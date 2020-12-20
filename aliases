@@ -1,0 +1,19 @@
+# Unix
+alias ll="ls -al"
+alias ln="ln -v"
+alias mkdir="mkdir -p"
+alias e="$EDITOR"
+alias v="$VISUAL"
+alias ..="cd .."
+alias ups="sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get autoremove"
+
+# Git
+alias gs="git status"
+
+# Pretty print the path
+alias path='echo $PATH | tr -s ":" "\n"'
+
+# Include custom aliases
+if [[ -f ~/.aliases.local ]]; then
+  source ~/.aliases.local
+fi
