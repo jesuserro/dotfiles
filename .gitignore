@@ -15,3 +15,5 @@ log/*.log
 rerun.txt
 tmp/**/*
 /tags
+
+.vscode
