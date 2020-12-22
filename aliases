@@ -5,7 +5,12 @@ alias mkdir="mkdir -p"
 alias e="$EDITOR"
 alias v="$VISUAL"
 alias ..="cd .."
-alias ups="sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get autoremove"
+
+# Sistemas
+alias ups="sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get autoremove && omz update"
+alias ss="sudo service nginx status && sudo service php7.4-fpm status && sudo service mysql status && sudo service mariadb status"
+alias rs="sudo service nginx restart && sudo service php7.4-fpm restart && sudo service mysql restart && sudo service mariadb restart"
+
 
 # Git
 alias gs="git status"
