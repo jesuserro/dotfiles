@@ -1,17 +1,24 @@
 #!/bin/sh 
-tmux new-session -s foo -d
-tmux rename-window 'Ventana'
 
-tmux split-window -v -p 45
-tmux send 'tail -f /var/log/nginx/error.log' C-m;
+tmux new-session -d -s main # Crea panel t1
+tmux rename-window $USER
+
+tmux split-window -v -p 35 # Crea t2
+tmux send-keys -t 2 'tail -f /var/log/nginx/error.log' C-m
+
+tmux select-pane -t 1
+tmux split-window -h -p 50 # Crea t3
+
+tmux select-pane -t 1
+
+# border colours
+# tmux set -g pane-border-style fg=red
+tmux set -g pane-active-border-style "bg=default fg=red"
+
+# Guardando session
+tmux -2 attach-session -d
+
+# Borrar todo: pkill -f tmux
 
 
-#tmux select-pane -t 0
-#tmux select-window -t foo:0
-
-tmux -2 attach-session -d 
-# tmux selectw -t 0
-# tmux set-window-option -g window-status-current-bg red
-# tmux setw -g window-status-current-style fg=black,bg=white
-
-# Borrar todo: pkill -f tmux 
+ 
