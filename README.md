@@ -41,7 +41,9 @@ p10k configure
 - [Plugins Oh my Zsh](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins)
   - [AWS plugin](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/aws)
 - [Plugins de la comunidad](https://github.com/zsh-users)
-- TMUX based on https://github.com/gpakosz/.tmux
+- TMUX based on: 
+  - https://github.com/gpakosz/.tmux
+  - @si4tar: https://www.youtube.com/watch?v=1dDahc214co
 
 # Instalación de Nerdfonts:
 Instalar MesloLGS NF Regular.ttf
@@ -64,6 +66,17 @@ rcup
 source ~/.zshrc
 # Para quitar paneles de TMUX:
 pkill -f tmux
+```
+
+# Tmux
+- Cheatsheet: https://tmuxcheatsheet.com/
+```shell
+# Ver los números de los paneles:
+Crtl + b + q
+# Amplia panel actual (y volver):
+Crtl + b + z
+# Show all sessions:
+Crtl + b + s
 ```
 
 Después de la instalación inicial, puedes ejecutarlo sin establecer la variable RCRC (rcup establecerá un enlace simbólico (symlink) del repo rcrc hacia ~/.rcrc para futuras ejecuciones de rcup). Ve el ejemplo.
