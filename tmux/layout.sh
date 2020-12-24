@@ -8,8 +8,8 @@ tmux send-keys -t 2 'tail -f /var/log/nginx/error.log' C-m
 
 tmux select-pane -t 1
 tmux split-window -h -p 50 # Crea t3
+tmux send-keys -t 2 'sudo mysql -u root -p' C-m
 
-tmux select-pane -t 1
 
 # border colours
 # tmux set -g pane-border-style fg=red
