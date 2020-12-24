@@ -4,20 +4,66 @@ Mis dotfiles para Ubuntu, Zsh, Oh My Zsh, Tmux
 Inspired in: 
 - https://github.com/thoughtbot/dotfiles
 - https://github.com/thoughtbot/rcm
+- TMUX: https://github.com/gpakosz/.tmux
 
-Instala el gestor oficial de Ubuntu para dotfiles:
+Instalación:
 ```shell
-sudo apt install rcm
-```
+cd
+sudo mkdir dotfiles-local && cd dotfiles-local && sudo touch gitconfig.local && cd ~
+sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get autoremove
+sudo apt-get -y install zsh powerline fonts-powerline rcm
+zsh --version
+whereis zsh
 
-Instala los dotfiles:
-```shell
+# Install OH-MY-ZSH in Ubuntu 20.04:
+sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+# Load dotfiles, theme and plugins
+git clone https://github.com/jesuserro/dotfiles.git
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $ZSH_CUSTOM/plugins/zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-autosuggestions.git $ZSH_CUSTOM/plugins/zsh-autosuggestions
+
+# Instala mis dotfiles y crea symlinks
 env RCRC=$HOME/dotfiles/rcrc rcup
+
+source ~/.zshrc
+
+# Configuración personal de la terminal - alias, themes, plugins, etc:
+sudo nano ~/.zshrc
+# plugins=(git zsh-syntax-highlighting zsh-autosuggestions)
+
+# Configurando el theme:
+p10k configure
 ```
 
-Refresca para ver los cambios:
+- [Info detallada](https://www.tecmint.com/install-oh-my-zsh-in-ubuntu/)
+- [Plugins Oh my Zsh](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins)
+  - [AWS plugin](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/aws)
+- [Plugins de la comunidad](https://github.com/zsh-users)
+- TMUX based on https://github.com/gpakosz/.tmux
+
+# Instalación de Nerdfonts:
+Instalar MesloLGS NF Regular.ttf
+- https://github.com/romkatv/powerlevel10k#meslo-nerd-font-patched-for-powerlevel10k
+Instalar todas: regular, italic, bold e italic-bold
+- https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Regular.ttf
 ```shell
+# Refrescar caché de fonts:
+fc-cache -fv
+# Configurar la shell:
+p10k configure
+```
+
+
+Refresca para ver los cambios en tus dotfiles:
+```shell
+# Crea symlinks entre estos dotfiles y el sistema en ~
+rcup
+# También puedes probar:
 source ~/.zshrc
+# Para quitar paneles de TMUX:
+pkill -f tmux
 ```
 
 Después de la instalación inicial, puedes ejecutarlo sin establecer la variable RCRC (rcup establecerá un enlace simbólico (symlink) del repo rcrc hacia ~/.rcrc para futuras ejecuciones de rcup). Ve el ejemplo.
