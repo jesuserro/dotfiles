@@ -1,10 +1,12 @@
 # dotfiles
 Mis dotfiles para Ubuntu, Zsh, Oh My Zsh, Tmux
 
-Inspired in: 
+Inspired by: 
 - https://github.com/thoughtbot/dotfiles
 - https://github.com/thoughtbot/rcm
-- TMUX: https://github.com/gpakosz/.tmux
+- TMUX: 
+  - https://github.com/gpakosz/.tmux
+  - Cheatsheet: https://tmuxcheatsheet.com/
 
 Instalación:
 ```shell
@@ -57,8 +59,7 @@ fc-cache -fv
 p10k configure
 ```
 
-
-Refresca para ver los cambios en tus dotfiles:
+# Refresca para ver los cambios en tus dotfiles:
 ```shell
 # Crea symlinks entre estos dotfiles y el sistema en ~
 rcup
@@ -66,17 +67,6 @@ rcup
 source ~/.zshrc
 # Para quitar paneles de TMUX:
 pkill -f tmux
-```
-
-# Tmux
-- Cheatsheet: https://tmuxcheatsheet.com/
-```shell
-# Ver los números de los paneles:
-Crtl + b + q
-# Amplia panel actual (y volver):
-Crtl + b + z
-# Show all sessions:
-Crtl + b + s
 ```
 
 Después de la instalación inicial, puedes ejecutarlo sin establecer la variable RCRC (rcup establecerá un enlace simbólico (symlink) del repo rcrc hacia ~/.rcrc para futuras ejecuciones de rcup). Ve el ejemplo.
@@ -112,4 +102,20 @@ Pon tus modificaciones en ~/dotfiles-local anexado con .local:
 ~/dotfiles-local/vimrc.bundles.local
 ~/dotfiles-local/zshrc.local
 ~/dotfiles-local/zsh/configs/*
+```
+
+# TMUX
+```shell
+# Listar sessiones
+tmux list-sessions
+# Ocultar sessiones (continuan los procesos ocultos):
+tmux detach -s Debug
+# Volver a mostrar ventana Debug
+tmux attach -t Debug
+# Ver los números de los paneles:
+Crtl + b + q
+# Amplia panel actual (y volver):
+Crtl + b + z
+# Show all sessions:
+Crtl + b + s
 ```
