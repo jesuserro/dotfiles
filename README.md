@@ -7,6 +7,9 @@ Inspired by:
 - TMUX: 
   - https://github.com/gpakosz/.tmux
   - Cheatsheet: https://tmuxcheatsheet.com/
+- Bash:
+  - https://overthewire.org/wargames/bandit/
+    - https://www.youtube.com/watch?v=RUorAzaDftg
 
 Instalación:
 ```shell
