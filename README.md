@@ -93,7 +93,18 @@ rcup
 ```
 para ligar cualquier nuevo archivo e instalar los nuevos plugins de vim. Nota Debes ejecutar rcup después de descargar para asegurarte que todos los archivos de los plugins estén instalados adecuadamente. Puedes ejecutar rcup con seguridad muchas veces para actualizar pronto y muy seguido!
 
-# Haz tus propias modificaciones
+# Para añadir nuevos dots
+```shell
+# Añadimos .vim en blanco
+touch ~/.vim
+mkrc ~/.vim
+# Se crean los symlynk que une este .vim en el user con mis dotfiles
+rcup
+```
+
+Aquí info para añadir nuevos ficheros: http://thoughtbot.github.io/rcm/
+
+# Local files
 Crea un directorio para tus modificaciones personales:
 
 ```shell
@@ -130,16 +141,27 @@ Crtl + b + s
 # VIM
 - Creación rápida de .vimrc: https://vim-bootstrap.com/
 - Seguir esta guía: https://victorhckinthefreeworld.com/2020/02/19/como-instalar-plugins-de-vim/
+
+Instalación de plugins:
+
 ```shell
 cd
 # Create a ~/.vim and subdirs:
-mkdir -p ~/.vim/autoload ~/.vim/bundle
+mkdir -p ~/.vim/autoload ~/.vim/pack
 # Maybe deprecated, install pathogen for NerdTree:
 curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
 # Native plugin autoloader:
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
+
+Modificar fichero ~/dotfiles/vimrc.bundles para añadir:
+```shell
+...
+Plug 'preservim/nerdtree'
+...
+```
+
 Entrar en VIM y escribir:
 ```shell
 :PlugClean
@@ -147,3 +169,5 @@ Entrar en VIM y escribir:
 :PlugUpdate
 :NERDTree /var/www/html
 ```
+
+En la carpeta "pack" se añadirá automáticamente el plugin.
