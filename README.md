@@ -49,6 +49,10 @@ p10k configure
 - TMUX based on: 
   - https://github.com/gpakosz/.tmux
   - @si4tar: https://www.youtube.com/watch?v=1dDahc214co
+- VIM:
+  - https://github.com/junegunn/vim-plug
+  - https://github.com/preservim/nerdtree
+  - Deprecated? https://github.com/tpope/vim-pathogen
 
 # Instalación de Nerdfonts:
 Instalar MesloLGS NF Regular.ttf
@@ -121,4 +125,25 @@ Crtl + b + q
 Crtl + b + z
 # Show all sessions:
 Crtl + b + s
+```
+
+# VIM
+- Creación rápida de .vimrc: https://vim-bootstrap.com/
+- Seguir esta guía: https://victorhckinthefreeworld.com/2020/02/19/como-instalar-plugins-de-vim/
+```shell
+cd
+# Create a ~/.vim and subdirs:
+mkdir -p ~/.vim/autoload ~/.vim/bundle
+# Maybe deprecated, install pathogen for NerdTree:
+curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
+# Native plugin autoloader:
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+```
+Entrar en VIM y escribir:
+```shell
+:PlugClean
+:PlugInstall
+:PlugUpdate
+:NERDTree /var/www/html
 ```
