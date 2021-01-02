@@ -1,5 +1,5 @@
 #!/bin/bash
-tiempo=0.25
+tiempo=0.5
 
 ip=$(hostname -I)
 sesion=${ip//./_}
@@ -11,7 +11,8 @@ tmux send-keys -t 2 'tail -f /var/log/nginx/error.log' C-m && sleep $tiempo
 # ---------------------------------------------------------------------------
 
 tmux new-window -t 2 -n 'BBDD'
-tmux send -t $session:BBDD "sudo mysql -u root -p" ENTER
+tmux send -t $session:BBDD "sudo -S ssh -o 'IdentitiesOnly yes' -i ~/.ssh/aws-jesuserro-key.pem -L 3333:localhost:3306 ubuntu@libricos.com" C-m && sleep $tiempo
+# tmux send -t $session:BBDD "sudo mysql -u root -p" ENTER
 
 tmux select-window -t 1
 tmux select-pane -t 1
