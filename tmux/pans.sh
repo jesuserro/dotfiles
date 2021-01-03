@@ -17,7 +17,7 @@ tmux send -t $session:BBDD "sudo -S ssh -o 'IdentitiesOnly yes' -i ~/.ssh/aws-je
 tmux select-window -t 1
 tmux select-pane -t 1
 
-tmux send -t $session:Debug "cd /var/www/html" ENTER
+tmux send -t $session:Debug "cd /var/www/html && sss" ENTER
 
 # Styles:
 # border colours: tmux set -g pane-border-style fg=red
