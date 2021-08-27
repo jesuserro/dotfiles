@@ -28,3 +28,8 @@
   path = ~/.gitconfig.local
 [diff]
   colorMoved = zebra
+[user]
+	name = Jesús Erro
+	email = jesus.erro.iribarren@gmail.com
+[credential]
+	helper = store
