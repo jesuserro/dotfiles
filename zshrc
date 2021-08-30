@@ -11,8 +11,23 @@ fi
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
+
+
+
 # Flutter
 export PATH="$PATH:$HOME/src/flutter/bin"
+#export PATH="$PATH:/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe"
+
+# Android SDK Tools and Platform Tools
+export ANDROID_HOME="$HOME/src/android-sdk"
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/tools/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+# sdkmanager fix for java 9 and 10
+#export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions --add-modules java.se.ee'
+
+
+
+
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
