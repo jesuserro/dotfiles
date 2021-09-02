@@ -14,8 +14,10 @@ export ZSH="$HOME/.oh-my-zsh"
 
 
 
-# Flutter
-export PATH="$PATH:$HOME/src/flutter/bin"
+# Flutter ejecutable:
+export PATH="$HOME/src/flutter/bin:$PATH"
+# Flutter SDK:
+export PATH="$PATH:/usr/lib/android-sdk"
 #export PATH="$PATH:/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe"
 
 # Android SDK Tools and Platform Tools
