@@ -21,8 +21,8 @@ export PATH="$PATH:/usr/lib/android-sdk"
 #export PATH="$PATH:/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe"
 
 # Android SDK Tools and Platform Tools
-export ANDROID_HOME="$HOME/src/android-sdk"
-export PATH=$PATH:$ANDROID_HOME/cmdline-tools/tools/bin
+export ANDROID_HOME="/usr/lib/android-sdk"
+export PATH=$PATH:$ANDROID_HOME/tools/bin
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 # sdkmanager fix for java 9 and 10
 #export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions --add-modules java.se.ee'
