@@ -129,3 +129,29 @@ source $ZSH/oh-my-zsh.sh
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# Init Docker daemon
+echo '# Start Docker daemon automatically when logging in if not running.' >> ~/.zshrc
+echo 'RUNNING=`ps aux | grep dockerd | grep -v grep`' >> ~/.zshrc
+echo 'if [ -z "$RUNNING" ]; then' >> ~/.zshrc
+echo '    sudo dockerd > /dev/null 2>&1 &' >> ~/.zshrc
+echo '    disown' >> ~/.zshrc
+echo 'fi' >> ~/.zshrc
+# Start Docker daemon automatically when logging in if not running.
+RUNNING=`ps aux | grep dockerd | grep -v grep`
+if [ -z "$RUNNING" ]; then
+    sudo dockerd > /dev/null 2>&1 &
+    disown
+fi
+# Start Docker daemon automatically when logging in if not running.
+RUNNING=`ps aux | grep dockerd | grep -v grep`
+if [ -z "$RUNNING" ]; then
+    sudo dockerd > /dev/null 2>&1 &
+    disown
+fi
+# Start Docker daemon automatically when logging in if not running.
+RUNNING=`ps aux | grep dockerd | grep -v grep`
+if [ -z "$RUNNING" ]; then
+    sudo dockerd > /dev/null 2>&1 &
+    disown
+fi
