@@ -115,3 +115,4 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+export PATH=$(echo "$PATH" | sed -e 's/:\/mnt[^:]*//g') # strip out problematic Windows %PATH%
