@@ -10,7 +10,11 @@ alias v="$VISUAL"
 alias ..="cd .."
 
 # Sistemas
-alias ups="sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get autoremove && omz update"
+alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove \
+&& omz update && upgrade_oh_my_zsh_custom \
+&& sudo service apache2 restart && sudo service mysql restart \
+&& sudo service apache2 status && sudo service mysql status \
+ip addr | grep -Ee 'inet.*eth0'"
 alias sss="sudo service nginx start && sudo service php7.4-fpm start && sudo service mariadb start"
 alias ss="sudo service nginx status && sudo service php7.4-fpm status && sudo service mariadb status"
 alias rs="sudo service nginx restart && sudo service php7.4-fpm restart && sudo service mariadb restart"
