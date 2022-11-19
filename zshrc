@@ -141,7 +141,7 @@ source $ZSH/oh-my-zsh.sh
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
 # Aliases
-[[ -f ~/.aliases ]] && source ~/.aliases
+[[ -f ~/.aliases ]] && source ~/dotfiles-local/.aliases
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
