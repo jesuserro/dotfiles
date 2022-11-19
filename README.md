@@ -1,7 +1,9 @@
 # My Dotfiles
 Mis dotfiles para Ubuntu, Zsh, Oh My Zsh, Tmux
 
-[Install ZSH](docs/installing-zsh-ohmyzsh.md)
+- [[202210131702 Installing ZSH & OhMyZSH]] 
+- [Relative uri](docs/installing-zsh-ohmyzsh.md)
+- [Obsidian uri](obsidian://open?vault=vault_trabajo&file=Daily%2F202210131702%20Installing%20ZSH%20%26%20OhMyZSHobsidian://open?vault=vault_trabajo&file=Daily%2F202210131702%20Installing%20ZSH%20%26%20OhMyZSH)
 
 ## Inspired by
 - https://github.com/thoughtbot/dotfiles
