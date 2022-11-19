@@ -38,6 +38,6 @@ alias files_user="find . -user www-data"
 alias lusers="sudo cat /etc/passwd | cut -d: -f1"
 
 # Include custom aliases
-if [[ -f ~/dotfiles-local/.aliases ]]; then 
-  source ~/dotfiles-local/.aliases
+if [[ -f ~/dotfiles-local/aliases ]]; then 
+  source ~/dotfiles-local/aliases
 fi
