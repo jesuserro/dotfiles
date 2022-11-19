@@ -1,6 +1,8 @@
 # My Dotfiles
 Mis dotfiles para Ubuntu, Zsh, Oh My Zsh, Tmux
 
+[Install ZSH](docs/installing-zsh-ohmyzsh.md)
+
 ## Inspired by
 - https://github.com/thoughtbot/dotfiles
 - https://github.com/thoughtbot/rcm
