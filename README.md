@@ -1,86 +1,45 @@
 # My Dotfiles
-Mis dotfiles para Ubuntu, Zsh, Oh My Zsh, Tmux
+My dotfiles for Ubuntu 20.04, Zsh, Oh My Zsh, Tmux
 
-- [[202210131702 Installing ZSH & OhMyZSH]] 
-- [Relative uri](docs/installing-zsh-ohmyzsh.md)
-- [Obsidian uri](obsidian://open?vault=vault_trabajo&file=Daily%2F202210131702%20Installing%20ZSH%20%26%20OhMyZSHobsidian://open?vault=vault_trabajo&file=Daily%2F202210131702%20Installing%20ZSH%20%26%20OhMyZSH)
+## Install
+### RCM
+``` shell
+sudo apt update -y \
+	&& sudo apt upgrade -y \
+	&& sudo apt autoremove
 
-## Inspired by
-- https://github.com/thoughtbot/dotfiles
-- https://github.com/thoughtbot/rcm
+sudo apt install -y rcm
+```
 
-### TMUX
-  - https://github.com/gpakosz/.tmux
-  - Cheatsheet: https://tmuxcheatsheet.com/
-### Bash
-  - https://overthewire.org/wargames/bandit/
-  - https://www.youtube.com/watch?v=RUorAzaDftg
-
-## Instalación
+### Dofiles
 ```shell
 cd
-sudo mkdir dotfiles-local && cd dotfiles-local && sudo touch gitconfig.local && cd ~
-sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get autoremove
-sudo apt-get -y install zsh powerline fonts-powerline rcm
-zsh --version
-whereis zsh
-
-# Install OH-MY-ZSH in Ubuntu 20.04:
-sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+sudo mkdir ~/dotfiles-local \
+	&& cd ~/dotfiles-local \
+	&& sudo touch ~/dotfiles-local/gitconfig.local \
+	&& sudo touch ~/dotfiles-local/aliases \
+	&& cd ~
 
 # Load dotfiles, theme and plugins
 git clone https://github.com/jesuserro/dotfiles.git
 
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
-
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $ZSH_CUSTOM/plugins/zsh-syntax-highlighting
-
-git clone https://github.com/zsh-users/zsh-autosuggestions.git $ZSH_CUSTOM/plugins/zsh-autosuggestions
-
-# Instala mis dotfiles y crea symlinks
+# Install the dotfiles (create symlinks)
 env RCRC=$HOME/dotfiles/rcrc rcup
 
 source ~/.zshrc
-
-# Configuración personal de la terminal - alias, themes, plugins, etc:
-sudo vim ~/.zshrc
-# plugins=(git zsh-syntax-highlighting zsh-autosuggestions)
-
-# Configurando el theme:
-p10k configure
 ```
 
-### Enlaces
-- [Info detallada](https://www.tecmint.com/install-oh-my-zsh-in-ubuntu/)
-- [Plugins Oh my Zsh](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins)
-	- [AWS plugin](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/aws)
-- [Plugins de la comunidad](https://github.com/zsh-users)
-	- TMUX based on: https://github.com/gpakosz/.tmux
-	- @si4tar: https://www.youtube.com/watch?v=1dDahc214co
-- VIM:
-  - https://github.com/junegunn/vim-plug
-  - https://github.com/preservim/nerdtree
-  - Deprecated? https://github.com/tpope/vim-pathogen
+After the initial installation, you can run `rcup` without the one-time variable `RCRC` being set (`rcup` will symlink the repo's `rcrc` to `~/.rcrc` for future runs of `rcup`). [See example](https://github.com/thoughtbot/dotfiles/blob/master/rcrc).
 
-## Instalación de Nerdfonts
+This command will create symlinks for config files in your home directory. Setting the `RCRC` environment variable tells `rcup` to use standard configuration options:
 
-Instalar MesloLGS NF Regular.ttf
-- https://github.com/romkatv/powerlevel10k#meslo-nerd-font-patched-for-powerlevel10k
+-   Exclude the `README.md`, `README-ES.md` and `LICENSE` files, which are part of the `dotfiles` repository but do not need to be symlinked in.
+-   Give precedence to personal overrides which by default are placed in `~/dotfiles-local`
+-   Please configure the `rcrc` file if you'd like to make personal overrides in a different directory
 
-Instalar todas: regular, italic, bold e italic-bold
-- https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Regular.ttf
-
-```shell
-# Refrescar caché de fonts:
-fc-cache -fv
-
-# Configurar la shell:
-p10k configure
-```
-
-## Refresca para ver los cambios en tus dotfiles
-
-```shell
+## Update
+From time to time you should pull down any updates to these dotfiles, and run
+``` shell
 # Crea symlinks entre estos dotfiles y el sistema en ~
 rcup
 
@@ -91,33 +50,14 @@ source ~/.zshrc
 pkill -f tmux
 ```
 
-  
-Después de la instalación inicial, puedes ejecutarlo sin establecer la variable RCRC (rcup establecerá un enlace simbólico (symlink) del repo rcrc hacia ~/.rcrc para futuras ejecuciones de rcup). Ve el ejemplo.
+to link any new files and install new vim plugins. 
 
-Este comando creará enlaces simbólicos (symlinks) para los archivos de configuración en tu directorio principal.
+**Note** You _must_ run `rcup` after pulling to ensure that all files in plugins are properly installed, but you can safely run `rcup` multiple times so update early and update often!
 
-Establecer la variable de entorno le dice a rcup que use las opciones de configuración preestablecidas:
-
-  - Excluye los archivos README.md, README-ES.md y LICENSE, que son parte del repositorio dotfiles, pero no necesitan enlazarse simbólicamente.
-
-  - Le da precedencia a las modificaciones personales que por defecto están en ~/dotfiles-local
-
-  - Por favor configura el archivo rcrc en caso de que quieras hacer modificaciones personales en un directorio distinto.
-
-## Actualizar
-
-De vez en cuando deberías descargar las actualizaciones de estos dotfiles, y ejectuar
-
+## Adding new dots
+You can add vim support by doing this:
 ```shell
-rcup
-```
-
-para ligar cualquier nuevo archivo e instalar los nuevos plugins de vim. Nota Debes ejecutar rcup después de descargar para asegurarte que todos los archivos de los plugins estén instalados adecuadamente. Puedes ejecutar rcup con seguridad muchas veces para actualizar pronto y muy seguido!
-
-## Para añadir nuevos dots
-
-```shell
-# Añadimos .vim en blanco
+# Create blank .vim
 touch ~/.vim
 
 mkrc ~/.vim
@@ -128,14 +68,13 @@ rcup
 
 Aquí info para añadir nuevos ficheros: http://thoughtbot.github.io/rcm/
 
-## Local files
-
-Crea un directorio para tus modificaciones personales:
+## Make your own customizations
+Create a directory for your personal customizations:
 ```shell
 mkdir ~/dotfiles-local
 ```
 
-Pon tus modificaciones en ~/dotfiles-local anexado con .local:
+Put your customizations in `~/dotfiles-local` appended with `.local`:
 ```shell
 ~/dotfiles-local/aliases.local
 ~/dotfiles-local/git_template.local/*
@@ -147,59 +86,175 @@ Pon tus modificaciones en ~/dotfiles-local anexado con .local:
 ~/dotfiles-local/zsh/configs/*
 ```
 
-## TMUX
-```shell
-# Listar sessiones
-tmux list-sessions
+## Calling dotfiles from ~/.zshrc
 
-# Ocultar sessiones (continuan los procesos ocultos):
-tmux detach -s Debug
-
-# Volver a mostrar ventana Debug
-tmux attach -t Debug
-
-# Ver los números de los paneles:
-Crtl + b + q
-
-# Amplia panel actual (y volver):
-Crtl + b + z
-
-# Show all sessions:
-Crtl + b + s
-```
-
-## VIM
-- Creación rápida de .vimrc: https://vim-bootstrap.com/
-- Seguir esta guía: https://victorhckinthefreeworld.com/2020/02/19/como-instalar-plugins-de-vim/
-
-### Instalación de plugins
-```shell
+``` shell
 cd
+ls -la
 
-# Create a ~/.vim and subdirs:
-mkdir -p ~/.vim/autoload ~/.vim/pack
-
-# Maybe deprecated, install pathogen for NerdTree:
-curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
-
-# Native plugin autoloader:
-curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
-
-    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+	.aliases -> /home/ubuntu/dotfiles/aliases
+	.bashrc -> /home/ubuntu/dotfiles/bashrc
+	.gitconfig -> /home/ubuntu/dotfiles/gitconfig
+	.tmux.conf -> /home/ubuntu/dotfiles/tmux.conf
+	.zshrc -> /home/ubuntu/dotfiles/zshrc
 ```
 
-Modificar fichero `~/dotfiles/vimrc.bundles` para añadir:
-```shell
-Plug 'preservim/nerdtree'
+Edit your `~/dotfiles/zshrc` like this:
+
+``` shell
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# If you come from bash you might have to change your $PATH.
+# export PATH=$HOME/bin:/usr/local/bin:$PATH
+
+# Path to your oh-my-zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
+# Set name of the theme to load --- if set to "random", it will
+# load a random theme each time oh-my-zsh is loaded, in which case,
+# to know which specific one was loaded, run: echo $RANDOM_THEME
+# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
+ZSH_THEME="powerlevel10k/powerlevel10k"
+
+# Set list of themes to pick from when loading at random
+# Setting this variable when ZSH_THEME=random will cause zsh to load
+# a theme from this variable instead of looking in $ZSH/themes/
+# If set to an empty array, this variable will have no effect.
+# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+
+# Uncomment the following line to use case-sensitive completion.
+# CASE_SENSITIVE="true"
+
+# Uncomment the following line to use hyphen-insensitive completion.
+# Case-sensitive completion must be off. _ and - will be interchangeable.
+# HYPHEN_INSENSITIVE="true"
+
+# Uncomment one of the following lines to change the auto-update behavior
+# zstyle ':omz:update' mode disabled  # disable automatic updates
+# zstyle ':omz:update' mode auto      # update automatically without asking
+# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
+
+# Uncomment the following line to change how often to auto-update (in days).
+# zstyle ':omz:update' frequency 13
+
+# Uncomment the following line if pasting URLs and other text is messed up.
+# DISABLE_MAGIC_FUNCTIONS="true"
+
+# Uncomment the following line to disable colors in ls.
+# DISABLE_LS_COLORS="true"
+
+# Uncomment the following line to disable auto-setting terminal title.
+# DISABLE_AUTO_TITLE="true"
+
+# Uncomment the following line to enable command auto-correction.
+# ENABLE_CORRECTION="true"
+
+# Uncomment the following line to display red dots whilst waiting for completion.
+# You can also set it to another string to have that shown instead of the default red dots.
+# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
+# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
+# COMPLETION_WAITING_DOTS="true"
+
+# Uncomment the following line if you want to disable marking untracked files
+# under VCS as dirty. This makes repository status check for large repositories
+# much, much faster.
+# DISABLE_UNTRACKED_FILES_DIRTY="true"
+
+# Uncomment the following line if you want to change the command execution time
+# stamp shown in the history command output.
+# You can set one of the optional three formats:
+# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
+# or set a custom format using the strftime function format specifications,
+# see 'man strftime' for details.
+# HIST_STAMPS="mm/dd/yyyy"
+
+# Would you like to use another custom folder than $ZSH/custom?
+# ZSH_CUSTOM=/path/to/new-custom-folder
+
+# Which plugins would you like to load?
+# Standard plugins can be found in $ZSH/plugins/
+# Custom plugins may be added to $ZSH_CUSTOM/plugins/
+# Example format: plugins=(rails git textmate ruby lighthouse)
+# Add wisely, as too many plugins slow down shell startup.
+plugins=(
+	git
+	colorize
+	colored-man-pages
+	history
+	dirhistory
+	jsontools
+	zsh-autosuggestions
+	zsh-syntax-highlighting
+	autoupdate
+	vi-mode
+)
+
+source $ZSH/oh-my-zsh.sh
+
+# User configuration
+
+# export MANPATH="/usr/local/man:$MANPATH"
+
+# You may need to manually set your language environment
+# export LANG=en_US.UTF-8
+
+# Preferred editor for local and remote sessions
+# if [[ -n $SSH_CONNECTION ]]; then
+#   export EDITOR='vim'
+# else
+#   export EDITOR='mvim'
+# fi
+
+# Compilation flags
+# export ARCHFLAGS="-arch x86_64"
+
+# Set personal aliases, overriding those provided by oh-my-zsh libs,
+# plugins, and themes. Aliases can be placed here, though oh-my-zsh
+# users are encouraged to define aliases within the ZSH_CUSTOM folder.
+# For a full list of active aliases, run `alias`.
+#
+# Example aliases
+# alias zshconfig="mate ~/.zshrc"
+# alias ohmyzsh="mate ~/.oh-my-zsh"
+alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove \
+&& omz update && upgrade_oh_my_zsh_custom \
+&& sudo service apache2 restart && sudo service mysql restart \
+&& sudo service apache2 status && sudo service mysql status \
+ip addr | grep -Ee 'inet.*eth0'"
+
+alias tmloc="~/.tmux/localidades.sh"
+
+# Local config
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+# Aliases
+[[ -f ~/.aliases ]] && source ~/.aliases
+
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 ```
 
-Entrar en VIM y escribir:
+## Info
+- [Install ZSH in Ubuntu](https://www.tecmint.com/install-oh-my-zsh-in-ubuntu/)
+- [Plugins Oh my Zsh](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins)
+	- [AWS plugin](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/aws)
+- [Plugins de la comunidad](https://github.com/zsh-users)
+	- TMUX based on: https://github.com/gpakosz/.tmux
+	- @si4tar: https://www.youtube.com/watch?v=1dDahc214co
 
-```shell
-:PlugClean
-:PlugInstall
-:PlugUpdate
-:NERDTree /var/www/html
-```
+### Inspired by
+- https://github.com/thoughtbot/dotfiles
+- https://github.com/thoughtbot/rcm
 
-En la carpeta "pack" se añadirá automáticamente el plugin.
+### TMUX
+  - https://github.com/gpakosz/.tmux
+  - Cheatsheet: https://tmuxcheatsheet.com/
+### Bash
+  - https://overthewire.org/wargames/bandit/
+  - https://www.youtube.com/watch?v=RUorAzaDftg
