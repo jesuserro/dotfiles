@@ -14,10 +14,10 @@ sudo apt install -y rcm
 ### Dofiles
 ```shell
 cd
-sudo mkdir ~/dotfiles-local \
+mkdir ~/dotfiles-local \
 	&& cd ~/dotfiles-local \
-	&& sudo touch ~/dotfiles-local/gitconfig.local \
-	&& sudo touch ~/dotfiles-local/aliases \
+	&& touch ~/dotfiles-local/gitconfig.local \
+	&& touch ~/dotfiles-local/aliases.local \
 	&& cd ~
 
 # Load dotfiles, theme and plugins
@@ -25,6 +25,10 @@ git clone https://github.com/jesuserro/dotfiles.git
 
 # Install the dotfiles (create symlinks)
 env RCRC=$HOME/dotfiles/rcrc rcup
+	overwrite /home/jesus/.bashrc? [ynaq] y
+	overwrite /home/jesus/.gitconfig? [ynaq] y
+	overwrite /home/jesus/.vimrc? [ynaq] y
+	overwrite /home/jesus/.zshrc? [ynaq] y
 
 source ~/.zshrc
 ```
@@ -38,7 +42,7 @@ This command will create symlinks for config files in your home directory. Setti
 -   Please configure the `rcrc` file if you'd like to make personal overrides in a different directory
 
 ## Update
-From time to time you should pull down any updates to these dotfiles, and run
+**After creating any new dotfiles-local file do the next (by example: ~/dotfiles-local/gitconfig.local).** From time to time you should pull down any updates to these dotfiles, and run:
 ``` shell
 # Crea symlinks entre estos dotfiles y el sistema en ~
 rcup
@@ -213,22 +217,6 @@ source $ZSH/oh-my-zsh.sh
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
 
-# Set personal aliases, overriding those provided by oh-my-zsh libs,
-# plugins, and themes. Aliases can be placed here, though oh-my-zsh
-# users are encouraged to define aliases within the ZSH_CUSTOM folder.
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
-alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove \
-&& omz update && upgrade_oh_my_zsh_custom \
-&& sudo service apache2 restart && sudo service mysql restart \
-&& sudo service apache2 status && sudo service mysql status \
-ip addr | grep -Ee 'inet.*eth0'"
-
-alias tmloc="~/.tmux/localidades.sh"
-
 # Local config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
@@ -240,6 +228,9 @@ alias tmloc="~/.tmux/localidades.sh"
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 ```
 
+## Aliases
+[[202211210836 Aliases]]
+
 ## Info
 - [Install ZSH in Ubuntu](https://www.tecmint.com/install-oh-my-zsh-in-ubuntu/)
 - [Plugins Oh my Zsh](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins)
@@ -248,13 +239,30 @@ alias tmloc="~/.tmux/localidades.sh"
 	- TMUX based on: https://github.com/gpakosz/.tmux
 	- @si4tar: https://www.youtube.com/watch?v=1dDahc214co
 
-### Inspired by
+## Inspired by
 - https://github.com/thoughtbot/dotfiles
 - https://github.com/thoughtbot/rcm
 
-### TMUX
+## TMUX
   - https://github.com/gpakosz/.tmux
   - Cheatsheet: https://tmuxcheatsheet.com/
-### Bash
+  
+## Bash
   - https://overthewire.org/wargames/bandit/
   - https://www.youtube.com/watch?v=RUorAzaDftg
+
+## Vimrc
+### Download Vim Color Schemes
+If you do not have such a directory, create one with the command:
+
+``` shell
+mkdir ~/.vim/colors
+```
+
+Download scheme from: https://vimcolorschemes.com/
+
+Now move the new scheme into it:
+
+``` shell
+mv ~/Downloads/[vim_colorscheme]  ~/.vim/colors
+```

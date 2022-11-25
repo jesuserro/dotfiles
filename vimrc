@@ -150,7 +150,8 @@ set ruler
 set number
 
 let no_buffers_menu=1
-colorscheme dracula
+" colorscheme dracula
+set background=dark
 
 
 set mousemodel=popup

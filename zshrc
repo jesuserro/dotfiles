@@ -12,26 +12,6 @@ fi
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
-
-
-
-# Flutter ejecutable:
-export PATH="$HOME/src/flutter/bin:$PATH"
-# Flutter SDK:
-export PATH="$PATH:/usr/lib/android-sdk"
-#export PATH="$PATH:/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe"
-
-# Android SDK Tools and Platform Tools
-export ANDROID_HOME="/usr/lib/android-sdk"
-export PATH=$PATH:$ANDROID_HOME/tools/bin
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-# sdkmanager fix for java 9 and 10
-#export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions --add-modules java.se.ee'
-
-
-
-
-
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
@@ -142,6 +122,9 @@ source $ZSH/oh-my-zsh.sh
 
 # Aliases
 [[ -f ~/.aliases ]] && source ~/.aliases
+
+# Git config
+#[[ -f ~/.aliases ]] && source ~/.aliases
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

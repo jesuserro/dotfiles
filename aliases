@@ -14,7 +14,8 @@ alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autore
 && omz update && upgrade_oh_my_zsh_custom \
 && sudo service apache2 restart && sudo service mysql restart \
 && sudo service apache2 status && sudo service mysql status \
-ip addr | grep -Ee 'inet.*eth0'"
+&& source ~/.zshrc \
+&& ip addr | grep -Ee 'inet.*eth0'"
 alias sss="sudo service nginx start && sudo service php7.4-fpm start && sudo service mariadb start"
 alias ss="sudo service nginx status && sudo service php7.4-fpm status && sudo service mariadb status"
 alias rs="sudo service nginx restart && sudo service php7.4-fpm restart && sudo service mariadb restart"
@@ -25,7 +26,6 @@ alias lc="sudo true > /var/log/nginx/error.log"
 
 # Seguridad:
 alias ffl='find . -mtime -1 -printf "%p\t%TY-%Tm-%Td %TH:%TM\t%u\t%g\t%m\n" | column -t | less'
-
 
 # Git
 # alias gs="git status" # es gst por defecto
@@ -38,6 +38,6 @@ alias files_user="find . -user www-data"
 alias lusers="sudo cat /etc/passwd | cut -d: -f1"
 
 # Include custom aliases
-if [[ -f ~/dotfiles-local/aliases ]]; then 
-  source ~/dotfiles-local/aliases
+if [[ -f ~/dotfiles-local/aliases.local ]]; then 
+  source ~/dotfiles-local/aliases.local
 fi
