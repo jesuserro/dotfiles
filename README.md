@@ -1,5 +1,5 @@
 # My Dotfiles
-My dotfiles for Ubuntu 20.04, Zsh, Oh My Zsh, RCM, TMUX and Vim.
+My dotfiles for Ubuntu 20.04, Zsh, Oh My Zsh, TMUX and Vim. Based on [RCM](https://github.com/thoughtbot/rcm) dotfile framework.
 
 ## Install
 ### RCM
