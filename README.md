@@ -66,13 +66,13 @@ pkill -f tmux
 
 to link any new files and install new vim plugins. 
 
-A new symlik will be automatically created:
+A new symlik should have been automatically created:
 ``` shell
 cd
 ls -la
-	# Created the first time from my ~/dotfiles/zshrc:
+	# Created the first time from ~/dotfiles/zshrc:
 	.gitconfig -> ~/dotfiles/gitconfig
-	# New changes from rcup:
+	# New symlink created from rcup:
 	.gitconfig.local -> ~/dotfiles-local/gitconfig.local
 
 # Check if new changes are available:
@@ -93,7 +93,7 @@ mkrc ~/.vim
 rcup
 ```
 
-Aquí info para añadir nuevos ficheros: http://thoughtbot.github.io/rcm/
+More info on adding new files: http://thoughtbot.github.io/rcm/
 
 ## Make your own customizations
 Create a directory for your personal customizations:
@@ -118,7 +118,6 @@ Put your customizations in `~/dotfiles-local` appended with `.local`:
 ``` shell
 cd
 ls -la
-
 	.aliases -> /home/ubuntu/dotfiles/aliases
 	.bashrc -> /home/ubuntu/dotfiles/bashrc
 	.gitconfig -> /home/ubuntu/dotfiles/gitconfig
