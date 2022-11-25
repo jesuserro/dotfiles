@@ -1,4 +1,4 @@
-# My Dotfiles
+# Dotfiles
 My dotfiles for Ubuntu 20.04, Zsh, Oh My Zsh, Tmux and Vim.
 
 ## Install
@@ -70,9 +70,9 @@ A new symlik will be automatically created:
 ``` shell
 cd
 ls -la
-	# Created the first time:
+	# Created the first time from my ~/dotfiles/zshrc:
 	.gitconfig -> ~/dotfiles/gitconfig
-	# New changes:
+	# New changes from rcup:
 	.gitconfig.local -> ~/dotfiles-local/gitconfig.local
 
 # Check if new changes are available:

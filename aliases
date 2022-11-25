@@ -16,13 +16,11 @@ alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autore
 && sudo service apache2 status && sudo service mysql status \
 && source ~/.zshrc \
 && ip addr | grep -Ee 'inet.*eth0'"
-alias sss="sudo service nginx start && sudo service php7.4-fpm start && sudo service mariadb start"
-alias ss="sudo service nginx status && sudo service php7.4-fpm status && sudo service mariadb status"
-alias rs="sudo service nginx restart && sudo service php7.4-fpm restart && sudo service mariadb restart"
+alias ss="sudo service apache2 restart && sudo service mariadb restart"
 alias pans="$HOME/.tmux/pans.sh"
 
 # Logs:
-alias lc="sudo true > /var/log/nginx/error.log"
+alias lc="sudo true > /var/log/apache2/error.log"
 
 # Seguridad:
 alias ffl='find . -mtime -1 -printf "%p\t%TY-%Tm-%Td %TH:%TM\t%u\t%g\t%m\n" | column -t | less'
