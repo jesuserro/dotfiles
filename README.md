@@ -1,5 +1,5 @@
 # My Dotfiles
-My dotfiles for Ubuntu 20.04, Zsh, Oh My Zsh, Tmux
+My dotfiles for Ubuntu 20.04, Zsh, Oh My Zsh, Tmux and Vim.
 
 ## Install
 ### RCM
@@ -25,10 +25,10 @@ git clone https://github.com/jesuserro/dotfiles.git
 
 # Install the dotfiles (create symlinks)
 env RCRC=$HOME/dotfiles/rcrc rcup
-	overwrite /home/jesus/.bashrc? [ynaq] y
-	overwrite /home/jesus/.gitconfig? [ynaq] y
-	overwrite /home/jesus/.vimrc? [ynaq] y
-	overwrite /home/jesus/.zshrc? [ynaq] y
+	overwrite ~/.bashrc? [ynaq] y
+	overwrite ~/.gitconfig? [ynaq] y
+	overwrite ~/.vimrc? [ynaq] y
+	overwrite ~/.zshrc? [ynaq] y
 
 source ~/.zshrc
 ```
@@ -42,7 +42,17 @@ This command will create symlinks for config files in your home directory. Setti
 -   Please configure the `rcrc` file if you'd like to make personal overrides in a different directory
 
 ## Update
-**After creating any new dotfiles-local file do the next (by example: ~/dotfiles-local/gitconfig.local).** From time to time you should pull down any updates to these dotfiles, and run:
+**After creating any new dotfiles-local file** (by example: `~/dotfiles-local/gitconfig.local`): 
+``` shell
+touch ~/dotfiles-local/gitconfig.local
+vim ~/dotfiles-local/gitconfig.local
+	1 [user]
+	2     name = <Your_User>
+	3     email = <Your_User>@<YOUR_DOMAIN>.com
+	:wq
+```
+
+**do the next**. From time to time you should pull down any updates to these dotfiles, and run:
 ``` shell
 # Crea symlinks entre estos dotfiles y el sistema en ~
 rcup
@@ -55,6 +65,19 @@ pkill -f tmux
 ```
 
 to link any new files and install new vim plugins. 
+
+A new symlik will be automatically created:
+``` shell
+cd
+ls -la
+	# Created the first time:
+	.gitconfig -> ~/dotfiles/gitconfig
+	# New changes:
+	.gitconfig.local -> ~/dotfiles-local/gitconfig.local
+
+# Check if new changes are available:
+git config --list
+```
 
 **Note** You _must_ run `rcup` after pulling to ensure that all files in plugins are properly installed, but you can safely run `rcup` multiple times so update early and update often!
 
