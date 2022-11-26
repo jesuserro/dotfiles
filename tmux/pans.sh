@@ -27,8 +27,8 @@ tmux send -t $session:Debug "cd /var/www/nges.local && ss" ENTER
 # border colours: tmux set -g pane-border-style fg=red
 tmux set -g pane-active-border-style "bg=default fg=red"
 
-# Modo ratón:
-tmux set -g mouse on
+# Modo ratón desactivado para pegar comandos del clipboard:
+tmux set -g mouse off
 
 # Guardando session
 tmux -2 attach-session -d
