@@ -21,3 +21,5 @@ tmp/**/*
 vim/pack/*
 
 .history
+
+*.log
