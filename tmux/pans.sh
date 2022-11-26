@@ -23,9 +23,10 @@ tmux select-pane -t 1
 
 tmux send -t $session:Debug "cd /var/www/nges.local && ss" ENTER
 
-# Styles:
-# border colours: tmux set -g pane-border-style fg=red
-tmux set -g pane-active-border-style "bg=default fg=red"
+# Styles
+# Border colours 
+tmux set -g pane-border-style "fg=default"
+tmux set -g pane-active-border-style "bg=default fg=yellow"
 
 # Modo ratón
 tmux set -g mouse on
