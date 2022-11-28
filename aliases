@@ -17,7 +17,10 @@ alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autore
 && source ~/.zshrc \
 && ip addr | grep -Ee 'inet.*eth0'"
 alias ss="sudo service apache2 restart && sudo service mariadb restart"
+# Creado con RCUP
 alias pans="$HOME/.tmux/pans.sh"
+# Sin RCUP (dar chmod +x a $HOME/dotfiles/tmux/ofertas.sh)
+alias ofertas="$HOME/dotfiles/tmux/ofertas.sh"
 
 # Logs:
 alias lc="sudo true > /var/log/apache2/error.log"
