@@ -24,6 +24,7 @@ alias pans="$HOME/.tmux/pans.sh"
 # Sin RCUP (dar chmod +x a $HOME/dotfiles/tmux/ofertas.sh)
 alias ofertas="$HOME/dotfiles/tmux/ofertas.sh"
 alias nges="$HOME/dotfiles/tmux/nges.sh"
+alias localidades="$HOME/dotfiles/tmux/localidades.sh"
 
 # Logs:
 alias lc="sudo true > /var/log/apache2/error.log"
