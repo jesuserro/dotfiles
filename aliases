@@ -26,6 +26,8 @@ alias work="$HOME/.tmux/work.sh"
 alias ofertas="$HOME/dotfiles/tmux/ofertas.sh"
 alias nges="$HOME/dotfiles/tmux/nges.sh"
 alias localidades="$HOME/dotfiles/tmux/localidades.sh"
+# alias home="$HOME/dotfiles/tmux/home.sh"
+# alias work="$HOME/dotfiles/tmux/work.sh"
 
 # Logs:
 alias lc="sudo true > /var/log/apache2/error.log"
