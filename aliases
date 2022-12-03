@@ -20,7 +20,8 @@ alias ss="sudo service apache2 restart && sudo service mariadb restart"
 
 # Proyectos:
 # Creado con RCUP
-alias pans="$HOME/.tmux/pans.sh"
+alias home="$HOME/.tmux/home.sh"
+alias work="$HOME/.tmux/work.sh"
 # Sin RCUP (dar chmod +x a $HOME/dotfiles/tmux/ofertas.sh)
 alias ofertas="$HOME/dotfiles/tmux/ofertas.sh"
 alias nges="$HOME/dotfiles/tmux/nges.sh"
