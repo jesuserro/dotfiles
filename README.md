@@ -1,5 +1,5 @@
 # Dotfiles
-My BETA dotfiles for Ubuntu 20.04, Zsh, Oh My Zsh, TMUX and Vim. Based on [RCM](https://github.com/thoughtbot/rcm) dotfile framework.
+My BETA dotfiles for Ubuntu 20.04, Zsh, Oh My Zsh, TMUX and NVim. Based on [RCM](https://github.com/thoughtbot/rcm) dotfile framework. This project is in develop mode, so you can encounter many bugs. Please don't use this if you're not familiarized with these tools.
 
 ## Install
 ### RCM
@@ -273,7 +273,14 @@ source $ZSH/oh-my-zsh.sh
   - https://overthewire.org/wargames/bandit/
   - https://www.youtube.com/watch?v=RUorAzaDftg
 
+## NVIM
+Adopting Neovim as default editor:
+``` shell
+sudo apt-get install neovim
+```
+
 ## Vimrc
+Deprecated for me.
 ### Download Vim Color Schemes
 If you do not have such a directory, create one with the command:
 
