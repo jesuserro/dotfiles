@@ -4,7 +4,7 @@ source ~/dotfiles/tmux/common/header.sh
 
 
 # Total screen
-tmux rename-window "One"
+tmux rename-window "Home"
 
 # Split screen
 tmux new-window -t 2 -n 'Two'
