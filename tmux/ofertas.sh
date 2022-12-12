@@ -15,19 +15,21 @@ tmux send-keys -t 2 'ssh -oHostKeyAlgorithms=+ssh-dss jesus@89.17.208.189' C-m &
 tmux split-window -v -p 35 && sleep $tiempo 
 tmux send-keys -t 2 'ssh -oHostKeyAlgorithms=+ssh-dss jesus@89.17.208.189 && tail -f /var/log/httpd/dev-ofertas_error_log' C-m && sleep $tiempo
 
-# PROD
+# PRE
 tmux new-window -t 3 -n '89.17.208.138 PRE'
 tmux send-keys -t 3 'ssh -oHostKeyAlgorithms=+ssh-dss jesus@89.17.208.138' C-m && sleep $tiempo
 tmux send-keys -t 3 'cd /home/pre-ofertas.centraldereservas.com/html' C-m && sleep $tiempo
 tmux split-window -v -p 35 && sleep $tiempo 
-tmux send-keys -t 3 'ssh -oHostKeyAlgorithms=+ssh-dss jesus@89.17.208.138 && tail -f /var/log/httpd/dev-ofertas_error_log' C-m && sleep $tiempo
+tmux send-keys -t 3 'ssh -oHostKeyAlgorithms=+ssh-dss jesus@89.17.208.138' C-m && sleep $tiempo
+tmux send-keys -t 3 'tail -f /etc/httpd/logs/pre-ofertas_error_log' C-m && sleep $tiempo
 
 # PROD
 tmux new-window -t 4 -n '89.17.208.138 PROD'
 tmux send-keys -t 4 'ssh -oHostKeyAlgorithms=+ssh-dss jesus@89.17.208.138' C-m && sleep $tiempo
 tmux send-keys -t 4 'cd /home/ofertas.centraldereservas.com/html' C-m && sleep $tiempo
 tmux split-window -v -p 35 && sleep $tiempo 
-tmux send-keys -t 4 'ssh -oHostKeyAlgorithms=+ssh-dss jesus@89.17.208.138 && tail -f /var/log/httpd/dev-ofertas_error_log' C-m && sleep $tiempo
+tmux send-keys -t 4 'ssh -oHostKeyAlgorithms=+ssh-dss jesus@89.17.208.138' C-m && sleep $tiempo
+tmux send-keys -t 4 'tail -f /etc/httpd/logs/ofertas_error_log' C-m && sleep $tiempo
 
 
 
