@@ -42,3 +42,6 @@
 	email = olagato@gmail.com
 [credential]
 	helper = store
+[safe]
+	directory = /home/jesus/proyectos/nges
+	directory = /home/jesus/proyectos/docker
