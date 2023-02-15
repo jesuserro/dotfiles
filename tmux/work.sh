@@ -17,7 +17,7 @@ tmux split-window -v -p 35 && sleep $tiempo # Crea t2
 
 # Local NGES
 # tmux new-window -t 4 -n 'NGES'
-# tmux send -t $session:NGES "cd /var/www/nges.local && ss" ENTER
+# tmux send -t $session:NGES "cd /var/www/nges.local && apachestart" ENTER
 # tmux split-window -v -p 35 && sleep $tiempo # Crea t3
 # tmux send-keys -t 4 'tail -f /var/log/apache2/error.log' C-m && sleep $tiempo
 

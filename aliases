@@ -16,7 +16,7 @@ alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autore
 && sudo service apache2 status && sudo service mysql status \
 && source ~/.zshrc \
 && ip addr | grep -Ee 'inet.*eth0'"
-alias ss="sudo service apache2 restart && sudo service mariadb restart"
+alias apachestart="sudo service apache2 restart && sudo service mariadb restart"
 
 # Proyectos:
 # Creado con RCUP
