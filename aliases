@@ -20,12 +20,12 @@ alias apachestart="sudo service apache2 restart && sudo service mariadb restart"
 
 # Proyectos:
 # Creado con RCUP
-alias home="$HOME/.tmux/home.sh"
-alias work="$HOME/.tmux/work.sh"
+# alias home="$HOME/.tmux/home.sh"
+# alias work="$HOME/.tmux/work.sh"
 # Sin RCUP (dar chmod +x a $HOME/dotfiles/tmux/ofertas.sh)
-alias ofertas="$HOME/dotfiles/tmux/ofertas.sh"
-alias nges="$HOME/dotfiles/tmux/nges.sh"
-alias localidades="$HOME/dotfiles/tmux/localidades.sh"
+# alias ofertas="$HOME/dotfiles/tmux/ofertas.sh"
+# alias nges="$HOME/dotfiles/tmux/nges.sh"
+# alias localidades="$HOME/dotfiles/tmux/localidades.sh"
 # alias home="$HOME/dotfiles/tmux/home.sh"
 # alias work="$HOME/dotfiles/tmux/work.sh"
 
@@ -37,7 +37,7 @@ alias ffl='find . -mtime -1 -printf "%p\t%TY-%Tm-%Td %TH:%TM\t%u\t%g\t%m\n" | co
 
 # Git
 # alias gs="git status" # es gst por defecto
-alias clean-branches='!f() { git branch --merged | grep -v "main\|master\|develop\|*" | xargs git branch -D; }; f'
+# alias cleanBranches='!f() { git branch --merged | grep -v "main\|master\|dev\|*" | xargs git branch -D; }; f'
 
 # Pretty print the path
 alias path='echo $PATH | tr -s ":" "\n"'
