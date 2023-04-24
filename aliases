@@ -37,6 +37,7 @@ alias ffl='find . -mtime -1 -printf "%p\t%TY-%Tm-%Td %TH:%TM\t%u\t%g\t%m\n" | co
 
 # Git
 # alias gs="git status" # es gst por defecto
+alias clean-branches='!f() { git branch --merged | grep -v "main\|master\|develop\|*" | xargs git branch -D; }; f'
 
 # Pretty print the path
 alias path='echo $PATH | tr -s ":" "\n"'
