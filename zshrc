@@ -99,6 +99,7 @@ plugins=(
 	zsh-autosuggestions
 	zsh-syntax-highlighting
 	autoupdate
+  docker
 )
 
 source $ZSH/oh-my-zsh.sh
