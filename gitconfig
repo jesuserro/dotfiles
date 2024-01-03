@@ -1,10 +1,10 @@
 [init]
-  defaultBranch = main
+	defaultBranch = main
   templatedir = ~/.git_template
 [push]
   default = current
 [color]
-  ui = auto
+	ui = true
 [alias]
   aa = add --all
   ap = add --patch
@@ -39,8 +39,8 @@
 [diff]
   colorMoved = zebra
 [user]
-	name = olagato
-	email = olagato@gmail.com
+	name = Jesús Erro
+	email = jesus@centraldereservas.com
 [credential]
 	helper = store
 [safe]
