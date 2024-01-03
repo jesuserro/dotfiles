@@ -21,6 +21,7 @@
   done = !git push origin HEAD
   save = !git add -A && git commit -m 'chore: commit save point'
   cleanBranches = !sh -c 'git branch --merged | grep -v "main\\|master\\|dev\\|*" | xargs git branch -D'
+  log = 'git --no-pager log'
 [core]
   excludesfile = ~/.gitignore
 	autocrlf = false
