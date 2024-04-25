@@ -47,7 +47,7 @@ This command will create symlinks for config files in your home directory. Setti
 
 ## Update
 
-**After creating any new dotfiles-local file** (by example: `~/dotfiles-local/gitconfig.local`): 
+**After creating any new dotfiles-local file** (by example: `~/dotfiles-local/gitconfig.local`):
 
 ``` shell
 touch ~/dotfiles-local/gitconfig.local
