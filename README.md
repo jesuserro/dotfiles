@@ -71,7 +71,7 @@ source ~/.zshrc
 pkill -f tmux
 ```
 
-to link any new files and install new vim plugins. 
+to link any new files and install new vim plugins.
 
 A new symlik should have been automatically created:
 ``` shell
