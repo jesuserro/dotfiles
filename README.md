@@ -1,8 +1,11 @@
 # Dotfiles
+
 My BETA dotfiles for Ubuntu 20.04, Zsh, Oh My Zsh, TMUX and NVim. Based on [RCM](https://github.com/thoughtbot/rcm) dotfile framework. This project is in develop mode, so you can encounter many bugs. Please don't use this if you're not familiarized with these tools.
 
 ## Install
+
 ### RCM
+
 ``` shell
 sudo apt update -y \
 	&& sudo apt upgrade -y \
@@ -12,6 +15,7 @@ sudo apt install -y rcm
 ```
 
 ### Dofiles
+
 ```shell
 cd
 mkdir ~/dotfiles-local \
@@ -42,7 +46,9 @@ This command will create symlinks for config files in your home directory. Setti
 -   Please configure the `rcrc` file if you'd like to make personal overrides in a different directory
 
 ## Update
+
 **After creating any new dotfiles-local file** (by example: `~/dotfiles-local/gitconfig.local`): 
+
 ``` shell
 touch ~/dotfiles-local/gitconfig.local
 vim ~/dotfiles-local/gitconfig.local
@@ -53,6 +59,7 @@ vim ~/dotfiles-local/gitconfig.local
 ```
 
 **do the next**. From time to time you should pull down any updates to these dotfiles, and run:
+
 ``` shell
 # Crea symlinks entre estos dotfiles y el sistema en ~
 rcup
@@ -82,6 +89,7 @@ git config --list
 **Note** You _must_ run `rcup` after pulling to ensure that all files in plugins are properly installed, but you can safely run `rcup` multiple times so update early and update often!
 
 ## Adding new dots
+
 You can add vim support by doing this:
 ```shell
 # Create blank .vim
@@ -96,6 +104,7 @@ rcup
 More info on adding new files: http://thoughtbot.github.io/rcm/
 
 ## Make your own customizations
+
 Create a directory for your personal customizations:
 ```shell
 mkdir ~/dotfiles-local
@@ -251,9 +260,11 @@ source $ZSH/oh-my-zsh.sh
 ```
 
 ## Aliases
+
 [[202211210836 Aliases]]
 
 ## Info
+
 - [Install ZSH in Ubuntu](https://www.tecmint.com/install-oh-my-zsh-in-ubuntu/)
 - [Plugins Oh my Zsh](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins)
 	- [AWS plugin](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/aws)
@@ -262,26 +273,33 @@ source $ZSH/oh-my-zsh.sh
 	- @si4tar: https://www.youtube.com/watch?v=1dDahc214co
 
 ## Inspired by
+
 - https://github.com/thoughtbot/dotfiles
 - https://github.com/thoughtbot/rcm
 
 ## TMUX
+
   - https://github.com/gpakosz/.tmux
   - Cheatsheet: https://tmuxcheatsheet.com/
   
 ## Bash
+
   - https://overthewire.org/wargames/bandit/
   - https://www.youtube.com/watch?v=RUorAzaDftg
 
 ## NVIM
+
 Adopting Neovim as default editor:
 ``` shell
 sudo apt-get install neovim
 ```
 
 ## Vimrc
+
 Deprecated for me.
+
 ### Download Vim Color Schemes
+
 If you do not have such a directory, create one with the command:
 
 ``` shell
