@@ -136,6 +136,9 @@ export EDITOR='nvim'
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# Cargar personalizaciones adicionales de Powerlevel10k
+[[ ! -f ~/dotfiles/powerlevel10k/config.zsh ]] || source ~/dotfiles/powerlevel10k/config.zsh
+
 ## Init Docker daemon
 # echo '# Start Docker daemon automatically when logging in if not running.' >> ~/.zshrc
 # echo 'RUNNING=`ps aux | grep dockerd | grep -v grep`' >> ~/.zshrc
