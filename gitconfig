@@ -1,10 +1,10 @@
 [init]
-  defaultBranch = main
+	defaultBranch = main
   templatedir = ~/.git_template
 [push]
   default = current
 [color]
-  ui = auto
+	ui = true
 [alias]
   aa = add --all
   ap = add --patch
@@ -21,6 +21,7 @@
   done = !git push origin HEAD
   save = !git add -A && git commit -m 'chore: commit save point'
   cleanBranches = !sh -c 'git branch --merged | grep -v "main\\|master\\|dev\\|*" | xargs git branch -D'
+  log = 'git --no-pager log'
 [core]
   excludesfile = ~/.gitignore
 	autocrlf = false
@@ -39,8 +40,8 @@
 [diff]
   colorMoved = zebra
 [user]
-	name = olagato
-	email = olagato@gmail.com
+	name = Jesús Erro
+	email = jesus@centraldereservas.com
 [credential]
 	helper = store
 [safe]

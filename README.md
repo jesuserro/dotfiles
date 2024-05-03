@@ -1,34 +1,38 @@
 # Dotfiles
+
 My BETA dotfiles for Ubuntu 20.04, Zsh, Oh My Zsh, TMUX and NVim. Based on [RCM](https://github.com/thoughtbot/rcm) dotfile framework. This project is in develop mode, so you can encounter many bugs. Please don't use this if you're not familiarized with these tools.
 
 ## Install
+
 ### RCM
+
 ``` shell
 sudo apt update -y \
-	&& sudo apt upgrade -y \
-	&& sudo apt autoremove
+&& sudo apt upgrade -y \
+&& sudo apt autoremove
 
 sudo apt install -y rcm
 ```
 
 ### Dofiles
+
 ```shell
 cd
 mkdir ~/dotfiles-local \
-	&& cd ~/dotfiles-local \
-	&& touch ~/dotfiles-local/gitconfig.local \
-	&& touch ~/dotfiles-local/aliases.local \
-	&& cd ~
+&& cd ~/dotfiles-local \
+&& touch ~/dotfiles-local/gitconfig.local \
+&& touch ~/dotfiles-local/aliases.local \
+&& cd ~
 
 # Load dotfiles, theme and plugins
 git clone https://github.com/jesuserro/dotfiles.git
 
 # Install the dotfiles (create symlinks)
 env RCRC=$HOME/dotfiles/rcrc rcup
-	overwrite ~/.bashrc? [ynaq] y
-	overwrite ~/.gitconfig? [ynaq] y
-	overwrite ~/.vimrc? [ynaq] y
-	overwrite ~/.zshrc? [ynaq] y
+overwrite ~/.bashrc? [ynaq] y
+overwrite ~/.gitconfig? [ynaq] y
+overwrite ~/.vimrc? [ynaq] y
+overwrite ~/.zshrc? [ynaq] y
 
 source ~/.zshrc
 ```
@@ -37,22 +41,25 @@ After the initial installation, you can run `rcup` without the one-time variab
 
 This command will create symlinks for config files in your home directory. Setting the `RCRC` environment variable tells `rcup` to use standard configuration options:
 
--   Exclude the `README.md`, `README-ES.md` and `LICENSE` files, which are part of the `dotfiles` repository but do not need to be symlinked in.
--   Give precedence to personal overrides which by default are placed in `~/dotfiles-local`
--   Please configure the `rcrc` file if you'd like to make personal overrides in a different directory
+- Exclude the `README.md`, `README-ES.md` and `LICENSE` files, which are part of the `dotfiles` repository but do not need to be symlinked in.
+- Give precedence to personal overrides which by default are placed in `~/dotfiles-local`
+- Please configure the `rcrc` file if you'd like to make personal overrides in a different directory
 
 ## Update
-**After creating any new dotfiles-local file** (by example: `~/dotfiles-local/gitconfig.local`): 
+
+**After creating any new dotfiles-local file** (by example: `~/dotfiles-local/gitconfig.local`):
+
 ``` shell
 touch ~/dotfiles-local/gitconfig.local
 vim ~/dotfiles-local/gitconfig.local
-	1 [user]
-	2     name = <Your_User>
-	3     email = <Your_User>@<YOUR_DOMAIN>.com
-	:wq
+1 [user]
+2     name = <Your_User>
+3     email = <Your_User>@<YOUR_DOMAIN>.com
+:wq
 ```
 
 **do the next**. From time to time you should pull down any updates to these dotfiles, and run:
+
 ``` shell
 # Crea symlinks entre estos dotfiles y el sistema en ~
 rcup
@@ -64,16 +71,17 @@ source ~/.zshrc
 pkill -f tmux
 ```
 
-to link any new files and install new vim plugins. 
+to link any new files and install new vim plugins.
 
 A new symlik should have been automatically created:
+
 ``` shell
 cd
 ls -la
-	# Created the first time from ~/dotfiles/zshrc:
-	.gitconfig -> ~/dotfiles/gitconfig
-	# New symlink created from rcup:
-	.gitconfig.local -> ~/dotfiles-local/gitconfig.local
+# Created the first time from ~/dotfiles/zshrc:
+.gitconfig -> ~/dotfiles/gitconfig
+# New symlink created from rcup:
+.gitconfig.local -> ~/dotfiles-local/gitconfig.local
 
 # Check if new changes are available:
 git config --list
@@ -82,7 +90,9 @@ git config --list
 **Note** You _must_ run `rcup` after pulling to ensure that all files in plugins are properly installed, but you can safely run `rcup` multiple times so update early and update often!
 
 ## Adding new dots
+
 You can add vim support by doing this:
+
 ```shell
 # Create blank .vim
 touch ~/.vim
@@ -93,15 +103,18 @@ mkrc ~/.vim
 rcup
 ```
 
-More info on adding new files: http://thoughtbot.github.io/rcm/
+More info on adding new files: `http://thoughtbot.github.io/rcm/`
 
 ## Make your own customizations
+
 Create a directory for your personal customizations:
+
 ```shell
 mkdir ~/dotfiles-local
 ```
 
 Put your customizations in `~/dotfiles-local` appended with `.local`:
+
 ```shell
 ~/dotfiles-local/aliases.local
 ~/dotfiles-local/git_template.local/*
@@ -118,11 +131,11 @@ Put your customizations in `~/dotfiles-local` appended with `.local`:
 ``` shell
 cd
 ls -la
-	.aliases -> /home/ubuntu/dotfiles/aliases
-	.bashrc -> /home/ubuntu/dotfiles/bashrc
-	.gitconfig -> /home/ubuntu/dotfiles/gitconfig
-	.tmux.conf -> /home/ubuntu/dotfiles/tmux.conf
-	.zshrc -> /home/ubuntu/dotfiles/zshrc
+.aliases -> /home/ubuntu/dotfiles/aliases
+.bashrc -> /home/ubuntu/dotfiles/bashrc
+.gitconfig -> /home/ubuntu/dotfiles/gitconfig
+.tmux.conf -> /home/ubuntu/dotfiles/tmux.conf
+.zshrc -> /home/ubuntu/dotfiles/zshrc
 ```
 
 Edit your `~/dotfiles/zshrc` like this:
@@ -208,16 +221,16 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
-	git
-	colorize
-	colored-man-pages
-	history
-	dirhistory
-	jsontools
-	zsh-autosuggestions
-	zsh-syntax-highlighting
-	autoupdate
-	vi-mode
+git
+colorize
+colored-man-pages
+history
+dirhistory
+jsontools
+zsh-autosuggestions
+zsh-syntax-highlighting
+autoupdate
+vi-mode
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -251,44 +264,54 @@ source $ZSH/oh-my-zsh.sh
 ```
 
 ## Aliases
+
 [[202211210836 Aliases]]
 
 ## Info
+
 - [Install ZSH in Ubuntu](https://www.tecmint.com/install-oh-my-zsh-in-ubuntu/)
 - [Plugins Oh my Zsh](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins)
-	- [AWS plugin](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/aws)
+- [AWS plugin](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/aws)
 - [Plugins de la comunidad](https://github.com/zsh-users)
-	- TMUX based on: https://github.com/gpakosz/.tmux
-	- @si4tar: https://www.youtube.com/watch?v=1dDahc214co
+- TMUX based on: `https://github.com/gpakosz/.tmux`
+- @si4tar: `https://www.youtube.com/watch?v=1dDahc214co`
 
 ## Inspired by
-- https://github.com/thoughtbot/dotfiles
-- https://github.com/thoughtbot/rcm
+
+- `https://github.com/thoughtbot/dotfiles`
+- `https://github.com/thoughtbot/rcm`
 
 ## TMUX
-  - https://github.com/gpakosz/.tmux
-  - Cheatsheet: https://tmuxcheatsheet.com/
+
+  - `https://github.com/gpakosz/.tmux`
+  - `Cheatsheet: https://tmuxcheatsheet.com/`
   
 ## Bash
-  - https://overthewire.org/wargames/bandit/
-  - https://www.youtube.com/watch?v=RUorAzaDftg
+
+  - `https://overthewire.org/wargames/bandit/`
+  - `https://www.youtube.com/watch?v=RUorAzaDftg`
 
 ## NVIM
+
 Adopting Neovim as default editor:
+
 ``` shell
 sudo apt-get install neovim
 ```
 
 ## Vimrc
+
 Deprecated for me.
+
 ### Download Vim Color Schemes
+
 If you do not have such a directory, create one with the command:
 
 ``` shell
 mkdir ~/.vim/colors
 ```
 
-Download scheme from: https://vimcolorschemes.com/
+Download scheme from: `https://vimcolorschemes.com/`
 
 Now move the new scheme into it:
 
