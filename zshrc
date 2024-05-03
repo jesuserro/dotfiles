@@ -144,7 +144,7 @@ export EDITOR='nvim'
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # Cargar personalizaciones adicionales de Powerlevel10k
-[[ ! -f ~/dotfiles/powerlevel10k/config.zsh ]] || source ~/dotfiles/powerlevel10k/config.zsh
+[[ ! -f ~/dotfiles/powerlevel10k/p10k.zsh ]] || source ~/dotfiles/powerlevel10k/p10k.zsh
 
 ## Init Docker daemon
 # echo '# Start Docker daemon automatically when logging in if not running.' >> ~/.zshrc
