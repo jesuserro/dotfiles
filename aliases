@@ -49,6 +49,20 @@ alias ping="ping -c 5"
 alias df="df -h"  # Show disk usage in human-readable format
 alias free="free -h"  # Show memory usage in human-readable format
 
+# Git
+alias gst="git status"
+alias gaa="git add --all"
+alias gcm="git commit -m"
+alias gco="git checkout"
+alias glg="git log --graph --oneline --all --pretty=format:'%C(yellow)%h%Creset - %s %C(green)(%ad) %C(cyan)[%an]%Creset' --date=format:'%Y-%m-%d %H:%M:%S'"
+alias gdf="git diff --color-words --word-diff=color"
+alias gdfc="git diff --color-words --word-diff=color -U3"
+alias gpl="git pull"
+alias gps="git push"
+alias gb="git branch -v --sort=-committerdate --color"
+alias gbinfo="git for-each-ref --sort=-committerdate refs/heads/ --format='%(color:yellow)%(refname:short)%(color:reset) - %(color:green)%(committerdate:short)%(color:reset) - %(color:blue)%(authorname)%(color:reset) - %(contents:subject)'"
+alias gclean="git branch --merged | grep -v 'main\|master\|dev\|*' | xargs git branch -d"
+
 # Include custom aliases if they exist
 if [[ -f ~/dotfiles-local/aliases.local ]]; then 
   source ~/dotfiles-local/aliases.local
