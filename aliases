@@ -10,6 +10,7 @@ alias v="$VISUAL"
 alias ..="cd .."
 
 # Sistemas
+# upgrade_oh_my_zsh_custom is a function from autoupdate plugin
 alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove \
 && omz update && upgrade_oh_my_zsh_custom \
 && sudo service apache2 restart && sudo service mysql restart \
