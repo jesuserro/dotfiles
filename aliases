@@ -2,52 +2,77 @@
 # Expand alias -> C-x a
 
 # Unix
-alias ll="ls -al"
+alias ll="ls -alF"  # Lista detallada con / para directorios
+alias la="ls -A"    # Lista casi todos los archivos, excluyendo . y ..
+alias l="ls -CF"    # Lista en formato compacto
 alias ln="ln -v"
 alias mkdir="mkdir -p"
 alias e="$EDITOR"
 alias v="$VISUAL"
 alias ..="cd .."
+alias ...="cd ../.."
 
 # Sistemas
-# upgrade_oh_my_zsh_custom is a function from autoupdate plugin
-alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove \
-&& omz update && upgrade_oh_my_zsh_custom \
-&& sudo service apache2 restart && sudo service mysql restart \
-&& sudo service apache2 status && sudo service mysql status \
-&& source ~/.zshrc \
-&& ip addr | grep -Ee 'inet.*eth0'"
+# upgrade_oh_my_zsh_custom es una función del plugin autoupdate
+alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y \
+  && omz update && upgrade_oh_my_zsh_custom \
+  && sudo service apache2 restart && sudo service mysql restart \
+  && sudo service apache2 status && sudo service mysql status \
+  && source ~/.zshrc \
+  && ip addr | grep -Ee 'inet.*eth0'"
 alias apachestart="sudo service apache2 restart && sudo service mariadb restart"
 
-# Proyectos:
-# Creado con RCUP
-# alias home="$HOME/.tmux/home.sh"
-# alias work="$HOME/.tmux/work.sh"
-# Sin RCUP (dar chmod +x a $HOME/dotfiles/tmux/ofertas.sh)
+# Proyectos
+# Descomentar y ajustar según tus proyectos específicos
+# alias home="$HOME/dotfiles/tmux/home.sh"
+# alias work="$HOME/dotfiles/tmux/work.sh"
 # alias ofertas="$HOME/dotfiles/tmux/ofertas.sh"
 # alias nges="$HOME/dotfiles/tmux/nges.sh"
 # alias localidades="$HOME/dotfiles/tmux/localidades.sh"
-# alias home="$HOME/dotfiles/tmux/home.sh"
-# alias work="$HOME/dotfiles/tmux/work.sh"
 
-# Logs:
-alias lc="sudo true > /var/log/apache2/error.log"
+# Logs
+alias lc="sudo truncate -s 0 /var/log/apache2/error.log"  # Limpiar el log de errores de Apache
 
-# Seguridad:
+# Seguridad
 alias ffl='find . -mtime -1 -printf "%p\t%TY-%Tm-%Td %TH:%TM\t%u\t%g\t%m\n" | column -t | less'
+alias files_user="find . -user www-data"
+alias lusers="cut -d: -f1 /etc/passwd | sort"
 
 # Git
-# alias gs="git status" # es gst por defecto
-# alias cleanBranches='!f() { git branch --merged | grep -v "main\|master\|dev\|*" | xargs git branch -D; }; f'
+alias gst="git status"
+alias gaa="git add --all"
+alias gcm="git commit -m"
+alias gco="git checkout"
+alias glg="git log --graph --oneline --all"
+alias gdf="git diff --color-words --word-diff=color"
+alias gdfc="git diff --color-words --word-diff=color -U3"
+alias gpl="git pull"
+alias gps="git push"
+alias gb="git branch -v --sort=-committerdate --color"
+alias gbinfo="git for-each-ref --sort=-committerdate refs/heads/ --format='%(color:yellow)%(refname:short)%(color:reset) - %(color:green)%(committerdate:short)%(color:reset) - %(color:blue)%(authorname)%(color:reset) - %(contents:subject)'"
+alias gclean="git branch --merged | grep -v 'main\|master\|dev\|*' | xargs git branch -d"
 
 # Pretty print the path
 alias path='echo $PATH | tr -s ":" "\n"'
 
-# Seguridad:
-alias files_user="find . -user www-data"
-alias lusers="sudo cat /etc/passwd | cut -d: -f1"
+# VSCode
+alias code.="code ."
+alias vs="code"
 
-# Include custom aliases
+# Docker
+alias dps="docker ps"
+alias di="docker images"
+alias drm="docker rm $(docker ps -a -q)"  # Eliminar contenedores detenidos
+alias dri="docker rmi $(docker images -q)"  # Eliminar imágenes no utilizadas
+alias dcompose="docker-compose"
+
+# Herramientas útiles
+alias htop="htop"
+alias ping="ping -c 5"
+alias df="df -h"  # Mostrar el uso del disco en formato legible
+alias free="free -h"  # Mostrar el uso de memoria en formato legible
+
+# Incluir aliases personalizados si existen
 if [[ -f ~/dotfiles-local/aliases.local ]]; then 
   source ~/dotfiles-local/aliases.local
 fi
