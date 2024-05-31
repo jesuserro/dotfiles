@@ -2,9 +2,9 @@
 # Expand alias -> C-x a
 
 # Unix
-alias ll="ls -alF"  # Lista detallada con / para directorios
-alias la="ls -A"    # Lista casi todos los archivos, excluyendo . y ..
-alias l="ls -CF"    # Lista en formato compacto
+alias ll="ls -alF"  # Detailed list with / for directories
+alias la="ls -A"    # List almost all files, excluding . and ..
+alias l="ls -CF"    # Compact list
 alias ln="ln -v"
 alias mkdir="mkdir -p"
 alias e="$EDITOR"
@@ -12,8 +12,7 @@ alias v="$VISUAL"
 alias ..="cd .."
 alias ...="cd ../.."
 
-# Sistemas
-# upgrade_oh_my_zsh_custom es una función del plugin autoupdate
+# Systems
 alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y \
   && omz update && upgrade_oh_my_zsh_custom \
   && sudo service apache2 restart && sudo service mysql restart \
@@ -22,35 +21,13 @@ alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autore
   && ip addr | grep -Ee 'inet.*eth0'"
 alias apachestart="sudo service apache2 restart && sudo service mariadb restart"
 
-# Proyectos
-# Descomentar y ajustar según tus proyectos específicos
-# alias home="$HOME/dotfiles/tmux/home.sh"
-# alias work="$HOME/dotfiles/tmux/work.sh"
-# alias ofertas="$HOME/dotfiles/tmux/ofertas.sh"
-# alias nges="$HOME/dotfiles/tmux/nges.sh"
-# alias localidades="$HOME/dotfiles/tmux/localidades.sh"
-
 # Logs
-alias lc="sudo truncate -s 0 /var/log/apache2/error.log"  # Limpiar el log de errores de Apache
+alias lc="sudo truncate -s 0 /var/log/apache2/error.log"  # Clear Apache error log
 
-# Seguridad
+# Security
 alias ffl='find . -mtime -1 -printf "%p\t%TY-%Tm-%Td %TH:%TM\t%u\t%g\t%m\n" | column -t | less'
 alias files_user="find . -user www-data"
 alias lusers="cut -d: -f1 /etc/passwd | sort"
-
-# Git
-alias gst="git status"
-alias gaa="git add --all"
-alias gcm="git commit -m"
-alias gco="git checkout"
-alias glg="git log --graph --oneline --all"
-alias gdf="git diff --color-words --word-diff=color"
-alias gdfc="git diff --color-words --word-diff=color -U3"
-alias gpl="git pull"
-alias gps="git push"
-alias gb="git branch -v --sort=-committerdate --color"
-alias gbinfo="git for-each-ref --sort=-committerdate refs/heads/ --format='%(color:yellow)%(refname:short)%(color:reset) - %(color:green)%(committerdate:short)%(color:reset) - %(color:blue)%(authorname)%(color:reset) - %(contents:subject)'"
-alias gclean="git branch --merged | grep -v 'main\|master\|dev\|*' | xargs git branch -d"
 
 # Pretty print the path
 alias path='echo $PATH | tr -s ":" "\n"'
@@ -62,17 +39,17 @@ alias vs="code"
 # Docker
 alias dps="docker ps"
 alias di="docker images"
-alias drm="docker rm $(docker ps -a -q)"  # Eliminar contenedores detenidos
-alias dri="docker rmi $(docker images -q)"  # Eliminar imágenes no utilizadas
+alias drm="docker rm $(docker ps -a -q)"  # Remove stopped containers
+alias dri="docker rmi $(docker images -q)"  # Remove unused images
 alias dcompose="docker-compose"
 
-# Herramientas útiles
+# Useful tools
 alias htop="htop"
 alias ping="ping -c 5"
-alias df="df -h"  # Mostrar el uso del disco en formato legible
-alias free="free -h"  # Mostrar el uso de memoria en formato legible
+alias df="df -h"  # Show disk usage in human-readable format
+alias free="free -h"  # Show memory usage in human-readable format
 
-# Incluir aliases personalizados si existen
+# Include custom aliases if they exist
 if [[ -f ~/dotfiles-local/aliases.local ]]; then 
   source ~/dotfiles-local/aliases.local
 fi
