@@ -263,6 +263,30 @@ source $ZSH/oh-my-zsh.sh
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 ```
 
+## Installing Oh My ZSH Plugins
+
+Aquí tienes una lista de algunos plugins populares para mejorar tu experiencia con `Oh My Zsh`. Estos plugins proporcionan funcionalidades adicionales que pueden ser muy útiles para programadores y usuarios avanzados.
+
+| Nombre del Plugin                | Comando Git de Instalación                                                                                                    | Descripción                                                                                                                                  |
+|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| zsh-autosuggestions              | `git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions` | Sugiere comandos basados en el historial mientras escribes, mostrando sugerencias en gris claro a la derecha del cursor.                      |
+| zsh-syntax-highlighting          | `git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting` | Resalta la sintaxis de los comandos en la terminal, ayudando a identificar errores y mejorando la legibilidad.                                |
+| zsh-completions                  | `git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-completions`         | Proporciona autocompletados adicionales para muchos comandos comunes y menos comunes que no están cubiertos por defecto.                     |
+| zsh-history-substring-search     | `git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-history-substring-search` | Permite buscar en el historial de comandos por subcadena, mejorando la eficiencia al reutilizar comandos anteriores.                          |
+| z                                | `git clone https://github.com/rupa/z ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/z`                                         | Facilita el cambio rápido a directorios utilizados frecuentemente, basado en la frecuencia y el uso reciente.                                 |
+| zsh-nvm                          | `git clone https://github.com/lukechilds/zsh-nvm ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-nvm`                       | Facilita la gestión de versiones de Node.js usando `nvm` (Node Version Manager).                                                             |
+| autoupdate                       | `git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/autoupdate`  | Automatiza la actualización de `oh-my-zsh` y sus plugins, manteniendo el entorno siempre actualizado.                                        |
+
+### Comentarios adicionales
+
+- **zsh-autosuggestions**: Este plugin es extremadamente útil para acelerar tu flujo de trabajo al sugerir comandos basados en tu historial.
+- **zsh-syntax-highlighting**: Mejora la legibilidad y ayuda a detectar errores de sintaxis rápidamente.
+- **zsh-completions**: Amplía significativamente las capacidades de autocompletado de `zsh`.
+- **zsh-history-substring-search**: Facilita la búsqueda y reutilización de comandos previos sin necesidad de recordar la secuencia exacta.
+- **z**: Ideal para desarrolladores que navegan entre múltiples proyectos y directorios frecuentemente.
+- **zsh-nvm**: Esencial para desarrolladores de Node.js que necesitan cambiar entre diferentes versiones de Node.js fácilmente.
+- **autoupdate**: Mantiene tu entorno `oh-my-zsh` siempre actualizado sin intervención manual.
+
 ## Aliases
 
 [[202211210836 Aliases]]
