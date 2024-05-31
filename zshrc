@@ -105,6 +105,7 @@ plugins=(
   aws
 	zsh-autosuggestions
 	zsh-syntax-highlighting
+  zsh-completions
 	autoupdate
   docker
 )
