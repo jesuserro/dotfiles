@@ -106,6 +106,8 @@ plugins=(
 	zsh-autosuggestions
 	zsh-syntax-highlighting
   zsh-completions
+  zsh-history-substring-search
+  z
 	autoupdate
   docker
 )
