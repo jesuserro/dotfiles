@@ -5,6 +5,12 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# Saving the original PATH
+export ORIGINAL_PATH=$PATH
+
+# Edit the PATH to fix PHP execution
+export PATH=/usr/bin:$PATH
+
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
@@ -156,3 +162,6 @@ export EDITOR='nvim'
 # echo '    sudo dockerd > /dev/null 2>&1 &' >> ~/.zshrc
 # echo '    disown' >> ~/.zshrc
 # echo 'fi' >> ~/.zshrc
+
+# Restore original PATH (commented by default)
+# export PATH=$ORIGINAL_PATH
