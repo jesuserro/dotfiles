@@ -37,12 +37,13 @@ print_row "Apache" "$(systemctl is-active apache2)"
 print_row "MySQL" "$(systemctl is-active mysql)"
 print_line
 
-# Conectividad a Internet
+# Conectividad a Internet e Interfaz de Red
 echo -e "\n\e[1;34mConectividad a Internet:\e[0m"
 print_line
+print_row "Interfaz de Red (eth0)" "$(ip addr | grep -Ee 'inet.*eth0' | awk '{print $2}')"
 if ping -c 3 google.com &> /dev/null; then
-    print_row "Conectividad" "\e[32mConectado\e[0m"
+    print_row "Conectividad" "$(echo -e "\e[32mConectado\e[0m")"
 else
-    print_row "Conectividad" "\e[31mDesconectado\e[0m"
+    print_row "Conectividad" "$(echo -e "\e[31mDesconectado\e[0m")"
 fi
 print_line
