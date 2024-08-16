@@ -18,7 +18,8 @@ alias ups="clear && sudo apt update -y && sudo apt upgrade -y && sudo apt autore
   && sudo service apache2 restart && sudo service mysql restart \
   && sudo service apache2 status && sudo service mysql status \
   && source ~/.zshrc \
-  && ip addr | grep -Ee 'inet.*eth0'"
+  && ip addr | grep -Ee 'inet.*eth0' \
+  && ~/dotfiles/scripts/clean_branches.sh"
 alias apachestart="sudo service apache2 restart && sudo service mariadb restart"
 
 # Logs
