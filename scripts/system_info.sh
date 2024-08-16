@@ -18,11 +18,14 @@ print_line
 
 # Filas con información del sistema
 print_row "Nombre del PC" "$(hostname)"
-print_row "Sistema Operativo" "$(lsb_release -d | cut -f2)"
-print_row "Versión del Kernel" "$(uname -r)"
+print_row "Procesador" "$(lscpu | grep 'Model name:' | awk -F':' '{print $2}' | xargs)"
 print_row "Uso de Memoria RAM" "$(free -h | awk '/^Mem:/ {print $3 "/" $2}')"
 print_row "Uso del Disco Duro" "$(df -h --total | grep 'total' | awk '{print $3 "/" $2 " (" $5 " usado)"}')"
-print_row "Uso de la CPU" "$(top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\([0-9.]*\)%* id.*/\1/')% idle"
+print_row "Arquitectura" "$(uname -m)"
+print_row "Sistema Operativo" "$(lsb_release -d | cut -f2)"
+print_row "Versión del Kernel" "$(uname -r)"
+print_row "Uso de la CPU" "$(top -bn1 | grep 'Cpu(s)' | awk -F'id,' '{print 100 - $1"% usado"}')"
+print_row "Tiempo de actividad del sistema" "$(uptime -p)"
 print_line
 
 # Estado de servicios
@@ -33,6 +36,7 @@ print_line
 print_row "Docker" "$(systemctl is-active docker)"
 print_row "Apache" "$(systemctl is-active apache2)"
 print_row "MySQL" "$(systemctl is-active mysql)"
+print_row "SSH" "$(systemctl is-active ssh)"
 print_line
 
 # Conectividad a Internet e Interfaz de Red
