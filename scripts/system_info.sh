@@ -12,7 +12,7 @@ print_row() {
 
 # Obtener información del PC
 manufacturer=$(powershell.exe -command "Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty Manufacturer" | tr -d '\r')
-model=$(powershell.exe -command "Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty Model" | tr -d '\r')
+model=$(powershell.exe -command "Get-CimInstance -ClassName Win32_ComputerSystemProduct | Select-Object -ExpandProperty Name" | tr -d '\r')
 
 # Encabezado de la tabla
 echo -e "\n\e[1;34mInformación Sistema:\e[0m"
