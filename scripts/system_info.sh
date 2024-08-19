@@ -10,6 +10,10 @@ print_row() {
     printf "| %-25s | %-50s |\n" "$1" "$2"
 }
 
+# Obtener información del PC
+manufacturer=$(powershell.exe -command "Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty Manufacturer" | tr -d '\r')
+model=$(powershell.exe -command "Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty Model" | tr -d '\r')
+
 # Encabezado de la tabla
 echo -e "\n\e[1;34mInformación Sistema:\e[0m"
 print_line
@@ -17,7 +21,7 @@ print_row "Componente" "Detalle"
 print_line
 
 # Filas con información del sistema
-print_row "Nombre PC" "$(hostname)"
+print_row "Nombre PC" "$(hostname) ($manufacturer $model)"
 print_row "Procesador" "$(lscpu | grep 'Model name:' | awk -F':' '{print $2}' | xargs)"
 print_row "Uso Memoria RAM" "$(free -h | awk '/^Mem:/ {print $3}')/$(powershell.exe -command "Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory" | awk '{printf "%.2f GB", $1/1073741824}')"
 print_row "Uso Disco Duro" "$(df -h --total | grep 'total' | awk '{print $3 "/" $2 " (" $5 " usado)"}')"
