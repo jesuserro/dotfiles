@@ -19,8 +19,7 @@ print_line
 # Filas con información del sistema
 print_row "Nombre PC" "$(hostname)"
 print_row "Procesador" "$(lscpu | grep 'Model name:' | awk -F':' '{print $2}' | xargs)"
-print_row "Memoria RAM Total" "$(powershell.exe -command "Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory" | awk '{printf "%.2f GB\n", $1/1073741824}')"
-print_row "Uso Memoria RAM" "$(free -h | awk '/^Mem:/ {print $3 "/" $2}')"
+print_row "Uso Memoria RAM" "$(free -h | awk '/^Mem:/ {print $3}')/$(powershell.exe -command "Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory" | awk '{printf "%.2f GB", $1/1073741824}')"
 print_row "Uso Disco Duro" "$(df -h --total | grep 'total' | awk '{print $3 "/" $2 " (" $5 " usado)"}')"
 print_row "Arquitectura" "$(uname -m)"
 print_row "Sistema Operativo" "$(lsb_release -d | cut -f2)"
