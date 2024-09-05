@@ -41,6 +41,7 @@
 	autocrlf = false
 	longpaths = true
 	eol = lf
+	editor = nano
 [merge]
   ff = only
 [commit]
