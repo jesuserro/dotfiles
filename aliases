@@ -13,8 +13,9 @@ alias ..="cd .."
 alias ...="cd ../.."
 
 # Systems
+alias sysinfo="~/dotfiles/scripts/system_info.sh"
+
 alias ups="sudo -v \
-  && ~/dotfiles/scripts/system_info.sh \
   && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y \
   && omz update && upgrade_oh_my_zsh_custom \
   && sudo service apache2 restart && sudo service mysql restart \
