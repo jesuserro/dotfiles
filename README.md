@@ -141,6 +141,8 @@ Installing Github Copilot (gh) extension:
 ```shell
 sudo apt update -y \
 && sudo apt install -y gh
+
+gh extension install github/gh-copilot
 ```
 
 ## Resources
