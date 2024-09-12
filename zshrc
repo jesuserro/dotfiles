@@ -106,6 +106,7 @@ plugins=(
   dirhistory
   docker
   extract
+  gh
   git
   history
   jsontools

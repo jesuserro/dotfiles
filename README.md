@@ -88,16 +88,26 @@ fi
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
 plugins=(
-  git
-  colorize
-  colored-man-pages
-  history
-  dirhistory
-  jsontools
-  zsh-autosuggestions
-  zsh-syntax-highlighting
   autoupdate
+  aws
+  colored-man-pages
+  colorize
+  composer
+  dirhistory
+  docker
+  extract
+  gh
+  git
+  history
+  jsontools
+  tmux
   vi-mode
+  wp-cli
+  z
+  zsh-autosuggestions
+  zsh-completions
+  zsh-history-substring-search
+  zsh-syntax-highlighting
 )
 source $ZSH/oh-my-zsh.sh
 
@@ -113,13 +123,25 @@ Here are some popular plugins to enhance your `Oh My Zsh` experience:
 
 | Plugin                          | Git Command                                                                                                                    | Description                                                                                                                |
 |---------------------------------|---------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| autoupdate                      | `git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/autoupdate`  | Automatically updates `oh-my-zsh` and its plugins.                                                                         |
+| aws                             | `git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/aws ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/aws`       | Adds auto-completion for AWS CLI commands.                                                                                 |
+| docker                          | `git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/docker ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/docker` | Adds auto-completion and aliases for Docker.                                                                               |
+| gh                              | `git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/gh`         | Adds auto-completion and aliases for GitHub CLI.                                                                           |
+| vi-mode                         | `git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/vi-mode ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/vi-mode` | Adds vi keybindings for command line editing.                                                                              |
+| wp-cli                          | `git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/wp-cli ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/wp-cli` | Adds auto-completion for WP-CLI commands.                                                                                  |
+| z                               | `git clone https://github.com/rupa/z ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/z`                                          | Quickly navigates to directories you use frequently.                                                                       |
 | zsh-autosuggestions             | `git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions` | Suggests commands based on history as you type.                                                                            |
-| zsh-syntax-highlighting         | `git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting` | Highlights syntax in your command line.                                                                                     |
 | zsh-completions                 | `git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-completions`         | Provides additional completions for many commands.                                                                         |
 | zsh-history-substring-search    | `git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-history-substring-search` | Searches your command history by substring.                                                                                |
-| z                               | `git clone https://github.com/rupa/z ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/z`                                          | Quickly navigates to directories you use frequently.                                                                       |
 | zsh-nvm                         | `git clone https://github.com/lukechilds/zsh-nvm ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-nvm`                       | Manages Node.js versions.                                                                                                  |
-| autoupdate                      | `git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/autoupdate`  | Automatically updates `oh-my-zsh` and its plugins.                                                                         |
+| zsh-syntax-highlighting         | `git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting` | Highlights syntax in your command line.  |
+
+Installing Github Copilot (gh) extension:
+
+```shell
+sudo apt update -y \
+&& sudo apt install -y gh
+```
 
 ## Resources
 
