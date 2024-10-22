@@ -18,16 +18,16 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/too
 # Install Oh My Zsh plugins
 
 # Zsh Autosuggestions
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$INSTALL_DIR/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
 # Zsh Autocomplete
-git clone https://github.com/marlonrichert/zsh-autocomplete ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autocomplete
+git clone https://github.com/marlonrichert/zsh-autocomplete ${ZSH_CUSTOM:-$INSTALL_DIR/.oh-my-zsh/custom}/plugins/zsh-autocomplete
 
 # Zsh Syntax Highlighting
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$INSTALL_DIR/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
 # Install Powerlevel10k theme
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$INSTALL_DIR/.oh-my-zsh/custom}/themes/powerlevel10k
 
 # Update .zshrc to set Powerlevel10k as the default theme
 sed -i 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$INSTALL_DIR/.zshrc"
