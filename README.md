@@ -145,6 +145,12 @@ sudo apt update -y \
 gh extension install github/gh-copilot
 ```
 
+## Termux Installation
+
+```shell
+curl 'https://raw.githubusercontent.com/jesuserro/dotfiles/main/termux/install.sh' | sh
+```
+
 ## Resources
 
 - [Install ZSH in Ubuntu](https://www.tecmint.com/install-oh-my-zsh-in-ubuntu/)
