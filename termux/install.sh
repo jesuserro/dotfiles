@@ -26,15 +26,19 @@ mkdir -p ~/.local/share/fonts
 wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/Hack.zip -O ~/Hack.zip
 unzip -o ~/Hack.zip -d ~/.local/share/fonts
 
+# Update font cache
+if command -v fc-cache >/dev/null 2>&1; then
+    fc-cache -fv
+else
+    echo "Note: 'fc-cache' is not available in Termux. If needed, update font cache manually on another system."
+fi
+
 # Clean up downloaded zip file
 rm ~/Hack.zip
 
 # Add Starship initialization and alias to ~/.zshrc
 echo 'eval "$(starship init zsh)"' >> "$INSTALL_DIR/.zshrc"
 echo "alias ll='lsd -la'" >> "$INSTALL_DIR/.zshrc"
-
-# Notify user that fc-cache is unavailable on Termux
-echo "Note: 'fc-cache' is not available in Termux. If needed, update font cache manually on another system."
 
 # Reload Zsh configuration and restart shell session
 if [ -f ~/.zshrc ]; then
