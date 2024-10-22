@@ -1,63 +1,117 @@
 #!/bin/bash
 
-# Define the Oh My Zsh directory
+# Directorio de Oh My Zsh
 OH_MY_ZSH_DIR="$HOME/.oh-my-zsh"
+ZSH_CUSTOM="$OH_MY_ZSH_DIR/custom"
 
-# Check if zsh is installed
-if ! command -v zsh &> /dev/null; then
-    echo "Zsh is not installed. Installing zsh..."
+# Lista de plugins a instalar
+plugins=(
+  autoupdate
+  aws
+  colored-man-pages
+  colorize
+  composer
+  dirhistory
+  docker
+  extract
+  gh
+  git
+  history
+  jsontools
+  tmux
+  vi-mode
+  wp-cli
+  z
+  zsh-autosuggestions
+  zsh-completions
+  zsh-history-substring-search
+  zsh-syntax-highlighting
+)
+
+# Verificar si Zsh está instalado
+if ! command -v zsh >/dev/null 2>&1; then
+    echo "Zsh no está instalado. Instalando Zsh..."
     pkg install -y zsh
 fi
 
-# Check if the script is running in Zsh
-if [ -z "$ZSH_VERSION" ]; then
-    echo "Restarting script in Zsh..."
-    exec zsh "$0" "$@"
-    exit
-fi
-
-# Set the installation directory
-INSTALL_DIR="/data/data/com.termux/files/home"
-
-# Update Termux packages
+# Actualizar paquetes de Termux e instalar paquetes esenciales
 pkg update && pkg upgrade -y
-
-# Install essential packages including unzip and curl
 pkg install -y git openssh lsd nano wget curl
 
-# Set Zsh as the default shell
-chsh -s zsh
+# Establecer Zsh como shell predeterminado
+chsh -s $(which zsh)
 
-# Install Oh My Zsh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-
-# Install Oh My Zsh plugins
-
-# Zsh Autosuggestions
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$OH_MY_ZSH_DIR/custom}/plugins/zsh-autosuggestions
-
-# Zsh Autocomplete
-git clone https://github.com/marlonrichert/zsh-autocomplete ${ZSH_CUSTOM:-$OH_MY_ZSH_DIR/custom}/plugins/zsh-autocomplete
-
-# Zsh Syntax Highlighting
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$OH_MY_ZSH_DIR/custom}/plugins/zsh-syntax-highlighting
-
-# Install Powerlevel10k theme
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$OH_MY_ZSH_DIR/custom}/themes/powerlevel10k
-
-# Update .zshrc to set Powerlevel10k as the default theme
-sed -i 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$INSTALL_DIR/.zshrc"
-
-# Enable plugins in .zshrc
-sed -i '/^plugins=/c\plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)' "$INSTALL_DIR/.zshrc"
-
-# Start Zsh if not already running
-if [ "$SHELL" != "$(command -v zsh)" ]; then
-    printf "Switching to Zsh...\n"
-    exec zsh
+# Instalar Oh My Zsh
+if [ ! -d "$OH_MY_ZSH_DIR" ]; then
+    echo "Instalando Oh My Zsh..."
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 else
-    printf "Already running Zsh.\n"
+    echo "Oh My Zsh ya está instalado."
 fi
 
-# Notify the user
-echo "Installation complete! Zsh is now the default shell with Oh My Zsh, Powerlevel10k theme, Autosuggestions, Autocomplete, and Syntax Highlighting plugins."
+# Instalar plugins de Oh My Zsh
+for plugin in "${plugins[@]}"; do
+    plugin_dir="$ZSH_CUSTOM/plugins/$plugin"
+    if [ ! -d "$plugin_dir" ]; then
+        echo "Instalando plugin $plugin..."
+        case $plugin in
+            zsh-autosuggestions)
+                git clone https://github.com/zsh-users/zsh-autosuggestions "$plugin_dir"
+                ;;
+            zsh-syntax-highlighting)
+                git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$plugin_dir"
+                ;;
+            zsh-autocomplete)
+                git clone https://github.com/marlonrichert/zsh-autocomplete "$plugin_dir"
+                ;;
+            zsh-history-substring-search)
+                git clone https://github.com/zsh-users/zsh-history-substring-search "$plugin_dir"
+                ;;
+            zsh-completions)
+                git clone https://github.com/zsh-users/zsh-completions "$plugin_dir"
+                ;;
+            *)
+                echo "El plugin $plugin se gestionará automáticamente por Oh My Zsh."
+                ;;
+        esac
+    else
+        echo "El plugin $plugin ya está instalado."
+    fi
+done
+
+# Instalar tema Powerlevel10k
+if [ ! -d "$ZSH_CUSTOM/themes/powerlevel10k" ]; then
+    echo "Instalando tema Powerlevel10k..."
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k"
+else
+    echo "El tema Powerlevel10k ya está instalado."
+fi
+
+# Respaldar .zshrc existente
+if [ -f "$HOME/.zshrc" ]; then
+    cp "$HOME/.zshrc" "$HOME/.zshrc.backup"
+    echo "Archivo .zshrc existente respaldado en .zshrc.backup"
+fi
+
+# Crear nuevo archivo .zshrc con la configuración deseada
+cat > "$HOME/.zshrc" <<EOL
+export ZSH="$HOME/.oh-my-zsh"
+
+ZSH_THEME="powerlevel10k/powerlevel10k"
+
+plugins=(
+  ${plugins[@]}
+)
+
+source \$ZSH/oh-my-zsh.sh
+
+alias ll="lsd -la"
+
+# Cargar configuración de Powerlevel10k si existe
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+EOL
+
+echo "Archivo .zshrc actualizado con la nueva configuración."
+
+# Iniciar Zsh
+exec zsh
