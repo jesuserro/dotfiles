@@ -38,8 +38,10 @@ configure_zshrc() {
 
 # Function to run plugin installation script
 run_plugin_installer() {
-    if [ -x "$PLUGIN_INSTALLER" ]; then
-        "$PLUGIN_INSTALLER"
+    # Check if the plugin installer script exists and is executable
+    if [ -f "$PLUGIN_INSTALLER" ]; then
+        chmod +x "$PLUGIN_INSTALLER"  # Ensure the script is executable
+        "$PLUGIN_INSTALLER" || return 1
     else
         printf "Plugin installer script not found or not executable.\n" >&2
         return 1
