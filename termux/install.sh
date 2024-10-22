@@ -15,9 +15,11 @@ chsh -s zsh
 # Install Starship
 pkg install starship
 
+# Ensure ~/.config directory exists
+mkdir -p "$INSTALL_DIR/.config"
+
 # Configure Starship with Gruvbox Rainbow preset
-mkdir -p ~/.config
-starship preset gruvbox-rainbow -o ~/.config/starship.toml
+starship preset gruvbox-rainbow -o "$INSTALL_DIR/.config/starship.toml"
 
 # Download and install Hack Nerd Font for icons
 mkdir -p ~/.local/share/fonts
