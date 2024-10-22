@@ -42,9 +42,8 @@ configure_zshrc() {
     # Enable plugins
     sed -i '/^plugins=/c\plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)' "$zshrc"
     
-    # Reload .zshrc
-    . "$zshrc" || return 1
-    exec zsh  # Restart Zsh to apply changes
+    # Reload Zsh configuration properly
+    zsh -ic "source $zshrc"
 }
 
 # Main function
