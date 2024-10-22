@@ -1,7 +1,7 @@
-#!/data/data/com.termux/files/usr/bin/zsh
+#!/usr/bin/env zsh
 
 # Set the installation directory
-INSTALL_DIR="/data/data/com.termux/files/home"
+INSTALL_DIR="$HOME"
 
 # Update Termux packages
 pkg update && pkg upgrade -y
@@ -33,10 +33,10 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k"
 
 # Update .zshrc to set Powerlevel10k as the default theme
-sed -i 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$INSTALL_DIR/.zshrc"
+sed -i 's|^ZSH_THEME=".*"|ZSH_THEME="powerlevel10k/powerlevel10k"|' "$INSTALL_DIR/.zshrc"
 
 # Enable plugins in .zshrc
-sed -i 's/^plugins=.*/plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)/' "$INSTALL_DIR/.zshrc"
+sed -i 's|^plugins=.*|plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)|' "$INSTALL_DIR/.zshrc"
 
 # Reload Zsh configuration
 if [ -f "$INSTALL_DIR/.zshrc" ]; then
