@@ -4,14 +4,22 @@
 INSTALL_DIR="$HOME"
 
 # Update Termux packages
-pkg update && pkg upgrade -y
+pkg update -y && pkg upgrade -y
 
-# Install essential packages including unzip and curl
+# Install essential packages
 pkg install -y git openssh lsd nano zsh wget curl
 
-# Install Oh My Zsh
-# Cambiado para ejecutar el script con zsh en lugar de sh
-curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | zsh
+# Install Oh My Zsh manually
+
+# Clone the Oh My Zsh repository
+git clone https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh"
+
+# Copy the template .zshrc to your home directory
+cp "$HOME/.oh-my-zsh/templates/zshrc.zsh-template" "$HOME/.zshrc"
+
+# Set Zsh as the default shell in Termux
+# Since chsh doesn't work in Termux, we can start zsh from bash
+echo "exec zsh" >> "$HOME/.bashrc"
 
 # Define ZSH_CUSTOM
 ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
@@ -31,13 +39,13 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k"
 
 # Update .zshrc to set Powerlevel10k as the default theme
-sed -i 's|^ZSH_THEME=".*"|ZSH_THEME="powerlevel10k/powerlevel10k"|' "$INSTALL_DIR/.zshrc"
+sed -i 's|^ZSH_THEME=".*"|ZSH_THEME="powerlevel10k/powerlevel10k"|' "$HOME/.zshrc"
 
 # Enable plugins in .zshrc
-sed -i 's|^plugins=.*|plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)|' "$INSTALL_DIR/.zshrc"
+sed -i 's|^plugins=(.*)|plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)|' "$HOME/.zshrc"
 
 # Reload Zsh configuration
-if [ -f "$INSTALL_DIR/.zshrc" ]; then
+if [ -f "$HOME/.zshrc" ]; then
     echo "Zsh configuration updated."
 else
     echo "No .zshrc file found. You may want to create one."
