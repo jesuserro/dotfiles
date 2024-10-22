@@ -1,75 +1,50 @@
 #!/data/data/com.termux/files/usr/bin/zsh
 
-# Global Variables
+# Set the installation directory
 INSTALL_DIR="/data/data/com.termux/files/home"
-PLUGIN_INSTALLER="$INSTALL_DIR/install_plugins.sh"
 
-# Function to update and install essential packages
-install_packages() {
-    pkg update && pkg upgrade -y
-    pkg install -y git openssh lsd nano zsh wget curl
-}
+# Update Termux packages
+pkg update && pkg upgrade -y
 
-# Function to install Oh My Zsh
-install_oh_my_zsh() {
-    if [ ! -d "$INSTALL_DIR/.oh-my-zsh" ]; then
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-    fi
-}
+# Install essential packages including unzip and curl
+pkg install -y git openssh lsd nano zsh wget curl
 
-# Function to configure .zshrc
-configure_zshrc() {
-    local zshrc="$INSTALL_DIR/.zshrc"
+# Set Zsh as the default shell
+chsh -s zsh
 
-    if [ ! -f "$zshrc" ]; then
-        printf "No .zshrc file found. You may want to create one.\n" >&2
-        return 1
-    fi
+# Install Oh My Zsh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-    # Set Powerlevel10k as the default theme
-    sed -i 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$zshrc"
+# Install Oh My Zsh plugins
 
-    # Enable plugins
-    sed -i '/^plugins=/c\plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)' "$zshrc"
-    
-    # Reload Zsh configuration properly
-    zsh -ic "source $zshrc"
-}
+# Zsh Autosuggestions
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
-# Function to run plugin installation script
-run_plugin_installer() {
-    # Check if the plugin installer script exists and is executable
-    if [ -f "$PLUGIN_INSTALLER" ]; then
-        chmod +x "$PLUGIN_INSTALLER"  # Ensure the script is executable
-        "$PLUGIN_INSTALLER" || return 1
-    else
-        printf "Plugin installer script not found or not executable.\n" >&2
-        return 1
-    fi
-}
+# Zsh Autocomplete
+git clone https://github.com/marlonrichert/zsh-autocomplete ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autocomplete
 
-# Main function
-main() {
-    install_packages
-    chsh -s zsh  # Set Zsh as the default shell
-    install_oh_my_zsh
+# Zsh Syntax Highlighting
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
-    # Call plugin installer script
-    if ! run_plugin_installer; then
-        printf "Failed to install plugins.\n" >&2
-        return 1
-    fi
+# Install Powerlevel10k theme
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k
 
-    # Configure .zshrc
-    if configure_zshrc; then
-        printf "Zsh configuration reloaded with Oh My Zsh, Powerlevel10k, and plugins.\n"
-    else
-        printf "Failed to reload Zsh configuration.\n" >&2
-    fi
+# Update .zshrc to set Powerlevel10k as the default theme
+sed -i 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$INSTALL_DIR/.zshrc"
 
-    # Notify the user
-    printf "Installation complete! Zsh is now the default shell with Oh My Zsh, Powerlevel10k theme, Autosuggestions, Autocomplete, and Syntax Highlighting plugins.\n"
-}
+# Enable plugins in .zshrc
+sed -i '/^plugins=/c\plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)' "$INSTALL_DIR/.zshrc"
 
-# Execute main
-main
+# Reload Zsh configuration
+if [ -f "$INSTALL_DIR/.zshrc" ]; then
+    . "$INSTALL_DIR/.zshrc"
+    source "$INSTALL_DIR/.zshrc"
+    exec zsh  # Restart Zsh to apply changes
+
+    echo "Zsh configuration reloaded with Oh My Zsh, Powerlevel10k, and plugins."
+else
+    echo "No .zshrc file found. You may want to create one."
+fi
+
+# Notify the user
+echo "Installation complete! Zsh is now the default shell with Oh My Zsh, Powerlevel10k theme, Autosuggestions, Autocomplete, and Syntax Highlighting plugins."
