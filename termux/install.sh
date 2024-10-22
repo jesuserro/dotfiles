@@ -34,11 +34,11 @@ echo 'eval "$(starship init zsh)"' >> "$INSTALL_DIR/.zshrc"
 echo "alias ll='lsd -la'" >> "$INSTALL_DIR/.zshrc"
 
 # Notify user that fc-cache is unavailable on Termux
-echo "Note: 'fc-cache' is not available in Termux. If needed, update font cache manually on another system."
+echo "Note: 'fc-cache' is not available in Termux. You may need to configure fonts manually in your terminal emulator."
 
 # Reload Zsh configuration and restart shell session
-if [ -f ~/.zshrc ]; then
-    source ~/.zshrc
+if [ -f "$INSTALL_DIR/.zshrc" ]; then
+    . "$INSTALL_DIR/.zshrc"  # Use . instead of source for compatibility with sh
     echo "Zsh configuration reloaded."
     exec zsh  # Restart Zsh to apply changes
 else
