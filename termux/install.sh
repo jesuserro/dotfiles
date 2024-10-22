@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/zsh
 
 # Set the installation directory
 INSTALL_DIR="/data/data/com.termux/files/home"
@@ -38,7 +38,7 @@ echo "Note: 'fc-cache' is not available in Termux. You may need to configure fon
 
 # Reload Zsh configuration and restart shell session
 if [ -f "$INSTALL_DIR/.zshrc" ]; then
-    . "$INSTALL_DIR/.zshrc"  # Use . instead of source for compatibility with sh
+    . "$INSTALL_DIR/.zshrc"  # Use . to source the file in Zsh
     echo "Zsh configuration reloaded."
     exec zsh  # Restart Zsh to apply changes
 else
