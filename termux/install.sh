@@ -22,11 +22,13 @@ starship preset gruvbox-rainbow -o ~/.config/starship.toml
 # Download and install Hack Nerd Font for icons
 mkdir -p ~/.local/share/fonts
 wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/Hack.zip -O ~/Hack.zip
-unzip ~/Hack.zip -d ~/.local/share/fonts
-fc-cache -fv
+unzip -o ~/Hack.zip -d ~/.local/share/fonts
 
 # Clean up downloaded zip file
 rm ~/Hack.zip
+
+# Notify user that fc-cache is unavailable on Termux
+echo "Note: 'fc-cache' is not available in Termux. If needed, update font cache manually on another system."
 
 # Reload Zsh configuration
 if [ -f ~/.zshrc ]; then
