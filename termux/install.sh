@@ -1,5 +1,12 @@
 #!/data/data/com.termux/files/usr/bin/zsh
 
+# Check if the script is running in Zsh
+if [ -z "$ZSH_VERSION" ]; then
+    echo "Restarting script in Zsh..."
+    exec zsh "$0" "$@"
+    exit
+fi
+
 # Set the installation directory
 INSTALL_DIR="/data/data/com.termux/files/home"
 
