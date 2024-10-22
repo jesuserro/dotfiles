@@ -35,15 +35,12 @@ sed -i 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$INSTALL_D
 # Enable plugins in .zshrc
 sed -i '/^plugins=/c\plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)' "$INSTALL_DIR/.zshrc"
 
-# Reload Zsh configuration
-if [ -f "$INSTALL_DIR/.zshrc" ]; then
-    . "$INSTALL_DIR/.zshrc"
-    source "$INSTALL_DIR/.zshrc"
-    exec zsh  # Restart Zsh to apply changes
-
-    echo "Zsh configuration reloaded with Oh My Zsh, Powerlevel10k, and plugins."
+# Start Zsh if not already running
+if [ "$SHELL" != "$(command -v zsh)" ]; then
+    printf "Switching to Zsh...\n"
+    exec zsh
 else
-    echo "No .zshrc file found. You may want to create one."
+    printf "Already running Zsh.\n"
 fi
 
 # Notify the user
