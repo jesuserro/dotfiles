@@ -29,19 +29,21 @@ unzip -o ~/Hack.zip -d ~/.local/share/fonts
 # Clean up downloaded zip file
 rm ~/Hack.zip
 
-# Add Starship initialization to ~/.zshrc
+# Add Starship initialization and alias to ~/.zshrc
 echo 'eval "$(starship init zsh)"' >> "$INSTALL_DIR/.zshrc"
+echo "alias ll='lsd -l'" >> "$INSTALL_DIR/.zshrc"
 
 # Notify user that fc-cache is unavailable on Termux
 echo "Note: 'fc-cache' is not available in Termux. If needed, update font cache manually on another system."
 
-# Reload Zsh configuration
+# Reload Zsh configuration and restart shell session
 if [ -f ~/.zshrc ]; then
     source ~/.zshrc
     echo "Zsh configuration reloaded."
+    exec zsh  # Restart Zsh to apply changes
 else
     echo "No .zshrc file found. You may want to create one."
 fi
 
 # Notify the user
-echo "Installation complete! Zsh is now the default shell with Starship prompt and NerdFonts."
+echo "Installation complete! Zsh is now the default shell with Starship prompt, NerdFonts, and alias ll='lsd'."
