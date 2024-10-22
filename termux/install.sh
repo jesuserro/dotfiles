@@ -1,11 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/zsh
-
-# Check if the script is running in Zsh
-if [ -z "$ZSH_VERSION" ]; then
-    echo "Restarting script in Zsh..."
-    exec zsh "$0" "$@"
-    exit
-fi
+#!/bin/bash
 
 # Set the installation directory
 INSTALL_DIR="/data/data/com.termux/files/home"
@@ -25,16 +18,16 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/too
 # Install Oh My Zsh plugins
 
 # Zsh Autosuggestions
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$INSTALL_DIR/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
 # Zsh Autocomplete
-git clone https://github.com/marlonrichert/zsh-autocomplete ${ZSH_CUSTOM:-$INSTALL_DIR/.oh-my-zsh/custom}/plugins/zsh-autocomplete
+git clone https://github.com/marlonrichert/zsh-autocomplete ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autocomplete
 
 # Zsh Syntax Highlighting
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$INSTALL_DIR/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
 # Install Powerlevel10k theme
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$INSTALL_DIR/.oh-my-zsh/custom}/themes/powerlevel10k
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k
 
 # Update .zshrc to set Powerlevel10k as the default theme
 sed -i 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$INSTALL_DIR/.zshrc"
@@ -42,12 +35,14 @@ sed -i 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$INSTALL_D
 # Enable plugins in .zshrc
 sed -i '/^plugins=/c\plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)' "$INSTALL_DIR/.zshrc"
 
-# Start Zsh if not already running
-if [ "$SHELL" != "$(command -v zsh)" ]; then
-    printf "Switching to Zsh...\n"
-    exec zsh
+# Reload Zsh configuration
+if [ -f "$INSTALL_DIR/.zshrc" ]; then
+    # Source the .zshrc file
+    source "$INSTALL_DIR/.zshrc"
+    echo "Zsh configuration reloaded with Oh My Zsh, Powerlevel10k, and plugins."
+    exec zsh  # Restart Zsh to apply changes
 else
-    printf "Already running Zsh.\n"
+    echo "No .zshrc file found. You may want to create one."
 fi
 
 # Notify the user
