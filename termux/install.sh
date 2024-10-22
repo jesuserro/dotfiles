@@ -26,17 +26,24 @@ git clone https://github.com/marlonrichert/zsh-autocomplete ${ZSH_CUSTOM:-~/.oh-
 # Zsh Syntax Highlighting
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
+# Install Powerlevel10k theme
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k
+
+# Update .zshrc to set Powerlevel10k as the default theme
+sed -i 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$INSTALL_DIR/.zshrc"
+
 # Enable plugins in .zshrc
 sed -i '/^plugins=/c\plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)' "$INSTALL_DIR/.zshrc"
 
 # Reload Zsh configuration
 if [ -f "$INSTALL_DIR/.zshrc" ]; then
     . "$INSTALL_DIR/.zshrc"
-    echo "Zsh configuration reloaded with Oh My Zsh and plugins."
+    source "$INSTALL_DIR/.zshrc"
     exec zsh  # Restart Zsh to apply changes
+    echo "Zsh configuration reloaded with Oh My Zsh, Powerlevel10k, and plugins."
 else
     echo "No .zshrc file found. You may want to create one."
 fi
 
 # Notify the user
-echo "Installation complete! Zsh is now the default shell with Oh My Zsh, Autosuggestions, Autocomplete, and Syntax Highlighting plugins."
+echo "Installation complete! Zsh is now the default shell with Oh My Zsh, Powerlevel10k theme, Autosuggestions, Autocomplete, and Syntax Highlighting plugins."
