@@ -10,7 +10,8 @@ pkg update && pkg upgrade -y
 pkg install -y git openssh lsd nano zsh wget curl
 
 # Install Oh My Zsh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+# Cambiado para ejecutar el script con zsh en lugar de sh
+curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | zsh
 
 # Define ZSH_CUSTOM
 ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
