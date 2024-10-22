@@ -6,48 +6,43 @@ INSTALL_DIR="/data/data/com.termux/files/home"
 # Update Termux packages
 pkg update && pkg upgrade -y
 
-# Install essential packages including unzip
-pkg install -y git openssh lsd nano zsh wget curl unzip
+# Install essential packages including unzip and curl
+pkg install -y git openssh lsd nano zsh wget curl
 
 # Set Zsh as the default shell
 chsh -s zsh
 
-# Install Starship
-pkg install starship
+# Install Oh My Zsh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-# Ensure ~/.config directory exists
-mkdir -p "$INSTALL_DIR/.config"
+# Install Oh My Zsh plugins
 
-# Configure Starship with Gruvbox Rainbow preset
-starship preset gruvbox-rainbow -o "$INSTALL_DIR/.config/starship.toml"
+# Zsh Autosuggestions
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
-# Download and install Hack Nerd Font for icons
-mkdir -p ~/.local/share/fonts
-wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/Hack.zip -O ~/Hack.zip
-unzip -o ~/Hack.zip -d ~/.local/share/fonts
+# Zsh Autocomplete
+git clone https://github.com/marlonrichert/zsh-autocomplete ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autocomplete
 
-# Update font cache
-if command -v fc-cache >/dev/null 2>&1; then
-    fc-cache -fv
-else
-    echo "Note: 'fc-cache' is not available in Termux. If needed, update font cache manually on another system."
-fi
+# Zsh Syntax Highlighting
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
-# Clean up downloaded zip file
-rm ~/Hack.zip
+# Install Powerlevel10k theme
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k
 
-# Add Starship initialization and alias to ~/.zshrc
-echo 'eval "$(starship init zsh)"' >> "$INSTALL_DIR/.zshrc"
-echo "alias ll='lsd -la'" >> "$INSTALL_DIR/.zshrc"
+# Set Powerlevel10k as the default theme in .zshrc
+sed -i 's/ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$INSTALL_DIR/.zshrc"
 
-# Reload Zsh configuration and restart shell session
-if [ -f ~/.zshrc ]; then
-    source ~/.zshrc
-    echo "Zsh configuration reloaded."
+# Enable plugins in .zshrc
+sed -i '/^plugins=/c\plugins=(git zsh-autosuggestions zsh-autocomplete zsh-syntax-highlighting)' "$INSTALL_DIR/.zshrc"
+
+# Reload Zsh configuration
+if [ -f "$INSTALL_DIR/.zshrc" ]; then
+    . "$INSTALL_DIR/.zshrc"
+    echo "Zsh configuration reloaded with Oh My Zsh, Powerlevel10k, and plugins."
     exec zsh  # Restart Zsh to apply changes
 else
     echo "No .zshrc file found. You may want to create one."
 fi
 
 # Notify the user
-echo "Installation complete! Zsh is now the default shell with Starship prompt, NerdFonts, and alias ll='lsd -la'."
+echo "Installation complete! Zsh is now the default shell with Oh My Zsh, Powerlevel10k theme, Autosuggestions, Autocomplete, and Syntax Highlighting plugins."
