@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/zsh
 
 # Set the installation directory
 INSTALL_DIR="/data/data/com.termux/files/home"
