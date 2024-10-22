@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/zsh
+#!/bin/bash
 
 # Set the installation directory
 INSTALL_DIR="/data/data/com.termux/files/home"
@@ -34,11 +34,11 @@ echo 'eval "$(starship init zsh)"' >> "$INSTALL_DIR/.zshrc"
 echo "alias ll='lsd -la'" >> "$INSTALL_DIR/.zshrc"
 
 # Notify user that fc-cache is unavailable on Termux
-echo "Note: 'fc-cache' is not available in Termux. You may need to configure fonts manually in your terminal emulator."
+echo "Note: 'fc-cache' is not available in Termux. If needed, update font cache manually on another system."
 
 # Reload Zsh configuration and restart shell session
-if [ -f "$INSTALL_DIR/.zshrc" ]; then
-    . "$INSTALL_DIR/.zshrc"  # Use . to source the file in Zsh
+if [ -f ~/.zshrc ]; then
+    source ~/.zshrc
     echo "Zsh configuration reloaded."
     exec zsh  # Restart Zsh to apply changes
 else
