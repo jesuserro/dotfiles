@@ -2,7 +2,7 @@
 
 # Global Variables
 INSTALL_DIR="/data/data/com.termux/files/home"
-ZSH_CUSTOM="${ZSH_CUSTOM:-$INSTALL_DIR/.oh-my-zsh/custom}"
+PLUGIN_INSTALLER="$INSTALL_DIR/install_plugins.sh"
 
 # Function to update and install essential packages
 install_packages() {
@@ -14,16 +14,6 @@ install_packages() {
 install_oh_my_zsh() {
     if [ ! -d "$INSTALL_DIR/.oh-my-zsh" ]; then
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-    fi
-}
-
-# Function to install a plugin or theme via git
-install_plugin() {
-    local repo_url=$1
-    local target_dir=$2
-
-    if [ ! -d "$target_dir" ]; then
-        git clone --depth=1 "$repo_url" "$target_dir"
     fi
 }
 
@@ -46,17 +36,27 @@ configure_zshrc() {
     zsh -ic "source $zshrc"
 }
 
+# Function to run plugin installation script
+run_plugin_installer() {
+    if [ -x "$PLUGIN_INSTALLER" ]; then
+        "$PLUGIN_INSTALLER"
+    else
+        printf "Plugin installer script not found or not executable.\n" >&2
+        return 1
+    fi
+}
+
 # Main function
 main() {
     install_packages
     chsh -s zsh  # Set Zsh as the default shell
     install_oh_my_zsh
 
-    # Install plugins and themes
-    install_plugin "https://github.com/zsh-users/zsh-autosuggestions" "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
-    install_plugin "https://github.com/marlonrichert/zsh-autocomplete" "$ZSH_CUSTOM/plugins/zsh-autocomplete"
-    install_plugin "https://github.com/zsh-users/zsh-syntax-highlighting.git" "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
-    install_plugin "https://github.com/romkatv/powerlevel10k.git" "$ZSH_CUSTOM/themes/powerlevel10k"
+    # Call plugin installer script
+    if ! run_plugin_installer; then
+        printf "Failed to install plugins.\n" >&2
+        return 1
+    fi
 
     # Configure .zshrc
     if configure_zshrc; then
