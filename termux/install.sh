@@ -1,28 +1,52 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Actualizar e instalar las actualizaciones disponibles
-echo "Actualizando e instalando paquetes..."
+# Solicitar permisos de almacenamiento
+termux-setup-storage
+
+# Configurar repositorios de Europa
+sed -i 's@https://packages.termux.dev/termux-main@https://europe.termux.dev/termux-main@g' $PREFIX/etc/apt/sources.list
+
+# Actualizar e instalar paquetes básicos
 pkg update && pkg upgrade -y
+pkg install -y git lsd unzip openssh nano wget curl zsh
 
-# Instalar paquetes básicos
-echo "Instalando paquetes básicos: git, lsd, unzip, openssh, nano, wget, curl..."
-pkg install -y git lsd unzip openssh nano wget curl
+# Cambiar shell predeterminada a Zsh y continuar en Zsh
+chsh -s zsh
+export SHELL=$(which zsh)
+exec zsh
 
-# Instalar Zsh
-echo "Instalando Zsh..."
-pkg install -y zsh
+# Añadir alias al .zshrc
+cat << 'EOF' >> ~/.zshrc
+alias ll="lsd -la"
+alias ups="pkg update -y && pkg upgrade -y && omz update && upgrade_oh_my_zsh_custom"
+alias git-update="git fetch --all --prune && git pull"
+alias git-save="git add -A && git commit -m 'chore: commit save point' && git push origin HEAD"
+EOF
 
-# Verificar si Zsh está correctamente instalado antes de configurarlo como shell por defecto
-if [ -x "$(command -v zsh)" ]; then
-    echo "Estableciendo Zsh como shell por defecto..."
-    chsh -s zsh
-    
-    # Crear o modificar el archivo ~/.zshrc con un alias para lsd
-    echo 'alias ll="lsd -la"' >> ~/.zshrc
-    echo "Alias ll configurado en ~/.zshrc."
-else
-    echo "Error: Zsh no se ha instalado correctamente o no es ejecutable."
-fi
+# Recargar .zshrc
+source ~/.zshrc
 
-# Confirmación de instalación
-echo "Instalación completada de los paquetes básicos, Zsh configurado como shell por defecto (si la instalación fue exitosa), y alias ll añadido a ~/.zshrc."
+# Instalar Oh My Zsh sin interacción
+export RUNZSH=no
+export CHSH=no
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+# Instalar plugins de Oh My Zsh
+ZSH_CUSTOM="${ZSH_CUSTOM:-~/.oh-my-zsh/custom}"
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM}/plugins/zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM}/plugins/zsh-completions
+git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM}/plugins/zsh-history-substring-search
+git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins ${ZSH_CUSTOM}/plugins/autoupdate
+git clone https://github.com/marlonrichert/zsh-autocomplete ${ZSH_CUSTOM}/plugins/zsh-autocomplete
+
+# Añadir plugins al .zshrc
+sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-completions zsh-history-substring-search autoupdate zsh-autocomplete)/g' ~/.zshrc
+
+# Configurar Git
+git config --global --add safe.directory /storage/emulated/0/Documents/vault
+git config --global credential.helper store
+git config --global user.name "Jesús"
+git config --global user.email "olagato@gmail.com"
+
+echo "Instalación completa. Por favor, reinicia Termux para aplicar todos los cambios."
