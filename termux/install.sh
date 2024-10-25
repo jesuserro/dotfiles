@@ -41,7 +41,7 @@ git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins ${ZSH_CUSTOM}/
 git clone https://github.com/marlonrichert/zsh-autocomplete ${ZSH_CUSTOM}/plugins/zsh-autocomplete
 
 # Añadir plugins al .zshrc
-sed -i 's/plugins=(git)/plugins=(autoupdate aws colored-man-pages colorize composer dirhistory docker extract gh git history jsontools vi-mode wp-cli zsh-autosuggestions zsh-autocomplete zsh-completions zsh-history-substring-search z zsh-syntax-highlighting)/g' ~/.zshrc
+sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-completions zsh-history-substring-search autoupdate zsh-autocomplete)/g' ~/.zshrc
 
 # Configurar Git
 git config --global --add safe.directory /storage/emulated/0/Documents/vault
