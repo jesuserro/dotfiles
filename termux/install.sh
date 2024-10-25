@@ -1,47 +1,57 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/bash
 
-# Solicitar permisos de almacenamiento
+# Configurar acceso al almacenamiento
 termux-setup-storage
 
-# Configurar repositorios de Europa
-sed -i 's@https://packages.termux.dev/termux-main@https://europe.termux.dev/termux-main@g' $PREFIX/etc/apt/sources.list
-
-# Actualizar e instalar paquetes básicos
+# Actualizar e instalar actualizaciones disponibles
 pkg update && pkg upgrade -y
+
+# Instalar paquetes básicos
 pkg install -y git lsd unzip openssh nano wget curl zsh
 
-# Cambiar shell predeterminada a Zsh y continuar en Zsh
-chsh -s zsh
-export SHELL=$(which zsh)
-exec zsh
+# Instalar Oh My Zsh sin cambiar la shell inmediatamente
+RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-# Añadir alias al .zshrc
-cat << 'EOF' >> ~/.zshrc
+# Cambiar la shell predeterminada a zsh
+chsh -s zsh
+
+# Clonar plugins de Oh My Zsh
+git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-syntax-highlighting ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-completions ~/.oh-my-zsh/custom/plugins/zsh-completions
+git clone https://github.com/zsh-users/zsh-history-substring-search ~/.oh-my-zsh/custom/plugins/zsh-history-substring-search
+git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins ~/.oh-my-zsh/custom/plugins/autoupdate
+git clone https://github.com/marlonrichert/zsh-autocomplete ~/.oh-my-zsh/custom/plugins/zsh-autocomplete
+
+# Respaldar .zshrc existente si existe
+[ -f ~/.zshrc ] && mv ~/.zshrc ~/.zshrc.backup
+
+# Crear nuevo archivo .zshrc con tus configuraciones
+cat << 'EOF' > ~/.zshrc
+export ZSH="$HOME/.oh-my-zsh"
+
+ZSH_THEME="robbyrussell"
+
+plugins=(
+  git
+  zsh-autosuggestions
+  zsh-syntax-highlighting
+  zsh-completions
+  zsh-history-substring-search
+  autoupdate
+  zsh-autocomplete
+)
+
+source $ZSH/oh-my-zsh.sh
+
 alias ll="lsd -la"
 alias ups="pkg update -y && pkg upgrade -y && omz update && upgrade_oh_my_zsh_custom"
 alias git-update="git fetch --all --prune && git pull"
 alias git-save="git add -A && git commit -m 'chore: commit save point' && git push origin HEAD"
 EOF
 
-# Recargar .zshrc
+# Aplicar el nuevo .zshrc
 source ~/.zshrc
-
-# Instalar Oh My Zsh sin interacción
-export RUNZSH=no
-export CHSH=no
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-
-# Instalar plugins de Oh My Zsh
-ZSH_CUSTOM="${ZSH_CUSTOM:-~/.oh-my-zsh/custom}"
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM}/plugins/zsh-autosuggestions
-git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting
-git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM}/plugins/zsh-completions
-git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM}/plugins/zsh-history-substring-search
-git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins ${ZSH_CUSTOM}/plugins/autoupdate
-git clone https://github.com/marlonrichert/zsh-autocomplete ${ZSH_CUSTOM}/plugins/zsh-autocomplete
-
-# Añadir plugins al .zshrc
-sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-completions zsh-history-substring-search autoupdate zsh-autocomplete)/g' ~/.zshrc
 
 # Configurar Git
 git config --global --add safe.directory /storage/emulated/0/Documents/vault
@@ -49,4 +59,6 @@ git config --global credential.helper store
 git config --global user.name "Jesús"
 git config --global user.email "olagato@gmail.com"
 
-echo "Instalación completa. Por favor, reinicia Termux para aplicar todos los cambios."
+# Crear el directorio vault si no existe y navegar a él
+mkdir -p /data/data/com.termux/files/home/storage/shared/Documents/vault
+cd /data/data/com.termux/files/home/storage/shared/Documents/vault
