@@ -15,15 +15,8 @@ pkg install -y git lsd unzip openssh nano wget curl
 # Instalar Zsh
 pkg install -y zsh
 
-chsh -s zsh
-
-# Crear o modificar el archivo ~/.zshrc con varios alias
-alias ll="lsd -la"
-alias ups="pkg update -y && pkg upgrade -y && omz update && upgrade_oh_my_zsh_custom"
-alias git-update="git fetch --all --prune && git pull"
-alias git-save="git add -A && git commit -m 'chore: commit save point' && git push origin HEAD"
-
-source ~/.zshrc 
+# chsh -s zsh
+# source ~/.zshrc 
 
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
@@ -32,10 +25,17 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting ~/.oh-my-zsh/cust
 git clone https://github.com/zsh-users/zsh-completions ~/.oh-my-zsh/custom/plugins/zsh-completions && \
 git clone https://github.com/zsh-users/zsh-history-substring-search ~/.oh-my-zsh/custom/plugins/zsh-history-substring-search && \
 git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins ~/.oh-my-zsh/custom/plugins/autoupdate && \
-git clone https://github.com/marlonrichert/zsh-autocomplete ~/.oh-my-zsh/custom/plugins/zsh-autocomplete
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $ZSH_CUSTOM/themes/powerlevel10k
+git clone https://github.com/marlonrichert/zsh-autocomplete ~/.oh-my-zsh/custom/plugins/zsh-autocomplete && \
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
 
 sed -i 's/^ZSH_THEME=".*"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc
+
+# Añadir alias al .zshrc usando sed
+sed -i '$ a\
+alias ll="lsd -la"\
+alias ups="pkg update -y && pkg upgrade -y && omz update && upgrade_oh_my_zsh_custom"\
+alias git-update="git fetch --all --prune && git pull"\
+alias git-save="git add -A && git commit -m '\''chore: commit save point'\'' && git push origin HEAD"' ~/.zshrc
 
 #cd /data/data/com.termux/files/home/storage/shared/Documents/vault
 git config --global --add safe.directory /storage/emulated/0/Documents/vault
