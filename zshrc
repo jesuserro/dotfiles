@@ -167,3 +167,5 @@ export EDITOR='nvim'
 
 # Restore original PATH (commented by default)
 # export PATH=$ORIGINAL_PATH
+
+export PATH=$PATH:$HOME/.local/bin
