@@ -62,3 +62,8 @@
 [safe]
 	directory = /home/jesus/proyectos/nges
 	directory = /home/jesus/proyectos/docker
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
