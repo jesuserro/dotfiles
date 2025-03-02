@@ -72,6 +72,8 @@ alias git-save='git add -A && git commit -m "chore: commit save point" && git pu
 # Alias for fetching, pruning, and pulling changes
 alias git-update='git fetch --prune --all && git pull'
 
+alias create_goodreads_db='mysql -e "DROP DATABASE IF EXISTS goodreads; CREATE DATABASE goodreads; USE goodreads;" && mysql goodreads < ~/proyectos/goodreads/db/structure.sql'
+
 # Include custom aliases if they exist
 if [[ -f ~/dotfiles-local/aliases.local ]]; then 
   source ~/dotfiles-local/aliases.local
