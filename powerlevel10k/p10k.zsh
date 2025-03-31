@@ -1,10 +1,14 @@
-# Configuración del color: https://codehs.com/tutorial/ryan/add-color-with-ansi-in-javascript
+# --- Personalización visual para Powerlevel10k ---
 
-# typeset -g POWERLEVEL9K_DIR_BACKGROUND=166 # naranja oscuro
-# typeset -g POWERLEVEL9K_DIR_BACKGROUND=172 # naranja oscuro 2
-# typeset -g POWERLEVEL9K_DIR_BACKGROUND=216 # naranja pastel
-typeset -g POWERLEVEL9K_DIR_BACKGROUND=173 # naranja pastel
+# Cambiar color del directorio (dir) a naranja pastel
+typeset -g POWERLEVEL9K_DIR_BACKGROUND=173
 
+# Cambiar color del os_icon a magenta
+typeset -g POWERLEVEL9K_OS_ICON_BACKGROUND=5
 
-# Configuración del color de fondo del os_icon
-typeset -g POWERLEVEL9K_OS_ICON_BACKGROUND=5 # Magenta
+# --- Mostrar el entorno virtual Python (venv) en la barra derecha ---
+
+# Solo añadir 'virtualenv' si no está ya presente
+if [[ ! " ${POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS[@]} " =~ " virtualenv " ]]; then
+  POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS+=('virtualenv')
+fi

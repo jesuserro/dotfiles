@@ -110,7 +110,9 @@ plugins=(
   git
   history
   jsontools
+  python 
   tmux
+  virtualenv
   vi-mode
   wp-cli
   z
@@ -151,11 +153,11 @@ export EDITOR='nvim'
 # Aliases
 [[ -f ~/.aliases ]] && source ~/.aliases
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+# Cargar configuración base de Powerlevel10k
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# Cargar personalizaciones adicionales de Powerlevel10k
-[[ ! -f ~/dotfiles/powerlevel10k/p10k.zsh ]] || source ~/dotfiles/powerlevel10k/p10k.zsh
+# Sobrescribir con mis colores personalizados (¡esto debe ir después!)
+[[ -f ~/dotfiles/powerlevel10k/p10k.zsh ]] && source ~/dotfiles/powerlevel10k/p10k.zsh
 
 ## Init Docker daemon
 # echo '# Start Docker daemon automatically when logging in if not running.' >> ~/.zshrc
