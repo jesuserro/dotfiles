@@ -15,6 +15,8 @@
   pf = push --force-with-lease
   pl = pull
   ps = push
+  merge-cleanup = "!sh ~/dotfiles/scripts/git_merge_feature_to_dev_and_main.sh"
+  start-feature = "!sh ~/dotfiles/scripts/git_start_feature.sh"
 
   # Branch management
   br = branch --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(contents:subject) %(color:green)(%(committerdate:relative)) [%(authorname)]' --sort=-committerdate
