@@ -112,9 +112,30 @@ plugins=(
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
-[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local # export apikeys here
 [[ -f ~/.aliases ]] && source ~/.aliases
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+```
+
+## Git Commands
+
+### 🚀 git start-feature
+
+Creates a new feature branch from dev, pushes it to the remote, and checks it out locally.
+
+```shell
+git start-feature 42-exportar-csv
+```
+
+### 🧼 git merge-cleanup
+
+Merges dev into main, then merges your feature branch into dev, and finally deletes the feature branch (both locally and remotely).
+You can pass the feature name with or without the feature/ prefix.
+
+```shell
+git merge-cleanup 42-exportar-csv
+# or
+git merge-cleanup feature/42-exportar-csv
 ```
 
 ## Oh My ZSH Plugins
