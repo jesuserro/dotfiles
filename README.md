@@ -124,7 +124,7 @@ source $ZSH/oh-my-zsh.sh
 Creates a new feature branch from dev, pushes it to the remote, and checks it out locally.
 
 ```shell
-git start-feature 42-exportar-csv
+git start-feature 33-exportar-csv
 ```
 
 ### 🧼 git merge-cleanup
@@ -133,9 +133,9 @@ Merges dev into main, then merges your feature branch into dev, and finally dele
 You can pass the feature name with or without the feature/ prefix.
 
 ```shell
-git merge-cleanup 42-exportar-csv
+git merge-cleanup 33-exportar-csv
 # or
-git merge-cleanup feature/42-exportar-csv
+git merge-cleanup feature/33-exportar-csv
 ```
 
 ## Oh My ZSH Plugins
