@@ -172,10 +172,13 @@ export EDITOR='nvim'
 
 export PATH=$PATH:$HOME/.local/bin
 
- # Configuración de Codex
- if [ -d "$HOME/dotfiles/codex" ]; then
-   mkdir -p "$HOME/.codex"
-   for file in "$HOME/dotfiles/codex"/*; do
-     ln -sf "$file" "$HOME/.codex/$(basename "$file")"
-   done
- fi
+ # Configuración de Codex: vincula tus dotfiles/codex a los de ~/.codex
+if [ -d "$HOME/dotfiles/codex" ]; then
+  mkdir -p "$HOME/.codex"
+  for file in "$HOME/dotfiles/codex"/*; do
+    target="$HOME/.codex/$(basename "$file")"
+    if [ ! -L "$target" ]; then
+      ln -sf "$file" "$target"
+    fi
+  done
+fi
