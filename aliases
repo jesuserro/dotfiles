@@ -35,6 +35,9 @@ alias lusers="cut -d: -f1 /etc/passwd | sort"
 # Pretty print the path
 alias path='echo $PATH | tr -s ":" "\n"'
 
+# Codex
+alias cx='codex'
+
 # VSCode
 alias code.="code ."
 alias vs="code"
