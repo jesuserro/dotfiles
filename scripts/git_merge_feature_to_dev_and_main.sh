@@ -3,9 +3,11 @@
 set -e
 
 # 📦 Config
-FEATURE_BRANCH="$1"
+INPUT_NAME="$1"
 DEV_BRANCH="dev"
 MAIN_BRANCH="main"
+FEATURE_PREFIX="feature/"
+FEATURE_BRANCH=""
 
 # 🎨 Colores
 GREEN='\033[0;32m'
@@ -34,17 +36,22 @@ branch_exists() {
 }
 
 # 📣 Inicio
-echo -e "${YELLOW}🚀 Iniciando flujo de integración de la rama '${FEATURE_BRANCH}'...${NC}"
+echo -e "${YELLOW}🚀 Iniciando flujo de integración de la rama feature '${INPUT_NAME}'...${NC}"
 
 # 🧪 Validaciones
-if [ -z "$FEATURE_BRANCH" ]; then
+if [ -z "$INPUT_NAME" ]; then
   echo -e "${RED}❗ ERROR: Debes pasar el nombre de la rama feature como argumento.${NC}"
-  echo "👉 Ejemplo: ./git_merge_feature_to_dev_and_main.sh 2-backup-and-restore-db"
+  echo "👉 Ejemplo: ./git_merge_feature_to_dev_and_main.sh 1-patata"
   exit 1
 fi
 
-if ! branch_exists "$FEATURE_BRANCH"; then
-  echo -e "${RED}❗ La rama '$FEATURE_BRANCH' no existe localmente.${NC}"
+# 🔍 Smart-detect para completar prefijo "feature/"
+if branch_exists "$INPUT_NAME"; then
+  FEATURE_BRANCH="$INPUT_NAME"
+elif branch_exists "${FEATURE_PREFIX}${INPUT_NAME}"; then
+  FEATURE_BRANCH="${FEATURE_PREFIX}${INPUT_NAME}"
+else
+  echo -e "${RED}❗ La rama '${INPUT_NAME}' ni '${FEATURE_PREFIX}${INPUT_NAME}' existe localmente.${NC}"
   exit 1
 fi
 
