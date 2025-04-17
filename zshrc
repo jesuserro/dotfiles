@@ -147,7 +147,7 @@ export EDITOR='nvim'
 #     tmux attach -t default || tmux new -s default
 # fi
 
-# Local config
+# Local config (apikeys)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
 # Aliases
@@ -171,3 +171,11 @@ export EDITOR='nvim'
 # export PATH=$ORIGINAL_PATH
 
 export PATH=$PATH:$HOME/.local/bin
+
+ # Configuración de Codex
+ if [ -d "$HOME/dotfiles/codex" ]; then
+   mkdir -p "$HOME/.codex"
+   for file in "$HOME/dotfiles/codex"/*; do
+     ln -sf "$file" "$HOME/.codex/$(basename "$file")"
+   done
+ fi
