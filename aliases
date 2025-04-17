@@ -17,6 +17,7 @@ alias sysinfo="~/dotfiles/scripts/system_info.sh"
 
 alias ups="sudo -v \
   && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y \
+  && npm update -g codex \
   && omz update && upgrade_oh_my_zsh_custom \
   && sudo service apache2 restart && sudo service mysql restart \
   && sudo service apache2 status && sudo service mysql status"
