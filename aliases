@@ -71,7 +71,8 @@ alias gbinfo="git for-each-ref --sort=-committerdate refs/heads/ --format='%(col
 alias gclean="git branch --merged | grep -v 'main\|master\|dev\|*' | xargs git branch -d"
 
 # Alias for saving and pushing changes to GitHub
-alias git-save='git add -A && git commit -m "chore: commit save point" && git push origin HEAD'
+#alias git-save='git add -A && git commit -m "chore: commit save point" && git push origin HEAD'
+alias git-save='~/dotfiles/scripts/git_save.sh'
 
 # Alias for fetching, pruning, and pulling changes
 alias git-update='git fetch --prune --all && git pull'
