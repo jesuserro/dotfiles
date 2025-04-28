@@ -1,0 +1,30 @@
+chore(save): workflow checkpoint
+
+# Tipos permitidos:
+# - feat: Nueva característica
+# - fix: Corrección de error
+# - docs: Cambios en la documentación
+# - style: Cambios que no afectan el significado del código (espacios, formato, etc.)
+# - refactor: Cambios que no corrigen errores ni añaden características
+# - test: Añadir o corregir pruebas
+# - chore: Actualizaciones de tareas, configuración, etc.
+
+# Ejemplos:
+# chore(save): workflow checkpoint
+# feat(auth): add login functionality
+# fix(api): resolve authentication error
+# docs(readme): update installation steps
+# style(lint): fix code formatting
+# refactor(utils): improve error handling
+# test(api): add authentication tests
+
+# El mensaje debe seguir el formato: <type>(<scope>): <description>
+# - type: tipo de cambio (feat, fix, etc.)
+# - scope: área afectada (opcional)
+# - description: descripción breve del cambio
+# - El mensaje debe estar en inglés
+# - La descripción debe comenzar con minúscula
+# - No debe terminar con punto
+# - Debe ser conciso y descriptivo
+
+# Escribe tu mensaje de commit aquí: 

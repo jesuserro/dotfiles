@@ -1,0 +1,91 @@
+# Archivos del sistema
+.DS_Store
+*.bak
+*.Identifier
+*.manifest
+*.spec
+*.so
+
+# Archivos de editor y IDE
+.vscode/
+.history/
+*.sw[nop]
+/tags
+
+# Archivos de Python
+__pycache__/
+*.pyc
+*.py[cod]
+*$py.class
+__init__.py
+
+# Entornos virtuales
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Logs y temporales
+*.log
+log/
+log/*.log
+tmp/
+tmp/**/*
+rerun.txt
+
+# Dependencias
+/bower_components/
+/node_modules/
+/vendor/
+.bundle
+
+# Base de datos
+db/*.sqlite3
+
+# Testing y cobertura
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Herramientas de desarrollo
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Type checkers
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Vim
+vim/pack/*
+
+# Git
+.git/

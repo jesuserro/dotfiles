@@ -1,19 +1,69 @@
 #!/bin/bash
 
 # Script para hacer git add, commit y push con mensajes mejorados
-# Uso: git-save [mensaje personalizado]
+# Uso: git-save [tipo] [scope] [descripción]
+# Ejemplo: git-save chore save "workflow checkpoint"
 
-# Si se proporciona un argumento, úsalo como mensaje
-if [ "$1" != "" ]; then
-  COMMIT_MSG="$1"
-else
-  # Si no hay argumentos, intentar leer de VSCode/Cursor (interfaz básica)
-  echo "Escribe tu mensaje de commit (deja vacío para mensaje predeterminado):"
-  read -r COMMIT_MSG
+# Función para validar el formato del mensaje
+validate_commit_format() {
+  local type="$1"
+  local scope="$2"
+  local description="$3"
   
-  # Si sigue vacío, usar el mensaje predeterminado
-  if [ -z "$COMMIT_MSG" ]; then
-    COMMIT_MSG="chore(save): workflow checkpoint"
+  # Tipos permitidos
+  local allowed_types=("feat" "fix" "docs" "style" "refactor" "test" "chore")
+  
+  # Validar tipo
+  if [[ ! " ${allowed_types[*]} " =~ " ${type} " ]]; then
+    echo "❌ Error: Tipo de commit no válido. Tipos permitidos: ${allowed_types[*]}"
+    return 1
+  fi
+  
+  # Validar descripción
+  if [[ -z "$description" ]]; then
+    echo "❌ Error: La descripción no puede estar vacía"
+    return 1
+  fi
+  
+  # Validar que la descripción comience con minúscula
+  if [[ ! "$description" =~ ^[a-z] ]]; then
+    echo "❌ Error: La descripción debe comenzar con minúscula"
+    return 1
+  fi
+  
+  return 0
+}
+
+# Si se proporcionan los tres argumentos, usarlos
+if [ "$#" -eq 3 ]; then
+  TYPE="$1"
+  SCOPE="$2"
+  DESCRIPTION="$3"
+  COMMIT_MSG="${TYPE}(${SCOPE}): ${DESCRIPTION}"
+  
+  # Validar el formato
+  if ! validate_commit_format "$TYPE" "$SCOPE" "$DESCRIPTION"; then
+    exit 1
+  fi
+else
+  # Si no hay argumentos, mostrar ayuda
+  if [ "$#" -eq 0 ]; then
+    echo "Uso: git-save [tipo] [scope] [descripción]"
+    echo "Ejemplo: git-save chore save \"workflow checkpoint\""
+    echo "Tipos permitidos: feat, fix, docs, style, refactor, test, chore"
+    exit 1
+  fi
+  
+  # Si solo se proporciona un argumento, asumir que es la descripción
+  if [ "$#" -eq 1 ]; then
+    TYPE="chore"
+    SCOPE="save"
+    DESCRIPTION="$1"
+    COMMIT_MSG="${TYPE}(${SCOPE}): ${DESCRIPTION}"
+  else
+    echo "❌ Error: Número incorrecto de argumentos"
+    echo "Uso: git-save [tipo] [scope] [descripción]"
+    exit 1
   fi
 fi
 
