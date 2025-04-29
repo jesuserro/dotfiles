@@ -1,25 +1,35 @@
 chore(save): workflow checkpoint
 
-# Tipos permitidos:
-# - feat: Nueva característica
-# - fix: Corrección de error
-# - docs: Cambios en la documentación
-# - style: Cambios que no afectan el significado del código (espacios, formato, etc.)
-# - refactor: Cambios que no corrigen errores ni añaden características
-# - test: Añadir o corregir pruebas
-# - chore: Actualizaciones de tareas, configuración, etc.
+# Tipos de commit y sus propósitos:
+# | Tipo       | Propósito |
+# |------------|-----------|
+# | `feat`     | Nueva funcionalidad (feature) para el usuario |
+# | `fix`      | Corrección de errores (bug fixes) |
+# | `docs`     | Cambios en la documentación |
+# | `style`    | Cambios de estilo (espacios, indentación, formato) sin afectar el código |
+# | `refactor` | Cambios en el código que no arreglan ni agregan funcionalidad |
+# | `perf`     | Mejoras de rendimiento (performance) |
+# | `test`     | Añadir o corregir pruebas (tests) |
+# | `build`    | Cambios que afectan el sistema de construcción o dependencias externas |
+# | `ci`       | Cambios en archivos de integración continua |
+# | `chore`    | Tareas menores o mantenimiento (no afectan código de producción) |
+# | `revert`   | Revertir un commit anterior |
 
 # Ejemplos:
-# chore(save): workflow checkpoint
-# feat(auth): add login functionality
-# fix(api): resolve authentication error
+# feat(auth): add OAuth2 authentication
+# fix(api): resolve rate limiting issue
 # docs(readme): update installation steps
 # style(lint): fix code formatting
 # refactor(utils): improve error handling
+# perf(database): optimize query performance
 # test(api): add authentication tests
+# build(deps): update npm dependencies
+# ci(github): add GitHub Actions workflow
+# chore(config): update ESLint rules
+# revert(api): revert breaking changes
 
 # El mensaje debe seguir el formato: <type>(<scope>): <description>
-# - type: tipo de cambio (feat, fix, etc.)
+# - type: tipo de cambio (feat, fix, docs, etc.)
 # - scope: área afectada (opcional)
 # - description: descripción breve del cambio
 # - El mensaje debe estar en inglés
