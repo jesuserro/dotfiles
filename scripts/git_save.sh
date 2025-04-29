@@ -2,77 +2,120 @@
 
 # Script para hacer git add, commit y push con mensajes mejorados
 # Uso: git-save [tipo] [scope] [descripción]
+#      git-save [tipo] [descripción]
+#      git-save [descripción]
 # Ejemplo: git-save chore save "workflow checkpoint"
 
-# Función para validar el formato del mensaje
-validate_commit_format() {
-  local type="$1"
-  local scope="$2"
-  local description="$3"
-  
-  # Tipos permitidos
-  local allowed_types=("feat" "fix" "docs" "style" "refactor" "test" "chore")
-  
-  # Validar tipo
-  if [[ ! " ${allowed_types[*]} " =~ " ${type} " ]]; then
-    echo "❌ Error: Tipo de commit no válido. Tipos permitidos: ${allowed_types[*]}"
-    return 1
-  fi
-  
-  # Validar descripción
-  if [[ -z "$description" ]]; then
-    echo "❌ Error: La descripción no puede estar vacía"
-    return 1
-  fi
-  
-  # Validar que la descripción comience con minúscula
-  if [[ ! "$description" =~ ^[a-z] ]]; then
-    echo "❌ Error: La descripción debe comenzar con minúscula"
-    return 1
-  fi
-  
-  return 0
+# Colores para mensajes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Tipos de commit permitidos
+ALLOWED_TYPES=("feat" "fix" "docs" "style" "refactor" "perf" "test" "build" "ci" "chore" "revert")
+
+# Mostrar ayuda
+show_help() {
+  echo -e "${BLUE}Uso de git-save:${NC}"
+  echo "  git-save <descripción>                 # Commit rápido con tipo 'chore'"
+  echo "  git-save <tipo> <descripción>          # Commit con tipo específico"
+  echo "  git-save <tipo> <scope> <descripción>  # Commit con tipo y scope específicos"
+  echo ""
+  echo -e "${YELLOW}Tipos permitidos:${NC}"
+  printf "  %s\n" "${ALLOWED_TYPES[@]}"
+  echo ""
+  echo -e "${BLUE}Ejemplos:${NC}"
+  echo "  git-save \"actualizar configuración\""
+  echo "  git-save feat \"agregar login con Google\""
+  echo "  git-save fix api \"corregir error en endpoint de usuarios\""
 }
 
-# Si se proporcionan los tres argumentos, usarlos
-if [ "$#" -eq 3 ]; then
+# Validar tipo de commit
+validate_type() {
+  local type="$1"
+  for allowed in "${ALLOWED_TYPES[@]}"; do
+    if [[ "$type" == "$allowed" ]]; then
+      return 0
+    fi
+  done
+  
+  echo -e "${RED}❌ Error: Tipo de commit '$type' no válido${NC}"
+  echo -e "${YELLOW}Tipos permitidos:${NC} ${ALLOWED_TYPES[*]}"
+  return 1
+}
+
+# Main
+if [[ $# -eq 0 ]]; then
+  show_help
+  exit 0
+fi
+
+# Determinar el mensaje de commit según los argumentos
+if [[ $# -eq 1 ]]; then
+  # Caso 1: git-save <descripción>
+  TYPE="chore"
+  SCOPE="save"
+  DESCRIPTION="$1"
+  COMMIT_MSG="${TYPE}(${SCOPE}): ${DESCRIPTION}"
+elif [[ $# -eq 2 ]]; then
+  # Caso 2: git-save <tipo> <descripción>
+  TYPE="$1"
+  DESCRIPTION="$2"
+  
+  # Validar tipo
+  if ! validate_type "$TYPE"; then
+    exit 1
+  fi
+  
+  COMMIT_MSG="${TYPE}: ${DESCRIPTION}"
+elif [[ $# -eq 3 ]]; then
+  # Caso 3: git-save <tipo> <scope> <descripción>
   TYPE="$1"
   SCOPE="$2"
   DESCRIPTION="$3"
+  
+  # Validar tipo
+  if ! validate_type "$TYPE"; then
+    exit 1
+  fi
+  
+  # Validar que la descripción comience con minúscula
+  if [[ ! "$DESCRIPTION" =~ ^[a-z] ]]; then
+    echo -e "${RED}❌ Error: La descripción debe comenzar con minúscula${NC}"
+    exit 1
+  fi
+  
   COMMIT_MSG="${TYPE}(${SCOPE}): ${DESCRIPTION}"
-  
-  # Validar el formato
-  if ! validate_commit_format "$TYPE" "$SCOPE" "$DESCRIPTION"; then
-    exit 1
-  fi
 else
-  # Si no hay argumentos, mostrar ayuda
-  if [ "$#" -eq 0 ]; then
-    echo "Uso: git-save [tipo] [scope] [descripción]"
-    echo "Ejemplo: git-save chore save \"workflow checkpoint\""
-    echo "Tipos permitidos: feat, fix, docs, style, refactor, test, chore"
-    exit 1
-  fi
-  
-  # Si solo se proporciona un argumento, asumir que es la descripción
-  if [ "$#" -eq 1 ]; then
-    TYPE="chore"
-    SCOPE="save"
-    DESCRIPTION="$1"
-    COMMIT_MSG="${TYPE}(${SCOPE}): ${DESCRIPTION}"
-  else
-    echo "❌ Error: Número incorrecto de argumentos"
-    echo "Uso: git-save [tipo] [scope] [descripción]"
-    exit 1
-  fi
+  echo -e "${RED}❌ Error: Demasiados argumentos${NC}"
+  show_help
+  exit 1
 fi
 
 # Obtener la rama actual
 BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "HEAD detached")
 
 # Ejecutar los comandos git
+echo -e "${BLUE}🔄 Agregando archivos...${NC}"
 git add -A
-git commit -m "$COMMIT_MSG"
-git push origin HEAD
 
-echo "✅ Cambios guardados y enviados con el mensaje: $COMMIT_MSG a $BRANCH" 
+echo -e "${BLUE}🔄 Haciendo commit con mensaje:${NC} $COMMIT_MSG"
+# Usar --no-template para ignorar la plantilla gitmessage
+if ! git commit -m "$COMMIT_MSG" --no-template; then
+  echo -e "${RED}❌ Error al hacer commit${NC}"
+  exit 1
+fi
+
+echo -e "${BLUE}🔄 Enviando cambios a $BRANCH...${NC}"
+# Usar --porcelain para obtener una salida más limpia y mejor detección de errores
+if ! git push origin HEAD --porcelain; then
+  echo -e "${RED}❌ Error al hacer push a $BRANCH${NC}"
+  echo -e "Prueba haciendo: ${YELLOW}git pull origin $BRANCH${NC}"
+  exit 1
+fi
+
+echo -e "${GREEN}✅ Cambios guardados y enviados con éxito:${NC}"
+echo -e "  Mensaje: ${YELLOW}$COMMIT_MSG${NC}"
+echo -e "  Rama: ${YELLOW}$BRANCH${NC}" 

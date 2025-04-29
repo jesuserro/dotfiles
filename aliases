@@ -1,21 +1,34 @@
 # @see https://github.com/ohmyzsh/ohmyzsh/wiki/Cheatsheet
 # Expand alias -> C-x a
 
-# Unix
-alias ll="ls -alF"  # Detailed list with / for directories
-alias la="ls -A"    # List almost all files, excluding . and ..
-alias l="ls -CF"    # Compact list
-alias ln="ln -v"
-alias mkdir="mkdir -p"
-alias e="$EDITOR"
-alias v="$VISUAL"
-alias ..="cd .."
-alias ...="cd ../.."
+# =============================================================================
+# Aliases personalizados para el sistema
+# =============================================================================
 
-# Systems
-alias sysinfo="~/dotfiles/scripts/system_info.sh"
+# ------------------------------------
+# Unix - Comandos básicos del sistema
+# ------------------------------------
+alias ll="ls -alF"      # Lista detallada con / para directorios
+alias la="ls -A"        # Lista casi todos los archivos, excluyendo . y ..
+alias l="ls -CF"        # Lista compacta
+alias ln="ln -v"        # Crear enlaces simbólicos verboso
+alias mkdir="mkdir -p"  # Crear directorios con padres si es necesario
+alias e="$EDITOR"       # Abrir editor predeterminado
+alias v="$VISUAL"       # Abrir editor visual
+alias ..="cd .."        # Subir un nivel
+alias ...="cd ../.."    # Subir dos niveles
 
-# Función para manejar Apache
+# ------------------------------------
+# Información y gestión del sistema
+# ------------------------------------
+alias sysinfo="~/dotfiles/scripts/system_info.sh"  # Mostrar información del sistema
+alias path='echo $PATH | tr -s ":" "\n"'           # Mostrar PATH formateado
+alias htop="htop"                                  # Monitor de sistema
+alias ping="ping -c 5"                             # Ping limitado a 5 paquetes
+alias df="df -h"                                   # Mostrar uso de disco en formato legible
+alias free="free -h"                               # Mostrar uso de memoria en formato legible
+
+# Función para manejar Apache y MySQL/MariaDB
 restart_apache() {
   if command -v apache2 >/dev/null 2>&1; then
     sudo service apache2 restart
@@ -25,70 +38,122 @@ restart_apache() {
   fi
 }
 
+# Actualizaciones del sistema
 alias ups="sudo -v \
   && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y \
   && npm update -g codex 2>/dev/null \
   && omz update && upgrade_oh_my_zsh_custom \
   && restart_apache"
-alias gitups="~/dotfiles/scripts/clean_branches.sh \
-  && gbinfo"
 alias apachestart="sudo service apache2 restart && sudo service mariadb restart"
 
-# Logs
-alias lc="sudo truncate -s 0 /var/log/apache2/error.log"  # Clear Apache error log
+# Gestión de logs
+alias lc="sudo truncate -s 0 /var/log/apache2/error.log"  # Limpiar log de errores de Apache
 
-# Security
+# Seguridad y archivos
 alias ffl='find . -mtime -1 -printf "%p\t%TY-%Tm-%Td %TH:%TM\t%u\t%g\t%m\n" | column -t | less'
 alias files_user="find . -user www-data"
 alias lusers="cut -d: -f1 /etc/passwd | sort"
 
-# Pretty print the path
-alias path='echo $PATH | tr -s ":" "\n"'
+# =============================================================================
+# Git - Control de versiones
+# =============================================================================
 
-# Codex
-alias cx='codex'
+# ------------------------------------
+# Comandos básicos de Git
+# ------------------------------------
+alias gs="git status"                           # Estado del repositorio
+alias ga="git add"                              # Añadir archivo específico
+alias gaa="git add --all"                       # Añadir todos los archivos
+alias gc="git commit --no-template -m"          # Commit con mensaje (sin plantilla)
+alias gp="git push"                             # Push a remoto
+alias gl="git pull"                             # Pull desde remoto
+alias gco="git checkout"                        # Cambiar de rama
+alias gb="git branch"                           # Listar ramas
+alias gdf="git diff --color-words --word-diff=color"       # Diff con colores por palabra
+alias gdfc="git diff --color-words --word-diff=color -U3"  # Diff con más contexto
 
-# VSCode
-alias code.="code ."
-alias vs="code"
-
-# Docker
-alias dps="docker ps"
-alias di="docker images"
-alias drm="docker rm $(docker ps -a -q)"  # Remove stopped containers
-alias dri="docker rmi $(docker images -q)"  # Remove unused images
-alias dcompose="docker-compose"
-
-# Useful tools
-alias htop="htop"
-alias ping="ping -c 5"
-alias df="df -h"  # Show disk usage in human-readable format
-alias free="free -h"  # Show memory usage in human-readable format
-
-# Git
-alias gst="git status"
-alias gaa="git add --all"
-alias gcm="git commit -m"
-alias gco="git checkout"
+# ------------------------------------
+# Comandos avanzados de Git
+# ------------------------------------
+alias glog="git log --oneline --graph --decorate"  # Log gráfico compacto
+# Log detallado con gráfico
 alias glg="git log --graph --oneline --all --pretty=format:'%C(yellow)%h%Creset - %s %C(green)(%ad) %C(cyan)[%an]%Creset' --date=format:'%Y-%m-%d %H:%M:%S'"
-alias gdf="git diff --color-words --word-diff=color"
-alias gdfc="git diff --color-words --word-diff=color -U3"
-alias gpl="git pull"
-alias gps="git push"
-alias gb="git branch -v --sort=-committerdate --color"
+# Información detallada de ramas
 alias gbinfo="git for-each-ref --sort=-committerdate refs/heads/ --format='%(color:yellow)%(refname:short)%(color:reset) - %(color:green)%(committerdate:short)%(color:reset) - %(color:blue)%(authorname)%(color:reset) - %(contents:subject)'"
+# Limpiar ramas fusionadas
 alias gclean="git branch --merged | grep -v 'main\|master\|dev\|*' | xargs git branch -d"
+alias gitups="~/dotfiles/scripts/clean_branches.sh && gbinfo"  # Actualizar y limpiar
 
-# Alias for saving and pushing changes to GitHub
-#alias git-save='git add -A && git commit -m "chore: commit save point" && git push origin HEAD'
-alias git-save='~/dotfiles/scripts/git_save.sh'
+# ------------------------------------
+# Scripts personalizados de Git
+# ------------------------------------
+# Script mejorado para add, commit y push todo en uno
+alias git-save="~/dotfiles/scripts/git_save.sh"
+# Script para commit con formato convencional
+alias git-cc="~/dotfiles/scripts/git_commit_conventional.sh"
+# Actualizar repositorio (fetch, prune, pull)
+alias git-update="git fetch --prune --all && git pull"
 
-# Alias for fetching, pruning, and pulling changes
-alias git-update='git fetch --prune --all && git pull'
+# ------------------------------------
+# Funciones de Git
+# ------------------------------------
+# Función para add, commit y push rápido
+gsave() {
+  if [ $# -eq 0 ]; then
+    git add -A && git commit -m "chore: quick save" --no-template && git push
+  elif [ $# -eq 1 ]; then
+    git add -A && git commit -m "chore: $1" --no-template && git push
+  else
+    echo "Uso: gsave [descripción opcional]"
+  fi
+}
 
+# Función para commits con formato convencional
+gcommit() {
+  if [ $# -eq 2 ]; then
+    # gcommit <tipo> <descripción>
+    git commit -m "$1: $2" --no-template
+  elif [ $# -eq 3 ]; then
+    # gcommit <tipo> <scope> <descripción>
+    git commit -m "$1($2): $3" --no-template
+  else
+    echo "Uso: gcommit <tipo> <descripción>"
+    echo "      gcommit <tipo> <scope> <descripción>"
+    echo "Ejemplo: gcommit feat 'nueva funcionalidad'"
+    echo "         gcommit fix api 'corregir error de autenticación'"
+  fi
+}
+
+# =============================================================================
+# Herramientas y aplicaciones
+# =============================================================================
+
+# ------------------------------------
+# IDEs y editores
+# ------------------------------------
+alias code.="code ."  # Abrir VSCode en directorio actual
+alias vs="code"       # Atajo para VSCode
+
+# ------------------------------------
+# Docker
+# ------------------------------------
+alias dps="docker ps"                                # Listar contenedores
+alias di="docker images"                             # Listar imágenes
+alias drm="docker rm $(docker ps -a -q)"             # Eliminar contenedores parados
+alias dri="docker rmi $(docker images -q)"           # Eliminar imágenes sin usar
+alias dcompose="docker-compose"                      # Atajo para docker-compose
+
+# ------------------------------------
+# Específicos de proyectos
+# ------------------------------------
+alias cx="codex"  # Codex
+
+# Bases de datos
 alias create_goodreads_db='mysql -e "DROP DATABASE IF EXISTS goodreads; CREATE DATABASE goodreads; USE goodreads;" && mysql goodreads < ~/proyectos/goodreads/db/structure.sql'
 
-# Include custom aliases if they exist
+# =============================================================================
+# Inclusión de aliases locales (si existen)
+# =============================================================================
 if [[ -f ~/dotfiles-local/aliases.local ]]; then 
   source ~/dotfiles-local/aliases.local
 fi

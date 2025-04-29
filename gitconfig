@@ -38,8 +38,12 @@
   undo = reset HEAD~1 --mixed
   res = !git reset --hard
   done = !git push origin HEAD
-  save = !git add -A && git commit -m 'chore: commit save point'
+  # Reemplazado el alias 'save' por 'save-basic' para evitar conflictos
+  save-basic = !git add -A && git commit -m 'chore: commit save point' --no-template
+  # Para crear commits más detallados, usar el script git-save.sh
   del = branch -D
+  # Alias para commit rápido sin mostrar editor y sin usar plantilla
+  cm = !git commit -m
 [core]
   excludesfile = ~/.gitignore
 	autocrlf = false
@@ -72,4 +76,4 @@
 	required = true
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
-  process = git-lfs filter-process
+  process = git-lfs filter-process 
