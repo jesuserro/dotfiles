@@ -172,6 +172,9 @@ export EDITOR='nvim'
 
 export PATH=$PATH:$HOME/.local/bin
 
+# NPM Global
+export PATH=~/.npm-global/bin:$PATH
+
  # Configuración de Codex: vincula tus dotfiles/codex a los de ~/.codex
 if [ -d "$HOME/dotfiles/codex" ]; then
   mkdir -p "$HOME/.codex"

@@ -15,12 +15,21 @@ alias ...="cd ../.."
 # Systems
 alias sysinfo="~/dotfiles/scripts/system_info.sh"
 
+# Función para manejar Apache
+restart_apache() {
+  if command -v apache2 >/dev/null 2>&1; then
+    sudo service apache2 restart
+    sudo service mysql restart
+    sudo service apache2 status
+    sudo service mysql status
+  fi
+}
+
 alias ups="sudo -v \
   && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y \
-  && npm update -g codex \
+  && npm update -g codex 2>/dev/null \
   && omz update && upgrade_oh_my_zsh_custom \
-  && sudo service apache2 restart && sudo service mysql restart \
-  && sudo service apache2 status && sudo service mysql status"
+  && restart_apache"
 alias gitups="~/dotfiles/scripts/clean_branches.sh \
   && gbinfo"
 alias apachestart="sudo service apache2 restart && sudo service mariadb restart"
