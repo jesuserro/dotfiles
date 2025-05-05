@@ -4,6 +4,7 @@
 # Uso: git-save [tipo] [scope] [descripción]
 #      git-save [tipo] [descripción]
 #      git-save [descripción]
+#      git-save            # Sin parámetros, usa mensaje por defecto
 # Ejemplo: git-save chore save "workflow checkpoint"
 
 # Colores para mensajes
@@ -19,6 +20,7 @@ ALLOWED_TYPES=("feat" "fix" "docs" "style" "refactor" "perf" "test" "build" "ci"
 # Mostrar ayuda
 show_help() {
   echo -e "${BLUE}Uso de git-save:${NC}"
+  echo "  git-save                               # Commit rápido con mensaje por defecto"
   echo "  git-save <descripción>                 # Commit rápido con tipo 'chore'"
   echo "  git-save <tipo> <descripción>          # Commit con tipo específico"
   echo "  git-save <tipo> <scope> <descripción>  # Commit con tipo y scope específicos"
@@ -27,6 +29,7 @@ show_help() {
   printf "  %s\n" "${ALLOWED_TYPES[@]}"
   echo ""
   echo -e "${BLUE}Ejemplos:${NC}"
+  echo "  git-save"
   echo "  git-save \"actualizar configuración\""
   echo "  git-save feat \"agregar login con Google\""
   echo "  git-save fix api \"corregir error en endpoint de usuarios\""
@@ -48,12 +51,12 @@ validate_type() {
 
 # Main
 if [[ $# -eq 0 ]]; then
-  show_help
-  exit 0
-fi
-
-# Determinar el mensaje de commit según los argumentos
-if [[ $# -eq 1 ]]; then
+  # Caso 0: git-save (sin argumentos)
+  TYPE="chore"
+  SCOPE="save"
+  DESCRIPTION="workflow checkpoint"
+  COMMIT_MSG="${TYPE}(${SCOPE}): ${DESCRIPTION}"
+elif [[ $# -eq 1 ]]; then
   # Caso 1: git-save <descripción>
   TYPE="chore"
   SCOPE="save"
