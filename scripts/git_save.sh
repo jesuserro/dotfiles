@@ -51,7 +51,7 @@ validate_type() {
 
 # Verificar si hay cambios en el stage
 check_staged_changes() {
-  if git diff --cached --quiet; then
+  if git diff --staged --quiet; then
     return 1  # No hay cambios en stage
   else
     return 0  # Hay cambios en stage
@@ -134,4 +134,4 @@ fi
 
 echo -e "${GREEN}✅ Cambios guardados y enviados con éxito:${NC}"
 echo -e "  Mensaje: ${YELLOW}$COMMIT_MSG${NC}"
-echo -e "  Rama: ${YELLOW}$BRANCH${NC}" 
+echo -e "  Rama: ${YELLOW}$BRANCH${NC}" # Test comment
