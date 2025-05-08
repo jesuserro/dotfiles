@@ -49,6 +49,15 @@ validate_type() {
   return 1
 }
 
+# Verificar si hay cambios en el stage
+check_staged_changes() {
+  if git diff --cached --quiet; then
+    return 1  # No hay cambios en stage
+  else
+    return 0  # Hay cambios en stage
+  fi
+}
+
 # Main
 if [[ $# -eq 0 ]]; then
   # Caso 0: git-save (sin argumentos)
@@ -100,9 +109,13 @@ fi
 # Obtener la rama actual
 BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "HEAD detached")
 
-# Ejecutar los comandos git
-echo -e "${BLUE}🔄 Agregando archivos...${NC}"
-git add -A
+# Verificar si hay cambios en el stage
+if check_staged_changes; then
+  echo -e "${BLUE}📦 Hay cambios en el stage. Haciendo commit solo de estos cambios...${NC}"
+else
+  echo -e "${BLUE}🔄 No hay cambios en el stage. Agregando todos los cambios...${NC}"
+  git add -A
+fi
 
 echo -e "${BLUE}🔄 Haciendo commit con mensaje:${NC} $COMMIT_MSG"
 # Usar --no-template para ignorar la plantilla gitmessage
