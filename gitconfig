@@ -20,15 +20,15 @@
   # Nuevo alias para commits con formato
   commit-format = "!f() { git commit -m \"$1($2): $3\"; }; f"
   # Nuevos aliases para logs y diffs mejorados
-  prettylog = "!f() { base=${1:-dev}; git log --color=always --pretty=format:\"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset\" --date=format:\"%Y-%m-%d %H:%M\" --name-status --numstat \"$base\"..HEAD | tr -d '\\r' | sed '/^$/d'; }; f"
-  diffstat = "!f() { base=${1:-dev}; git diff --stat --color=always \"$base\"..HEAD | tr -d '\\r' | sed '/^$/d'; }; f"
+  prettylog = "!f() { base=${1:-dev}; echo '📋 Historial de commits desde' $base; git log --color=always --pretty=format:\"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset\" --date=format:\"%Y-%m-%d %H:%M\" --name-status --numstat \"$base\"..HEAD | tr -d '\\r' | sed '/^$/d'; }; f"
+  diffstat = "!f() { base=${1:-dev}; echo '📊 Estadísticas de cambios desde' $base; git diff --stat --color=always \"$base\"..HEAD | tr -d '\\r' | sed '/^$/d'; }; f"
   # Nuevos aliases para gestión de tags
-  taglist = "!git for-each-ref --sort=-creatordate --format='🎯 %(color:yellow)%(refname:short)%(color:reset) | %(color:green)%(creatordate:format:%Y-%m-%d %H:%M)%(color:reset) | %(color:blue)%(objectname:short)%(color:reset)' refs/tags | tr -d '\\r' | sed '/^$/d'"
+  taglist = "!git for-each-ref --sort=-creatordate --format='🏷️  %(color:yellow)%(refname:short)%(color:reset) | %(color:green)%(creatordate:format:%Y-%m-%d %H:%M)%(color:reset) | %(color:blue)%(objectname:short)%(color:reset)' refs/tags | tr -d '\\r' | sed '/^$/d'"
   tagsannotated = "tag -n99"
-  tagshow = "!f() { if [ -z \"$1\" ]; then echo 'Uso: git tagshow <tag>'; echo 'Ejemplo: git tagshow v1.0.0'; else git show --color=always \"$1\" | tr -d '\\r' | sed '/^$/d'; fi; }; f"
+  tagshow = "!f() { if [ -z \"$1\" ]; then echo '📝 Uso: git tagshow <tag>'; echo '📌 Ejemplo: git tagshow v1.0.0'; else echo '🔍 Detalles del tag:' $1; git show --color=always \"$1\" | tr -d '\\r' | sed '/^$/d'; fi; }; f"
   # Nuevos aliases para comparación de ramas
-  prettysince = "!f() { base=${1:-dev}; echo '🟢 Commits en tu rama desde' $base; git log --color=always --pretty=format:\"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset\" --date=format:\"%Y-%m-%d %H:%M\" --name-status --numstat \"$base\"..HEAD | tr -d '\\r' | sed '/^$/d'; }; f"
-  prettyuntil = "!f() { base=${1:-dev}; echo '🔴 Commits en' $base 'que te faltan'; git log --color=always --pretty=format:\"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset\" --date=format:\"%Y-%m-%d %H:%M\" --name-status --numstat HEAD..\"$base\" | tr -d '\\r' | sed '/^$/d'; }; f"
+  prettysince = "!f() { base=${1:-dev}; echo '🟢 Commits en tu rama desde' $base '(lo que has añadido)'; git log --color=always --pretty=format:\"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset\" --date=format:\"%Y-%m-%d %H:%M\" --name-status --numstat \"$base\"..HEAD | tr -d '\\r' | sed '/^$/d'; }; f"
+  prettyuntil = "!f() { base=${1:-dev}; echo '🔴 Commits en' $base 'que te faltan (lo que necesitas actualizar)'; git log --color=always --pretty=format:\"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset\" --date=format:\"%Y-%m-%d %H:%M\" --name-status --numstat HEAD..\"$base\" | tr -d '\\r' | sed '/^$/d'; }; f"
 
   # Branch management
   br = branch --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(contents:subject) %(color:green)(%(committerdate:relative)) [%(authorname)]' --sort=-committerdate
