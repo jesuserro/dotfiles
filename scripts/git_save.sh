@@ -61,7 +61,7 @@ check_staged_changes() {
 # Función para mostrar los archivos modificados
 show_modified_files() {
   echo -e "${BLUE}📝 Archivos modificados:${NC}"
-  git diff --name-status | while read status file; do
+  git diff --name-status --staged | while read status file; do
     case $status in
       A) echo -e "  ${GREEN}A${NC} $file" ;;  # Added
       M) echo -e "  ${YELLOW}M${NC} $file" ;;  # Modified
