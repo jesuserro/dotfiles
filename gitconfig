@@ -20,7 +20,7 @@
   # Nuevo alias para commits con formato
   commit-format = "!f() { git commit -m \"$1($2): $3\"; }; f"
   # Nuevos aliases para logs y diffs mejorados
-  prettylog = "!f() { base=${1:-dev}; echo '📋 Historial de commits desde' $base; git log --color=always --pretty=format:\"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset\" --date=format:\"%Y-%m-%d %H:%M\" --name-status --numstat \"$base\"..HEAD | tr -d '\\r' | sed '/^$/d'; }; f"
+  prettylog = "!f() { base=${1:-dev}; echo '📋 Historial de commits desde' $base; git log --color=always --pretty=format:\"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset\" --date=format:\"%Y-%m-%d %H:%M\" --name-status --numstat \"$base\"..HEAD | tr -d '\\r' | sed '/^$/d' | sed -e 's/^A\t/\\x1b[32mA\\x1b[0m\t/g' -e 's/^M\t/\\x1b[33mM\\x1b[0m\t/g' -e 's/^D\t/\\x1b[31mD\\x1b[0m\t/g' -e 's/^R\\([0-9]*\\)\t/\\x1b[34mR\\1\\x1b[0m\t/g' -e 's/^C\t/\\x1b[34mC\\x1b[0m\t/g'; }; f"
   diffstat = "!f() { base=${1:-dev}; echo '📊 Estadísticas de cambios desde' $base; git diff --stat --color=always \"$base\"..HEAD | tr -d '\\r' | sed '/^$/d'; }; f"
   # Nuevos aliases para gestión de tags
   taglist = "!git for-each-ref --sort=-creatordate --format='🏷️  %(color:yellow)%(refname:short)%(color:reset) | %(color:green)%(creatordate:format:%Y-%m-%d %H:%M)%(color:reset) | %(color:blue)%(objectname:short)%(color:reset)' refs/tags | tr -d '\\r' | sed '/^$/d'"
