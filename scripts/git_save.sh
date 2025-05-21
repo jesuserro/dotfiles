@@ -58,6 +58,21 @@ check_staged_changes() {
   fi
 }
 
+# Función para mostrar los archivos modificados
+show_modified_files() {
+  echo -e "${BLUE}📝 Archivos modificados:${NC}"
+  git diff --name-status | while read status file; do
+    case $status in
+      A) echo -e "  ${GREEN}A${NC} $file" ;;  # Added
+      M) echo -e "  ${YELLOW}M${NC} $file" ;;  # Modified
+      D) echo -e "  ${RED}D${NC} $file" ;;  # Deleted
+      R*) echo -e "  ${BLUE}R${NC} $file" ;;  # Renamed
+      C*) echo -e "  ${BLUE}C${NC} $file" ;;  # Copied
+      *) echo -e "  $status $file" ;;
+    esac
+  done
+}
+
 # Main
 if [[ $# -eq 0 ]]; then
   # Caso 0: git-save (sin argumentos)
@@ -118,6 +133,8 @@ else
 fi
 
 echo -e "${BLUE}🔄 Haciendo commit con mensaje:${NC} $COMMIT_MSG"
+# Mostrar archivos modificados antes del commit
+show_modified_files
 # Usar --no-template para ignorar la plantilla gitmessage
 if ! git commit -m "$COMMIT_MSG" --no-template; then
   echo -e "${RED}❌ Error al hacer commit${NC}"
