@@ -17,6 +17,8 @@
   ps = push
   merge-cleanup = "!bash ~/dotfiles/scripts/git_merge_feature_to_dev_and_main.sh"
   start-feature = "!bash ~/dotfiles/scripts/git_start_feature.sh"
+  # Alias para cherry-pick de commits de Codex
+  codexpick = "!bash ~/dotfiles/scripts/git_codex_pick.sh"
   # Nuevo alias para commits con formato
   commit-format = "!f() { git commit -m \"$1($2): $3\"; }; f"
   # Nuevos aliases para logs y diffs mejorados
