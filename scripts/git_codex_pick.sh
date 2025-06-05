@@ -33,15 +33,21 @@ if [[ -n $(git status --porcelain) ]]; then
   exit 1
 fi
 
-# 🔍 Verificar si el commit existe
-if ! git rev-parse --verify "$COMMIT_HASH" >/dev/null 2>&1; then
+# 🔍 Verificar si el commit existe y obtener el hash completo
+FULL_HASH=$(git rev-parse --verify "$COMMIT_HASH" 2>/dev/null)
+if [ $? -ne 0 ]; then
   echo -e "${RED}❗ El commit '$COMMIT_HASH' no existe.${NC}"
   exit 1
 fi
 
+# Si el hash proporcionado es abreviado, mostrar el hash completo
+if [ "$COMMIT_HASH" != "$FULL_HASH" ]; then
+  echo -e "${BLUE}ℹ️  Hash abreviado detectado. Hash completo: ${YELLOW}$FULL_HASH${NC}"
+fi
+
 # 🔄 Realizar el cherry-pick
-echo -e "${BLUE}🔄 Aplicando cambios del commit '$COMMIT_HASH'...${NC}"
-if ! git cherry-pick -n "$COMMIT_HASH"; then
+echo -e "${BLUE}🔄 Aplicando cambios del commit '$FULL_HASH'...${NC}"
+if ! git cherry-pick -n "$FULL_HASH"; then
   echo -e "${RED}❗ Error al aplicar el cherry-pick.${NC}"
   echo -e "${YELLOW}💡 Sugerencia: Resuelve los conflictos manualmente si los hay.${NC}"
   exit 1
