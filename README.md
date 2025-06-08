@@ -160,6 +160,31 @@ Features:
 - Shows clear error messages
 - Suggests solutions when there are conflicts
 
+### 🔍 Localizar el hash de un commit en una rama remota de Codex
+
+Para localizar el hash de un commit en una rama remota de Codex, puedes usar los siguientes comandos:
+
+```shell
+# 1. Actualizar la información de las ramas remotas
+git fetch origin
+
+# 2. Ver el último commit de la rama remota de Codex
+git log origin/codex/nombre-de-la-rama -1
+
+# 3. Ver todos los commits de la rama remota de Codex
+git log origin/codex/nombre-de-la-rama
+
+# 4. Ver los commits de forma más compacta
+git log --oneline origin/codex/nombre-de-la-rama
+```
+
+Características:
+- Muestra el hash completo del commit
+- Incluye el mensaje del commit
+- Muestra la fecha y el autor
+- Permite ver el historial completo de commits en la rama
+- Formato compacto disponible con `--oneline`
+
 ### 📝 git-save
 
 Enhanced script to perform add, commit, and push in a single command, with messages formatted according to the conventional standard.
