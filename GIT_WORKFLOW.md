@@ -77,6 +77,29 @@ Los siguientes alias están configurados en `~/.gitconfig`:
   
   # Muestra la guía de workflow
   workflow = "!bash ~/dotfiles/scripts/git_workflow.sh"
+  
+  # Scripts personalizados
+  save = "!bash ~/dotfiles/scripts/git_save.sh"
+  cc = "!bash ~/dotfiles/scripts/git_cc.sh"
+  update = "fetch --prune --all && pull"
+  
+  # Comandos básicos
+  gs = status
+  ga = add
+  gaa = add --all
+  gc = commit --no-template -m
+  gp = push
+  gl = pull
+  gco = checkout
+  gb = branch
+  gdf = diff --color-words --word-diff=color
+  gdfc = diff --color-words --word-diff=color -U3
+  
+  # Comandos avanzados
+  glog = log --oneline --graph --decorate
+  glg = log --graph --oneline --all --pretty=format:'%C(yellow)%h%Creset - %s %C(green)(%ad) %C(cyan)[%an]%Creset' --date=format:'%Y-%m-%d %H:%M:%S'
+  gbinfo = for-each-ref --sort=-committerdate refs/heads/ --format='%(color:yellow)%(refname:short)%(color:reset) - %(color:green)%(committerdate:short)%(color:reset) - %(color:blue)%(authorname)%(color:reset) - %(contents:subject)'
+  gclean = !sh -c 'git branch --merged | grep -v "main\\|master\\|dev\\|*" | xargs git branch -d'
 ```
 
 ## 📝 Ejemplos de Uso

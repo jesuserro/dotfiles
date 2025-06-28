@@ -59,43 +59,13 @@ alias lusers="cut -d: -f1 /etc/passwd | sort"
 # =============================================================================
 
 # ------------------------------------
-# Comandos básicos de Git
+# Comandos de Git que requieren shell (no se pueden mover a gitconfig)
 # ------------------------------------
-alias gs="git status"                           # Estado del repositorio
-alias ga="git add"                              # Añadir archivo específico
-alias gaa="git add --all"                       # Añadir todos los archivos
-alias gc="git commit --no-template -m"          # Commit con mensaje (sin plantilla)
-alias gp="git push"                             # Push a remoto
-alias gl="git pull"                             # Pull desde remoto
-alias gco="git checkout"                        # Cambiar de rama
-alias gb="git branch"                           # Listar ramas
-alias gdf="git diff --color-words --word-diff=color"       # Diff con colores por palabra
-alias gdfc="git diff --color-words --word-diff=color -U3"  # Diff con más contexto
+# Actualizar repositorio con limpieza de ramas
+alias gitups="~/dotfiles/scripts/clean_branches.sh && gbinfo"
 
 # ------------------------------------
-# Comandos avanzados de Git
-# ------------------------------------
-alias glog="git log --oneline --graph --decorate"  # Log gráfico compacto
-# Log detallado con gráfico
-alias glg="git log --graph --oneline --all --pretty=format:'%C(yellow)%h%Creset - %s %C(green)(%ad) %C(cyan)[%an]%Creset' --date=format:'%Y-%m-%d %H:%M:%S'"
-# Información detallada de ramas
-alias gbinfo="git for-each-ref --sort=-committerdate refs/heads/ --format='%(color:yellow)%(refname:short)%(color:reset) - %(color:green)%(committerdate:short)%(color:reset) - %(color:blue)%(authorname)%(color:reset) - %(contents:subject)'"
-# Limpiar ramas fusionadas
-alias gclean="git branch --merged | grep -v 'main\|master\|dev\|*' | xargs git branch -d"
-alias gitups="~/dotfiles/scripts/clean_branches.sh && gbinfo"  # Actualizar y limpiar
-
-# ------------------------------------
-# Scripts personalizados de Git
-# ------------------------------------
-# Script mejorado para add, commit y push todo en uno
-alias git-save="~/dotfiles/scripts/git_save.sh"
-# Script para commit con formato convencional
-alias git-cc="~/dotfiles/scripts/git_commit_conventional.sh"
-# Actualizar repositorio (fetch, prune, pull)
-alias git-update="git fetch --prune --all && git pull"
-
-# ------------------------------------
-# Funciones de Git
+# Funciones de Git (no se pueden mover a gitconfig)
 # ------------------------------------
 # Función para add, commit y push rápido
 gsave() {
