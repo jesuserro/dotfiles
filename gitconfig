@@ -21,6 +21,10 @@
   codexpick = "!bash ~/dotfiles/scripts/git_codex_pick.sh"
   # Nuevo alias para commits con formato
   commit-format = "!f() { git commit -m \"$1($2): $3\"; }; f"
+  # Nuevos aliases para la nueva política de ramas
+  feat = "!f() { TOP=$(git rev-parse --show-toplevel); bash \"$TOP/scripts/finish_feature.sh\" \"$@\"; }; f"
+  rel = "!f() { TOP=$(git rev-parse --show-toplevel); bash \"$TOP/scripts/release_dev_to_main.sh\" \"$@\"; }; f"
+  workflow = "!bash ~/dotfiles/scripts/git_workflow_guide.sh"
   # Nuevos aliases para logs y diffs mejorados
   prettylog = "!f() { base=${1:-dev}; echo '📋 Historial de commits desde' $base; git log --color=always --pretty=format:\"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset\" --date=format:\"%Y-%m-%d %H:%M\" --name-status --numstat \"$base\"..HEAD | tr -d '\\r' | sed '/^$/d' | sed -e 's/^A\t/\\x1b[32mA\\x1b[0m\t/g' -e 's/^M\t/\\x1b[33mM\\x1b[0m\t/g' -e 's/^D\t/\\x1b[31mD\\x1b[0m\t/g' -e 's/^R\\([0-9]*\\)\t/\\x1b[34mR\\1\\x1b[0m\t/g' -e 's/^C\t/\\x1b[34mC\\x1b[0m\t/g'; }; f"
   diffstat = "!f() { base=${1:-dev}; echo '📊 Estadísticas de cambios desde' $base; git diff --stat --color=always \"$base\"..HEAD | tr -d '\\r' | sed '/^$/d'; }; f"
