@@ -21,7 +21,7 @@ Esta documentación describe la nueva política de ramas y workflow de Git imple
 
 ## 🛠️ Scripts Disponibles
 
-### `scripts/finish_feature.sh`
+### `scripts/git_feat.sh`
 Integra una rama feature en `dev` y la archiva.
 
 **Uso:**
@@ -38,7 +38,7 @@ git feat <nombre-feature>
 - ✅ Archiva la rama feature como `archive/feature/nombre`
 - ✅ Elimina la rama original del remoto
 
-### `scripts/release_dev_to_main.sh`
+### `scripts/git_rel.sh`
 Publica `dev` en `main` y crea un tag de versión.
 
 **Uso:**
@@ -55,7 +55,7 @@ git rel 2.1.0        # Versión específica v2.1.0
 - ✅ Crea tag de versión (automática o específica)
 - ✅ Push de cambios y tag
 
-### `scripts/git_workflow_guide.sh`
+### `scripts/git_workflow.sh`
 Muestra la guía completa del workflow.
 
 **Uso:**
@@ -70,13 +70,13 @@ Los siguientes alias están configurados en `~/.gitconfig`:
 ```ini
 [alias]
   # Integra feature en dev
-  feat = "!f() { TOP=$(git rev-parse --show-toplevel); bash \"$TOP/scripts/finish_feature.sh\" \"$@\"; }; f"
+  feat = "!f() { TOP=$(git rev-parse --show-toplevel); bash \"$TOP/scripts/git_feat.sh\" \"$@\"; }; f"
   
   # Publica release de dev → main
-  rel = "!f() { TOP=$(git rev-parse --show-toplevel); bash \"$TOP/scripts/release_dev_to_main.sh\" \"$@\"; }; f"
+  rel = "!f() { TOP=$(git rev-parse --show-toplevel); bash \"$TOP/scripts/git_rel.sh\" \"$@\"; }; f"
   
   # Muestra la guía de workflow
-  workflow = "!bash ~/dotfiles/scripts/git_workflow_guide.sh"
+  workflow = "!bash ~/dotfiles/scripts/git_workflow.sh"
 ```
 
 ## 📝 Ejemplos de Uso
