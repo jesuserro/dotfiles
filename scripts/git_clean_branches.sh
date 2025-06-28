@@ -170,13 +170,13 @@ echo -e "${CYAN}📋 Resumen de limpieza:${NC}"
 echo -e "${BLUE}┌─────────────────────────────────────────────────────────────┐${NC}"
 echo -e "${BLUE}│ Tipo de Rama    │ Locales │ Remotas │ Total │${NC}"
 echo -e "${BLUE}├─────────────────┼─────────┼─────────┼───────┤${NC}"
-echo -e "${BLUE}│ codex/          │ ${total_local_codex:>7} │ ${total_remote_codex:>7} │ ${total_local_codex:>5} │${NC}"
-echo -e "${BLUE}│ archive/        │ ${total_local_archive:>7} │ ${total_remote_archive:>7} │ ${total_local_archive:>5} │${NC}"
+printf "${BLUE}│ codex/          │ %7d │ %7d │ %5d │${NC}\n" $total_local_codex $total_remote_codex $total_local_codex
+printf "${BLUE}│ archive/        │ %7d │ %7d │ %5d │${NC}\n" $total_local_archive $total_remote_archive $total_local_archive
 echo -e "${BLUE}├─────────────────┼─────────┼─────────┼───────┤${NC}"
 local_total=$((total_local_codex + total_local_archive))
 remote_total=$((total_remote_codex + total_remote_archive))
 grand_total=$((local_total + remote_total))
-echo -e "${BLUE}│ TOTAL           │ ${local_total:>7} │ ${remote_total:>7} │ ${grand_total:>5} │${NC}"
+printf "${BLUE}│ TOTAL           │ %7d │ %7d │ %5d │${NC}\n" $local_total $remote_total $grand_total
 echo -e "${BLUE}└─────────────────┴─────────┴─────────┴───────┘${NC}"
 
 echo ""
