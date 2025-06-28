@@ -83,6 +83,7 @@
   save = !bash ~/dotfiles/scripts/git_save.sh
   cc = !bash ~/dotfiles/scripts/git_cc.sh
   update = fetch --prune --all && pull
+  clean-branches = "!f() { TOP=$(git rev-parse --show-toplevel); if [ -x \"$TOP/scripts/git_clean_branches.sh\" ]; then bash \"$TOP/scripts/git_clean_branches.sh\" \"$@\"; else echo '⚠️  Advertencia: El script git_clean_branches.sh no tiene permisos de ejecución. Ejecuta: chmod +x scripts/git_clean_branches.sh'; fi; }; f"
 [core]
   excludesfile = ~/.gitignore
 	autocrlf = false
