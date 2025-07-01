@@ -4,7 +4,6 @@
 set -e
 
 # 📦 Configuración básica
-INPUT_NAME="$1"                        # Nombre de la feature recibido por parámetro
 DEV_BRANCH="dev"                      # Rama de desarrollo
 FEATURE_PREFIX="feature/"            # Prefijo estándar para ramas de features
 FEATURE_BRANCH=""                    # Rama feature final a usar (resuelta más abajo)
@@ -19,6 +18,8 @@ NC='\033[0m' # Sin color
 
 # 🔍 Procesar argumentos
 process_arguments() {
+  local input_name=""
+  
   while [[ $# -gt 0 ]]; do
     case $1 in
       --help|-h)
@@ -38,8 +39,8 @@ process_arguments() {
         exit 0
         ;;
       *)
-        if [ -z "$INPUT_NAME" ]; then
-          INPUT_NAME="$1"
+        if [ -z "$input_name" ]; then
+          input_name="$1"
         else
           echo -e "${RED}❗ Argumento desconocido: $1${NC}"
           echo -e "${BLUE}💡 Usa 'git feat --help' para ver las opciones${NC}"
@@ -49,10 +50,12 @@ process_arguments() {
         ;;
     esac
   done
+  
+  echo "$input_name"
 }
 
-# Procesar argumentos
-process_arguments "$@"
+# Procesar argumentos y obtener el nombre de la feature
+INPUT_NAME=$(process_arguments "$@")
 
 # ✅ Validación: debe ejecutarse dentro de un repositorio Git
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
