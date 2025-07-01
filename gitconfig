@@ -28,6 +28,8 @@
   # Nuevos aliases para logs y diffs mejorados
   prettylog = "!bash ~/dotfiles/scripts/git_prettylog.sh"
   diffstat = "!bash ~/dotfiles/scripts/git_diffstat.sh"
+  # Nuevo alias para generación de changelogs
+  changelog = "!bash ~/dotfiles/scripts/git_changelog.sh"
   # Nuevos aliases para gestión de tags
   taglist = "!git for-each-ref --sort=-creatordate --format='🏷️  %(color:yellow)%(refname:short)%(color:reset) | %(color:green)%(creatordate:format:%Y-%m-%d %H:%M)%(color:reset) | %(color:blue)%(objectname:short)%(color:reset)' refs/tags | tr -d '\\r' | sed '/^$/d'"
   tagsannotated = "tag -n99"

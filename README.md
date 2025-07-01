@@ -268,6 +268,70 @@ git rel --help
 - Option to skip tests completely with `--force` or `--skip-tests`
 - Provides helpful suggestions for test configuration
 
+**Changelog Generation:**
+- Automatically generates changelogs for each release
+- Creates individual changelog files in `releases/` directory
+- Updates main `CHANGELOG.md` with recent releases
+- Categorizes commits by type (feat, fix, docs, etc.)
+- Maintains last 5 releases in main changelog
+
+### 📝 git changelog
+
+Generates professional changelogs for releases, categorizing commits and maintaining both individual release files and a main changelog.
+
+```shell
+# Generate changelog for a specific tag (auto-detects previous tag)
+git changelog v1.2.3
+
+# Generate changelog between two specific tags
+git changelog v1.2.3 v1.2.2
+
+# Show help
+git changelog --help
+```
+
+**Features:**
+- Automatically detects previous tag if not specified
+- Categorizes commits by type (feat, fix, docs, chore, etc.)
+- Creates individual changelog files in `releases/` directory
+- Updates main `CHANGELOG.md` with recent releases
+- Maintains professional formatting and structure
+- Supports Conventional Commits format
+
+**Generated Structure:**
+```
+proyecto/
+├── CHANGELOG.md                    # Last 5 releases (quick view)
+└── releases/                       # Complete history by release
+    ├── v2024.01.15_1430.md
+    ├── v2024.01.20_0915.md
+    └── v2024.01.25_1645.md
+```
+
+**Example Output:**
+```markdown
+# Release v2024.01.15_1430
+
+**Fecha:** 2024-01-15
+
+## Changes
+
+### Added
+- feat(auth): implement OAuth2 authentication system
+- feat(api): add user profile management endpoints
+
+### Fixed
+- fix(mobile): resolve login timeout issue
+
+### Chores
+- chore(deps): update security dependencies
+
+## Technical Details
+- Tag: v2024.01.15_1430
+- Previous tag: v2024.01.10_0915
+- Total commits: 15
+```
+
 ### 📝 git-save
 
 Enhanced script to perform add, commit, and push in a single command, with messages formatted according to the conventional standard.

@@ -428,6 +428,14 @@ git tag "$TAG_NAME"
 git push origin "$TAG_NAME"
 echo -e "${GREEN}✅ Tag '${TAG_NAME}' creado y subido.${NC}"
 
+# 📝 Paso 4: Generar changelogs
+echo -e "${YELLOW}📝 Generando changelogs...${NC}"
+if bash ~/dotfiles/scripts/git_changelog.sh "$TAG_NAME"; then
+  echo -e "${GREEN}✅ Changelogs generados exitosamente${NC}"
+else
+  echo -e "${YELLOW}⚠️  Error generando changelogs, pero el release se completó${NC}"
+fi
+
 # 🎉 Fin del proceso
 echo -e "${GREEN}🎉 ¡Release completado exitosamente!${NC}"
 echo -e "${BLUE}📋 Resumen:${NC}"
@@ -438,4 +446,5 @@ if [ "$SKIP_TESTS" = true ]; then
 else
   echo -e "  • Tests ejecutados ✅"
 fi
+echo -e "  • Changelogs generados ✅"
 echo -e "${BLUE}💡 Próximo paso: Deploy a producción${NC}" 
