@@ -22,8 +22,8 @@
   # Nuevo alias para commits con formato
   commit-format = "!f() { git commit -m \"$1($2): $3\"; }; f"
   # Nuevos aliases para la nueva política de ramas
-  feat = "!f() { TOP=$(git rev-parse --show-toplevel); bash \"$TOP/scripts/git_feat.sh\" \"$@\"; }; f"
-  rel = "!f() { TOP=$(git rev-parse --show-toplevel); bash \"$TOP/scripts/git_rel.sh\" \"$@\"; }; f"
+  feat = "!bash ~/dotfiles/scripts/git_feat.sh"
+  rel = "!bash ~/dotfiles/scripts/git_rel.sh"
   workflow = "!bash ~/dotfiles/scripts/git_workflow.sh"
   # Nuevos aliases para logs y diffs mejorados
   prettylog = "!bash ~/dotfiles/scripts/git_prettylog.sh"

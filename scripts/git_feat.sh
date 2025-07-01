@@ -17,6 +17,43 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # Sin color
 
+# 🔍 Procesar argumentos
+process_arguments() {
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --help|-h)
+        echo -e "${BLUE}📖 Uso: git feat <nombre-feature>${NC}"
+        echo -e "${BLUE}📖 Descripción: Integra una rama feature en dev y la archiva${NC}"
+        echo -e "${BLUE}📖 Ejemplos:${NC}"
+        echo -e "  git feat mi-nueva-funcionalidad     # Rama 'feature/mi-nueva-funcionalidad'"
+        echo -e "  git feat feature/login-system       # Rama 'feature/login-system'"
+        echo -e "  git feat login-system               # Rama 'feature/login-system'"
+        echo -e "${BLUE}📖 Opciones:${NC}"
+        echo -e "  --help, -h                          # Mostrar esta ayuda"
+        echo -e "${BLUE}📖 Flujo:${NC}"
+        echo -e "  1. Se mueve a rama 'dev'"
+        echo -e "  2. Hace merge de tu feature en dev"
+        echo -e "  3. Archiva tu rama feature"
+        echo -e "  4. Termina en rama 'dev'"
+        exit 0
+        ;;
+      *)
+        if [ -z "$INPUT_NAME" ]; then
+          INPUT_NAME="$1"
+        else
+          echo -e "${RED}❗ Argumento desconocido: $1${NC}"
+          echo -e "${BLUE}💡 Usa 'git feat --help' para ver las opciones${NC}"
+          exit 1
+        fi
+        shift
+        ;;
+    esac
+  done
+}
+
+# Procesar argumentos
+process_arguments "$@"
+
 # ✅ Validación: debe ejecutarse dentro de un repositorio Git
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo -e "${RED}❌ No estás dentro de un repositorio Git.${NC}"
@@ -108,8 +145,8 @@ echo -e "${YELLOW}🚀 Integrando feature '${INPUT_NAME}' en dev...${NC}"
 # 📛 Validación de argumentos
 if [ -z "$INPUT_NAME" ]; then
   echo -e "${RED}❗ ERROR: Debes pasar el nombre de la rama feature como argumento.${NC}"
-  echo "👉 Ejemplo: ./finish_feature.sh adding-dbt"
-  echo "👉 O usar: git feat adding-dbt"
+  echo "👉 Ejemplo: git feat mi-nueva-funcionalidad"
+  echo "👉 O usa: git feat --help"
   exit 1
 fi
 
