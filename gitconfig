@@ -23,13 +23,15 @@
   commit-format = "!f() { git commit -m \"$1($2): $3\"; }; f"
   # Nuevos aliases para la nueva política de ramas
   feat = "!bash ~/dotfiles/scripts/git_feat.sh"
+  feat-help = "!bash ~/dotfiles/scripts/git_feat.sh --help"
   rel = "!bash ~/dotfiles/scripts/git_rel.sh"
+  rel-help = "!bash ~/dotfiles/scripts/git_rel.sh --help"
   workflow = "!bash ~/dotfiles/scripts/git_workflow.sh"
   # Nuevos aliases para logs y diffs mejorados
-  prettylog = "!bash ~/dotfiles/scripts/git_prettylog.sh"
-  diffstat = "!bash ~/dotfiles/scripts/git_diffstat.sh"
+  prettylog = "!f() { bash ~/dotfiles/scripts/git_prettylog.sh \"$@\"; }; f"
+  diffstat = "!f() { bash ~/dotfiles/scripts/git_diffstat.sh \"$@\"; }; f"
   # Nuevo alias para generación de changelogs
-  changelog = "!bash ~/dotfiles/scripts/git_changelog.sh"
+  changelog = "!f() { bash ~/dotfiles/scripts/git_changelog.sh \"$@\"; }; f"
   # Nuevos aliases para gestión de tags
   taglist = "!git for-each-ref --sort=-creatordate --format='🏷️  %(color:yellow)%(refname:short)%(color:reset) | %(color:green)%(creatordate:format:%Y-%m-%d %H:%M)%(color:reset) | %(color:blue)%(objectname:short)%(color:reset)' refs/tags | tr -d '\\r' | sed '/^$/d'"
   tagsannotated = "tag -n99"
