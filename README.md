@@ -127,7 +127,9 @@ Creates a new feature branch from dev, pushes it to the remote, and checks it ou
 git start-feature 33-export-csv
 ```
 
-### 🧼 git merge-cleanup
+### 🧼 git merge-cleanup (DEPRECATED)
+
+**⚠️  This command has been deprecated and replaced by `git feat`.**
 
 Merges dev into main, then merges your feature branch into dev, and finally deletes the feature branch (both locally and remotely).
 You can pass the feature name with or without the feature/ prefix.
@@ -137,6 +139,8 @@ git merge-cleanup 33-export-csv
 # or
 git merge-cleanup feature/33-export-csv
 ```
+
+**Migration:** Use `git feat` instead for the new workflow.
 
 ### 🤖 git codexpick
 
@@ -184,6 +188,85 @@ Características:
 - Muestra la fecha y el autor
 - Permite ver el historial completo de commits en la rama
 - Formato compacto disponible con `--oneline`
+
+### 🚀 git feat
+
+Integrates a feature branch into dev, archives the feature branch, and cleans up. This is the new workflow command that replaces the old `git merge-cleanup`.
+
+```shell
+# From any branch (including your feature branch)
+git feat mi-nueva-funcionalidad
+
+# The script automatically:
+# 1. Moves to dev branch
+# 2. Pulls latest changes from dev
+# 3. Merges your feature into dev
+# 4. Archives your feature branch as archive/feature/mi-nueva-funcionalidad
+# 5. Deletes the original feature branch from remote
+# 6. Ends up in dev branch
+```
+
+**Features:**
+- Works from any branch (automatically switches to dev)
+- Detects feature branches with or without `feature/` prefix
+- Checks for potential conflicts before merging
+- Archives feature branches instead of deleting them completely
+- Provides clear error messages and suggestions
+- Validates clean working directory
+
+**Conflict Handling:**
+- Detects potential conflicts before merging
+- If conflicts occur during merge, provides clear instructions
+- Allows manual conflict resolution with helpful guidance
+
+### 🎯 git rel
+
+Creates a release by merging dev into main, running tests, and creating a version tag. This is the new workflow command for production releases.
+
+```shell
+# Release with automatic version (vYYYY.MM.DD_HHMM)
+git rel
+
+# Release with specific version
+git rel 1.2.3
+
+# Release skipping tests (when tests are failing)
+git rel --force
+# or
+git rel --skip-tests
+
+# Release with specific version and skipping tests
+git rel 1.2.3 --force
+
+# Show help
+git rel --help
+```
+
+**Features:**
+- Works from any branch (automatically switches to main)
+- Runs tests automatically (detects multiple frameworks)
+- Creates version tags automatically
+- Supports manual version specification
+- Provides options to skip tests when needed
+- Interactive conflict resolution
+
+**Supported Test Frameworks:**
+- Node.js (`npm test`)
+- Python (`pytest`)
+- Java/Maven (`mvn test`)
+- Java/Gradle (`./gradlew test`)
+- Rust (`cargo test`)
+- Go (`go test ./...`)
+- PHP (`composer test`)
+- Ruby (`bundle exec rspec`)
+- Makefile (`make test` or `make tests`)
+- Custom scripts (`scripts/test.sh`)
+
+**Test Handling:**
+- Automatically detects and runs tests
+- If tests fail, asks if you want to continue
+- Option to skip tests completely with `--force` or `--skip-tests`
+- Provides helpful suggestions for test configuration
 
 ### 📝 git-save
 

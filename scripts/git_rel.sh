@@ -8,6 +8,7 @@ VERSION="$1"                          # Versión opcional recibida por parámetr
 DEV_BRANCH="dev"                      # Rama de desarrollo
 MAIN_BRANCH="main"                    # Rama principal de producción
 TAG_PREFIX="v"                        # Prefijo para tags de versión
+SKIP_TESTS=false                      # Flag para saltar tests
 
 # 🎨 Colores para el output en consola
 GREEN='\033[0;32m'
@@ -15,6 +16,43 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # Sin color
+
+# 🔍 Procesar argumentos
+process_arguments() {
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --force|--skip-tests)
+        SKIP_TESTS=true
+        shift
+        ;;
+      --help|-h)
+        echo -e "${BLUE}📖 Uso: git rel [versión] [opciones]${NC}"
+        echo -e "${BLUE}📖 Ejemplos:${NC}"
+        echo -e "  git rel                    # Release con versión automática"
+        echo -e "  git rel 1.2.3              # Release con versión específica"
+        echo -e "  git rel --force            # Release saltando tests"
+        echo -e "  git rel 1.2.3 --skip-tests # Release con versión y saltando tests"
+        echo -e "${BLUE}📖 Opciones:${NC}"
+        echo -e "  --force, --skip-tests      # Continuar aunque los tests fallen"
+        echo -e "  --help, -h                 # Mostrar esta ayuda"
+        exit 0
+        ;;
+      *)
+        if [ -z "$VERSION" ]; then
+          VERSION="$1"
+        else
+          echo -e "${RED}❗ Argumento desconocido: $1${NC}"
+          echo -e "${BLUE}💡 Usa 'git rel --help' para ver las opciones${NC}"
+          exit 1
+        fi
+        shift
+        ;;
+    esac
+  done
+}
+
+# Procesar argumentos
+process_arguments "$@"
 
 # ✅ Validación: debe ejecutarse dentro de un repositorio Git
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -103,6 +141,12 @@ do_merge() {
 
 # 🧪 Función para ejecutar tests (si existen)
 run_tests() {
+  # Si se especificó saltar tests, salir inmediatamente
+  if [ "$SKIP_TESTS" = true ]; then
+    echo -e "${YELLOW}⚠️  Saltando tests (--skip-tests especificado)${NC}"
+    return 0
+  fi
+  
   echo -e "${BLUE}🧪 Ejecutando tests...${NC}"
   
   # Verificar si existe un script de tests personalizado
@@ -113,7 +157,13 @@ run_tests() {
       return 0
     else
       echo -e "${RED}❌ Tests personalizados fallaron${NC}"
-      exit 1
+      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+      read -r response
+      if [[ ! "$response" =~ ^[Ss]$ ]]; then
+        exit 1
+      fi
+      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+      return 0
     fi
   fi
   
@@ -125,7 +175,13 @@ run_tests() {
       return 0
     else
       echo -e "${RED}❌ Tests de Node.js fallaron${NC}"
-      exit 1
+      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+      read -r response
+      if [[ ! "$response" =~ ^[Ss]$ ]]; then
+        exit 1
+      fi
+      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+      return 0
     fi
   fi
   
@@ -139,7 +195,13 @@ run_tests() {
         return 0
       else
         echo -e "${RED}❌ Tests de Python fallaron${NC}"
-        exit 1
+        echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+        read -r response
+        if [[ ! "$response" =~ ^[Ss]$ ]]; then
+          exit 1
+        fi
+        echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+        return 0
       fi
     elif command -v python &> /dev/null; then
       if python -m pytest; then
@@ -147,7 +209,13 @@ run_tests() {
         return 0
       else
         echo -e "${RED}❌ Tests de Python fallaron${NC}"
-        exit 1
+        echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+        read -r response
+        if [[ ! "$response" =~ ^[Ss]$ ]]; then
+          exit 1
+        fi
+        echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+        return 0
       fi
     else
       echo -e "${RED}❌ No se encontró python3 ni python${NC}"
@@ -163,7 +231,13 @@ run_tests() {
       return 0
     else
       echo -e "${RED}❌ Tests de Maven fallaron${NC}"
-      exit 1
+      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+      read -r response
+      if [[ ! "$response" =~ ^[Ss]$ ]]; then
+        exit 1
+      fi
+      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+      return 0
     fi
   fi
   
@@ -175,7 +249,13 @@ run_tests() {
       return 0
     else
       echo -e "${RED}❌ Tests de Gradle fallaron${NC}"
-      exit 1
+      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+      read -r response
+      if [[ ! "$response" =~ ^[Ss]$ ]]; then
+        exit 1
+      fi
+      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+      return 0
     fi
   fi
   
@@ -187,7 +267,13 @@ run_tests() {
       return 0
     else
       echo -e "${RED}❌ Tests de Rust fallaron${NC}"
-      exit 1
+      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+      read -r response
+      if [[ ! "$response" =~ ^[Ss]$ ]]; then
+        exit 1
+      fi
+      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+      return 0
     fi
   fi
   
@@ -199,7 +285,13 @@ run_tests() {
       return 0
     else
       echo -e "${RED}❌ Tests de Go fallaron${NC}"
-      exit 1
+      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+      read -r response
+      if [[ ! "$response" =~ ^[Ss]$ ]]; then
+        exit 1
+      fi
+      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+      return 0
     fi
   fi
   
@@ -211,7 +303,13 @@ run_tests() {
       return 0
     else
       echo -e "${RED}❌ Tests de PHP fallaron${NC}"
-      exit 1
+      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+      read -r response
+      if [[ ! "$response" =~ ^[Ss]$ ]]; then
+        exit 1
+      fi
+      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+      return 0
     fi
   fi
   
@@ -223,7 +321,13 @@ run_tests() {
       return 0
     else
       echo -e "${RED}❌ Tests de Ruby fallaron${NC}"
-      exit 1
+      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+      read -r response
+      if [[ ! "$response" =~ ^[Ss]$ ]]; then
+        exit 1
+      fi
+      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+      return 0
     fi
   fi
   
@@ -237,7 +341,13 @@ run_tests() {
         return 0
       else
         echo -e "${RED}❌ Tests de Makefile (make tests) fallaron${NC}"
-        exit 1
+        echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+        read -r response
+        if [[ ! "$response" =~ ^[Ss]$ ]]; then
+          exit 1
+        fi
+        echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+        return 0
       fi
     elif grep -q "^test:" Makefile; then
       if make test; then
@@ -245,7 +355,13 @@ run_tests() {
         return 0
       else
         echo -e "${RED}❌ Tests de Makefile (make test) fallaron${NC}"
-        exit 1
+        echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
+        read -r response
+        if [[ ! "$response" =~ ^[Ss]$ ]]; then
+          exit 1
+        fi
+        echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
+        return 0
       fi
     fi
   fi
@@ -317,5 +433,9 @@ echo -e "${GREEN}🎉 ¡Release completado exitosamente!${NC}"
 echo -e "${BLUE}📋 Resumen:${NC}"
 echo -e "  • ${DEV_BRANCH} → ${MAIN_BRANCH} ✅"
 echo -e "  • Tag creado: ${TAG_NAME} ✅"
-echo -e "  • Tests ejecutados ✅"
+if [ "$SKIP_TESTS" = true ]; then
+  echo -e "  • Tests saltados (--skip-tests) ⚠️"
+else
+  echo -e "  • Tests ejecutados ✅"
+fi
 echo -e "${BLUE}💡 Próximo paso: Deploy a producción${NC}" 
