@@ -74,7 +74,10 @@ fi
 get_previous_tag() {
   if [ -z "$LAST_TAG" ]; then
     # Intentar obtener el último tag antes del actual
-    LAST_TAG=$(git describe --tags --abbrev=0 "$TAG_NAME"^ 2>/dev/null || echo "")
+    LAST_TAG=$(git describe --tags --abbrev=0 "$TAG_NAME"^ 2>/dev/null)
+    if [ $? -ne 0 ]; then
+      LAST_TAG=""
+    fi
     if [ -n "$LAST_TAG" ]; then
       echo -e "${BLUE}🔍 Tag anterior detectado automáticamente: ${LAST_TAG}${NC}"
     else
@@ -113,28 +116,29 @@ categorize_commits() {
   local other_file=$(mktemp)
   
   # Procesar cada línea
-  echo "$content" | while IFS= read -r line; do
-    if [[ $line =~ ^- ]]; then
-      # Extraer el tipo del commit (si existe)
-      if [[ $line =~ ^- (feat|feature) ]]; then
-        echo "$line" >> "$feat_file"
-      elif [[ $line =~ ^- fix ]]; then
-        echo "$line" >> "$fix_file"
-      elif [[ $line =~ ^- docs ]]; then
-        echo "$line" >> "$docs_file"
-      elif [[ $line =~ ^- style ]]; then
-        echo "$line" >> "$style_file"
-      elif [[ $line =~ ^- refactor ]]; then
-        echo "$line" >> "$refactor_file"
-      elif [[ $line =~ ^- test ]]; then
-        echo "$line" >> "$test_file"
-      elif [[ $line =~ ^- chore ]]; then
-        echo "$line" >> "$chore_file"
-      else
-        echo "$line" >> "$other_file"
-      fi
-    fi
-  done
+  local tmp_content=$(mktemp)
+  echo "$content" > "$tmp_content"
+  while IFS= read -r line; do
+    case "$line" in
+      "- feat"*|"- feature"*)
+        echo "$line" >> "$feat_file" ;;
+      "- fix"*)
+        echo "$line" >> "$fix_file" ;;
+      "- docs"*)
+        echo "$line" >> "$docs_file" ;;
+      "- style"*)
+        echo "$line" >> "$style_file" ;;
+      "- refactor"*)
+        echo "$line" >> "$refactor_file" ;;
+      "- test"*)
+        echo "$line" >> "$test_file" ;;
+      "- chore"*)
+        echo "$line" >> "$chore_file" ;;
+      "-"*)
+        echo "$line" >> "$other_file" ;;
+    esac
+  done < "$tmp_content"
+  rm -f "$tmp_content"
   
   # Generar contenido categorizado
   local categorized_content=""

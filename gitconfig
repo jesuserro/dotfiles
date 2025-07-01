@@ -26,6 +26,8 @@
   feat-help = "!bash ~/dotfiles/scripts/git_feat.sh --help"
   rel = "!bash ~/dotfiles/scripts/git_rel.sh"
   rel-help = "!bash ~/dotfiles/scripts/git_rel.sh --help"
+  rel-resolve = "!bash ~/dotfiles/scripts/git_rel_resolve.sh"
+  rel-resolve-help = "!bash ~/dotfiles/scripts/git_rel_resolve.sh --help"
   workflow = "!bash ~/dotfiles/scripts/git_workflow.sh"
   # Nuevos aliases para logs y diffs mejorados
   prettylog = "!f() { bash ~/dotfiles/scripts/git_prettylog.sh \"$@\"; }; f"

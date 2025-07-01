@@ -275,6 +275,55 @@ git rel --help
 - Categorizes commits by type (feat, fix, docs, etc.)
 - Maintains last 5 releases in main changelog
 
+**Conflict Resolution:**
+- If `git rel` fails due to conflicts, use `git rel-resolve` to handle them automatically
+- Detects and cleans up problematic files (like untracked directories)
+- Provides step-by-step guidance for manual conflict resolution
+- Automatically generates tags and changelogs after conflict resolution
+
+### 🔧 git rel-resolve
+
+Automatically resolves conflicts that occur during `git rel` and generates the missing tag and changelog. This is essential when the normal release process fails due to merge conflicts.
+
+```shell
+# Resolve conflicts and complete the release process
+git rel-resolve
+
+# Skip merge (if already resolved manually) and only generate tag/changelog
+git rel-resolve --skip-merge
+
+# Use a specific tag instead of auto-generated one
+git rel-resolve --tag v1.2.3
+
+# Show help
+git rel-resolve --help
+```
+
+**When to use:**
+- When `git rel` fails with merge conflicts
+- When you've manually resolved conflicts and need to complete the release
+- When you need to regenerate tags and changelogs after a failed release
+
+**What it does automatically:**
+1. **🧹 Cleans problematic files** (like untracked directories that cause conflicts)
+2. **🔁 Attempts the merge** of `dev` → `main`
+3. **🏷️ Creates the tag** automatically (format: `vYYYY.MM.DD_HHMM`)
+4. **📝 Generates the changelog** using the corrected script
+5. **📤 Pushes all changes** to the repository
+
+**Complete workflow for conflicts:**
+```shell
+# 1. Try normal release
+git rel
+
+# 2. If it fails with conflicts, use the resolver
+git rel-resolve
+
+# 3. If the resolver detects conflicts, it will guide you to resolve them manually
+# 4. After manual resolution, complete the process:
+git rel-resolve --skip-merge
+```
+
 ### 📝 git changelog
 
 Generates professional changelogs for releases, categorizing commits and maintaining both individual release files and a main changelog.
@@ -371,6 +420,7 @@ git-cc fix api "fix authentication error"
 | `git taglist` | `git for-each-ref --sort=-creatordate --format='🏷️  %(refname:short) | %(creatordate:format:%Y-%m-%d %H:%M) | %(objectname:short)'` | Lists tags with improved formatting |
 | `git prettysince` | `git log --color=always --pretty=format:"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset"` | Shows commits added since a branch |
 | `git prettyuntil` | `git log --color=always --pretty=format:"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset"` | Shows commits that need to be updated |
+| `git rel-resolve` | `bash ~/dotfiles/scripts/git_rel_resolve.sh` | Resolves conflicts from failed `git rel` and generates missing tag/changelog |
 
 ## Oh My ZSH Plugins
 
