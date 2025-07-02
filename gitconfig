@@ -34,6 +34,8 @@
   diffstat = "!f() { bash ~/dotfiles/scripts/git_diffstat.sh \"$@\"; }; f"
   # Nuevo alias para generación de changelogs
   changelog = "!f() { bash ~/dotfiles/scripts/git_changelog.sh \"$@\"; }; f"
+  # Nuevo alias para generación de changelogs de ramas
+  branch-changelog = "!f() { bash ~/dotfiles/scripts/git_branch_changelog.sh \"$@\"; }; f"
   # Nuevos aliases para gestión de tags
   taglist = "!git for-each-ref --sort=-creatordate --format='🏷️  %(color:yellow)%(refname:short)%(color:reset) | %(color:green)%(creatordate:format:%Y-%m-%d %H:%M)%(color:reset) | %(color:blue)%(objectname:short)%(color:reset)' refs/tags | tr -d '\\r' | sed '/^$/d'"
   tagsannotated = "tag -n99"
