@@ -64,7 +64,7 @@
   done = !git push origin HEAD
   # Reemplazado el alias 'save' por 'save-basic' para evitar conflictos
   save-basic = !git add -A && git commit -m 'chore: commit save point' --no-template
-  # Para crear commits más detallados, usar el script git-save.sh
+  # Para crear commits más detallados, usar el script git_save.sh
   del = branch -D
   # Alias para commit rápido sin mostrar editor y sin usar plantilla
   cm = !git commit -m

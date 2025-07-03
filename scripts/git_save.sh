@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Script para hacer git add, commit y push con mensajes mejorados
-# Uso: git-save [tipo] [scope] [descripción]
-#      git-save [tipo] [descripción]
-#      git-save [descripción]
-#      git-save            # Sin parámetros, usa mensaje por defecto
-# Ejemplo: git-save chore save "workflow checkpoint"
+# Uso: git save [tipo] [scope] [descripción]
+#      git save [tipo] [descripción]
+#      git save [descripción]
+#      git save            # Sin parámetros, usa mensaje por defecto
+# Ejemplo: git save chore save "workflow checkpoint"
 
 # Colores para mensajes
 RED='\033[0;31m'
@@ -19,20 +19,20 @@ ALLOWED_TYPES=("feat" "fix" "docs" "style" "refactor" "perf" "test" "build" "ci"
 
 # Mostrar ayuda
 show_help() {
-  echo -e "${BLUE}Uso de git-save:${NC}"
-  echo "  git-save                               # Commit rápido con mensaje por defecto"
-  echo "  git-save <descripción>                 # Commit rápido con tipo 'chore'"
-  echo "  git-save <tipo> <descripción>          # Commit con tipo específico"
-  echo "  git-save <tipo> <scope> <descripción>  # Commit con tipo y scope específicos"
+  echo -e "${BLUE}Uso de git save:${NC}"
+  echo "  git save                               # Commit rápido con mensaje por defecto"
+  echo "  git save <descripción>                 # Commit rápido con tipo 'chore'"
+  echo "  git save <tipo> <descripción>          # Commit con tipo específico"
+  echo "  git save <tipo> <scope> <descripción>  # Commit con tipo y scope específicos"
   echo ""
   echo -e "${YELLOW}Tipos permitidos:${NC}"
   printf "  %s\n" "${ALLOWED_TYPES[@]}"
   echo ""
   echo -e "${BLUE}Ejemplos:${NC}"
-  echo "  git-save"
-  echo "  git-save \"actualizar configuración\""
-  echo "  git-save feat \"agregar login con Google\""
-  echo "  git-save fix api \"corregir error en endpoint de usuarios\""
+  echo "  git save"
+  echo "  git save \"actualizar configuración\""
+  echo "  git save feat \"agregar login con Google\""
+  echo "  git save fix api \"corregir error en endpoint de usuarios\""
 }
 
 # Validar tipo de commit
@@ -75,19 +75,19 @@ show_modified_files() {
 
 # Main
 if [[ $# -eq 0 ]]; then
-  # Caso 0: git-save (sin argumentos)
+  # Caso 0: git save (sin argumentos)
   TYPE="chore"
   SCOPE="save"
   DESCRIPTION="workflow checkpoint"
   COMMIT_MSG="${TYPE}(${SCOPE}): ${DESCRIPTION}"
 elif [[ $# -eq 1 ]]; then
-  # Caso 1: git-save <descripción>
+  # Caso 1: git save <descripción>
   TYPE="chore"
   SCOPE="save"
   DESCRIPTION="$1"
   COMMIT_MSG="${TYPE}(${SCOPE}): ${DESCRIPTION}"
 elif [[ $# -eq 2 ]]; then
-  # Caso 2: git-save <tipo> <descripción>
+  # Caso 2: git save <tipo> <descripción>
   TYPE="$1"
   DESCRIPTION="$2"
   
@@ -98,7 +98,7 @@ elif [[ $# -eq 2 ]]; then
   
   COMMIT_MSG="${TYPE}: ${DESCRIPTION}"
 elif [[ $# -eq 3 ]]; then
-  # Caso 3: git-save <tipo> <scope> <descripción>
+  # Caso 3: git save <tipo> <scope> <descripción>
   TYPE="$1"
   SCOPE="$2"
   DESCRIPTION="$3"
