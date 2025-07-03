@@ -81,13 +81,24 @@ check_potential_conflicts() {
   
   echo -e "${BLUE}🔍 Verificando conflictos potenciales entre '${source_branch}' y '${target_branch}'...${NC}"
   
-  # Obtener la lista de archivos modificados
-  local modified_files=$(git diff --name-only $target_branch...$source_branch)
+  # Verificar si las ramas están al día
+  git fetch origin "$source_branch" "$target_branch" >/dev/null 2>&1
+  
+  # Obtener la lista de archivos modificados en la rama source desde el último merge
+  local modified_files=$(git diff --name-only $target_branch...$source_branch 2>/dev/null || echo "")
+  
+  # Si no hay archivos modificados, no hay conflictos potenciales
+  if [ -z "$modified_files" ]; then
+    echo -e "${GREEN}✅ No se detectaron cambios entre las ramas${NC}"
+    return 0
+  fi
   
   # Verificar si hay archivos que podrían causar conflictos
+  # Solo considerar archivos que han sido modificados en ambas ramas desde su punto común
   local potential_conflicts=()
   for file in $modified_files; do
-    if git diff --name-only $target_branch | grep -q "^$file$"; then
+    # Verificar si el archivo también ha sido modificado en target desde el último merge
+    if git diff --name-only $source_branch...$target_branch 2>/dev/null | grep -q "^$file$"; then
       potential_conflicts+=("$file")
     fi
   done
@@ -101,6 +112,7 @@ check_potential_conflicts() {
     return 1
   fi
   
+  echo -e "${GREEN}✅ No se detectaron conflictos potenciales${NC}"
   return 0
 }
 
@@ -120,13 +132,36 @@ do_merge() {
     fi
   fi
   
-  # Intentar el merge
-  if ! git merge "$source_branch" --no-edit; then
-    echo -e "${RED}❗ Conflictos detectados entre '${source_branch}' y '${target_branch}'${NC}"
-    echo -e "${YELLOW}💡 Sugerencia: Resuelve los conflictos y luego ejecuta:${NC}"
-    echo -e "  git add ."
-    echo -e "  git commit -m \"merge: resolve conflicts between ${source_branch} and ${target_branch}\""
-    exit 1
+  # Intentar el merge con mejor manejo de errores
+  local merge_output
+  merge_output=$(git merge "$source_branch" --no-edit 2>&1)
+  local merge_exit_code=$?
+  
+  if [ $merge_exit_code -ne 0 ]; then
+    # Verificar si es un error de fast-forward
+    if echo "$merge_output" | grep -q "Not possible to fast-forward"; then
+      echo -e "${YELLOW}⚠️  No es posible hacer fast-forward merge.${NC}"
+      echo -e "${BLUE}💡 Intentando merge con --no-ff...${NC}"
+      
+      # Intentar merge con --no-ff
+      if git merge "$source_branch" --no-ff --no-edit; then
+        echo -e "${GREEN}✅ Merge completado con --no-ff${NC}"
+      else
+        echo -e "${RED}❗ Error en merge con --no-ff${NC}"
+        echo -e "${YELLOW}💡 Sugerencia: Resuelve los conflictos manualmente y luego ejecuta:${NC}"
+        echo -e "  git add ."
+        echo -e "  git commit -m \"merge: resolve conflicts between ${source_branch} and ${target_branch}\""
+        exit 1
+      fi
+    else
+      echo -e "${RED}❗ Conflictos detectados entre '${source_branch}' y '${target_branch}'${NC}"
+      echo -e "${YELLOW}💡 Sugerencia: Resuelve los conflictos y luego ejecuta:${NC}"
+      echo -e "  git add ."
+      echo -e "  git commit -m \"merge: resolve conflicts between ${source_branch} and ${target_branch}\""
+      exit 1
+    fi
+  else
+    echo -e "${GREEN}✅ Merge completado exitosamente${NC}"
   fi
   
   # Push de los cambios
