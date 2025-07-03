@@ -199,6 +199,39 @@ git start-feature docs-installation
 git start-feature docs-examples
 ```
 
+## ❓ FAQ
+
+### 🤔 ¿Desde qué rama debo crear una nueva feature?
+
+**Respuesta:** Siempre desde `dev`. El script automáticamente:
+1. Cambia a la rama `dev`
+2. Actualiza `dev` con `git pull origin dev`
+3. Crea la nueva feature desde `dev`
+
+**Razón:** `dev` es la rama de integración continua donde confluyen todas las features. Nunca trabajes directamente en `main`.
+
+### 🏷️ ¿Cómo usar correctamente el comando?
+
+**Respuesta:** El script añade automáticamente el prefijo `feature/`. Ejemplos:
+
+```bash
+# ✅ Correcto - genera: feature/adding-dbt
+git start-feature adding-dbt
+
+# ❌ Incorrecto - genera: feature/feature/adding-dbt
+git start-feature feature/adding-dbt
+```
+
+**Regla:** No incluyas el prefijo `feature/` en el nombre, el script lo añade automáticamente.
+
+### 🔄 ¿Qué pasa si ya existe una rama con ese nombre?
+
+El script verificará si la rama existe y te mostrará un error si ya existe. Debes usar un nombre único para cada feature.
+
+### 🚨 ¿Qué pasa si tengo cambios sin guardar?
+
+El script verificará que no tengas cambios sin guardar antes de cambiar de rama. Debes hacer `git add` y `git commit` o `git stash` antes de crear una nueva feature.
+
 ### 🧪 Testing
 
 ```bash

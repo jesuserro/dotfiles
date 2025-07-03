@@ -115,6 +115,31 @@ git commit -m "feat(dbt): add new models"
 git push origin feature/adding-dbt
 ```
 
+### ❓ Preguntas Frecuentes
+
+#### ¿Desde qué rama empiezo una nueva feature?
+**Respuesta:** Siempre desde `dev`. El flujo correcto es:
+```bash
+git checkout dev
+git pull origin dev
+git start-feature mi-nueva-feature
+```
+
+**Razón:** `dev` es la rama de integración continua donde confluyen todas las features. Nunca trabajes directamente en `main`.
+
+#### ¿Cómo usar correctamente `git start-feature`?
+**Respuesta:** El script añade automáticamente el prefijo `feature/`. Ejemplos:
+
+```bash
+# ✅ Correcto - genera: feature/adding-dbt
+git start-feature adding-dbt
+
+# ❌ Incorrecto - genera: feature/feature/adding-dbt
+git start-feature feature/adding-dbt
+```
+
+**Regla:** No incluyas el prefijo `feature/` en el nombre, el script lo añade automáticamente.
+
 ### Integrar feature en dev
 ```bash
 # Integrar feature (automáticamente la archiva)
