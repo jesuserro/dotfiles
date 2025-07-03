@@ -11,6 +11,7 @@
 - [🎛️ Opciones](#️-opciones)
 - [🔄 Flujo de Trabajo](#-flujo-de-trabajo)
 - [📦 Sistema de Archivo](#-sistema-de-archivo)
+- [📝 Changelog Automático](#-changelog-automático)
 - [⚡ Casos de Uso](#-casos-de-uso)
 - [🛠️ Resolución de Conflictos](#️-resolución-de-conflictos)
 - [🔧 Configuración](#-configuración)
@@ -24,6 +25,7 @@ El script `git_feat.sh` automatiza el proceso de integración de ramas de featur
 
 - 🔍 **Detección automática**: Resuelve automáticamente si la rama tiene prefijo `feature/` o no
 - 🔄 **Merge inteligente**: Maneja conflictos potenciales antes del merge
+- 📝 **Changelog automático**: Genera changelog de la feature antes de archivarla
 - 📦 **Archivo automático**: Mueve ramas integradas a `archive/` y las elimina del remoto
 - 🛡️ **Validaciones**: Verifica estado del repositorio y existencia de ramas
 - 🎨 **Output colorido**: Interfaz visual con colores y emojis
@@ -61,6 +63,12 @@ git feat login-system               # Rama 'feature/login-system'
 ✅ No se detectaron conflictos potenciales
 🔁 Haciendo merge de 'feature/login-system' → 'dev'...
 ✅ Merge completado: 'feature/login-system' → 'dev'
+📝 Generando changelog de la feature antes de archivarla...
+✅ Changelog de feature generado: releases/branch_feature_login-system.md
+📊 Estadísticas:
+  • Commits exclusivos: 5
+  • Rama base: dev
+  • Archivo: releases/branch_feature_login-system.md
 📦 Archivando rama 'feature/login-system' como 'archive/feature/login-system'...
 ✅ Rama archivada como 'archive/feature/login-system' y eliminada la original del remoto.
 🎉 ¡Feature 'login-system' integrada exitosamente en dev!
@@ -86,12 +94,14 @@ git feat -h
   git feat feature/login-system       # Rama 'feature/login-system'
   git feat login-system               # Rama 'feature/login-system'
 📖 Opciones:
+  --no-changelog                      # No generar changelog automáticamente
   --help, -h                          # Mostrar esta ayuda
 📖 Flujo:
   1. Se mueve a rama 'dev'
   2. Hace merge de tu feature en dev
-  3. Archiva tu rama feature
-  4. Termina en rama 'dev'
+  3. Genera changelog de la feature (opcional)
+  4. Archiva tu rama feature
+  5. Termina en rama 'dev'
 ```
 
 ## 🔄 Flujo de Trabajo
@@ -112,9 +122,10 @@ graph TD
     I -->|✅ No| L
     L --> M{¿Merge exitoso?}
     M -->|❌ No| N[🛠️ Resolver conflictos]
-    M -->|✅ Sí| O[📦 Archivar rama]
-    O --> P[🗑️ Eliminar del remoto]
-    P --> Q[🎉 Feature integrada]
+    M -->|✅ Sí| O[📝 Generar changelog]
+    O --> P[📦 Archivar rama]
+    P --> Q[🗑️ Eliminar del remoto]
+    Q --> R[🎉 Feature integrada]
 ```
 
 ## 📦 Sistema de Archivo
@@ -143,6 +154,49 @@ Después de git feat:
 └── archive/bugfix/issue-123
 ```
 
+## 📝 Changelog Automático
+
+### 🎯 Generación Automática
+
+El script genera automáticamente un changelog de la feature **antes** de archivarla, capturando todos los commits exclusivos de la feature:
+
+```
+📝 Generando changelog de la feature antes de archivarla...
+✅ Changelog de feature generado: releases/branch_feature_login-system.md
+📊 Estadísticas:
+  • Commits exclusivos: 5
+  • Rama base: dev
+  • Archivo: releases/branch_feature_login-system.md
+```
+
+### 📁 Ubicación de Changelogs
+
+Los changelogs se guardan en el directorio `releases/` del proyecto:
+
+```
+proyecto/
+├── releases/
+│   ├── branch_feature_login-system.md
+│   ├── branch_feature_user-profile.md
+│   └── branch_bugfix_issue-123.md
+└── ...
+```
+
+### 🚫 Desactivar Changelog Automático
+
+Si no quieres generar el changelog automáticamente:
+
+```bash
+git feat mi-feature --no-changelog
+```
+
+### 📄 Formato del Changelog
+
+El changelog incluye:
+- **Commits exclusivos** de la feature (vs rama base)
+- **Información técnica** (rama, commits, fecha)
+- **Estado de integración** (marcado como integrado)
+
 ## ⚡ Casos de Uso
 
 ### 🚀 Integración Normal
@@ -153,10 +207,10 @@ git checkout feature/mi-feature
 # ... hacer cambios ...
 git commit -m "feat: añadir nueva funcionalidad"
 
-# 2. Integrar en dev
+# 2. Integrar en dev (con changelog automático)
 git feat mi-feature
 
-# 3. ¡Listo! La feature está en dev y archivada
+# 3. ¡Listo! La feature está en dev, archivada y con changelog
 ```
 
 ### 🔄 Múltiples Features
@@ -167,7 +221,7 @@ git feat feature-1
 git feat feature-2
 git feat feature-3
 
-# Todas quedan archivadas y listas para release
+# Todas quedan archivadas con sus changelogs
 ```
 
 ### 🏷️ Con Diferentes Prefijos
@@ -226,6 +280,7 @@ Si hay conflictos reales durante el merge:
 DEV_BRANCH="dev"                    # Rama de desarrollo
 FEATURE_PREFIX="feature/"           # Prefijo estándar para features
 ARCHIVE_PREFIX="archive/"           # Prefijo para archivar ramas
+GENERATE_CHANGELOG=true             # Generar changelog automáticamente
 ```
 
 ### 🎨 Personalización
@@ -237,6 +292,9 @@ ARCHIVE_PREFIX="archived/"
 
 # Cambiar rama de desarrollo
 DEV_BRANCH="develop"
+
+# Desactivar changelog por defecto
+GENERATE_CHANGELOG=false
 ```
 
 ## ❓ FAQ
@@ -257,6 +315,18 @@ El script maneja automáticamente merges no fast-forward y continúa.
 ### 📦 ¿Dónde van las ramas archivadas?
 
 Las ramas se mueven a `archive/` localmente y se eliminan del remoto para mantener limpio el repositorio.
+
+### 📝 ¿Dónde se guardan los changelogs?
+
+Los changelogs se guardan en `releases/branch_<nombre-feature>.md` y contienen todos los commits exclusivos de la feature.
+
+### 🚫 ¿Puedo desactivar el changelog automático?
+
+Sí, usa la opción `--no-changelog`:
+
+```bash
+git feat mi-feature --no-changelog
+```
 
 ### 🛠️ ¿Qué hacer si hay conflictos?
 
@@ -293,4 +363,4 @@ No, el script siempre archiva las ramas integradas para mantener el repositorio 
 
 ## 🎉 ¡Listo para usar!
 
-El script `git_feat.sh` está diseñado para hacer la integración de features de forma segura y automática. ¡Disfruta de un flujo de trabajo más eficiente! 🌟 
+El script `git_feat.sh` está diseñado para hacer la integración de features de forma segura y automática, incluyendo la generación de changelogs precisos antes de archivar las ramas. ¡Disfruta de un flujo de trabajo más eficiente! 🌟

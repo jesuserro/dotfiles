@@ -8,6 +8,7 @@ DEV_BRANCH="dev"                      # Rama de desarrollo
 FEATURE_PREFIX="feature/"            # Prefijo estándar para ramas de features
 FEATURE_BRANCH=""                    # Rama feature final a usar (resuelta más abajo)
 ARCHIVE_PREFIX="archive/"            # Prefijo para archivar ramas
+GENERATE_CHANGELOG=true              # Generar changelog automáticamente
 
 # 🎨 Colores para el output en consola
 GREEN='\033[0;32m'
@@ -23,20 +24,26 @@ process_arguments() {
   while [[ $# -gt 0 ]]; do
     case $1 in
       --help|-h)
-        echo -e "${BLUE}📖 Uso: git feat <nombre-feature>${NC}"
+        echo -e "${BLUE}📖 Uso: git feat <nombre-feature> [opciones]${NC}"
         echo -e "${BLUE}📖 Descripción: Integra una rama feature en dev y la archiva${NC}"
         echo -e "${BLUE}📖 Ejemplos:${NC}"
         echo -e "  git feat mi-nueva-funcionalidad     # Rama 'feature/mi-nueva-funcionalidad'"
         echo -e "  git feat feature/login-system       # Rama 'feature/login-system'"
         echo -e "  git feat login-system               # Rama 'feature/login-system'"
         echo -e "${BLUE}📖 Opciones:${NC}"
+        echo -e "  --no-changelog                      # No generar changelog automáticamente"
         echo -e "  --help, -h                          # Mostrar esta ayuda"
         echo -e "${BLUE}📖 Flujo:${NC}"
         echo -e "  1. Se mueve a rama 'dev'"
         echo -e "  2. Hace merge de tu feature en dev"
-        echo -e "  3. Archiva tu rama feature"
-        echo -e "  4. Termina en rama 'dev'"
+        echo -e "  3. Genera changelog de la feature (opcional)"
+        echo -e "  4. Archiva tu rama feature"
+        echo -e "  5. Termina en rama 'dev'"
         exit 0
+        ;;
+      --no-changelog)
+        GENERATE_CHANGELOG=false
+        shift
         ;;
       *)
         if [ -z "$input_name" ]; then
@@ -142,6 +149,63 @@ do_merge() {
   echo -e "${GREEN}✅ Merge completado: '${source_branch}' → '${target_branch}'${NC}"
 }
 
+# 📝 Función para generar changelog de la feature antes de archivarla
+generate_feature_changelog() {
+  local feature_branch="$1"
+  local base_branch="$2"
+  
+  if [ "$GENERATE_CHANGELOG" = true ]; then
+    echo -e "${YELLOW}📝 Generando changelog de la feature antes de archivarla...${NC}"
+    
+    # Crear directorio de releases si no existe
+    local releases_dir="$(git rev-parse --show-toplevel)/releases"
+    if [ ! -d "$releases_dir" ]; then
+      mkdir -p "$releases_dir"
+    fi
+    
+    # Crear nombre de archivo seguro para la feature
+    local safe_branch_name=$(echo "$feature_branch" | sed 's/[^a-zA-Z0-9._-]/_/g')
+    local changelog_file="$releases_dir/branch_${safe_branch_name}.md"
+    
+    # Obtener fecha y hora actual
+    local current_date=$(date +%Y-%m-%d)
+    local current_time=$(date +%H:%M)
+    
+    # Obtener información de la feature
+    local branch_info=$(git log -1 --pretty=format:"%h - %s (%an)" "$feature_branch")
+    local total_commits=$(git rev-list --count "${base_branch}..${feature_branch}" 2>/dev/null || echo "0")
+    
+    # Generar contenido del changelog (commits exclusivos de la feature)
+    local changelog_content=$(git log --pretty=format:"- %h %ad %an %s" --date=format:"%Y-%m-%d %H:%M" "${base_branch}..${feature_branch}" 2>/dev/null || echo "# No se pudieron obtener commits exclusivos")
+    
+    # Crear archivo de changelog
+    cat > "$changelog_file" << EOF
+# Feature Changelog: ${feature_branch}
+
+**Fecha de integración:** ${current_date}  
+**Rama base:** ${base_branch}  
+**Último commit:** ${branch_info}
+
+## Changes
+
+${changelog_content}
+
+## Technical Details
+- Feature branch: ${feature_branch}
+- Base branch: ${base_branch}
+- Total commits: ${total_commits}
+- Integrated: ${current_date} ${current_time}
+- Status: Integrated into ${base_branch}
+EOF
+
+    echo -e "${GREEN}✅ Changelog de feature generado: ${changelog_file}${NC}"
+    echo -e "${BLUE}📊 Estadísticas:${NC}"
+    echo -e "  • Commits exclusivos: ${total_commits}"
+    echo -e "  • Rama base: ${base_branch}"
+    echo -e "  • Archivo: ${changelog_file}"
+  fi
+}
+
 # 📢 Inicio del flujo
 echo -e "${YELLOW}🚀 Integrando feature '${INPUT_NAME}' en dev...${NC}"
 
@@ -171,6 +235,9 @@ echo -e "${YELLOW}🔁 Integrando '${FEATURE_BRANCH}' en '${DEV_BRANCH}'...${NC}
 git checkout "$DEV_BRANCH"
 git pull origin "$DEV_BRANCH"
 do_merge "$FEATURE_BRANCH" "$DEV_BRANCH"
+
+# 📝 Generar changelog de la feature ANTES de archivarla
+generate_feature_changelog "$FEATURE_BRANCH" "$DEV_BRANCH"
 
 # 📦 Archivar la rama feature
 ARCHIVE_BRANCH="${ARCHIVE_PREFIX}${FEATURE_BRANCH}"
