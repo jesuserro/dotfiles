@@ -60,6 +60,13 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 1
 fi
 
+# ✅ Validación: debe tener un remoto configurado
+if ! git remote get-url origin >/dev/null 2>&1; then
+  echo -e "${RED}❌ No hay un remoto 'origin' configurado.${NC}"
+  echo -e "${YELLOW}💡 Sugerencia: Configura el remoto con: git remote add origin <url>${NC}"
+  exit 1
+fi
+
 # 🧼 Validación: working directory debe estar limpio
 check_clean_repo() {
   if [[ -n $(git status --porcelain) ]]; then
@@ -116,7 +123,7 @@ check_potential_conflicts() {
   return 0
 }
 
-# 🔄 Función para hacer merge con manejo de errores
+# 🔄 Función para hacer merge con manejo de errores (simplificada como git_feat.sh)
 do_merge() {
   local source_branch="$1"
   local target_branch="$2"
@@ -132,36 +139,13 @@ do_merge() {
     fi
   fi
   
-  # Intentar el merge con mejor manejo de errores
-  local merge_output
-  merge_output=$(git merge "$source_branch" --no-edit 2>&1)
-  local merge_exit_code=$?
-  
-  if [ $merge_exit_code -ne 0 ]; then
-    # Verificar si es un error de fast-forward
-    if echo "$merge_output" | grep -q "Not possible to fast-forward"; then
-      echo -e "${YELLOW}⚠️  No es posible hacer fast-forward merge.${NC}"
-      echo -e "${BLUE}💡 Intentando merge con --no-ff...${NC}"
-      
-      # Intentar merge con --no-ff
-      if git merge "$source_branch" --no-ff --no-edit; then
-        echo -e "${GREEN}✅ Merge completado con --no-ff${NC}"
-      else
-        echo -e "${RED}❗ Error en merge con --no-ff${NC}"
-        echo -e "${YELLOW}💡 Sugerencia: Resuelve los conflictos manualmente y luego ejecuta:${NC}"
-        echo -e "  git add ."
-        echo -e "  git commit -m \"merge: resolve conflicts between ${source_branch} and ${target_branch}\""
-        exit 1
-      fi
-    else
-      echo -e "${RED}❗ Conflictos detectados entre '${source_branch}' y '${target_branch}'${NC}"
-      echo -e "${YELLOW}💡 Sugerencia: Resuelve los conflictos y luego ejecuta:${NC}"
-      echo -e "  git add ."
-      echo -e "  git commit -m \"merge: resolve conflicts between ${source_branch} and ${target_branch}\""
-      exit 1
-    fi
-  else
-    echo -e "${GREEN}✅ Merge completado exitosamente${NC}"
+  # Intentar el merge (igual que git_feat.sh)
+  if ! git merge "$source_branch" --no-edit; then
+    echo -e "${RED}❗ Conflictos detectados entre '${source_branch}' y '${target_branch}'${NC}"
+    echo -e "${YELLOW}💡 Sugerencia: Resuelve los conflictos y luego ejecuta:${NC}"
+    echo -e "  git add ."
+    echo -e "  git commit -m \"merge: resolve conflicts between ${source_branch} and ${target_branch}\""
+    exit 1
   fi
   
   # Push de los cambios
@@ -433,16 +417,42 @@ generate_version() {
 # 📢 Inicio del flujo
 echo -e "${YELLOW}🚀 Iniciando release de dev a main...${NC}"
 
-# Verificar que las ramas existan
+# Verificar que las ramas existan localmente
 if ! branch_exists "$DEV_BRANCH"; then
-  echo -e "${RED}❗ La rama '${DEV_BRANCH}' no existe.${NC}"
-  exit 1
+  echo -e "${RED}❗ La rama '${DEV_BRANCH}' no existe localmente.${NC}"
+  echo -e "${BLUE}💡 Intentando obtener desde remoto...${NC}"
+  if git fetch origin "$DEV_BRANCH" && git checkout -b "$DEV_BRANCH" "origin/$DEV_BRANCH"; then
+    echo -e "${GREEN}✅ Rama '${DEV_BRANCH}' creada desde remoto${NC}"
+  else
+    echo -e "${RED}❌ No se pudo obtener la rama '${DEV_BRANCH}' desde remoto${NC}"
+    exit 1
+  fi
 fi
 
 if ! branch_exists "$MAIN_BRANCH"; then
-  echo -e "${RED}❗ La rama '${MAIN_BRANCH}' no existe.${NC}"
+  echo -e "${RED}❗ La rama '${MAIN_BRANCH}' no existe localmente.${NC}"
+  echo -e "${BLUE}💡 Intentando obtener desde remoto...${NC}"
+  if git fetch origin "$MAIN_BRANCH" && git checkout -b "$MAIN_BRANCH" "origin/$MAIN_BRANCH"; then
+    echo -e "${GREEN}✅ Rama '${MAIN_BRANCH}' creada desde remoto${NC}"
+  else
+    echo -e "${RED}❌ No se pudo obtener la rama '${MAIN_BRANCH}' desde remoto${NC}"
+    exit 1
+  fi
+fi
+
+# Verificar que las ramas remotas existan
+echo -e "${BLUE}🔍 Verificando ramas remotas...${NC}"
+if ! git ls-remote --heads origin "$DEV_BRANCH" | grep -q "$DEV_BRANCH"; then
+  echo -e "${RED}❗ La rama remota '${DEV_BRANCH}' no existe.${NC}"
   exit 1
 fi
+
+if ! git ls-remote --heads origin "$MAIN_BRANCH" | grep -q "$MAIN_BRANCH"; then
+  echo -e "${RED}❗ La rama remota '${MAIN_BRANCH}' no existe.${NC}"
+  exit 1
+fi
+
+echo -e "${GREEN}✅ Todas las ramas verificadas correctamente${NC}"
 
 # Verificar estado del repositorio
 check_clean_repo
@@ -450,7 +460,7 @@ check_clean_repo
 # 🧪 Paso 1: Ejecutar tests
 run_tests
 
-# 🔁 Paso 2: Merge de dev → main
+# 🔁 Paso 2: Merge de dev → main (igual que git_feat.sh)
 echo -e "${YELLOW}🔁 Integrando '${DEV_BRANCH}' en '${MAIN_BRANCH}'...${NC}"
 git checkout "$MAIN_BRANCH"
 git pull origin "$MAIN_BRANCH"
@@ -459,27 +469,121 @@ do_merge "$DEV_BRANCH" "$MAIN_BRANCH"
 # 🏷️ Paso 3: Crear tag de versión
 TAG_NAME=$(generate_version)
 echo -e "${YELLOW}🏷️  Creando tag '${TAG_NAME}'...${NC}"
-git tag "$TAG_NAME"
-git push origin "$TAG_NAME"
-echo -e "${GREEN}✅ Tag '${TAG_NAME}' creado y subido.${NC}"
 
-# 📝 Paso 4: Generar changelogs
-echo -e "${YELLOW}📝 Generando changelogs...${NC}"
-if bash ~/dotfiles/scripts/git_changelog.sh "$TAG_NAME"; then
-  echo -e "${GREEN}✅ Changelogs generados exitosamente${NC}"
+# Verificar que estamos en main antes de crear el tag
+if [ "$(git branch --show-current)" != "$MAIN_BRANCH" ]; then
+  echo -e "${RED}❗ Error: No estamos en la rama '${MAIN_BRANCH}' para crear el tag${NC}"
+  exit 1
+fi
+
+# Verificar si el tag ya existe
+if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+  echo -e "${RED}❗ El tag '${TAG_NAME}' ya existe.${NC}"
+  echo -e "${YELLOW}💡 Opciones:${NC}"
+  echo -e "  1. Usar una versión diferente"
+  echo -e "  2. Eliminar el tag existente y recrearlo"
+  echo -e "  3. Continuar sin crear tag"
+  echo -e "${YELLOW}¿Qué deseas hacer? (1/2/3)${NC}"
+  read -r choice
+  case $choice in
+    1)
+      echo -e "${BLUE}💡 Ingresa una nueva versión (ej: 1.2.4):${NC}"
+      read -r new_version
+      TAG_NAME="${TAG_PREFIX}${new_version}"
+      ;;
+    2)
+      echo -e "${YELLOW}🗑️  Eliminando tag existente...${NC}"
+      git tag -d "$TAG_NAME" 2>/dev/null || true
+      git push origin ":refs/tags/$TAG_NAME" 2>/dev/null || true
+      ;;
+    3)
+      echo -e "${YELLOW}⚠️  Continuando sin crear tag${NC}"
+      TAG_NAME=""
+      ;;
+    *)
+      echo -e "${RED}❌ Opción inválida. Saliendo...${NC}"
+      exit 1
+      ;;
+  esac
+fi
+
+# Crear y subir el tag si se especificó
+if [ -n "$TAG_NAME" ]; then
+  echo -e "${BLUE}🏷️  Creando tag '${TAG_NAME}' en el commit actual...${NC}"
+  
+  # Mostrar información del commit donde se creará el tag
+  local current_commit=$(git rev-parse HEAD)
+  local commit_info=$(git log -1 --pretty=format:"%h - %s (%an)" "$current_commit")
+  echo -e "${BLUE}📝 Tag se creará en: ${commit_info}${NC}"
+  
+  if git tag "$TAG_NAME"; then
+    echo -e "${BLUE}📤 Subiendo tag a GitHub...${NC}"
+    if git push origin "$TAG_NAME"; then
+      echo -e "${GREEN}✅ Tag '${TAG_NAME}' creado y subido exitosamente a GitHub.${NC}"
+      
+      # Verificar que el tag se subió correctamente
+      echo -e "${BLUE}🔍 Verificando tag en GitHub...${NC}"
+      if git ls-remote --tags origin | grep -q "$TAG_NAME"; then
+        echo -e "${GREEN}✅ Tag '${TAG_NAME}' confirmado en GitHub.${NC}"
+      else
+        echo -e "${YELLOW}⚠️  No se pudo verificar el tag en GitHub, pero el push fue exitoso${NC}"
+      fi
+    else
+      echo -e "${RED}❌ Error al subir el tag a GitHub${NC}"
+      echo -e "${YELLOW}💡 Sugerencia: Verifica permisos y conexión a GitHub${NC}"
+      exit 1
+    fi
+  else
+    echo -e "${RED}❌ Error al crear el tag localmente${NC}"
+    exit 1
+  fi
 else
-  echo -e "${YELLOW}⚠️  Error generando changelogs, pero el release se completó${NC}"
+  echo -e "${YELLOW}⚠️  No se creó ningún tag${NC}"
+fi
+
+# 📝 Paso 4: Generar changelogs (solo si se creó un tag)
+if [ -n "$TAG_NAME" ]; then
+  echo -e "${YELLOW}📝 Generando changelogs...${NC}"
+  if bash ~/dotfiles/scripts/git_changelog.sh "$TAG_NAME"; then
+    echo -e "${GREEN}✅ Changelogs generados exitosamente${NC}"
+  else
+    echo -e "${YELLOW}⚠️  Error generando changelogs, pero el release se completó${NC}"
+  fi
+else
+  echo -e "${YELLOW}⚠️  Saltando generación de changelogs (no hay tag)${NC}"
+fi
+
+# 🔍 Verificación final: confirmar que estamos en main
+echo -e "${BLUE}🔍 Verificación final...${NC}"
+if [ "$(git branch --show-current)" = "$MAIN_BRANCH" ]; then
+  echo -e "${GREEN}✅ Estamos en la rama correcta: ${MAIN_BRANCH}${NC}"
+  
+  # Mostrar los últimos commits en main
+  echo -e "${BLUE}📝 Últimos commits en '${MAIN_BRANCH}':${NC}"
+  git log --oneline -3 "$MAIN_BRANCH"
+else
+  echo -e "${RED}❌ Error: No estamos en la rama '${MAIN_BRANCH}'${NC}"
+  echo -e "${YELLOW}💡 Rama actual: $(git branch --show-current)${NC}"
 fi
 
 # 🎉 Fin del proceso
 echo -e "${GREEN}🎉 ¡Release completado exitosamente!${NC}"
 echo -e "${BLUE}📋 Resumen:${NC}"
 echo -e "  • ${DEV_BRANCH} → ${MAIN_BRANCH} ✅"
-echo -e "  • Tag creado: ${TAG_NAME} ✅"
+if [ -n "$TAG_NAME" ]; then
+  echo -e "  • Tag creado: ${TAG_NAME} ✅"
+  echo -e "  • Tag en GitHub: https://github.com/$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/')/releases/tag/${TAG_NAME}"
+else
+  echo -e "  • Tag: No creado ⚠️"
+fi
 if [ "$SKIP_TESTS" = true ]; then
   echo -e "  • Tests saltados (--skip-tests) ⚠️"
 else
   echo -e "  • Tests ejecutados ✅"
 fi
-echo -e "  • Changelogs generados ✅"
+if [ -n "$TAG_NAME" ]; then
+  echo -e "  • Changelogs generados ✅"
+else
+  echo -e "  • Changelogs: No generados ⚠️"
+fi
 echo -e "${BLUE}💡 Próximo paso: Deploy a producción${NC}" 
