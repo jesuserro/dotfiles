@@ -512,8 +512,8 @@ if [ -n "$TAG_NAME" ]; then
   echo -e "${BLUE}🏷️  Creando tag '${TAG_NAME}' en el commit actual...${NC}"
   
   # Mostrar información del commit donde se creará el tag
-  local current_commit=$(git rev-parse HEAD)
-  local commit_info=$(git log -1 --pretty=format:"%h - %s (%an)" "$current_commit")
+  current_commit=$(git rev-parse HEAD)
+  commit_info=$(git log -1 --pretty=format:"%h - %s (%an)" "$current_commit")
   echo -e "${BLUE}📝 Tag se creará en: ${commit_info}${NC}"
   
   if git tag "$TAG_NAME"; then
