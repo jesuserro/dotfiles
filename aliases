@@ -104,6 +104,11 @@ gcommit() {
 alias code.="code ."  # Abrir VSCode en directorio actual
 alias vs="code"       # Atajo para VSCode
 
+# Cursor CLI
+alias cursor.="cursor-agent ."  # Abrir Cursor en directorio actual
+alias cur="cursor-agent"        # Atajo para Cursor CLI
+alias cura="cursor-agent --help" # Ayuda de Cursor CLI
+
 # ------------------------------------
 # Docker
 # ------------------------------------

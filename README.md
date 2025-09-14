@@ -450,6 +450,136 @@ sudo apt update -y \
 gh extension install github/gh-copilot
 ```
 
+## Cursor CLI Integration
+
+### Installation
+
+Cursor CLI has been integrated into these dotfiles to provide AI-powered development assistance directly from the terminal.
+
+**Installation command:**
+```shell
+curl https://cursor.com/install -fsS | bash
+```
+
+**Expected output:**
+```
+Cursor Agent Installer
+
+✓ Detected linux/x64
+✓ Package downloaded and extracted
+✓ Package installed successfully
+✓ Bin directory ready
+✓ Symlink created
+
+✨ Installation Complete!
+
+Next Steps
+
+1. Add ~/.local/bin to your PATH:
+   For zsh:
+   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+   source ~/.zshrc
+
+2. Start using Cursor Agent:
+   cursor-agent
+
+Happy coding! 🚀
+```
+
+### Configuration
+
+The dotfiles automatically configure Cursor CLI with:
+
+1. **PATH Configuration**: `~/.local/bin` is added to PATH in `.zshrc` (line 254)
+2. **Useful Aliases**: Added to `aliases` file:
+   - `cursor.` - Open Cursor in current directory
+   - `cur` - Shortcut for `cursor-agent`
+   - `cura` - Show Cursor CLI help
+
+### Usage Examples
+
+**Basic commands:**
+```shell
+# Open Cursor in current directory
+cursor.
+
+# Start Cursor Agent
+cur
+
+# Show help
+cura
+```
+
+**Practical examples:**
+```shell
+# Analyze and refactor code
+cur "Analyze this Python project and suggest performance improvements"
+
+# Generate code from scratch
+cur "Create a REST API with FastAPI including JWT authentication and CRUD operations"
+
+# Debug and fix errors
+cur "This code has a bug, help me find and fix it"
+
+# Generate documentation
+cur "Generate complete documentation for this project including README and docstrings"
+
+# Security audit
+cur "Review this code for security vulnerabilities and suggest fixes"
+```
+
+**Authentication:**
+```shell
+# Login to Cursor
+cur login
+
+# Check authentication status
+cur status
+
+# Logout
+cur logout
+```
+
+**Shell Integration:**
+```shell
+# Install shell integration for better terminal experience
+cur install-shell-integration
+
+# Uninstall shell integration
+cur uninstall-shell-integration
+```
+
+### Features
+
+- **AI-Powered Development**: Get intelligent code suggestions and assistance
+- **Multi-Language Support**: Works with any programming language
+- **Context Awareness**: Maintains context of your current terminal session
+- **Script Integration**: Can be integrated into development scripts
+- **Background Mode**: Run in background for continuous assistance
+- **Model Selection**: Choose between different AI models (GPT-5, Sonnet-4, etc.)
+
+### Advanced Usage
+
+**Background mode:**
+```shell
+cur --background
+```
+
+**Print mode (for scripts):**
+```shell
+cur --print "Generate a Dockerfile for this Node.js app"
+```
+
+**Specific model:**
+```shell
+cur --model gpt-5 "Optimize this database query"
+```
+
+**Force mode (allows all commands):**
+```shell
+cur --force "Refactor this entire codebase"
+```
+
 ## Termux Installation
 
 ```shell

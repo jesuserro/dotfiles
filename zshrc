@@ -5,6 +5,10 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# =============================================================================
+# PATH Configuration
+# =============================================================================
+
 # Saving the original PATH
 export ORIGINAL_PATH=$PATH
 
@@ -110,6 +114,7 @@ plugins=(
   git
   history
   jsontools
+  pip
   python 
   tmux
   virtualenv
@@ -125,6 +130,77 @@ plugins=(
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
+
+# 🐍 Python Development Configuration
+# ===================================
+
+# Python path configuration
+export PYTHONPATH="${PYTHONPATH}:${HOME}/.local/lib/python3.*/site-packages"
+
+# Python development tools
+export PYTHON_CONFIGURE_OPTS="--enable-shared"
+
+# Virtual environment configuration
+export VIRTUAL_ENV_DISABLE_PROMPT=1
+
+# Poetry configuration
+export POETRY_VENV_IN_PROJECT=1
+export POETRY_CACHE_DIR="${HOME}/.cache/pypoetry"
+
+# pip configuration
+export PIP_REQUIRE_VIRTUALENV=true
+export PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Python development aliases
+alias py='python3'
+alias pip='pip3'
+alias venv='python3 -m venv'
+alias activate='source venv/bin/activate'
+alias deactivate='deactivate'
+
+# Python development functions
+pyclean() {
+    find . -type f -name "*.py[co]" -delete
+    find . -type d -name "__pycache__" -delete
+    find . -type d -name "*.egg-info" -exec rm -rf {} +
+    find . -type d -name ".pytest_cache" -exec rm -rf {} +
+    find . -type d -name ".mypy_cache" -exec rm -rf {} +
+    echo "🧹 Python cache files cleaned"
+}
+
+pyreq() {
+    if [ -f "requirements.txt" ]; then
+        pip install -r requirements.txt
+    elif [ -f "pyproject.toml" ]; then
+        poetry install
+    elif [ -f "Pipfile" ]; then
+        pipenv install
+    else
+        echo "❌ No requirements file found (requirements.txt, pyproject.toml, or Pipfile)"
+    fi
+}
+
+pytest() {
+    if command -v pytest &> /dev/null; then
+        python -m pytest "$@"
+    else
+        python -m unittest discover -s tests -p "test_*.py" "$@"
+    fi
+}
+
+# Python version management
+if command -v pyenv &> /dev/null; then
+    export PATH="$HOME/.pyenv/bin:$PATH"
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+fi
+
+# Conda configuration
+if [ -f "${HOME}/miniconda3/etc/profile.d/conda.sh" ]; then
+    source "${HOME}/miniconda3/etc/profile.d/conda.sh"
+elif [ -f "${HOME}/anaconda3/etc/profile.d/conda.sh" ]; then
+    source "${HOME}/anaconda3/etc/profile.d/conda.sh"
+fi
 
 # export MANPATH="/usr/local/man:$MANPATH"
 
@@ -167,12 +243,17 @@ export EDITOR='nvim'
 # echo '    disown' >> ~/.zshrc
 # echo 'fi' >> ~/.zshrc
 
+# =============================================================================
+# Additional PATH Exports
+# =============================================================================
+
 # Restore original PATH (commented by default)
 # export PATH=$ORIGINAL_PATH
 
+# Local binaries (includes Cursor CLI)
 export PATH=$PATH:$HOME/.local/bin
 
-# NPM Global
+# NPM Global packages
 export PATH=~/.npm-global/bin:$PATH
 
  # Configuración de Codex: vincula tus dotfiles/codex a los de ~/.codex
