@@ -188,7 +188,6 @@ generate_branch_changelog() {
   local current_time=$(date +%H:%M)
   
   # Obtener información de la rama
-  local branch_info=$(git log -1 --pretty=format:"%h - %s (%an)" "$branch_name")
   local total_commits=$(git rev-list --count "${base_branch}..${branch_name}" 2>/dev/null || echo "0")
   
   # Generar contenido del changelog con formato mejorado
@@ -205,8 +204,7 @@ generate_branch_changelog() {
 # Branch Changelog: ${branch_name}
 
 **Fecha de generación:** ${current_date}  
-**Rama base:** ${base_branch}  
-**Último commit:** ${branch_info}
+**Rama base:** ${base_branch}
 
 ## Changes
 
