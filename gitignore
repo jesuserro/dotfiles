@@ -17,7 +17,6 @@ __pycache__/
 *.pyc
 *.py[cod]
 *$py.class
-__init__.py
 
 # Entornos virtuales
 .env

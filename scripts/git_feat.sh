@@ -234,10 +234,12 @@ check_clean_repo
 echo -e "${YELLOW}🔁 Integrando '${FEATURE_BRANCH}' en '${DEV_BRANCH}'...${NC}"
 git checkout "$DEV_BRANCH"
 git pull origin "$DEV_BRANCH"
-do_merge "$FEATURE_BRANCH" "$DEV_BRANCH"
 
-# 📝 Generar changelog de la feature ANTES de archivarla
+# 📝 Generar changelog de la feature ANTES del merge (cuando todavía tiene commits exclusivos)
 generate_feature_changelog "$FEATURE_BRANCH" "$DEV_BRANCH"
+
+# Ahora hacer el merge
+do_merge "$FEATURE_BRANCH" "$DEV_BRANCH"
 
 # 📦 Archivar la rama feature
 ARCHIVE_BRANCH="${ARCHIVE_PREFIX}${FEATURE_BRANCH}"
