@@ -55,6 +55,7 @@ clean_local_branches() {
   
   if [ -z "$merged_branches" ]; then
     echo -e "${YELLOW}⚠️  No hay ramas locales '${prefix}*' mergeadas en dev${NC}"
+    CLEAN_COUNT=0
     return 0
   fi
   
@@ -80,7 +81,8 @@ clean_local_branches() {
   done
   
   echo -e "${GREEN}📊 Ramas locales '${prefix}*' borradas: ${count}${NC}"
-  return $count
+  CLEAN_COUNT=$count
+  return 0
 }
 
 # 🧹 Función para limpiar ramas remotas
@@ -96,6 +98,7 @@ clean_remote_branches() {
   
   if [ -z "$merged_remote_branches" ]; then
     echo -e "${YELLOW}⚠️  No hay ramas remotas '${prefix}*' mergeadas en dev${NC}"
+    CLEAN_COUNT=0
     return 0
   fi
   
@@ -110,7 +113,8 @@ clean_remote_branches() {
   done
   
   echo -e "${GREEN}📊 Ramas remotas '${prefix}*' borradas: ${count}${NC}"
-  return $count
+  CLEAN_COUNT=$count
+  return 0
 }
 
 # 📢 Inicio del flujo
@@ -138,30 +142,26 @@ total_remote_codex=0
 total_remote_archive=0
 
 # 🧹 Paso 3: Limpiar ramas codex/ locales
-if clean_local_branches "$CODEX_PREFIX" "codex"; then
-  total_local_codex=$?
-fi
+clean_local_branches "$CODEX_PREFIX" "codex"
+total_local_codex=$CLEAN_COUNT
 
 echo ""
 
 # 🧹 Paso 4: Limpiar ramas archive/ locales
-if clean_local_branches "$ARCHIVE_PREFIX" "archive"; then
-  total_local_archive=$?
-fi
+clean_local_branches "$ARCHIVE_PREFIX" "archive"
+total_local_archive=$CLEAN_COUNT
 
 echo ""
 
 # 🧹 Paso 5: Limpiar ramas codex/ remotas
-if clean_remote_branches "$CODEX_PREFIX" "codex"; then
-  total_remote_codex=$?
-fi
+clean_remote_branches "$CODEX_PREFIX" "codex"
+total_remote_codex=$CLEAN_COUNT
 
 echo ""
 
 # 🧹 Paso 6: Limpiar ramas archive/ remotas
-if clean_remote_branches "$ARCHIVE_PREFIX" "archive"; then
-  total_remote_archive=$?
-fi
+clean_remote_branches "$ARCHIVE_PREFIX" "archive"
+total_remote_archive=$CLEAN_COUNT
 
 echo ""
 

@@ -62,7 +62,7 @@ alias lusers="cut -d: -f1 /etc/passwd | sort"
 # Comandos de Git que requieren shell (no se pueden mover a gitconfig)
 # ------------------------------------
 # Actualizar repositorio con limpieza de ramas
-alias gitups="~/dotfiles/scripts/clean_branches.sh && gbinfo"
+alias gitups="~/dotfiles/scripts/git_clean_branches.sh && gbinfo"
 
 # ------------------------------------
 # Funciones de Git (no se pueden mover a gitconfig)
