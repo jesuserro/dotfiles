@@ -272,11 +272,11 @@ generate_changelog_for_tag() {
     mkdir -p "$releases_dir"
   fi
   
-  # Obtener el tag anterior (el último tag antes del HEAD actual)
-  # Primero intentar obtener el tag más reciente que no sea el actual
+  # Obtener el tag anterior (el último tag de release antes del HEAD actual)
+  # Buscar solo tags que empiecen con el prefijo (normalmente "v") y tengan formato de release
   local last_tag=""
-  # Obtener todos los tags ordenados por fecha (más recientes primero)
-  local all_tags=$(git tag --sort=-creatordate 2>/dev/null || echo "")
+  # Obtener todos los tags que empiecen con el prefijo, ordenados por fecha (más recientes primero)
+  local all_tags=$(git tag --sort=-creatordate | grep "^${TAG_PREFIX}" 2>/dev/null || echo "")
   if [ -n "$all_tags" ]; then
     # Si hay tags, obtener el primero que no sea el que estamos creando
     for tag in $all_tags; do
@@ -287,17 +287,17 @@ generate_changelog_for_tag() {
     done
   fi
   
-  # Si aún no tenemos un tag anterior, intentar con git describe
+  # Si aún no tenemos un tag anterior, intentar con git describe pero solo tags con prefijo
   if [ -z "$last_tag" ]; then
-    last_tag=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+    last_tag=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}*" HEAD~1 2>/dev/null || echo "")
   fi
   
-  # Generar contenido del changelog desde commits
+  # Generar contenido del changelog desde commits (con fecha y hash)
   local changelog_content=""
   if [ -n "$last_tag" ]; then
-    changelog_content=$(git log --pretty=format:"- %s (%an)" "${last_tag}..HEAD" 2>/dev/null || echo "")
+    changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${last_tag}..HEAD" 2>/dev/null || echo "")
   else
-    changelog_content=$(git log --pretty=format:"- %s (%an)" --reverse 2>/dev/null || echo "")
+    changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" --reverse 2>/dev/null || echo "")
   fi
   
   # Categorizar commits
@@ -484,7 +484,7 @@ echo -e "${GREEN}🎉 ¡Release completado exitosamente!${NC}"
 echo -e "${BLUE}📋 Resumen:${NC}"
 echo -e "  • ${DEV_BRANCH} → ${MAIN_BRANCH} ✅"
 if [ -n "$TAG_NAME" ]; then
-  local repo_url=$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/' | sed 's/\.git$//')
+  repo_url=$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/' | sed 's/\.git$//')
   echo -e "  • Tag anotado creado: ${TAG_NAME} ✅"
   echo -e "  • Tag en GitHub: https://github.com/${repo_url}/releases/tag/${TAG_NAME}"
   echo -e "  • Release en GitHub: https://github.com/${repo_url}/releases/tag/${TAG_NAME}"
