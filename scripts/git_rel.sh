@@ -8,7 +8,6 @@ VERSION="$1"                          # Versión opcional recibida por parámetr
 DEV_BRANCH="dev"                      # Rama de desarrollo
 MAIN_BRANCH="main"                    # Rama principal de producción
 TAG_PREFIX="v"                        # Prefijo para tags de versión
-SKIP_TESTS=false                      # Flag para saltar tests
 
 # 🎨 Colores para el output en consola
 GREEN='\033[0;32m'
@@ -21,19 +20,12 @@ NC='\033[0m' # Sin color
 process_arguments() {
   while [[ $# -gt 0 ]]; do
     case $1 in
-      --force|--skip-tests)
-        SKIP_TESTS=true
-        shift
-        ;;
       --help|-h)
-        echo -e "${BLUE}📖 Uso: git rel [versión] [opciones]${NC}"
+        echo -e "${BLUE}📖 Uso: git rel [versión]${NC}"
         echo -e "${BLUE}📖 Ejemplos:${NC}"
         echo -e "  git rel                    # Release con versión automática"
         echo -e "  git rel 1.2.3              # Release con versión específica"
-        echo -e "  git rel --force            # Release saltando tests"
-        echo -e "  git rel 1.2.3 --skip-tests # Release con versión y saltando tests"
         echo -e "${BLUE}📖 Opciones:${NC}"
-        echo -e "  --force, --skip-tests      # Continuar aunque los tests fallen"
         echo -e "  --help, -h                 # Mostrar esta ayuda"
         exit 0
         ;;
@@ -158,259 +150,24 @@ do_merge() {
   echo -e "${GREEN}✅ Merge completado: '${source_branch}' → '${target_branch}'${NC}"
 }
 
-# 🧪 Función para ejecutar tests (si existen)
-run_tests() {
-  # Si se especificó saltar tests, salir inmediatamente
-  if [ "$SKIP_TESTS" = true ]; then
-    echo -e "${YELLOW}⚠️  Saltando tests (--skip-tests especificado)${NC}"
-    return 0
-  fi
-  
-  echo -e "${BLUE}🧪 Ejecutando tests...${NC}"
-  
-  # Verificar si existe un script de tests personalizado
-  if [ -f "scripts/test.sh" ]; then
-    echo -e "${YELLOW}🔧 Detectado script de tests personalizado, ejecutando...${NC}"
-    if bash scripts/test.sh; then
-      echo -e "${GREEN}✅ Tests personalizados pasaron${NC}"
-      return 0
-    else
-      echo -e "${RED}❌ Tests personalizados fallaron${NC}"
-      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-      read -r response
-      if [[ ! "$response" =~ ^[Ss]$ ]]; then
-        exit 1
-      fi
-      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-      return 0
-    fi
-  fi
-  
-  # Verificar si existe package.json (Node.js)
-  if [ -f "package.json" ]; then
-    echo -e "${YELLOW}📦 Detectado proyecto Node.js, ejecutando tests...${NC}"
-    if npm test; then
-      echo -e "${GREEN}✅ Tests de Node.js pasaron${NC}"
-      return 0
-    else
-      echo -e "${RED}❌ Tests de Node.js fallaron${NC}"
-      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-      read -r response
-      if [[ ! "$response" =~ ^[Ss]$ ]]; then
-        exit 1
-      fi
-      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-      return 0
-    fi
-  fi
-  
-  # Verificar si existe requirements.txt o pyproject.toml (Python)
-  if [ -f "requirements.txt" ] || [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-    echo -e "${YELLOW}🐍 Detectado proyecto Python, ejecutando tests...${NC}"
-    # Intentar con python3 primero, luego con python
-    if command -v python3 &> /dev/null; then
-      if python3 -m pytest; then
-        echo -e "${GREEN}✅ Tests de Python pasaron${NC}"
-        return 0
-      else
-        echo -e "${RED}❌ Tests de Python fallaron${NC}"
-        echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-        read -r response
-        if [[ ! "$response" =~ ^[Ss]$ ]]; then
-          exit 1
-        fi
-        echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-        return 0
-      fi
-    elif command -v python &> /dev/null; then
-      if python -m pytest; then
-        echo -e "${GREEN}✅ Tests de Python pasaron${NC}"
-        return 0
-      else
-        echo -e "${RED}❌ Tests de Python fallaron${NC}"
-        echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-        read -r response
-        if [[ ! "$response" =~ ^[Ss]$ ]]; then
-          exit 1
-        fi
-        echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-        return 0
-      fi
-    else
-      echo -e "${RED}❌ No se encontró python3 ni python${NC}"
-      exit 1
-    fi
-  fi
-  
-  # Verificar si existe pom.xml (Maven)
-  if [ -f "pom.xml" ]; then
-    echo -e "${YELLOW}☕ Detectado proyecto Maven, ejecutando tests...${NC}"
-    if mvn test; then
-      echo -e "${GREEN}✅ Tests de Maven pasaron${NC}"
-      return 0
-    else
-      echo -e "${RED}❌ Tests de Maven fallaron${NC}"
-      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-      read -r response
-      if [[ ! "$response" =~ ^[Ss]$ ]]; then
-        exit 1
-      fi
-      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-      return 0
-    fi
-  fi
-  
-  # Verificar si existe build.gradle (Gradle)
-  if [ -f "build.gradle" ]; then
-    echo -e "${YELLOW}☕ Detectado proyecto Gradle, ejecutando tests...${NC}"
-    if ./gradlew test; then
-      echo -e "${GREEN}✅ Tests de Gradle pasaron${NC}"
-      return 0
-    else
-      echo -e "${RED}❌ Tests de Gradle fallaron${NC}"
-      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-      read -r response
-      if [[ ! "$response" =~ ^[Ss]$ ]]; then
-        exit 1
-      fi
-      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-      return 0
-    fi
-  fi
-  
-  # Verificar si existe Cargo.toml (Rust)
-  if [ -f "Cargo.toml" ]; then
-    echo -e "${YELLOW}🦀 Detectado proyecto Rust, ejecutando tests...${NC}"
-    if cargo test; then
-      echo -e "${GREEN}✅ Tests de Rust pasaron${NC}"
-      return 0
-    else
-      echo -e "${RED}❌ Tests de Rust fallaron${NC}"
-      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-      read -r response
-      if [[ ! "$response" =~ ^[Ss]$ ]]; then
-        exit 1
-      fi
-      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-      return 0
-    fi
-  fi
-  
-  # Verificar si existe go.mod (Go)
-  if [ -f "go.mod" ]; then
-    echo -e "${YELLOW}🐹 Detectado proyecto Go, ejecutando tests...${NC}"
-    if go test ./...; then
-      echo -e "${GREEN}✅ Tests de Go pasaron${NC}"
-      return 0
-    else
-      echo -e "${RED}❌ Tests de Go fallaron${NC}"
-      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-      read -r response
-      if [[ ! "$response" =~ ^[Ss]$ ]]; then
-        exit 1
-      fi
-      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-      return 0
-    fi
-  fi
-  
-  # Verificar si existe composer.json (PHP)
-  if [ -f "composer.json" ]; then
-    echo -e "${YELLOW}🐘 Detectado proyecto PHP, ejecutando tests...${NC}"
-    if composer test || php vendor/bin/phpunit; then
-      echo -e "${GREEN}✅ Tests de PHP pasaron${NC}"
-      return 0
-    else
-      echo -e "${RED}❌ Tests de PHP fallaron${NC}"
-      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-      read -r response
-      if [[ ! "$response" =~ ^[Ss]$ ]]; then
-        exit 1
-      fi
-      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-      return 0
-    fi
-  fi
-  
-  # Verificar si existe Gemfile (Ruby)
-  if [ -f "Gemfile" ]; then
-    echo -e "${YELLOW}💎 Detectado proyecto Ruby, ejecutando tests...${NC}"
-    if bundle exec rspec || bundle exec rake test; then
-      echo -e "${GREEN}✅ Tests de Ruby pasaron${NC}"
-      return 0
-    else
-      echo -e "${RED}❌ Tests de Ruby fallaron${NC}"
-      echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-      read -r response
-      if [[ ! "$response" =~ ^[Ss]$ ]]; then
-        exit 1
-      fi
-      echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-      return 0
-    fi
-  fi
-  
-  # Verificar si existe Makefile con target test
-  if [ -f "Makefile" ] && (grep -q "^test:" Makefile || grep -q "^tests:" Makefile); then
-    echo -e "${YELLOW}🔨 Detectado Makefile con target test/tests, ejecutando...${NC}"
-    # Intentar con "make tests" primero, luego con "make test"
-    if grep -q "^tests:" Makefile; then
-      if make tests; then
-        echo -e "${GREEN}✅ Tests de Makefile (make tests) pasaron${NC}"
-        return 0
-      else
-        echo -e "${RED}❌ Tests de Makefile (make tests) fallaron${NC}"
-        echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-        read -r response
-        if [[ ! "$response" =~ ^[Ss]$ ]]; then
-          exit 1
-        fi
-        echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-        return 0
-      fi
-    elif grep -q "^test:" Makefile; then
-      if make test; then
-        echo -e "${GREEN}✅ Tests de Makefile (make test) pasaron${NC}"
-        return 0
-      else
-        echo -e "${RED}❌ Tests de Makefile (make test) fallaron${NC}"
-        echo -e "${YELLOW}⚠️  ¿Deseas continuar con la release aunque los tests fallen? (s/N)${NC}"
-        read -r response
-        if [[ ! "$response" =~ ^[Ss]$ ]]; then
-          exit 1
-        fi
-        echo -e "${YELLOW}⚠️  Continuando con la release (tests fallaron)${NC}"
-        return 0
-      fi
-    fi
-  fi
-  
-  # Si no se detectó ningún framework de tests
-  echo -e "${YELLOW}⚠️  No se detectaron tests automáticos.${NC}"
-  echo -e "${BLUE}💡 Opciones para configurar tests:${NC}"
-  echo -e "  • Crear scripts/test.sh (script personalizado)"
-  echo -e "  • Configurar package.json (Node.js)"
-  echo -e "  • Configurar pyproject.toml (Python)"
-  echo -e "  • Configurar pom.xml (Maven)"
-  echo -e "  • Configurar build.gradle (Gradle)"
-  echo -e "  • Configurar Cargo.toml (Rust)"
-  echo -e "  • Configurar go.mod (Go)"
-  echo -e "  • Configurar composer.json (PHP)"
-  echo -e "  • Configurar Gemfile (Ruby)"
-  echo -e "  • Añadir target 'test:' en Makefile"
-  echo -e "${YELLOW}¿Deseas continuar sin ejecutar tests? (s/N)${NC}"
-  read -r response
-  if [[ ! "$response" =~ ^[Ss]$ ]]; then
-    exit 1
-  fi
-}
 
 # 🏷️ Función para generar versión automática
 generate_version() {
   if [ -z "$VERSION" ]; then
-    # Generar versión automática con formato vAAAA.MM.DD_HHMM
+    # Generar versión automática con formato profesional: vAAAA.MM.DD_HHMM
+    # Ejemplo: v2025.12.07_1023
     VERSION=$(date +"%Y.%m.%d_%H%M")
+  else
+    # Si se proporciona una versión manual, asegurar que tenga el formato correcto
+    # Remover el prefijo 'v' si existe para normalizar
+    VERSION=$(echo "$VERSION" | sed 's/^v//')
+    # Validar formato básico (debe contener al menos números y puntos/guiones bajos)
+    if ! echo "$VERSION" | grep -qE '^[0-9]'; then
+      echo -e "${YELLOW}⚠️  Formato de versión no reconocido, usando versión automática${NC}"
+      VERSION=$(date +"%Y.%m.%d_%H%M")
+    fi
   fi
+  # Asegurar que el prefijo 'v' esté presente
   echo "${TAG_PREFIX}${VERSION}"
 }
 
@@ -457,16 +214,13 @@ echo -e "${GREEN}✅ Todas las ramas verificadas correctamente${NC}"
 # Verificar estado del repositorio
 check_clean_repo
 
-# 🧪 Paso 1: Ejecutar tests
-run_tests
-
-# 🔁 Paso 2: Merge de dev → main (igual que git_feat.sh)
+# 🔁 Paso 1: Merge de dev → main (igual que git_feat.sh)
 echo -e "${YELLOW}🔁 Integrando '${DEV_BRANCH}' en '${MAIN_BRANCH}'...${NC}"
 git checkout "$MAIN_BRANCH"
 git pull origin "$MAIN_BRANCH"
 do_merge "$DEV_BRANCH" "$MAIN_BRANCH"
 
-# 🏷️ Paso 3: Crear tag de versión
+# 🏷️ Paso 2: Generar nombre de versión para el tag
 TAG_NAME=$(generate_version)
 echo -e "${YELLOW}🏷️  Creando tag '${TAG_NAME}'...${NC}"
 
@@ -507,19 +261,129 @@ if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
   esac
 fi
 
-# Crear y subir el tag si se especificó
+# 📝 Función para generar changelog antes de crear el tag
+generate_changelog_for_tag() {
+  local tag_name="$1"
+  local project_root=$(git rev-parse --show-toplevel)
+  local releases_dir="$project_root/releases"
+  
+  # Crear directorio de releases si no existe
+  if [ ! -d "$releases_dir" ]; then
+    mkdir -p "$releases_dir"
+  fi
+  
+  # Obtener el tag anterior (el último tag antes del HEAD actual)
+  # Primero intentar obtener el tag más reciente que no sea el actual
+  local last_tag=""
+  # Obtener todos los tags ordenados por fecha (más recientes primero)
+  local all_tags=$(git tag --sort=-creatordate 2>/dev/null || echo "")
+  if [ -n "$all_tags" ]; then
+    # Si hay tags, obtener el primero que no sea el que estamos creando
+    for tag in $all_tags; do
+      if [ "$tag" != "$tag_name" ]; then
+        last_tag="$tag"
+        break
+      fi
+    done
+  fi
+  
+  # Si aún no tenemos un tag anterior, intentar con git describe
+  if [ -z "$last_tag" ]; then
+    last_tag=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+  fi
+  
+  # Generar contenido del changelog desde commits
+  local changelog_content=""
+  if [ -n "$last_tag" ]; then
+    changelog_content=$(git log --pretty=format:"- %s (%an)" "${last_tag}..HEAD" 2>/dev/null || echo "")
+  else
+    changelog_content=$(git log --pretty=format:"- %s (%an)" --reverse 2>/dev/null || echo "")
+  fi
+  
+  # Categorizar commits
+  local categorized_content=""
+  local feat_items=$(echo "$changelog_content" | grep -E "^- (feat|feature)" || true)
+  local fix_items=$(echo "$changelog_content" | grep -E "^- fix" || true)
+  local docs_items=$(echo "$changelog_content" | grep -E "^- docs" || true)
+  local refactor_items=$(echo "$changelog_content" | grep -E "^- refactor" || true)
+  local test_items=$(echo "$changelog_content" | grep -E "^- test" || true)
+  local style_items=$(echo "$changelog_content" | grep -E "^- style" || true)
+  local chore_items=$(echo "$changelog_content" | grep -E "^- chore" || true)
+  local other_items=$(echo "$changelog_content" | grep -vE "^- (feat|feature|fix|docs|refactor|test|style|chore)" || true)
+  
+  if [ -n "$feat_items" ]; then
+    categorized_content+="### Added\n${feat_items}\n\n"
+  fi
+  if [ -n "$fix_items" ]; then
+    categorized_content+="### Fixed\n${fix_items}\n\n"
+  fi
+  if [ -n "$docs_items" ]; then
+    categorized_content+="### Documentation\n${docs_items}\n\n"
+  fi
+  if [ -n "$refactor_items" ]; then
+    categorized_content+="### Refactored\n${refactor_items}\n\n"
+  fi
+  if [ -n "$test_items" ]; then
+    categorized_content+="### Tests\n${test_items}\n\n"
+  fi
+  if [ -n "$style_items" ]; then
+    categorized_content+="### Style\n${style_items}\n\n"
+  fi
+  if [ -n "$chore_items" ]; then
+    categorized_content+="### Chores\n${chore_items}\n\n"
+  fi
+  if [ -n "$other_items" ]; then
+    categorized_content+="### Other\n${other_items}\n\n"
+  fi
+  
+  # Si no hay contenido categorizado, usar el contenido completo
+  if [ -z "$categorized_content" ]; then
+    categorized_content="$changelog_content"
+  fi
+  
+  # Obtener fecha
+  local tag_date=$(date +%Y-%m-%d)
+  
+  # Crear mensaje para el tag anotado
+  local tag_message="Release ${tag_name}
+
+Fecha: ${tag_date}
+${last_tag:+Tag anterior: ${last_tag}}
+
+## Changes
+
+${categorized_content}"
+
+  echo "$tag_message"
+}
+
+# 📝 Paso 3: Generar changelog antes de crear el tag
+TAG_MESSAGE=""
 if [ -n "$TAG_NAME" ]; then
-  echo -e "${BLUE}🏷️  Creando tag '${TAG_NAME}' en el commit actual...${NC}"
+  echo -e "${YELLOW}📝 Generando changelog para el tag...${NC}"
+  TAG_MESSAGE=$(generate_changelog_for_tag "$TAG_NAME")
+  if [ -n "$TAG_MESSAGE" ]; then
+    echo -e "${GREEN}✅ Changelog generado exitosamente${NC}"
+  else
+    echo -e "${YELLOW}⚠️  No se pudo generar changelog, usando mensaje básico${NC}"
+    TAG_MESSAGE="Release ${TAG_NAME}"
+  fi
+fi
+
+# 🏷️ Paso 4: Crear tag anotado con changelog
+if [ -n "$TAG_NAME" ]; then
+  echo -e "${BLUE}🏷️  Creando tag anotado '${TAG_NAME}' en el commit actual...${NC}"
   
   # Mostrar información del commit donde se creará el tag
   current_commit=$(git rev-parse HEAD)
   commit_info=$(git log -1 --pretty=format:"%h - %s (%an)" "$current_commit")
   echo -e "${BLUE}📝 Tag se creará en: ${commit_info}${NC}"
   
-  if git tag "$TAG_NAME"; then
+  # Crear tag anotado con el mensaje del changelog
+  if echo "$TAG_MESSAGE" | git tag -a "$TAG_NAME" -F -; then
     echo -e "${BLUE}📤 Subiendo tag a GitHub...${NC}"
     if git push origin "$TAG_NAME"; then
-      echo -e "${GREEN}✅ Tag '${TAG_NAME}' creado y subido exitosamente a GitHub.${NC}"
+      echo -e "${GREEN}✅ Tag anotado '${TAG_NAME}' creado y subido exitosamente a GitHub.${NC}"
       
       # Verificar que el tag se subió correctamente
       echo -e "${BLUE}🔍 Verificando tag en GitHub...${NC}"
@@ -541,16 +405,65 @@ else
   echo -e "${YELLOW}⚠️  No se creó ningún tag${NC}"
 fi
 
-# 📝 Paso 4: Generar changelogs (solo si se creó un tag)
+# 📝 Paso 5: Generar archivos de changelog (solo si se creó un tag)
 if [ -n "$TAG_NAME" ]; then
-  echo -e "${YELLOW}📝 Generando changelogs...${NC}"
+  echo -e "${YELLOW}📝 Generando archivos de changelog...${NC}"
   if bash ~/dotfiles/scripts/git_changelog.sh "$TAG_NAME"; then
-    echo -e "${GREEN}✅ Changelogs generados exitosamente${NC}"
+    echo -e "${GREEN}✅ Archivos de changelog generados exitosamente${NC}"
   else
-    echo -e "${YELLOW}⚠️  Error generando changelogs, pero el release se completó${NC}"
+    echo -e "${YELLOW}⚠️  Error generando archivos de changelog, pero el release se completó${NC}"
   fi
 else
-  echo -e "${YELLOW}⚠️  Saltando generación de changelogs (no hay tag)${NC}"
+  echo -e "${YELLOW}⚠️  Saltando generación de archivos de changelog (no hay tag)${NC}"
+fi
+
+# 🚀 Paso 6: Crear release en GitHub (solo si se creó un tag)
+if [ -n "$TAG_NAME" ]; then
+  echo -e "${YELLOW}🚀 Creando release en GitHub...${NC}"
+  
+  # Verificar si gh CLI está disponible
+  if command -v gh &> /dev/null; then
+    # Obtener el archivo de changelog generado
+    project_root=$(git rev-parse --show-toplevel)
+    release_file="$project_root/releases/${TAG_NAME}.md"
+    
+    if [ -f "$release_file" ]; then
+      # Crear release usando gh CLI con el contenido del changelog
+      if gh release create "$TAG_NAME" --title "$TAG_NAME" --notes-file "$release_file" 2>/dev/null; then
+        echo -e "${GREEN}✅ Release '${TAG_NAME}' creado exitosamente en GitHub${NC}"
+      else
+        # Si el release ya existe, intentar editarlo
+        if gh release edit "$TAG_NAME" --notes-file "$release_file" 2>/dev/null; then
+          echo -e "${GREEN}✅ Release '${TAG_NAME}' actualizado exitosamente en GitHub${NC}"
+        else
+          echo -e "${YELLOW}⚠️  No se pudo crear/actualizar el release en GitHub (puede que ya exista)${NC}"
+          echo -e "${BLUE}💡 Puedes crearlo manualmente en: https://github.com/$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/')/releases/new${NC}"
+        fi
+      fi
+    else
+      # Si no hay archivo de changelog, crear release con el mensaje del tag
+      if gh release create "$TAG_NAME" --title "$TAG_NAME" --notes "$TAG_MESSAGE" 2>/dev/null; then
+        echo -e "${GREEN}✅ Release '${TAG_NAME}' creado exitosamente en GitHub${NC}"
+      else
+        if gh release edit "$TAG_NAME" --notes "$TAG_MESSAGE" 2>/dev/null; then
+          echo -e "${GREEN}✅ Release '${TAG_NAME}' actualizado exitosamente en GitHub${NC}"
+        else
+          echo -e "${YELLOW}⚠️  No se pudo crear/actualizar el release en GitHub${NC}"
+          echo -e "${BLUE}💡 Puedes crearlo manualmente en: https://github.com/$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/')/releases/new${NC}"
+        fi
+      fi
+    fi
+  else
+    echo -e "${YELLOW}⚠️  GitHub CLI (gh) no está instalado${NC}"
+    echo -e "${BLUE}💡 Instala gh CLI para crear releases automáticamente: https://cli.github.com/${NC}"
+    echo -e "${BLUE}💡 O crea el release manualmente en: https://github.com/$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/')/releases/new${NC}"
+    echo -e "${BLUE}💡 Usa el siguiente contenido para el release:${NC}"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "$TAG_MESSAGE"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  fi
+else
+  echo -e "${YELLOW}⚠️  Saltando creación de release (no hay tag)${NC}"
 fi
 
 # 🔍 Verificación final: confirmar que estamos en main
@@ -571,18 +484,21 @@ echo -e "${GREEN}🎉 ¡Release completado exitosamente!${NC}"
 echo -e "${BLUE}📋 Resumen:${NC}"
 echo -e "  • ${DEV_BRANCH} → ${MAIN_BRANCH} ✅"
 if [ -n "$TAG_NAME" ]; then
-  echo -e "  • Tag creado: ${TAG_NAME} ✅"
-  echo -e "  • Tag en GitHub: https://github.com/$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/')/releases/tag/${TAG_NAME}"
+  local repo_url=$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/' | sed 's/\.git$//')
+  echo -e "  • Tag anotado creado: ${TAG_NAME} ✅"
+  echo -e "  • Tag en GitHub: https://github.com/${repo_url}/releases/tag/${TAG_NAME}"
+  echo -e "  • Release en GitHub: https://github.com/${repo_url}/releases/tag/${TAG_NAME}"
 else
   echo -e "  • Tag: No creado ⚠️"
 fi
-if [ "$SKIP_TESTS" = true ]; then
-  echo -e "  • Tests saltados (--skip-tests) ⚠️"
-else
-  echo -e "  • Tests ejecutados ✅"
-fi
 if [ -n "$TAG_NAME" ]; then
-  echo -e "  • Changelogs generados ✅"
+  echo -e "  • Changelog en tag: ✅"
+  echo -e "  • Archivos de changelog generados: ✅"
+  if command -v gh &> /dev/null; then
+    echo -e "  • Release de GitHub: ✅"
+  else
+    echo -e "  • Release de GitHub: ⚠️  (requiere gh CLI)"
+  fi
 else
   echo -e "  • Changelogs: No generados ⚠️"
 fi
