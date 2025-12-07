@@ -24,6 +24,8 @@
   # Nuevos aliases para la nueva política de ramas
   feat = "!bash ~/dotfiles/scripts/git_feat.sh"
   feat-help = "!bash ~/dotfiles/scripts/git_feat.sh --help"
+  pr = "!bash ~/dotfiles/scripts/git_pr.sh"
+  pr-help = "!bash ~/dotfiles/scripts/git_pr.sh --help"
   rel = "!bash ~/dotfiles/scripts/git_rel.sh"
   rel-help = "!bash ~/dotfiles/scripts/git_rel.sh --help"
   rel-resolve = "!bash ~/dotfiles/scripts/git_rel_resolve.sh"
