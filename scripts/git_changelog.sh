@@ -73,15 +73,25 @@ fi
 # 🏷️ Función para obtener el tag anterior si no se proporciona
 get_previous_tag() {
   if [ -z "$LAST_TAG" ]; then
-    # Intentar obtener el último tag antes del actual
-    LAST_TAG=$(git describe --tags --abbrev=0 "$TAG_NAME"^ 2>/dev/null)
-    if [ $? -ne 0 ]; then
-      LAST_TAG=""
+    # Extraer el prefijo del tag actual (normalmente "v")
+    TAG_PREFIX=$(echo "$TAG_NAME" | sed 's/^\([^0-9]*\).*/\1/')
+    if [ -z "$TAG_PREFIX" ]; then
+      TAG_PREFIX="v"
     fi
-    if [ -n "$LAST_TAG" ]; then
+    
+    # Intentar obtener el último tag de release antes del actual
+    # Buscar solo tags que empiecen con el prefijo
+    LAST_TAG=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}*" "$TAG_NAME"^ 2>/dev/null)
+    if [ $? -ne 0 ] || [ -z "$LAST_TAG" ]; then
+      # Si no se encuentra, buscar en todos los tags con prefijo ordenados por fecha
+      LAST_TAG=$(git tag --sort=-creatordate | grep "^${TAG_PREFIX}" | grep -v "^${TAG_NAME}$" | head -n 1 2>/dev/null || echo "")
+    fi
+    
+    if [ -n "$LAST_TAG" ] && [ "$LAST_TAG" != "$TAG_NAME" ]; then
       echo -e "${BLUE}🔍 Tag anterior detectado automáticamente: ${LAST_TAG}${NC}"
     else
-      echo -e "${YELLOW}⚠️  No se encontró tag anterior. Mostrando todos los commits.${NC}"
+      LAST_TAG=""  # Limpiar si es el mismo tag o no se encontró
+      echo -e "${YELLOW}⚠️  No se encontró tag anterior de release. Mostrando todos los commits hasta este tag.${NC}"
     fi
   fi
 }
@@ -91,13 +101,14 @@ generate_changelog_content() {
   local from_tag="$1"
   local to_tag="$2"
   
-  if [ -n "$from_tag" ]; then
+  if [ -n "$from_tag" ] && [ "$from_tag" != "$to_tag" ]; then
     echo -e "${BLUE}📝 Generando changelog desde ${from_tag} hasta ${to_tag}...${NC}"
-    git log --pretty=format:"- %s (%an)" "${from_tag}..${to_tag}" 2>/dev/null || \
-    git log --pretty=format:"- %s (%an)" "${from_tag}..HEAD" 2>/dev/null
+    git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${from_tag}..${to_tag}" 2>/dev/null || \
+    git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${from_tag}..HEAD" 2>/dev/null
   else
     echo -e "${BLUE}📝 Generando changelog completo hasta ${to_tag}...${NC}"
-    git log --pretty=format:"- %s (%an)" --reverse
+    git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${to_tag}" 2>/dev/null || \
+    git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" --reverse
   fi
 }
 
@@ -115,72 +126,76 @@ categorize_commits() {
   local chore_file=$(mktemp)
   local other_file=$(mktemp)
   
-  # Procesar cada línea
+  # Procesar cada línea (el formato ahora es: "- YYYY-MM-DD HH:MM `hash` tipo(scope): mensaje")
   local tmp_content=$(mktemp)
   echo "$content" > "$tmp_content"
   while IFS= read -r line; do
-    case "$line" in
-      "- feat"*|"- feature"*)
-        echo "$line" >> "$feat_file" ;;
-      "- fix"*)
-        echo "$line" >> "$fix_file" ;;
-      "- docs"*)
-        echo "$line" >> "$docs_file" ;;
-      "- style"*)
-        echo "$line" >> "$style_file" ;;
-      "- refactor"*)
-        echo "$line" >> "$refactor_file" ;;
-      "- test"*)
-        echo "$line" >> "$test_file" ;;
-      "- chore"*)
-        echo "$line" >> "$chore_file" ;;
-      "-"*)
-        echo "$line" >> "$other_file" ;;
-    esac
+    # Extraer el tipo del commit que viene después del backtick de cierre y antes de (
+    # El formato es: "- YYYY-MM-DD HH:MM `hash` tipo(scope): mensaje"
+    # Usar una variable para el patrón del backtick para evitar problemas de escape
+    local backtick_pattern='`[^`]*`'
+    if echo "$line" | grep -qE "${backtick_pattern} (feat|feature)"; then
+      echo "$line" >> "$feat_file"
+    elif echo "$line" | grep -qE "${backtick_pattern} fix"; then
+      echo "$line" >> "$fix_file"
+    elif echo "$line" | grep -qE "${backtick_pattern} docs"; then
+      echo "$line" >> "$docs_file"
+    elif echo "$line" | grep -qE "${backtick_pattern} style"; then
+      echo "$line" >> "$style_file"
+    elif echo "$line" | grep -qE "${backtick_pattern} refactor"; then
+      echo "$line" >> "$refactor_file"
+    elif echo "$line" | grep -qE "${backtick_pattern} test"; then
+      echo "$line" >> "$test_file"
+    elif echo "$line" | grep -qE "${backtick_pattern} chore"; then
+      echo "$line" >> "$chore_file"
+    elif echo "$line" | grep -qE "^-"; then
+      echo "$line" >> "$other_file"
+    fi
   done < "$tmp_content"
   rm -f "$tmp_content"
   
-  # Generar contenido categorizado
+  # Generar contenido categorizado usando printf para saltos de línea correctos
   local categorized_content=""
+  local nl=$'\n'
   
   if [ -s "$feat_file" ]; then
-    categorized_content+="### Added\n"
-    categorized_content+="$(cat "$feat_file")\n\n"
+    categorized_content+="### Added${nl}"
+    categorized_content+="$(cat "$feat_file")${nl}${nl}"
   fi
   
   if [ -s "$fix_file" ]; then
-    categorized_content+="### Fixed\n"
-    categorized_content+="$(cat "$fix_file")\n\n"
+    categorized_content+="### Fixed${nl}"
+    categorized_content+="$(cat "$fix_file")${nl}${nl}"
   fi
   
   if [ -s "$docs_file" ]; then
-    categorized_content+="### Documentation\n"
-    categorized_content+="$(cat "$docs_file")\n\n"
+    categorized_content+="### Documentation${nl}"
+    categorized_content+="$(cat "$docs_file")${nl}${nl}"
   fi
   
   if [ -s "$refactor_file" ]; then
-    categorized_content+="### Refactored\n"
-    categorized_content+="$(cat "$refactor_file")\n\n"
+    categorized_content+="### Refactored${nl}"
+    categorized_content+="$(cat "$refactor_file")${nl}${nl}"
   fi
   
   if [ -s "$test_file" ]; then
-    categorized_content+="### Tests\n"
-    categorized_content+="$(cat "$test_file")\n\n"
+    categorized_content+="### Tests${nl}"
+    categorized_content+="$(cat "$test_file")${nl}${nl}"
   fi
   
   if [ -s "$style_file" ]; then
-    categorized_content+="### Style\n"
-    categorized_content+="$(cat "$style_file")\n\n"
+    categorized_content+="### Style${nl}"
+    categorized_content+="$(cat "$style_file")${nl}${nl}"
   fi
   
   if [ -s "$chore_file" ]; then
-    categorized_content+="### Chores\n"
-    categorized_content+="$(cat "$chore_file")\n\n"
+    categorized_content+="### Chores${nl}"
+    categorized_content+="$(cat "$chore_file")${nl}${nl}"
   fi
   
   if [ -s "$other_file" ]; then
-    categorized_content+="### Other\n"
-    categorized_content+="$(cat "$other_file")\n\n"
+    categorized_content+="### Other${nl}"
+    categorized_content+="$(cat "$other_file")${nl}${nl}"
   fi
   
   # Limpiar archivos temporales
