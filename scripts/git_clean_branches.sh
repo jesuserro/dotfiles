@@ -170,8 +170,8 @@ echo -e "${CYAN}📋 Resumen de limpieza:${NC}"
 echo -e "${BLUE}┌─────────────────────────────────────────────────────────────┐${NC}"
 echo -e "${BLUE}│ Tipo de Rama    │ Locales │ Remotas │ Total │${NC}"
 echo -e "${BLUE}├─────────────────┼─────────┼─────────┼───────┤${NC}"
-printf "${BLUE}│ codex/          │ %7d │ %7d │ %5d │${NC}\n" $total_local_codex $total_remote_codex $total_local_codex
-printf "${BLUE}│ archive/        │ %7d │ %7d │ %5d │${NC}\n" $total_local_archive $total_remote_archive $total_local_archive
+printf "${BLUE}│ codex/          │ %7d │ %7d │ %5d │${NC}\n" $total_local_codex $total_remote_codex $((total_local_codex + total_remote_codex))
+printf "${BLUE}│ archive/        │ %7d │ %7d │ %5d │${NC}\n" $total_local_archive $total_remote_archive $((total_local_archive + total_remote_archive))
 echo -e "${BLUE}├─────────────────┼─────────┼─────────┼───────┤${NC}"
 local_total=$((total_local_codex + total_local_archive))
 remote_total=$((total_remote_codex + total_remote_archive))
