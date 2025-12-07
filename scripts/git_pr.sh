@@ -278,6 +278,3 @@ ensure_remote_branch "$FEATURE_BRANCH"
 # Crear el Pull Request
 create_pull_request "$FEATURE_BRANCH" "$DEV_BRANCH"
 
-# 🎉 Fin del proceso
-echo -e "${GREEN}🎉 ¡Pull Request creado exitosamente!${NC}"
-
