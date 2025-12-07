@@ -36,7 +36,7 @@ process_arguments() {
         echo -e "${BLUE}📖 Flujo:${NC}"
         echo -e "  1. Se mueve a rama 'dev'"
         echo -e "  2. Hace merge de tu feature en dev"
-        echo -e "  3. Genera changelog de la feature (opcional)"
+        echo -e "  3. Genera changelog de la feature después del merge (opcional)"
         echo -e "  4. Archiva tu rama feature"
         echo -e "  5. Termina en rama 'dev'"
         exit 0
@@ -149,13 +149,14 @@ do_merge() {
   echo -e "${GREEN}✅ Merge completado: '${source_branch}' → '${target_branch}'${NC}"
 }
 
-# 📝 Función para generar changelog de la feature antes de archivarla
+# 📝 Función para generar changelog de la feature después del merge
 generate_feature_changelog() {
   local feature_branch="$1"
   local base_branch="$2"
+  local base_commit="$3"  # Commit de base antes del merge
   
   if [ "$GENERATE_CHANGELOG" = true ]; then
-    echo -e "${YELLOW}📝 Generando changelog de la feature antes de archivarla...${NC}"
+    echo -e "${YELLOW}📝 Generando changelog de la feature después del merge...${NC}"
     
     # Crear directorio de releases si no existe
     local releases_dir="$(git rev-parse --show-toplevel)/releases"
@@ -171,12 +172,12 @@ generate_feature_changelog() {
     local current_date=$(date +%Y-%m-%d)
     local current_time=$(date +%H:%M)
     
-    # Obtener información de la feature
+    # Obtener información de la feature usando el commit base antes del merge
     local branch_info=$(git log -1 --pretty=format:"%h - %s (%an)" "$feature_branch")
-    local total_commits=$(git rev-list --count "${base_branch}..${feature_branch}" 2>/dev/null || echo "0")
+    local total_commits=$(git rev-list --count "${base_commit}..${feature_branch}" 2>/dev/null || echo "0")
     
-    # Generar contenido del changelog (commits exclusivos de la feature)
-    local changelog_content=$(git log --pretty=format:"- %h %ad %an %s" --date=format:"%Y-%m-%d %H:%M" "${base_branch}..${feature_branch}" 2>/dev/null || echo "# No se pudieron obtener commits exclusivos")
+    # Generar contenido del changelog (commits exclusivos de la feature usando el commit base)
+    local changelog_content=$(git log --pretty=format:"- %h %ad %an %s" --date=format:"%Y-%m-%d %H:%M" "${base_commit}..${feature_branch}" 2>/dev/null || echo "# No se pudieron obtener commits exclusivos")
     
     # Crear archivo de changelog
     cat > "$changelog_file" << EOF
@@ -235,11 +236,14 @@ echo -e "${YELLOW}🔁 Integrando '${FEATURE_BRANCH}' en '${DEV_BRANCH}'...${NC}
 git checkout "$DEV_BRANCH"
 git pull origin "$DEV_BRANCH"
 
-# 📝 Generar changelog de la feature ANTES del merge (cuando todavía tiene commits exclusivos)
-generate_feature_changelog "$FEATURE_BRANCH" "$DEV_BRANCH"
+# Guardar el commit actual de dev antes del merge (para poder obtener commits exclusivos después)
+BASE_COMMIT=$(git rev-parse HEAD)
 
-# Ahora hacer el merge
+# Hacer el merge primero
 do_merge "$FEATURE_BRANCH" "$DEV_BRANCH"
+
+# 📝 Generar changelog de la feature DESPUÉS del merge (usando el commit base guardado)
+generate_feature_changelog "$FEATURE_BRANCH" "$DEV_BRANCH" "$BASE_COMMIT"
 
 # 📦 Archivar la rama feature
 ARCHIVE_BRANCH="${ARCHIVE_PREFIX}${FEATURE_BRANCH}"
