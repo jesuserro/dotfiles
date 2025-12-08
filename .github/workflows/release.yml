@@ -1,0 +1,54 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Se dispara cuando se crea un tag que empieza con 'v'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Necesario para crear releases
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Necesario para obtener todo el historial de tags
+      
+      - name: Get tag name
+        id: tag
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Tag name: $TAG_NAME"
+      
+      - name: Prepare release notes
+        id: release_notes
+        run: |
+          TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+          
+          # Verificar si existe el archivo de release
+          if [ -f "releases/${TAG_NAME}.md" ]; then
+            echo "Using release file: releases/${TAG_NAME}.md"
+            # Usar el archivo de release como notas
+            cp "releases/${TAG_NAME}.md" /tmp/release_notes.md
+          else
+            echo "Release file not found, using tag message"
+            # Obtener el mensaje del tag anotado
+            TAG_MESSAGE=$(git tag -l --format='%(contents)' "${TAG_NAME}" 2>/dev/null || echo "")
+            if [ -z "$TAG_MESSAGE" ] || [ "$TAG_MESSAGE" == "" ]; then
+              TAG_MESSAGE="Release ${TAG_NAME}"
+            fi
+            echo "$TAG_MESSAGE" > /tmp/release_notes.md
+          fi
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          name: Release ${{ steps.tag.outputs.tag_name }}
+          body_path: /tmp/release_notes.md
+          draft: false
+          prerelease: false
