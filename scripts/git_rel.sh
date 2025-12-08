@@ -4,9 +4,11 @@
 set -e
 
 # 📦 Configuración básica
+# NOTA: Esta configuración es estándar para TODOS los proyectos.
+# Siempre usamos 'main' como rama principal de producción.
 VERSION="$1"                          # Versión opcional recibida por parámetro
 DEV_BRANCH="dev"                      # Rama de desarrollo
-MAIN_BRANCH="main"                    # Rama principal de producción
+MAIN_BRANCH="main"                    # Rama principal de producción (estándar en todos los proyectos)
 TAG_PREFIX="v"                        # Prefijo para tags de versión
 
 # 🎨 Colores para el output en consola

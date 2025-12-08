@@ -2,11 +2,13 @@
 
 Esta documentación describe la nueva política de ramas y workflow de Git implementada en este proyecto.
 
+> **⚠️ IMPORTANTE:** Esta política es **estándar para TODOS los proyectos**. Siempre usamos `main` como rama principal de producción.
+
 ## 📋 Política de Ramas
 
 | Rama | Propósito | Regla de oro |
 |------|-----------|--------------|
-| **`main`** | Producción – solo código estable, testeado y listo para deploy | _Nunca se trabaja directamente aquí_ |
+| **`main`** | Producción – solo código estable, testeado y listo para deploy | _Nunca se trabaja directamente aquí_<br>**Rama principal estándar en todos los proyectos** |
 | **`dev`**  | Integración continua – donde confluyen todas las _features_ | Debe ser *siempre* integrable<br>(tests verdes) |
 | **`feature/*`** | Trabajo diario – una rama por funcionalidad, vida corta | Se elimina tras fusionarse en `dev` |
 | **Tags (`vX.Y.Z`)** | Versión inmutable de lo que hay en `main` | Se crean **solo** después de un release |

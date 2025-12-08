@@ -210,8 +210,10 @@ graph TD
 
 ```bash
 # En scripts/git_rel.sh
+# NOTA: Esta configuración es estándar para TODOS los proyectos.
+# Siempre usamos 'main' como rama principal de producción.
 DEV_BRANCH="dev"           # Rama de desarrollo
-MAIN_BRANCH="main"         # Rama principal
+MAIN_BRANCH="main"         # Rama principal de producción (estándar en todos los proyectos)
 TAG_PREFIX="v"             # Prefijo de tags (formato: vYYYY.MM.DD_HHMM)
 ```
 
