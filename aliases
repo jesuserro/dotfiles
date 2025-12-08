@@ -38,12 +38,207 @@ restart_apache() {
   fi
 }
 
-# Actualizaciones del sistema
-alias ups="sudo -v \
-  && sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y \
-  && npm update -g codex 2>/dev/null \
-  && omz update && upgrade_oh_my_zsh_custom \
-  && restart_apache"
+# =============================================================================
+# Actualizaciones del sistema - Función ups() con formato mejorado
+# =============================================================================
+
+# 🎨 Variables de colores para el output
+_ups_green='\033[0;32m'
+_ups_yellow='\033[1;33m'
+_ups_red='\033[0;31m'
+_ups_blue='\033[0;34m'
+_ups_cyan='\033[0;36m'
+_ups_magenta='\033[0;35m'
+_ups_bold='\033[1m'
+_ups_nc='\033[0m' # Sin color
+
+# Funciones auxiliares para formateo visual
+_ups_section() {
+  echo -e "\n${_ups_cyan}${_ups_bold}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${_ups_nc}"
+  echo -e "${_ups_cyan}${_ups_bold}$1${_ups_nc}"
+  echo -e "${_ups_cyan}${_ups_bold}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${_ups_nc}\n"
+}
+
+_ups_success() {
+  echo -e "${_ups_green}✅ $1${_ups_nc}"
+}
+
+_ups_error() {
+  echo -e "${_ups_red}❌ $1${_ups_nc}"
+}
+
+_ups_info() {
+  echo -e "${_ups_blue}ℹ️  $1${_ups_nc}"
+}
+
+_ups_warning() {
+  echo -e "${_ups_yellow}⚠️  $1${_ups_nc}"
+}
+
+_ups_progress() {
+  echo -e "${_ups_yellow}⏳ $1${_ups_nc}"
+}
+
+# Función principal de actualización del sistema
+ups() {
+  local start_time=$(date +%s)
+  local errors=0
+  local error_messages=()
+  
+  # Encabezado inicial
+  echo -e "\n${_ups_magenta}${_ups_bold}╔═══════════════════════════════════════════════════════════════╗${_ups_nc}"
+  echo -e "${_ups_magenta}${_ups_bold}║${_ups_nc}  ${_ups_bold}🚀 ACTUALIZACIÓN DEL SISTEMA${_ups_nc}                                    ${_ups_magenta}${_ups_bold}║${_ups_nc}"
+  echo -e "${_ups_magenta}${_ups_bold}╚═══════════════════════════════════════════════════════════════╝${_ups_nc}\n"
+  
+  # Detectar entorno WSL
+  if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
+    _ups_info "Entorno detectado: Ubuntu WSL"
+  fi
+  
+  # 🔐 Sección: Autenticación sudo
+  _ups_section "🔐 Autenticación sudo"
+  _ups_progress "Verificando credenciales sudo..."
+  if sudo -v; then
+    _ups_success "Credenciales sudo verificadas"
+  else
+    _ups_error "Error al verificar credenciales sudo"
+    ((errors++))
+    error_messages+=("Error en autenticación sudo")
+  fi
+  
+  # 📦 Sección: Actualización de paquetes apt
+  _ups_section "📦 Actualización de paquetes APT"
+  
+  # apt update
+  _ups_progress "Actualizando lista de paquetes (apt update)..."
+  local update_start=$(date +%s)
+  if sudo apt update -y 2>&1 | tee /tmp/ups_apt_update.log; then
+    local update_time=$(($(date +%s) - update_start))
+    _ups_success "Lista de paquetes actualizada (${update_time}s)"
+  else
+    _ups_error "Error al actualizar lista de paquetes"
+    ((errors++))
+    error_messages+=("Error en apt update")
+  fi
+  
+  # apt upgrade
+  _ups_progress "Actualizando paquetes instalados (apt upgrade)..."
+  local upgrade_start=$(date +%s)
+  if sudo apt upgrade -y 2>&1 | tee /tmp/ups_apt_upgrade.log; then
+    local upgrade_time=$(($(date +%s) - upgrade_start))
+    _ups_success "Paquetes actualizados (${upgrade_time}s)"
+    
+    # Intentar extraer estadísticas del log
+    local upgraded_count=$(grep -c "upgraded" /tmp/ups_apt_upgrade.log 2>/dev/null || echo "0")
+    if [ "$upgraded_count" -gt 0 ]; then
+      _ups_info "Paquetes procesados: $(grep -oP '\d+ upgraded' /tmp/ups_apt_upgrade.log | head -1 || echo 'N/A')"
+    fi
+  else
+    _ups_error "Error al actualizar paquetes"
+    ((errors++))
+    error_messages+=("Error en apt upgrade")
+  fi
+  
+  # apt autoremove
+  _ups_section "🧹 Limpieza de paquetes"
+  _ups_progress "Eliminando paquetes no utilizados (apt autoremove)..."
+  local autoremove_start=$(date +%s)
+  if sudo apt autoremove -y 2>&1 | tee /tmp/ups_apt_autoremove.log; then
+    local autoremove_time=$(($(date +%s) - autoremove_start))
+    _ups_success "Paquetes no utilizados eliminados (${autoremove_time}s)"
+    
+    # Intentar extraer información de espacio liberado
+    local removed_count=$(grep -c "removed" /tmp/ups_apt_autoremove.log 2>/dev/null || echo "0")
+    if [ "$removed_count" -gt 0 ]; then
+      _ups_info "Paquetes eliminados: $(grep -oP '\d+ removed' /tmp/ups_apt_autoremove.log | head -1 || echo 'N/A')"
+    fi
+  else
+    _ups_warning "No se pudieron eliminar algunos paquetes (puede ser normal)"
+  fi
+  
+  # 📚 Sección: Actualización npm
+  _ups_section "📚 Actualización de paquetes NPM"
+  if command -v npm >/dev/null 2>&1; then
+    _ups_progress "Actualizando paquete global: codex..."
+    local npm_start=$(date +%s)
+    if npm update -g codex 2>&1 | tee /tmp/ups_npm.log; then
+      local npm_time=$(($(date +%s) - npm_start))
+      _ups_success "Paquete npm 'codex' actualizado (${npm_time}s)"
+    else
+      _ups_warning "No se pudo actualizar el paquete npm 'codex' (puede no estar instalado)"
+    fi
+  else
+    _ups_info "npm no está instalado, omitiendo actualización de paquetes npm"
+  fi
+  
+  # ⚡ Sección: Actualización Oh My Zsh
+  _ups_section "⚡ Actualización de Oh My Zsh"
+  if command -v omz >/dev/null 2>&1 || [ -d "$ZSH" ]; then
+    _ups_progress "Actualizando Oh My Zsh..."
+    local omz_start=$(date +%s)
+    if omz update 2>&1 | tee /tmp/ups_omz.log; then
+      local omz_time=$(($(date +%s) - omz_start))
+      _ups_success "Oh My Zsh actualizado (${omz_time}s)"
+    else
+      _ups_warning "Error al actualizar Oh My Zsh (continuando...)"
+    fi
+    
+    _ups_progress "Actualizando customizaciones de Oh My Zsh..."
+    if command -v upgrade_oh_my_zsh_custom >/dev/null 2>&1; then
+      if upgrade_oh_my_zsh_custom 2>&1 | tee /tmp/ups_omz_custom.log; then
+        _ups_success "Customizaciones de Oh My Zsh actualizadas"
+      else
+        _ups_warning "Error al actualizar customizaciones (puede ser normal)"
+      fi
+    else
+      _ups_info "Función upgrade_oh_my_zsh_custom no disponible"
+    fi
+  else
+    _ups_info "Oh My Zsh no está instalado, omitiendo actualización"
+  fi
+  
+  # 🔄 Sección: Reinicio de servicios
+  _ups_section "🔄 Reinicio de servicios"
+  if command -v apache2 >/dev/null 2>&1; then
+    _ups_progress "Reiniciando servicios Apache y MySQL..."
+    local services_start=$(date +%s)
+    if restart_apache 2>&1 | tee /tmp/ups_services.log; then
+      local services_time=$(($(date +%s) - services_start))
+      _ups_success "Servicios reiniciados correctamente (${services_time}s)"
+    else
+      _ups_warning "Algunos servicios no se pudieron reiniciar"
+    fi
+  else
+    _ups_info "Apache2 no está instalado, omitiendo reinicio de servicios"
+  fi
+  
+  # Resumen final
+  local end_time=$(date +%s)
+  local total_time=$(($end_time - start_time))
+  local minutes=$((total_time / 60))
+  local seconds=$((total_time % 60))
+  
+  echo -e "\n${_ups_magenta}${_ups_bold}╔═══════════════════════════════════════════════════════════════╗${_ups_nc}"
+  echo -e "${_ups_magenta}${_ups_bold}║${_ups_nc}  ${_ups_bold}📊 RESUMEN DE ACTUALIZACIÓN${_ups_nc}                                    ${_ups_magenta}${_ups_bold}║${_ups_nc}"
+  echo -e "${_ups_magenta}${_ups_bold}╚═══════════════════════════════════════════════════════════════╝${_ups_nc}\n"
+  
+  echo -e "${_ups_blue}⏱️  Tiempo total de ejecución: ${_ups_bold}${minutes}m ${seconds}s${_ups_nc}"
+  
+  if [ $errors -eq 0 ]; then
+    echo -e "${_ups_green}${_ups_bold}✅ Proceso completado sin errores${_ups_nc}\n"
+  else
+    echo -e "${_ups_red}${_ups_bold}⚠️  Se encontraron ${errors} error(es) durante el proceso${_ups_nc}"
+    for msg in "${error_messages[@]}"; do
+      echo -e "${_ups_red}   • $msg${_ups_nc}"
+    done
+    echo ""
+  fi
+  
+  # Limpiar archivos temporales
+  rm -f /tmp/ups_*.log 2>/dev/null
+  
+  return $errors
+}
 alias apachestart="sudo service apache2 restart && sudo service mariadb restart"
 
 # Gestión de logs
