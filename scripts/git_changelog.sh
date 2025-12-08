@@ -79,39 +79,11 @@ get_previous_tag() {
       TAG_PREFIX="v"
     fi
     
-    # Obtener el commit al que apunta el tag actual
-    local tag_commit=$(git rev-parse "$TAG_NAME" 2>/dev/null || echo "")
-    
-    if [ -n "$tag_commit" ]; then
-      # Buscar el tag anterior en el historial de commits
-      # Usar git describe para encontrar el tag anterior al commit del tag actual
-      # Primero intentar con el commit padre del tag
-      LAST_TAG=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}*" "${tag_commit}^" 2>/dev/null || echo "")
-      
-      # Si no se encuentra, buscar todos los tags con prefijo y encontrar el anterior en el historial
-      if [ -z "$LAST_TAG" ] || [ "$LAST_TAG" = "$TAG_NAME" ]; then
-        # Obtener todos los tags con prefijo ordenados por fecha de creación (más recientes primero)
-        local all_tags=$(git tag --sort=-creatordate | grep "^${TAG_PREFIX}" 2>/dev/null || echo "")
-        if [ -n "$all_tags" ]; then
-          # Buscar el primer tag que esté antes del tag actual en el historial
-          for tag in $all_tags; do
-            if [ "$tag" != "$TAG_NAME" ]; then
-              # Verificar que el tag esté antes del tag actual en el historial
-              local tag_commit_hash=$(git rev-parse "$tag" 2>/dev/null || echo "")
-              if [ -n "$tag_commit_hash" ]; then
-                # Verificar si el tag anterior es ancestro del tag actual
-                if git merge-base --is-ancestor "$tag_commit_hash" "$tag_commit" 2>/dev/null; then
-                  LAST_TAG="$tag"
-                  break
-                fi
-              fi
-            fi
-          done
-        fi
-      fi
-    else
-      # Si no se puede obtener el commit del tag, usar método alternativo
-      # Buscar en todos los tags con prefijo ordenados por fecha
+    # Intentar obtener el último tag de release antes del actual
+    # Buscar solo tags que empiecen con el prefijo
+    LAST_TAG=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}*" "$TAG_NAME"^ 2>/dev/null)
+    if [ $? -ne 0 ] || [ -z "$LAST_TAG" ]; then
+      # Si no se encuentra, buscar en todos los tags con prefijo ordenados por fecha
       LAST_TAG=$(git tag --sort=-creatordate | grep "^${TAG_PREFIX}" | grep -v "^${TAG_NAME}$" | head -n 1 2>/dev/null || echo "")
     fi
     
@@ -131,34 +103,12 @@ generate_changelog_content() {
   
   if [ -n "$from_tag" ] && [ "$from_tag" != "$to_tag" ]; then
     echo -e "${BLUE}📝 Generando changelog desde ${from_tag} hasta ${to_tag}...${NC}"
-    # Usar el rango exclusivo (..) que incluye todos los commits desde from_tag hasta to_tag
-    # El formato A..B incluye commits en B que no están en A
-    local changelog_output=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${from_tag}..${to_tag}" 2>/dev/null)
-    
-    # Si no hay salida, intentar con HEAD como fallback
-    if [ -z "$changelog_output" ]; then
-      changelog_output=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${from_tag}..HEAD" 2>/dev/null)
-    fi
-    
-    # Si aún no hay salida, intentar obtener el commit del tag y usar ese
-    if [ -z "$changelog_output" ]; then
-      local to_commit=$(git rev-parse "$to_tag" 2>/dev/null || echo "")
-      if [ -n "$to_commit" ]; then
-        changelog_output=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${from_tag}..${to_commit}" 2>/dev/null)
-      fi
-    fi
-    
-    echo "$changelog_output"
+    git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${from_tag}..${to_tag}" 2>/dev/null || \
+    git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${from_tag}..HEAD" 2>/dev/null
   else
     echo -e "${BLUE}📝 Generando changelog completo hasta ${to_tag}...${NC}"
-    # Si no hay tag anterior, mostrar todos los commits hasta el tag actual
-    local to_commit=$(git rev-parse "$to_tag" 2>/dev/null || echo "")
-    if [ -n "$to_commit" ]; then
-      git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "$to_commit" 2>/dev/null || \
-      git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" --reverse
-    else
-      git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" --reverse
-    fi
+    git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${to_tag}" 2>/dev/null || \
+    git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" --reverse
   fi
 }
 

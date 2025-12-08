@@ -210,8 +210,10 @@ graph TD
 
 ```bash
 # En scripts/git_rel.sh
+# NOTA: Esta configuración es estándar para TODOS los proyectos.
+# Siempre usamos 'main' como rama principal de producción.
 DEV_BRANCH="dev"           # Rama de desarrollo
-MAIN_BRANCH="main"         # Rama principal
+MAIN_BRANCH="main"         # Rama principal de producción (estándar en todos los proyectos)
 TAG_PREFIX="v"             # Prefijo de tags (formato: vYYYY.MM.DD_HHMM)
 ```
 
@@ -242,15 +244,17 @@ Los tags creados son **anotados** e incluyen el changelog completo como mensaje.
 
 ### 🚀 ¿Cómo se crean los releases en GitHub?
 
-Los releases se crean automáticamente mediante **GitHub Actions** cuando se sube un tag al repositorio. El workflow `.github/workflows/release.yml` se dispara automáticamente cuando se crea un tag que empieza con `v`.
+El script intenta crear automáticamente un release en GitHub usando `gh` CLI. Si `gh` CLI no está instalado o no está autenticado, el script mostrará el contenido del changelog para que puedas crearlo manualmente.
 
-**Cómo funciona:**
-1. El script `git rel` crea y sube el tag a GitHub
-2. GitHub Actions detecta el nuevo tag
-3. El workflow lee el archivo `releases/TAG.md` (si existe) o el mensaje del tag anotado
-4. Se crea automáticamente el release en GitHub con el changelog completo
+**Para habilitar releases automáticos:**
+```bash
+# Instalar gh CLI
+# En Ubuntu/Debian:
+sudo apt install gh
 
-**Nota:** El script también intenta crear el release usando `gh` CLI si está disponible, pero GitHub Actions es el método principal y más confiable.
+# Autenticarse con permisos de repo
+gh auth login --scopes repo
+```
 
 ### 🏷️ ¿Cómo cambiar el formato de versiones?
 

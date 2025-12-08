@@ -4,9 +4,11 @@
 set -e
 
 # 📦 Configuración básica
+# NOTA: Esta configuración es estándar para TODOS los proyectos.
+# Siempre usamos 'main' como rama principal de producción.
 VERSION="$1"                          # Versión opcional recibida por parámetro
 DEV_BRANCH="dev"                      # Rama de desarrollo
-MAIN_BRANCH="main"                    # Rama principal de producción
+MAIN_BRANCH="main"                    # Rama principal de producción (estándar en todos los proyectos)
 TAG_PREFIX="v"                        # Prefijo para tags de versión
 
 # 🎨 Colores para el output en consola
@@ -275,26 +277,10 @@ generate_changelog_for_tag() {
   # Obtener el tag anterior (el último tag de release antes del HEAD actual)
   # Buscar solo tags que empiecen con el prefijo (normalmente "v") y tengan formato de release
   local last_tag=""
-  local current_commit=$(git rev-parse HEAD 2>/dev/null || echo "")
-  
   # Obtener todos los tags que empiecen con el prefijo, ordenados por fecha (más recientes primero)
   local all_tags=$(git tag --sort=-creatordate | grep "^${TAG_PREFIX}" 2>/dev/null || echo "")
-  if [ -n "$all_tags" ] && [ -n "$current_commit" ]; then
-    # Buscar el primer tag que esté antes del HEAD actual en el historial
-    for tag in $all_tags; do
-      if [ "$tag" != "$tag_name" ]; then
-        local tag_commit=$(git rev-parse "$tag" 2>/dev/null || echo "")
-        if [ -n "$tag_commit" ]; then
-          # Verificar que el tag anterior sea ancestro del HEAD actual
-          if git merge-base --is-ancestor "$tag_commit" "$current_commit" 2>/dev/null; then
-            last_tag="$tag"
-            break
-          fi
-        fi
-      fi
-    done
-  elif [ -n "$all_tags" ]; then
-    # Si no podemos obtener el commit actual, usar el método simple
+  if [ -n "$all_tags" ]; then
+    # Si hay tags, obtener el primero que no sea el que estamos creando
     for tag in $all_tags; do
       if [ "$tag" != "$tag_name" ]; then
         last_tag="$tag"
@@ -304,17 +290,15 @@ generate_changelog_for_tag() {
   fi
   
   # Si aún no tenemos un tag anterior, intentar con git describe pero solo tags con prefijo
-  if [ -z "$last_tag" ] && [ -n "$current_commit" ]; then
-    last_tag=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}*" "${current_commit}^" 2>/dev/null || echo "")
+  if [ -z "$last_tag" ]; then
+    last_tag=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}*" HEAD~1 2>/dev/null || echo "")
   fi
   
   # Generar contenido del changelog desde commits (con fecha y hash)
   local changelog_content=""
   if [ -n "$last_tag" ]; then
-    # Usar el rango exclusivo que incluye todos los commits desde last_tag hasta HEAD
     changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${last_tag}..HEAD" 2>/dev/null || echo "")
   else
-    # Si no hay tag anterior, mostrar todos los commits hasta HEAD
     changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" --reverse 2>/dev/null || echo "")
   fi
   
