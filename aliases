@@ -109,10 +109,10 @@ ups() {
   # 📦 Sección: Actualización de paquetes apt
   _ups_section "📦 Actualización de paquetes APT"
   
-  # apt update
-  _ups_progress "Actualizando lista de paquetes (apt update)..."
+  # apt-get update
+  _ups_progress "Actualizando lista de paquetes (apt-get update)..."
   local update_start=$(date +%s)
-  if sudo apt update -y 2>&1 | tee /tmp/ups_apt_update.log; then
+  if sudo apt-get update -y 2>&1 | tee /tmp/ups_apt_update.log; then
     local update_time=$(($(date +%s) - update_start))
     _ups_success "Lista de paquetes actualizada (${update_time}s)"
   else
@@ -121,17 +121,17 @@ ups() {
     error_messages+=("Error en apt update")
   fi
   
-  # apt upgrade
-  _ups_progress "Actualizando paquetes instalados (apt upgrade)..."
+  # apt-get upgrade
+  _ups_progress "Actualizando paquetes instalados (apt-get upgrade)..."
   local upgrade_start=$(date +%s)
-  if sudo apt upgrade -y 2>&1 | tee /tmp/ups_apt_upgrade.log; then
+  if sudo apt-get upgrade -y 2>&1 | tee /tmp/ups_apt_upgrade.log; then
     local upgrade_time=$(($(date +%s) - upgrade_start))
     _ups_success "Paquetes actualizados (${upgrade_time}s)"
     
     # Intentar extraer estadísticas del log
-    local upgraded_count=$(grep -c "upgraded" /tmp/ups_apt_upgrade.log 2>/dev/null || echo "0")
-    if [ "$upgraded_count" -gt 0 ]; then
-      _ups_info "Paquetes procesados: $(grep -oP '\d+ upgraded' /tmp/ups_apt_upgrade.log | head -1 || echo 'N/A')"
+    local upgraded_line=$(grep -oP '\d+ upgraded' /tmp/ups_apt_upgrade.log 2>/dev/null | head -1)
+    if [ -n "$upgraded_line" ]; then
+      _ups_info "Paquetes procesados: $upgraded_line"
     fi
   else
     _ups_error "Error al actualizar paquetes"
@@ -139,18 +139,18 @@ ups() {
     error_messages+=("Error en apt upgrade")
   fi
   
-  # apt autoremove
+  # apt-get autoremove
   _ups_section "🧹 Limpieza de paquetes"
-  _ups_progress "Eliminando paquetes no utilizados (apt autoremove)..."
+  _ups_progress "Eliminando paquetes no utilizados (apt-get autoremove)..."
   local autoremove_start=$(date +%s)
-  if sudo apt autoremove -y 2>&1 | tee /tmp/ups_apt_autoremove.log; then
+  if sudo apt-get autoremove -y 2>&1 | tee /tmp/ups_apt_autoremove.log; then
     local autoremove_time=$(($(date +%s) - autoremove_start))
     _ups_success "Paquetes no utilizados eliminados (${autoremove_time}s)"
     
     # Intentar extraer información de espacio liberado
-    local removed_count=$(grep -c "removed" /tmp/ups_apt_autoremove.log 2>/dev/null || echo "0")
-    if [ "$removed_count" -gt 0 ]; then
-      _ups_info "Paquetes eliminados: $(grep -oP '\d+ removed' /tmp/ups_apt_autoremove.log | head -1 || echo 'N/A')"
+    local removed_line=$(grep -oP '\d+ removed' /tmp/ups_apt_autoremove.log 2>/dev/null | head -1)
+    if [ -n "$removed_line" ]; then
+      _ups_info "Paquetes eliminados: $removed_line"
     fi
   else
     _ups_warning "No se pudieron eliminar algunos paquetes (puede ser normal)"
