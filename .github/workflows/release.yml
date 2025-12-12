@@ -67,8 +67,9 @@ jobs:
           # Mostrar TODOS los commits entre el último tag y el actual (sin filtrar por fecha)
           if [ -n "$LAST_TAG" ] && [ "$LAST_TAG" != "$TAG_NAME" ]; then
             echo "Generating changelog from $LAST_TAG to $TAG_NAME"
-            # Obtener todos los commits entre los tags (excluyendo el commit del tag anterior con ^)
-            CHANGELOG_CONTENT=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}^..${TAG_NAME}" 2>/dev/null || git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}..${TAG_NAME}" 2>/dev/null || echo "")
+            # Obtener todos los commits entre los tags (usar .. sin ^ para excluir el commit del tag anterior)
+            # Esto asegura que solo se incluyan commits que están después del tag anterior
+            CHANGELOG_CONTENT=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}..${TAG_NAME}" 2>/dev/null || echo "")
           else
             echo "No previous tag found, generating changelog for all commits up to $TAG_NAME"
             # Si no hay tag anterior, mostrar commits del tag actual (limitado a 50 para no ser demasiado largo)
