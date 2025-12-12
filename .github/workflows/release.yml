@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Necesario para obtener todo el historial de tags
+          token: ${{ secrets.GITHUB_TOKEN }}  # Necesario para poder hacer push del changelog
       
       - name: Get tag name
         id: tag
@@ -24,24 +25,140 @@ jobs:
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "Tag name: $TAG_NAME"
       
-      - name: Prepare release notes
-        id: release_notes
+      - name: Get previous tag
+        id: previous_tag
         run: |
           TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+          TAG_PREFIX=$(echo "$TAG_NAME" | sed 's/^\([^0-9]*\).*/\1/')
+          if [ -z "$TAG_PREFIX" ]; then
+            TAG_PREFIX="v"
+          fi
           
-          # Verificar si existe el archivo de release
-          if [ -f "releases/${TAG_NAME}.md" ]; then
-            echo "Using release file: releases/${TAG_NAME}.md"
-            # Usar el archivo de release como notas
-            cp "releases/${TAG_NAME}.md" /tmp/release_notes.md
+          # Intentar obtener el último tag de release antes del actual
+          LAST_TAG=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}*" "${TAG_NAME}^" 2>/dev/null || echo "")
+          
+          if [ -z "$LAST_TAG" ]; then
+            # Si no se encuentra, buscar en todos los tags con prefijo ordenados por fecha
+            LAST_TAG=$(git tag --sort=-creatordate | grep "^${TAG_PREFIX}" | grep -v "^${TAG_NAME}$" | head -n 1 || echo "")
+          fi
+          
+          if [ -n "$LAST_TAG" ] && [ "$LAST_TAG" != "$TAG_NAME" ]; then
+            echo "previous_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+            echo "Previous tag: $LAST_TAG"
           else
-            echo "Release file not found, using tag message"
-            # Obtener el mensaje del tag anotado
-            TAG_MESSAGE=$(git tag -l --format='%(contents)' "${TAG_NAME}" 2>/dev/null || echo "")
-            if [ -z "$TAG_MESSAGE" ] || [ "$TAG_MESSAGE" == "" ]; then
-              TAG_MESSAGE="Release ${TAG_NAME}"
+            echo "previous_tag=" >> $GITHUB_OUTPUT
+            echo "No previous tag found"
+          fi
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+          LAST_TAG="${{ steps.previous_tag.outputs.previous_tag }}"
+          
+          # Crear directorio de releases si no existe
+          mkdir -p releases
+          
+          # Generar contenido del changelog desde commits
+          if [ -n "$LAST_TAG" ] && [ "$LAST_TAG" != "$TAG_NAME" ]; then
+            echo "Generating changelog from $LAST_TAG to $TAG_NAME"
+            CHANGELOG_CONTENT=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}..${TAG_NAME}" 2>/dev/null || echo "")
+          else
+            echo "Generating full changelog up to $TAG_NAME"
+            CHANGELOG_CONTENT=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${TAG_NAME}" 2>/dev/null || echo "")
+          fi
+          
+          # Categorizar commits (Conventional Commits)
+          FEAT_ITEMS=$(echo "$CHANGELOG_CONTENT" | grep -E "`[^`]*` (feat|feature)" || true)
+          FIX_ITEMS=$(echo "$CHANGELOG_CONTENT" | grep -E "`[^`]*` fix" || true)
+          DOCS_ITEMS=$(echo "$CHANGELOG_CONTENT" | grep -E "`[^`]*` docs" || true)
+          REFACTOR_ITEMS=$(echo "$CHANGELOG_CONTENT" | grep -E "`[^`]*` refactor" || true)
+          TEST_ITEMS=$(echo "$CHANGELOG_CONTENT" | grep -E "`[^`]*` test" || true)
+          STYLE_ITEMS=$(echo "$CHANGELOG_CONTENT" | grep -E "`[^`]*` style" || true)
+          CHORE_ITEMS=$(echo "$CHANGELOG_CONTENT" | grep -E "`[^`]*` chore" || true)
+          OTHER_ITEMS=$(echo "$CHANGELOG_CONTENT" | grep -vE "`[^`]*` (feat|feature|fix|docs|refactor|test|style|chore)" || true)
+          
+          # Construir contenido categorizado
+          CATEGORIZED_CONTENT=""
+          
+          if [ -n "$FEAT_ITEMS" ]; then
+            CATEGORIZED_CONTENT+="### ✨ Added"$'\n'"$FEAT_ITEMS"$'\n\n'
+          fi
+          if [ -n "$FIX_ITEMS" ]; then
+            CATEGORIZED_CONTENT+="### 🐛 Fixed"$'\n'"$FIX_ITEMS"$'\n\n'
+          fi
+          if [ -n "$DOCS_ITEMS" ]; then
+            CATEGORIZED_CONTENT+="### 📚 Documentation"$'\n'"$DOCS_ITEMS"$'\n\n'
+          fi
+          if [ -n "$REFACTOR_ITEMS" ]; then
+            CATEGORIZED_CONTENT+="### ♻️ Refactored"$'\n'"$REFACTOR_ITEMS"$'\n\n'
+          fi
+          if [ -n "$TEST_ITEMS" ]; then
+            CATEGORIZED_CONTENT+="### ✅ Tests"$'\n'"$TEST_ITEMS"$'\n\n'
+          fi
+          if [ -n "$STYLE_ITEMS" ]; then
+            CATEGORIZED_CONTENT+="### 💅 Style"$'\n'"$STYLE_ITEMS"$'\n\n'
+          fi
+          if [ -n "$CHORE_ITEMS" ]; then
+            CATEGORIZED_CONTENT+="### 🔧 Chores"$'\n'"$CHORE_ITEMS"$'\n\n'
+          fi
+          if [ -n "$OTHER_ITEMS" ]; then
+            CATEGORIZED_CONTENT+="### 📝 Other"$'\n'"$OTHER_ITEMS"$'\n\n'
+          fi
+          
+          # Si no hay contenido categorizado, usar el contenido completo
+          if [ -z "$CATEGORIZED_CONTENT" ]; then
+            CATEGORIZED_CONTENT="$CHANGELOG_CONTENT"
+          fi
+          
+          # Obtener fecha del tag
+          TAG_DATE=$(git log -1 --format="%ad" --date=short "${TAG_NAME}" 2>/dev/null || date +%Y-%m-%d)
+          
+          # Calcular total de commits
+          TOTAL_COMMITS=$(echo "$CHANGELOG_CONTENT" | grep -c "^-" || echo "0")
+          
+          # Crear archivo de release
+          {
+            echo "# Release ${TAG_NAME}"
+            echo ""
+            echo "**Fecha:** ${TAG_DATE}"
+            if [ -n "$LAST_TAG" ]; then
+              echo "**Previous Release:** ${LAST_TAG}"
             fi
-            echo "$TAG_MESSAGE" > /tmp/release_notes.md
+            echo ""
+            echo "## Changes"
+            echo ""
+            echo "$CATEGORIZED_CONTENT"
+            echo ""
+            echo "## Technical Details"
+            echo "- Tag: ${TAG_NAME}"
+            echo "- Previous tag: ${LAST_TAG:-Initial release}"
+            echo "- Total commits: ${TOTAL_COMMITS}"
+          } > "releases/${TAG_NAME}.md"
+          
+          echo "Changelog generated: releases/${TAG_NAME}.md"
+          echo "Total commits: $TOTAL_COMMITS"
+      
+      - name: Commit changelog file
+        run: |
+          TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Hacer checkout de main para poder hacer commit (cuando se crea un tag, estamos en detached HEAD)
+          git checkout main || git checkout dev || echo "Could not checkout branch, skipping commit"
+          
+          # Verificar si el archivo existe y tiene cambios
+          if [ -f "releases/${TAG_NAME}.md" ]; then
+            git add "releases/${TAG_NAME}.md"
+            if ! git diff --cached --quiet; then
+              git commit -m "docs(release): add changelog for ${TAG_NAME}" || echo "Commit failed"
+              git push || echo "Push failed (may need permissions)"
+            else
+              echo "No changes to commit (file already exists and is up to date)"
+            fi
+          else
+            echo "Changelog file not found, skipping commit"
           fi
       
       - name: Create Release
@@ -49,6 +166,6 @@ jobs:
         with:
           tag_name: ${{ steps.tag.outputs.tag_name }}
           name: Release ${{ steps.tag.outputs.tag_name }}
-          body_path: /tmp/release_notes.md
+          body_path: releases/${{ steps.tag.outputs.tag_name }}.md
           draft: false
           prerelease: false
