@@ -117,7 +117,7 @@ check_potential_conflicts() {
   return 0
 }
 
-# 🔄 Función para hacer merge con manejo de errores (simplificada como git_feat.sh)
+# 🔄 Función para hacer merge con manejo de errores (sin abrir editor)
 do_merge() {
   local source_branch="$1"
   local target_branch="$2"
@@ -133,15 +133,39 @@ do_merge() {
     fi
   fi
   
-  # Intentar el merge sin abrir editor (usar mensaje automático)
-  # GIT_MERGE_AUTOEDIT=no evita que se abra el editor
-  # GIT_EDITOR=true asegura que si se abre, se cierre inmediatamente
-  if ! GIT_MERGE_AUTOEDIT=no GIT_EDITOR=true git merge "$source_branch" --no-edit -m "merge(${target_branch}): integrate ${source_branch}"; then
-    echo -e "${RED}❗ Conflictos detectados entre '${source_branch}' y '${target_branch}'${NC}"
-    echo -e "${YELLOW}💡 Sugerencia: Resuelve los conflictos y luego ejecuta:${NC}"
-    echo -e "  git add ."
-    echo -e "  git commit -m \"merge: resolve conflicts between ${source_branch} and ${target_branch}\""
-    exit 1
+  # Guardar configuración actual del editor
+  local old_editor=$(git config --get core.editor 2>/dev/null || echo "")
+  
+  # Configurar temporalmente para evitar editor completamente
+  # Usar /bin/true que siempre retorna éxito sin hacer nada
+  git config core.editor /bin/true 2>/dev/null || true
+  
+  # Intentar el merge sin abrir editor
+  # Usar --no-edit para evitar editor y múltiples variables de entorno
+  local merge_message="merge(${target_branch}): integrate ${source_branch}"
+  if ! GIT_MERGE_AUTOEDIT=no GIT_EDITOR=/bin/true git -c core.editor=/bin/true merge "$source_branch" --no-edit -m "$merge_message" 2>/dev/null; then
+    # Si falla con -m (puede que no sea necesario en fast-forward), intentar sin -m
+    if ! GIT_MERGE_AUTOEDIT=no GIT_EDITOR=/bin/true git -c core.editor=/bin/true merge "$source_branch" --no-edit 2>/dev/null; then
+      # Restaurar configuración si falla
+      if [ -n "$old_editor" ]; then
+        git config core.editor "$old_editor" 2>/dev/null || true
+      else
+        git config --unset core.editor 2>/dev/null || true
+      fi
+      
+      echo -e "${RED}❗ Conflictos detectados entre '${source_branch}' y '${target_branch}'${NC}"
+      echo -e "${YELLOW}💡 Sugerencia: Resuelve los conflictos y luego ejecuta:${NC}"
+      echo -e "  git add ."
+      echo -e "  git commit -m \"merge: resolve conflicts between ${source_branch} and ${target_branch}\""
+      exit 1
+    fi
+  fi
+  
+  # Restaurar configuración después del merge exitoso
+  if [ -n "$old_editor" ]; then
+    git config core.editor "$old_editor" 2>/dev/null || true
+  else
+    git config --unset core.editor 2>/dev/null || true
   fi
   
   # Push de los cambios
@@ -333,17 +357,17 @@ else
 fi
 
 # 🎉 Fin del proceso
-  echo -e "${GREEN}🎉 ¡Release completado exitosamente!${NC}"
-  echo -e "${BLUE}📋 Resumen:${NC}"
-  echo -e "  • ${DEV_BRANCH} → ${MAIN_BRANCH} ✅"
-  if [ -n "$TAG_NAME" ]; then
-    repo_url=$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/' | sed 's/\.git$//')
-    echo -e "  • Tag anotado creado: ${TAG_NAME} ✅"
-    echo -e "  • Tag en GitHub: https://github.com/${repo_url}/releases/tag/${TAG_NAME}"
-    echo -e "  • Changelog y release: Se generarán automáticamente por GitHub Actions 🔄"
-    echo -e "${YELLOW}💡 Nota: El changelog completo aparecerá en el Release de GitHub, no en el tag${NC}"
-    echo -e "${BLUE}   Verifica el workflow en: https://github.com/${repo_url}/actions${NC}"
-  else
-    echo -e "  • Tag: No creado ⚠️"
-  fi
-  echo -e "${BLUE}💡 Próximo paso: Deploy a producción${NC}"
+echo -e "${GREEN}🎉 ¡Release completado exitosamente!${NC}"
+echo -e "${BLUE}📋 Resumen:${NC}"
+echo -e "  • ${DEV_BRANCH} → ${MAIN_BRANCH} ✅"
+if [ -n "$TAG_NAME" ]; then
+  repo_url=$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/' | sed 's/\.git$//')
+  echo -e "  • Tag anotado creado: ${TAG_NAME} ✅"
+  echo -e "  • Tag en GitHub: https://github.com/${repo_url}/releases/tag/${TAG_NAME}"
+  echo -e "  • Changelog y release: Se generarán automáticamente por GitHub Actions 🔄"
+  echo -e "${YELLOW}💡 Nota: El changelog completo aparecerá en el Release de GitHub, no en el tag${NC}"
+  echo -e "${BLUE}   Verifica el workflow en: https://github.com/${repo_url}/actions${NC}"
+else
+  echo -e "  • Tag: No creado ⚠️"
+fi
+echo -e "${BLUE}💡 Próximo paso: Deploy a producción${NC}"
