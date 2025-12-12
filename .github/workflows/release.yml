@@ -53,19 +53,30 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
+          set -e  # Salir si hay errores
           TAG_NAME="${{ steps.tag.outputs.tag_name }}"
           LAST_TAG="${{ steps.previous_tag.outputs.previous_tag }}"
+          
+          echo "Current tag: $TAG_NAME"
+          echo "Previous tag: ${LAST_TAG:-none}"
           
           # Crear directorio de releases si no existe
           mkdir -p releases
           
           # Generar contenido del changelog desde commits
+          # Usar el tag anterior como referencia para calcular solo los commits nuevos
           if [ -n "$LAST_TAG" ] && [ "$LAST_TAG" != "$TAG_NAME" ]; then
             echo "Generating changelog from $LAST_TAG to $TAG_NAME"
-            CHANGELOG_CONTENT=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}..${TAG_NAME}" 2>/dev/null || echo "")
+            # Usar ^ para excluir el commit del tag anterior
+            CHANGELOG_CONTENT=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}^..${TAG_NAME}" 2>/dev/null || git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}..${TAG_NAME}" 2>/dev/null || echo "")
           else
-            echo "Generating full changelog up to $TAG_NAME"
-            CHANGELOG_CONTENT=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${TAG_NAME}" 2>/dev/null || echo "")
+            echo "No previous tag found, generating changelog for all commits up to $TAG_NAME"
+            # Si no hay tag anterior, mostrar solo los commits del tag actual (no todo el historial)
+            CHANGELOG_CONTENT=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${TAG_NAME}" -n 50 2>/dev/null || echo "")
+          fi
+          
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            echo "Warning: No changelog content generated"
           fi
           
           # Categorizar commits (Conventional Commits)
@@ -138,8 +149,18 @@ jobs:
           
           echo "Changelog generated: releases/${TAG_NAME}.md"
           echo "Total commits: $TOTAL_COMMITS"
+          
+          # Verificar que el archivo se creó correctamente
+          if [ -f "releases/${TAG_NAME}.md" ]; then
+            echo "✅ Release file created successfully"
+            echo "File size: $(wc -l < releases/${TAG_NAME}.md) lines"
+          else
+            echo "❌ ERROR: Release file was not created!"
+            exit 1
+          fi
       
       - name: Commit changelog file
+        continue-on-error: true
         run: |
           TAG_NAME="${{ steps.tag.outputs.tag_name }}"
           git config user.name "github-actions[bot]"
@@ -169,3 +190,5 @@ jobs:
           body_path: releases/${{ steps.tag.outputs.tag_name }}.md
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
