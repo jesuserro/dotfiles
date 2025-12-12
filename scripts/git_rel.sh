@@ -135,37 +135,60 @@ do_merge() {
   
   # Guardar configuración actual del editor
   local old_editor=$(git config --get core.editor 2>/dev/null || echo "")
+  local old_merge_edit=$(git config --get merge.tool 2>/dev/null || echo "")
   
   # Configurar temporalmente para evitar editor completamente
-  # Usar /bin/true que siempre retorna éxito sin hacer nada
-  git config core.editor /bin/true 2>/dev/null || true
+  # Usar múltiples métodos para asegurar que no se abra el editor
+  export GIT_MERGE_AUTOEDIT=no
+  export GIT_EDITOR=true
+  git config core.editor true 2>/dev/null || true
+  git config merge.tool true 2>/dev/null || true
   
   # Intentar el merge sin abrir editor
-  # Usar --no-edit para evitar editor y múltiples variables de entorno
+  # Usar --no-ff para forzar merge commit y -m para mensaje explícito
   local merge_message="merge(${target_branch}): integrate ${source_branch}"
-  if ! GIT_MERGE_AUTOEDIT=no GIT_EDITOR=/bin/true git -c core.editor=/bin/true merge "$source_branch" --no-edit -m "$merge_message" 2>/dev/null; then
-    # Si falla con -m (puede que no sea necesario en fast-forward), intentar sin -m
-    if ! GIT_MERGE_AUTOEDIT=no GIT_EDITOR=/bin/true git -c core.editor=/bin/true merge "$source_branch" --no-edit 2>/dev/null; then
-      # Restaurar configuración si falla
-      if [ -n "$old_editor" ]; then
-        git config core.editor "$old_editor" 2>/dev/null || true
-      else
-        git config --unset core.editor 2>/dev/null || true
+  
+  # Primero intentar con --no-ff y -m (fuerza merge commit con mensaje)
+  if ! git merge "$source_branch" --no-ff --no-edit -m "$merge_message" 2>/dev/null; then
+    # Si falla, intentar sin --no-ff (puede ser fast-forward)
+    if ! git merge "$source_branch" --no-edit -m "$merge_message" 2>/dev/null; then
+      # Si aún falla, intentar sin -m (puede que no sea necesario)
+      if ! git merge "$source_branch" --no-edit 2>/dev/null; then
+        # Restaurar configuración si falla
+        unset GIT_MERGE_AUTOEDIT
+        unset GIT_EDITOR
+        if [ -n "$old_editor" ]; then
+          git config core.editor "$old_editor" 2>/dev/null || true
+        else
+          git config --unset core.editor 2>/dev/null || true
+        fi
+        if [ -n "$old_merge_edit" ]; then
+          git config merge.tool "$old_merge_edit" 2>/dev/null || true
+        else
+          git config --unset merge.tool 2>/dev/null || true
+        fi
+        
+        echo -e "${RED}❗ Conflictos detectados entre '${source_branch}' y '${target_branch}'${NC}"
+        echo -e "${YELLOW}💡 Sugerencia: Resuelve los conflictos y luego ejecuta:${NC}"
+        echo -e "  git add ."
+        echo -e "  git commit -m \"merge: resolve conflicts between ${source_branch} and ${target_branch}\""
+        exit 1
       fi
-      
-      echo -e "${RED}❗ Conflictos detectados entre '${source_branch}' y '${target_branch}'${NC}"
-      echo -e "${YELLOW}💡 Sugerencia: Resuelve los conflictos y luego ejecuta:${NC}"
-      echo -e "  git add ."
-      echo -e "  git commit -m \"merge: resolve conflicts between ${source_branch} and ${target_branch}\""
-      exit 1
     fi
   fi
   
   # Restaurar configuración después del merge exitoso
+  unset GIT_MERGE_AUTOEDIT
+  unset GIT_EDITOR
   if [ -n "$old_editor" ]; then
     git config core.editor "$old_editor" 2>/dev/null || true
   else
     git config --unset core.editor 2>/dev/null || true
+  fi
+  if [ -n "$old_merge_edit" ]; then
+    git config merge.tool "$old_merge_edit" 2>/dev/null || true
+  else
+    git config --unset merge.tool 2>/dev/null || true
   fi
   
   # Push de los cambios
