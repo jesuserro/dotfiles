@@ -94,30 +94,47 @@ git rel -h
 
 ## 📝 Formato de Changelog
 
-El script genera changelogs con un formato profesional que incluye:
+El script genera changelogs con un formato profesional similar a data-peek que incluye:
 
 - **Fecha y hora**: Formato `YYYY-MM-DD HH:MM`
 - **Hash del commit**: Código corto del commit entre backticks de markdown
 - **Mensaje del commit**: Tipo, scope y descripción
 - **Autor**: Nombre del autor del commit
+- **Cálculo preciso**: Solo incluye commits exclusivos de `dev` desde el último tag, similar a `git feat`
 
 **Ejemplo de línea de changelog:**
 ```markdown
 - 2025-12-07 10:51 `7aa62e4` feat(git_rel): improve tag generation with annotated tags and GitHub releases (Jesús Erro)
 ```
 
+**Ejemplo de formato completo del tag (similar a data-peek):**
+```markdown
+## v2025.12.07_1051
+
+**Release Date:** 2025-12-07 10:51
+**Previous Release:** v2025.12.06_1430
+
+### What's Changed
+
+### ✨ Added
+- 2025-12-07 10:51 `7aa62e4` feat(git_rel): improve tag generation (Jesús Erro)
+
+### 🐛 Fixed
+- 2025-12-07 10:30 `3b2a1c4` fix: correct changelog calculation (Jesús Erro)
+```
+
 ### 📊 Categorización Automática
 
-Los commits se organizan automáticamente en categorías:
+Los commits se organizan automáticamente en categorías con emojis (similar a data-peek):
 
-- **Added**: Commits tipo `feat` o `feature`
-- **Fixed**: Commits tipo `fix`
-- **Documentation**: Commits tipo `docs`
-- **Refactored**: Commits tipo `refactor`
-- **Tests**: Commits tipo `test`
-- **Style**: Commits tipo `style`
-- **Chores**: Commits tipo `chore`
-- **Other**: Otros commits que no coinciden con los tipos anteriores
+- **✨ Added**: Commits tipo `feat` o `feature`
+- **🐛 Fixed**: Commits tipo `fix`
+- **📚 Documentation**: Commits tipo `docs`
+- **♻️ Refactored**: Commits tipo `refactor`
+- **✅ Tests**: Commits tipo `test`
+- **💅 Style**: Commits tipo `style`
+- **🔧 Chores**: Commits tipo `chore`
+- **📝 Other**: Otros commits que no coinciden con los tipos anteriores
 
 ## ⚡ Casos de Uso
 
@@ -274,12 +291,23 @@ Los changelogs se generan automáticamente y se guardan en:
 
 **Formato del changelog:**
 - Cada línea incluye: fecha, hora, hash del commit (en backticks), mensaje y autor
-- Los commits se categorizan automáticamente (Added, Fixed, Documentation, etc.)
-- Solo se consideran tags de release (con el prefijo configurado) para calcular diferencias
+- Los commits se categorizan automáticamente con emojis (✨ Added, 🐛 Fixed, 📚 Documentation, etc.)
+- **Cálculo preciso**: Solo incluye commits exclusivos de `dev` desde el commit base de `main` antes del merge
+- Similar a `git feat`, calcula solo los commits que realmente vienen de `dev` en este release
 
-### 🔍 ¿Cómo detecta el tag anterior?
+### 🔍 ¿Cómo calcula los commits del changelog?
 
-El script busca automáticamente el último tag de release (que empieza con el prefijo configurado, normalmente "v") antes del tag actual. Si no encuentra un tag anterior, muestra todos los commits desde el inicio del repositorio.
+El script usa una estrategia similar a `git feat` para calcular commits exclusivos:
+
+1. **Guarda el commit base**: Antes del merge, guarda el commit actual de `main`
+2. **Calcula commits exclusivos**: Después del merge, calcula los commits de `dev` que no estaban en ese commit base
+3. **Usa el último tag como referencia**: Si no hay commit base, usa el último tag como punto de referencia
+
+Esto asegura que solo se incluyan los commits que realmente vienen de `dev` en este release, evitando incluir commits de hotfixes directos en `main` u otros cambios no relacionados.
+
+### 🎯 ¿Por qué el cálculo es más preciso ahora?
+
+Anteriormente, el script usaba `last_tag..HEAD` que incluía todos los commits en `main`, incluso los que no venían de `dev`. Ahora, similar a `git feat`, calcula solo los commits exclusivos de `dev` desde el punto de integración, asegurando que el changelog refleje exactamente lo que se está liberando.
 
 ---
 

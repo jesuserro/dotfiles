@@ -218,8 +218,18 @@ check_clean_repo
 
 # 🔁 Paso 1: Merge de dev → main (igual que git_feat.sh)
 echo -e "${YELLOW}🔁 Integrando '${DEV_BRANCH}' en '${MAIN_BRANCH}'...${NC}"
+
+# Asegurar que dev esté actualizada antes del merge
+git fetch origin "$DEV_BRANCH" >/dev/null 2>&1 || true
+
+# Cambiar a main y actualizar
 git checkout "$MAIN_BRANCH"
 git pull origin "$MAIN_BRANCH"
+
+# Guardar el commit actual de main antes del merge (para poder obtener commits exclusivos después)
+BASE_COMMIT=$(git rev-parse HEAD)
+
+# Hacer el merge
 do_merge "$DEV_BRANCH" "$MAIN_BRANCH"
 
 # 🏷️ Paso 2: Generar nombre de versión para el tag
@@ -266,6 +276,8 @@ fi
 # 📝 Función para generar changelog antes de crear el tag
 generate_changelog_for_tag() {
   local tag_name="$1"
+  local base_commit="$2"  # Commit base de main antes del merge
+  local dev_branch="$3"    # Rama dev para calcular commits exclusivos
   local project_root=$(git rev-parse --show-toplevel)
   local releases_dir="$project_root/releases"
   
@@ -291,51 +303,76 @@ generate_changelog_for_tag() {
   
   # Si aún no tenemos un tag anterior, intentar con git describe pero solo tags con prefijo
   if [ -z "$last_tag" ]; then
-    last_tag=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}*" HEAD~1 2>/dev/null || echo "")
+    last_tag=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}*" "$base_commit" 2>/dev/null || echo "")
   fi
   
-  # Generar contenido del changelog desde commits (con fecha y hash)
+  # Generar contenido del changelog desde commits exclusivos de dev
+  # Usar el commit base guardado antes del merge para calcular solo los commits de dev
   local changelog_content=""
-  if [ -n "$last_tag" ]; then
+  if [ -n "$base_commit" ] && [ -n "$dev_branch" ]; then
+    # Asegurar que tenemos la referencia remota de dev actualizada
+    git fetch origin "$dev_branch" >/dev/null 2>&1 || true
+    
+    # Calcular commits exclusivos de dev desde el commit base (similar a git_feat.sh)
+    # Esto asegura que solo incluimos los commits que vienen de dev en este release
+    # Usar origin/dev_branch para asegurar que tenemos la versión más reciente
+    local dev_ref="origin/${dev_branch}"
+    if ! git rev-parse --verify "$dev_ref" >/dev/null 2>&1; then
+      # Si no existe origin/dev_branch, usar la rama local
+      dev_ref="$dev_branch"
+    fi
+    
+    changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${base_commit}..${dev_ref}" 2>/dev/null || echo "")
+    
+    # Si no hay commits en ese rango, intentar con el último tag como fallback
+    if [ -z "$changelog_content" ] && [ -n "$last_tag" ]; then
+      echo -e "${YELLOW}⚠️  No se encontraron commits exclusivos de dev, usando último tag como referencia${NC}"
+      changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${last_tag}..${dev_ref}" 2>/dev/null || echo "")
+    fi
+  elif [ -n "$last_tag" ]; then
+    # Fallback: usar último tag si no tenemos commit base
     changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${last_tag}..HEAD" 2>/dev/null || echo "")
   else
+    # Último fallback: todos los commits
     changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" --reverse 2>/dev/null || echo "")
   fi
   
-  # Categorizar commits
+  # Categorizar commits (mejorado para detectar tipos después del backtick)
   local categorized_content=""
-  local feat_items=$(echo "$changelog_content" | grep -E "^- (feat|feature)" || true)
-  local fix_items=$(echo "$changelog_content" | grep -E "^- fix" || true)
-  local docs_items=$(echo "$changelog_content" | grep -E "^- docs" || true)
-  local refactor_items=$(echo "$changelog_content" | grep -E "^- refactor" || true)
-  local test_items=$(echo "$changelog_content" | grep -E "^- test" || true)
-  local style_items=$(echo "$changelog_content" | grep -E "^- style" || true)
-  local chore_items=$(echo "$changelog_content" | grep -E "^- chore" || true)
-  local other_items=$(echo "$changelog_content" | grep -vE "^- (feat|feature|fix|docs|refactor|test|style|chore)" || true)
+  # El formato es: "- YYYY-MM-DD HH:MM `hash` tipo(scope): mensaje"
+  # Necesitamos extraer el tipo después del backtick de cierre
+  local feat_items=$(echo "$changelog_content" | grep -E "`[^`]*` (feat|feature)" || true)
+  local fix_items=$(echo "$changelog_content" | grep -E "`[^`]*` fix" || true)
+  local docs_items=$(echo "$changelog_content" | grep -E "`[^`]*` docs" || true)
+  local refactor_items=$(echo "$changelog_content" | grep -E "`[^`]*` refactor" || true)
+  local test_items=$(echo "$changelog_content" | grep -E "`[^`]*` test" || true)
+  local style_items=$(echo "$changelog_content" | grep -E "`[^`]*` style" || true)
+  local chore_items=$(echo "$changelog_content" | grep -E "`[^`]*` chore" || true)
+  local other_items=$(echo "$changelog_content" | grep -vE "`[^`]*` (feat|feature|fix|docs|refactor|test|style|chore)" || true)
   
   if [ -n "$feat_items" ]; then
-    categorized_content+="### Added\n${feat_items}\n\n"
+    categorized_content+="### ✨ Added\n${feat_items}\n\n"
   fi
   if [ -n "$fix_items" ]; then
-    categorized_content+="### Fixed\n${fix_items}\n\n"
+    categorized_content+="### 🐛 Fixed\n${fix_items}\n\n"
   fi
   if [ -n "$docs_items" ]; then
-    categorized_content+="### Documentation\n${docs_items}\n\n"
+    categorized_content+="### 📚 Documentation\n${docs_items}\n\n"
   fi
   if [ -n "$refactor_items" ]; then
-    categorized_content+="### Refactored\n${refactor_items}\n\n"
+    categorized_content+="### ♻️ Refactored\n${refactor_items}\n\n"
   fi
   if [ -n "$test_items" ]; then
-    categorized_content+="### Tests\n${test_items}\n\n"
+    categorized_content+="### ✅ Tests\n${test_items}\n\n"
   fi
   if [ -n "$style_items" ]; then
-    categorized_content+="### Style\n${style_items}\n\n"
+    categorized_content+="### 💅 Style\n${style_items}\n\n"
   fi
   if [ -n "$chore_items" ]; then
-    categorized_content+="### Chores\n${chore_items}\n\n"
+    categorized_content+="### 🔧 Chores\n${chore_items}\n\n"
   fi
   if [ -n "$other_items" ]; then
-    categorized_content+="### Other\n${other_items}\n\n"
+    categorized_content+="### 📝 Other\n${other_items}\n\n"
   fi
   
   # Si no hay contenido categorizado, usar el contenido completo
@@ -343,18 +380,34 @@ generate_changelog_for_tag() {
     categorized_content="$changelog_content"
   fi
   
-  # Obtener fecha
+  # Obtener fecha del commit actual
   local tag_date=$(date +%Y-%m-%d)
+  local tag_time=$(date +%H:%M)
   
-  # Crear mensaje para el tag anotado
-  local tag_message="Release ${tag_name}
+  # Calcular estadísticas
+  local total_commits=$(echo "$changelog_content" | grep -c "^-" || echo "0")
+  
+  # Crear mensaje para el tag anotado (formato similar a data-peek)
+  local tag_message="## ${tag_name}
 
-Fecha: ${tag_date}
-${last_tag:+Tag anterior: ${last_tag}}
+**Release Date:** ${tag_date} ${tag_time}
+${last_tag:+**Previous Release:** ${last_tag}}
 
-## Changes
+### What's Changed
 
 ${categorized_content}"
+
+  # Si no hay contenido categorizado, usar el contenido completo
+  if [ -z "$categorized_content" ]; then
+    tag_message="## ${tag_name}
+
+**Release Date:** ${tag_date} ${tag_time}
+${last_tag:+**Previous Release:** ${last_tag}}
+
+### What's Changed
+
+${changelog_content}"
+  fi
 
   echo "$tag_message"
 }
@@ -363,7 +416,8 @@ ${categorized_content}"
 TAG_MESSAGE=""
 if [ -n "$TAG_NAME" ]; then
   echo -e "${YELLOW}📝 Generando changelog para el tag...${NC}"
-  TAG_MESSAGE=$(generate_changelog_for_tag "$TAG_NAME")
+  # Pasar el commit base y la rama dev para calcular commits exclusivos
+  TAG_MESSAGE=$(generate_changelog_for_tag "$TAG_NAME" "$BASE_COMMIT" "$DEV_BRANCH")
   if [ -n "$TAG_MESSAGE" ]; then
     echo -e "${GREEN}✅ Changelog generado exitosamente${NC}"
   else
