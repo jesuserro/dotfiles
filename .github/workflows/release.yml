@@ -64,14 +64,14 @@ jobs:
           mkdir -p releases
           
           # Generar contenido del changelog desde commits
-          # Usar el tag anterior como referencia para calcular solo los commits nuevos
+          # Mostrar TODOS los commits entre el último tag y el actual (sin filtrar por fecha)
           if [ -n "$LAST_TAG" ] && [ "$LAST_TAG" != "$TAG_NAME" ]; then
             echo "Generating changelog from $LAST_TAG to $TAG_NAME"
-            # Usar ^ para excluir el commit del tag anterior
+            # Obtener todos los commits entre los tags (excluyendo el commit del tag anterior con ^)
             CHANGELOG_CONTENT=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}^..${TAG_NAME}" 2>/dev/null || git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}..${TAG_NAME}" 2>/dev/null || echo "")
           else
             echo "No previous tag found, generating changelog for all commits up to $TAG_NAME"
-            # Si no hay tag anterior, mostrar solo los commits del tag actual (no todo el historial)
+            # Si no hay tag anterior, mostrar commits del tag actual (limitado a 50 para no ser demasiado largo)
             CHANGELOG_CONTENT=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${TAG_NAME}" -n 50 2>/dev/null || echo "")
           fi
           
@@ -122,7 +122,7 @@ jobs:
             CATEGORIZED_CONTENT="$CHANGELOG_CONTENT"
           fi
           
-          # Obtener fecha del tag
+          # Obtener fecha del tag para el archivo de release
           TAG_DATE=$(git log -1 --format="%ad" --date=short "${TAG_NAME}" 2>/dev/null || date +%Y-%m-%d)
           
           # Calcular total de commits

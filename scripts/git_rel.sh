@@ -135,37 +135,49 @@ do_merge() {
   
   # Guardar configuración actual del editor
   local old_editor=$(git config --get core.editor 2>/dev/null || echo "")
-  local old_merge_edit=$(git config --get merge.tool 2>/dev/null || echo "")
+  local old_merge_ff=$(git config --get merge.ff 2>/dev/null || echo "")
   
   # Configurar temporalmente para evitar editor completamente
   # Usar múltiples métodos para asegurar que no se abra el editor
   export GIT_MERGE_AUTOEDIT=no
   export GIT_EDITOR=true
+  export EDITOR=true
+  export VISUAL=true
+  
+  # Configurar git para no usar editor (a nivel local del repo)
   git config core.editor true 2>/dev/null || true
-  git config merge.tool true 2>/dev/null || true
+  # Temporalmente desactivar merge.ff=only para permitir merge commits
+  if [ -n "$old_merge_ff" ]; then
+    git config merge.ff false 2>/dev/null || true
+  fi
   
   # Intentar el merge sin abrir editor
-  # Usar --no-ff para forzar merge commit y -m para mensaje explícito
+  # Usar todas las variables de entorno y configuraciones posibles para evitar el editor
   local merge_message="merge(${target_branch}): integrate ${source_branch}"
   
-  # Primero intentar con --no-ff y -m (fuerza merge commit con mensaje)
-  if ! git merge "$source_branch" --no-ff --no-edit -m "$merge_message" 2>/dev/null; then
-    # Si falla, intentar sin --no-ff (puede ser fast-forward)
-    if ! git merge "$source_branch" --no-edit -m "$merge_message" 2>/dev/null; then
-      # Si aún falla, intentar sin -m (puede que no sea necesario)
-      if ! git merge "$source_branch" --no-edit 2>/dev/null; then
+  # Usar -c core.editor=true directamente en el comando git para forzar la configuración
+  # Esto sobrescribe cualquier configuración global o local
+  # Cerrar stdin con </dev/null para evitar que git intente leer del terminal
+  # Redirigir stderr a /dev/null para evitar mensajes de advertencia
+  if ! (GIT_MERGE_AUTOEDIT=no GIT_EDITOR=true EDITOR=true VISUAL=true git -c core.editor=true -c merge.ff=false merge "$source_branch" --no-edit -m "$merge_message" </dev/null 2>/dev/null); then
+    # Si falla, intentar sin --no-ff (puede ser fast-forward y no necesita merge commit)
+    if ! (GIT_MERGE_AUTOEDIT=no GIT_EDITOR=true EDITOR=true VISUAL=true git -c core.editor=true merge "$source_branch" --no-edit -m "$merge_message" </dev/null 2>/dev/null); then
+      # Si aún falla, intentar sin -m (puede que no sea necesario en fast-forward)
+      if ! (GIT_MERGE_AUTOEDIT=no GIT_EDITOR=true EDITOR=true VISUAL=true git -c core.editor=true merge "$source_branch" --no-edit </dev/null 2>/dev/null); then
         # Restaurar configuración si falla
         unset GIT_MERGE_AUTOEDIT
         unset GIT_EDITOR
+        unset EDITOR
+        unset VISUAL
         if [ -n "$old_editor" ]; then
           git config core.editor "$old_editor" 2>/dev/null || true
         else
           git config --unset core.editor 2>/dev/null || true
         fi
-        if [ -n "$old_merge_edit" ]; then
-          git config merge.tool "$old_merge_edit" 2>/dev/null || true
+        if [ -n "$old_merge_ff" ]; then
+          git config merge.ff "$old_merge_ff" 2>/dev/null || true
         else
-          git config --unset merge.tool 2>/dev/null || true
+          git config --unset merge.ff 2>/dev/null || true
         fi
         
         echo -e "${RED}❗ Conflictos detectados entre '${source_branch}' y '${target_branch}'${NC}"
@@ -180,15 +192,17 @@ do_merge() {
   # Restaurar configuración después del merge exitoso
   unset GIT_MERGE_AUTOEDIT
   unset GIT_EDITOR
+  unset EDITOR
+  unset VISUAL
   if [ -n "$old_editor" ]; then
     git config core.editor "$old_editor" 2>/dev/null || true
   else
     git config --unset core.editor 2>/dev/null || true
   fi
-  if [ -n "$old_merge_edit" ]; then
-    git config merge.tool "$old_merge_edit" 2>/dev/null || true
+  if [ -n "$old_merge_ff" ]; then
+    git config merge.ff "$old_merge_ff" 2>/dev/null || true
   else
-    git config --unset merge.tool 2>/dev/null || true
+    git config --unset merge.ff 2>/dev/null || true
   fi
   
   # Push de los cambios
