@@ -182,6 +182,18 @@ jobs:
             echo "Changelog file not found, skipping commit"
           fi
       
+      - name: Verify release file exists
+        run: |
+          TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+          if [ ! -f "releases/${TAG_NAME}.md" ]; then
+            echo "❌ ERROR: Release file releases/${TAG_NAME}.md does not exist!"
+            ls -la releases/ || echo "Releases directory does not exist"
+            exit 1
+          fi
+          echo "✅ Release file found: releases/${TAG_NAME}.md"
+          echo "Preview of first 20 lines:"
+          head -n 20 "releases/${TAG_NAME}.md"
+      
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
