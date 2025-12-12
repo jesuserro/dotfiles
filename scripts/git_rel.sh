@@ -273,160 +273,7 @@ if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
   esac
 fi
 
-# 📝 Función para generar changelog antes de crear el tag
-generate_changelog_for_tag() {
-  local tag_name="$1"
-  local base_commit="$2"  # Commit base de main antes del merge
-  local dev_branch="$3"    # Rama dev para calcular commits exclusivos
-  local project_root=$(git rev-parse --show-toplevel)
-  local releases_dir="$project_root/releases"
-  
-  # Crear directorio de releases si no existe
-  if [ ! -d "$releases_dir" ]; then
-    mkdir -p "$releases_dir"
-  fi
-  
-  # Obtener el tag anterior (el último tag de release antes del HEAD actual)
-  # Buscar solo tags que empiecen con el prefijo (normalmente "v") y tengan formato de release
-  local last_tag=""
-  # Obtener todos los tags que empiecen con el prefijo, ordenados por fecha (más recientes primero)
-  local all_tags=$(git tag --sort=-creatordate | grep "^${TAG_PREFIX}" 2>/dev/null || echo "")
-  if [ -n "$all_tags" ]; then
-    # Si hay tags, obtener el primero que no sea el que estamos creando
-    for tag in $all_tags; do
-      if [ "$tag" != "$tag_name" ]; then
-        last_tag="$tag"
-        break
-      fi
-    done
-  fi
-  
-  # Si aún no tenemos un tag anterior, intentar con git describe pero solo tags con prefijo
-  if [ -z "$last_tag" ]; then
-    last_tag=$(git describe --tags --abbrev=0 --match "${TAG_PREFIX}*" "$base_commit" 2>/dev/null || echo "")
-  fi
-  
-  # Generar contenido del changelog desde commits exclusivos de dev
-  # Usar el commit base guardado antes del merge para calcular solo los commits de dev
-  local changelog_content=""
-  if [ -n "$base_commit" ] && [ -n "$dev_branch" ]; then
-    # Asegurar que tenemos la referencia remota de dev actualizada
-    git fetch origin "$dev_branch" >/dev/null 2>&1 || true
-    
-    # Calcular commits exclusivos de dev desde el commit base (similar a git_feat.sh)
-    # Esto asegura que solo incluimos los commits que vienen de dev en este release
-    # Usar origin/dev_branch para asegurar que tenemos la versión más reciente
-    local dev_ref="origin/${dev_branch}"
-    if ! git rev-parse --verify "$dev_ref" >/dev/null 2>&1; then
-      # Si no existe origin/dev_branch, usar la rama local
-      dev_ref="$dev_branch"
-    fi
-    
-    changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${base_commit}..${dev_ref}" 2>/dev/null || echo "")
-    
-    # Si no hay commits en ese rango, intentar con el último tag como fallback
-    if [ -z "$changelog_content" ] && [ -n "$last_tag" ]; then
-      echo -e "${YELLOW}⚠️  No se encontraron commits exclusivos de dev, usando último tag como referencia${NC}"
-      changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${last_tag}..${dev_ref}" 2>/dev/null || echo "")
-    fi
-  elif [ -n "$last_tag" ]; then
-    # Fallback: usar último tag si no tenemos commit base
-    changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${last_tag}..HEAD" 2>/dev/null || echo "")
-  else
-    # Último fallback: todos los commits
-    changelog_content=$(git log --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" --reverse 2>/dev/null || echo "")
-  fi
-  
-  # Categorizar commits (mejorado para detectar tipos después del backtick)
-  local categorized_content=""
-  # El formato es: "- YYYY-MM-DD HH:MM `hash` tipo(scope): mensaje"
-  # Necesitamos extraer el tipo después del backtick de cierre
-  local feat_items=$(echo "$changelog_content" | grep -E "`[^`]*` (feat|feature)" || true)
-  local fix_items=$(echo "$changelog_content" | grep -E "`[^`]*` fix" || true)
-  local docs_items=$(echo "$changelog_content" | grep -E "`[^`]*` docs" || true)
-  local refactor_items=$(echo "$changelog_content" | grep -E "`[^`]*` refactor" || true)
-  local test_items=$(echo "$changelog_content" | grep -E "`[^`]*` test" || true)
-  local style_items=$(echo "$changelog_content" | grep -E "`[^`]*` style" || true)
-  local chore_items=$(echo "$changelog_content" | grep -E "`[^`]*` chore" || true)
-  local other_items=$(echo "$changelog_content" | grep -vE "`[^`]*` (feat|feature|fix|docs|refactor|test|style|chore)" || true)
-  
-  if [ -n "$feat_items" ]; then
-    categorized_content+="### ✨ Added\n${feat_items}\n\n"
-  fi
-  if [ -n "$fix_items" ]; then
-    categorized_content+="### 🐛 Fixed\n${fix_items}\n\n"
-  fi
-  if [ -n "$docs_items" ]; then
-    categorized_content+="### 📚 Documentation\n${docs_items}\n\n"
-  fi
-  if [ -n "$refactor_items" ]; then
-    categorized_content+="### ♻️ Refactored\n${refactor_items}\n\n"
-  fi
-  if [ -n "$test_items" ]; then
-    categorized_content+="### ✅ Tests\n${test_items}\n\n"
-  fi
-  if [ -n "$style_items" ]; then
-    categorized_content+="### 💅 Style\n${style_items}\n\n"
-  fi
-  if [ -n "$chore_items" ]; then
-    categorized_content+="### 🔧 Chores\n${chore_items}\n\n"
-  fi
-  if [ -n "$other_items" ]; then
-    categorized_content+="### 📝 Other\n${other_items}\n\n"
-  fi
-  
-  # Si no hay contenido categorizado, usar el contenido completo
-  if [ -z "$categorized_content" ]; then
-    categorized_content="$changelog_content"
-  fi
-  
-  # Obtener fecha del commit actual
-  local tag_date=$(date +%Y-%m-%d)
-  local tag_time=$(date +%H:%M)
-  
-  # Calcular estadísticas
-  local total_commits=$(echo "$changelog_content" | grep -c "^-" || echo "0")
-  
-  # Crear mensaje para el tag anotado (formato similar a data-peek)
-  local tag_message="## ${tag_name}
-
-**Release Date:** ${tag_date} ${tag_time}
-${last_tag:+**Previous Release:** ${last_tag}}
-
-### What's Changed
-
-${categorized_content}"
-
-  # Si no hay contenido categorizado, usar el contenido completo
-  if [ -z "$categorized_content" ]; then
-    tag_message="## ${tag_name}
-
-**Release Date:** ${tag_date} ${tag_time}
-${last_tag:+**Previous Release:** ${last_tag}}
-
-### What's Changed
-
-${changelog_content}"
-  fi
-
-  echo "$tag_message"
-}
-
-# 📝 Paso 3: Generar changelog antes de crear el tag
-TAG_MESSAGE=""
-if [ -n "$TAG_NAME" ]; then
-  echo -e "${YELLOW}📝 Generando changelog para el tag...${NC}"
-  # Pasar el commit base y la rama dev para calcular commits exclusivos
-  TAG_MESSAGE=$(generate_changelog_for_tag "$TAG_NAME" "$BASE_COMMIT" "$DEV_BRANCH")
-  if [ -n "$TAG_MESSAGE" ]; then
-    echo -e "${GREEN}✅ Changelog generado exitosamente${NC}"
-  else
-    echo -e "${YELLOW}⚠️  No se pudo generar changelog, usando mensaje básico${NC}"
-    TAG_MESSAGE="Release ${TAG_NAME}"
-  fi
-fi
-
-# 🏷️ Paso 4: Crear tag anotado con changelog
+# 🏷️ Paso 3: Crear tag anotado con mensaje básico
 if [ -n "$TAG_NAME" ]; then
   echo -e "${BLUE}🏷️  Creando tag anotado '${TAG_NAME}' en el commit actual...${NC}"
   
@@ -435,7 +282,16 @@ if [ -n "$TAG_NAME" ]; then
   commit_info=$(git log -1 --pretty=format:"%h - %s (%an)" "$current_commit")
   echo -e "${BLUE}📝 Tag se creará en: ${commit_info}${NC}"
   
-  # Crear tag anotado con el mensaje del changelog
+  # Crear mensaje básico para el tag (el changelog completo lo generará GitHub Actions)
+  tag_date=$(date +%Y-%m-%d)
+  tag_time=$(date +%H:%M)
+  TAG_MESSAGE="Release ${TAG_NAME}
+
+**Release Date:** ${tag_date} ${tag_time}
+
+Changelog will be generated automatically by GitHub Actions."
+  
+  # Crear tag anotado con mensaje básico
   if echo "$TAG_MESSAGE" | git tag -a "$TAG_NAME" -F -; then
     echo -e "${BLUE}📤 Subiendo tag a GitHub...${NC}"
     if git push origin "$TAG_NAME"; then
@@ -461,67 +317,6 @@ else
   echo -e "${YELLOW}⚠️  No se creó ningún tag${NC}"
 fi
 
-# 📝 Paso 5: Generar archivos de changelog (solo si se creó un tag)
-if [ -n "$TAG_NAME" ]; then
-  echo -e "${YELLOW}📝 Generando archivos de changelog...${NC}"
-  if bash ~/dotfiles/scripts/git_changelog.sh "$TAG_NAME"; then
-    echo -e "${GREEN}✅ Archivos de changelog generados exitosamente${NC}"
-  else
-    echo -e "${YELLOW}⚠️  Error generando archivos de changelog, pero el release se completó${NC}"
-  fi
-else
-  echo -e "${YELLOW}⚠️  Saltando generación de archivos de changelog (no hay tag)${NC}"
-fi
-
-# 🚀 Paso 6: Crear release en GitHub (solo si se creó un tag)
-if [ -n "$TAG_NAME" ]; then
-  echo -e "${YELLOW}🚀 Creando release en GitHub...${NC}"
-  
-  # Verificar si gh CLI está disponible
-  if command -v gh &> /dev/null; then
-    # Obtener el archivo de changelog generado
-    project_root=$(git rev-parse --show-toplevel)
-    release_file="$project_root/releases/${TAG_NAME}.md"
-    
-    if [ -f "$release_file" ]; then
-      # Crear release usando gh CLI con el contenido del changelog
-      if gh release create "$TAG_NAME" --title "$TAG_NAME" --notes-file "$release_file" 2>/dev/null; then
-        echo -e "${GREEN}✅ Release '${TAG_NAME}' creado exitosamente en GitHub${NC}"
-      else
-        # Si el release ya existe, intentar editarlo
-        if gh release edit "$TAG_NAME" --notes-file "$release_file" 2>/dev/null; then
-          echo -e "${GREEN}✅ Release '${TAG_NAME}' actualizado exitosamente en GitHub${NC}"
-        else
-          echo -e "${YELLOW}⚠️  No se pudo crear/actualizar el release en GitHub (puede que ya exista)${NC}"
-          echo -e "${BLUE}💡 Puedes crearlo manualmente en: https://github.com/$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/')/releases/new${NC}"
-        fi
-      fi
-    else
-      # Si no hay archivo de changelog, crear release con el mensaje del tag
-      if gh release create "$TAG_NAME" --title "$TAG_NAME" --notes "$TAG_MESSAGE" 2>/dev/null; then
-        echo -e "${GREEN}✅ Release '${TAG_NAME}' creado exitosamente en GitHub${NC}"
-      else
-        if gh release edit "$TAG_NAME" --notes "$TAG_MESSAGE" 2>/dev/null; then
-          echo -e "${GREEN}✅ Release '${TAG_NAME}' actualizado exitosamente en GitHub${NC}"
-        else
-          echo -e "${YELLOW}⚠️  No se pudo crear/actualizar el release en GitHub${NC}"
-          echo -e "${BLUE}💡 Puedes crearlo manualmente en: https://github.com/$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/')/releases/new${NC}"
-        fi
-      fi
-    fi
-  else
-    echo -e "${YELLOW}⚠️  GitHub CLI (gh) no está instalado${NC}"
-    echo -e "${BLUE}💡 Instala gh CLI para crear releases automáticamente: https://cli.github.com/${NC}"
-    echo -e "${BLUE}💡 O crea el release manualmente en: https://github.com/$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/')/releases/new${NC}"
-    echo -e "${BLUE}💡 Usa el siguiente contenido para el release:${NC}"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "$TAG_MESSAGE"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  fi
-else
-  echo -e "${YELLOW}⚠️  Saltando creación de release (no hay tag)${NC}"
-fi
-
 # 🔍 Verificación final: confirmar que estamos en main
 echo -e "${BLUE}🔍 Verificación final...${NC}"
 if [ "$(git branch --show-current)" = "$MAIN_BRANCH" ]; then
@@ -543,19 +338,8 @@ if [ -n "$TAG_NAME" ]; then
   repo_url=$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/' | sed 's/\.git$//')
   echo -e "  • Tag anotado creado: ${TAG_NAME} ✅"
   echo -e "  • Tag en GitHub: https://github.com/${repo_url}/releases/tag/${TAG_NAME}"
-  echo -e "  • Release en GitHub: https://github.com/${repo_url}/releases/tag/${TAG_NAME}"
+  echo -e "  • Changelog y release: Se generarán automáticamente por GitHub Actions 🔄"
 else
   echo -e "  • Tag: No creado ⚠️"
-fi
-if [ -n "$TAG_NAME" ]; then
-  echo -e "  • Changelog en tag: ✅"
-  echo -e "  • Archivos de changelog generados: ✅"
-  if command -v gh &> /dev/null; then
-    echo -e "  • Release de GitHub: ✅"
-  else
-    echo -e "  • Release de GitHub: ⚠️  (requiere gh CLI)"
-  fi
-else
-  echo -e "  • Changelogs: No generados ⚠️"
 fi
 echo -e "${BLUE}💡 Próximo paso: Deploy a producción${NC}" 

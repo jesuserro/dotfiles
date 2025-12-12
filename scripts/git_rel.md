@@ -1,6 +1,6 @@
 # 🚀 Git Release Script (`git_rel.sh`)
 
-> **Script automatizado para hacer releases de `dev` a `main` con gestión inteligente de conflictos, tags anotados con changelog completo y creación automática de releases en GitHub.**
+> **Script automatizado para hacer releases de `dev` a `main` con gestión inteligente de conflictos y creación de tags anotados. El changelog y release se generan automáticamente por GitHub Actions cuando se crea el tag.**
 
 ## 📋 Tabla de Contenidos
 
@@ -18,18 +18,16 @@
 
 ## 🎯 Descripción
 
-El script `git_rel.sh` automatiza el proceso de release de código desde la rama de desarrollo (`dev`) a la rama principal (`main`). Incluye validaciones, gestión inteligente de conflictos, generación de changelogs, creación de tags anotados con documentación completa y creación automática de releases en GitHub.
+El script `git_rel.sh` automatiza el proceso de release de código desde la rama de desarrollo (`dev`) a la rama principal (`main`). Incluye validaciones, gestión inteligente de conflictos y creación de tags anotados. El changelog completo y el release en GitHub se generan automáticamente mediante un workflow de GitHub Actions cuando se crea el tag.
 
 ## ✨ Características
 
 - 🔄 **Merge inteligente**: Maneja automáticamente casos de no fast-forward
-- 🏷️ **Tags anotados profesionales**: Crea tags anotados con formato `vYYYY.MM.DD_HHMM` que incluyen el changelog completo como mensaje
-- 📝 **Changelogs mejorados**: Genera changelogs con fecha, hora y hash del commit en formato markdown
-- 🚀 **Releases de GitHub**: Crea automáticamente releases en GitHub usando `gh` CLI con el changelog completo
+- 🏷️ **Tags anotados**: Crea tags anotados con formato `vYYYY.MM.DD_HHMM` con mensaje básico
 - 🔍 **Detección de conflictos**: Identifica conflictos potenciales antes del merge
 - 🎨 **Output colorido**: Interfaz visual con colores y emojis
 - 🛡️ **Validaciones**: Verifica estado del repositorio y permisos
-- 📊 **Categorización inteligente**: Organiza commits por tipo (feat, fix, docs, refactor, etc.)
+- 🤖 **Integración con GitHub Actions**: El changelog y release se generan automáticamente cuando se crea el tag (requiere workflow configurado en el proyecto)
 
 ## 🔧 Instalación
 
@@ -53,15 +51,17 @@ git rel
 🔁 Integrando 'dev' en 'main'...
 ✅ Merge completado: 'dev' → 'main'
 🏷️ Creando tag 'v2025.12.07_1051'...
-📝 Generando changelog para el tag...
-✅ Changelog generado exitosamente
 🏷️ Creando tag anotado 'v2025.12.07_1051' en el commit actual...
+📝 Tag se creará en: 7aa62e4 - feat(git_rel): improve tag generation (Jesús Erro)
+📤 Subiendo tag a GitHub...
 ✅ Tag anotado 'v2025.12.07_1051' creado y subido exitosamente a GitHub.
-📝 Generando archivos de changelog...
-✅ Archivos de changelog generados exitosamente
-🚀 Creando release en GitHub...
-✅ Release 'v2025.12.07_1051' creado exitosamente en GitHub
+✅ Tag 'v2025.12.07_1051' confirmado en GitHub.
 🎉 ¡Release completado exitosamente!
+📋 Resumen:
+  • dev → main ✅
+  • Tag anotado creado: v2025.12.07_1051 ✅
+  • Tag en GitHub: https://github.com/user/repo/releases/tag/v2025.12.07_1051
+  • Changelog y release: Se generarán automáticamente por GitHub Actions 🔄
 ```
 
 ### 🏷️ Con Versión Específica
@@ -92,49 +92,20 @@ git rel -h
   --help, -h                 # Mostrar esta ayuda
 ```
 
-## 📝 Formato de Changelog
+## 📝 Formato del Tag
 
-El script genera changelogs con un formato profesional similar a data-peek que incluye:
+El script crea tags anotados con un mensaje básico. El changelog completo se genera automáticamente por GitHub Actions cuando se crea el tag.
 
-- **Fecha y hora**: Formato `YYYY-MM-DD HH:MM`
-- **Hash del commit**: Código corto del commit entre backticks de markdown
-- **Mensaje del commit**: Tipo, scope y descripción
-- **Autor**: Nombre del autor del commit
-- **Cálculo preciso**: Solo incluye commits exclusivos de `dev` desde el último tag, similar a `git feat`
-
-**Ejemplo de línea de changelog:**
+**Ejemplo de mensaje del tag:**
 ```markdown
-- 2025-12-07 10:51 `7aa62e4` feat(git_rel): improve tag generation with annotated tags and GitHub releases (Jesús Erro)
-```
-
-**Ejemplo de formato completo del tag (similar a data-peek):**
-```markdown
-## v2025.12.07_1051
+Release v2025.12.07_1051
 
 **Release Date:** 2025-12-07 10:51
-**Previous Release:** v2025.12.06_1430
 
-### What's Changed
-
-### ✨ Added
-- 2025-12-07 10:51 `7aa62e4` feat(git_rel): improve tag generation (Jesús Erro)
-
-### 🐛 Fixed
-- 2025-12-07 10:30 `3b2a1c4` fix: correct changelog calculation (Jesús Erro)
+Changelog will be generated automatically by GitHub Actions.
 ```
 
-### 📊 Categorización Automática
-
-Los commits se organizan automáticamente en categorías con emojis (similar a data-peek):
-
-- **✨ Added**: Commits tipo `feat` o `feature`
-- **🐛 Fixed**: Commits tipo `fix`
-- **📚 Documentation**: Commits tipo `docs`
-- **♻️ Refactored**: Commits tipo `refactor`
-- **✅ Tests**: Commits tipo `test`
-- **💅 Style**: Commits tipo `style`
-- **🔧 Chores**: Commits tipo `chore`
-- **📝 Other**: Otros commits que no coinciden con los tipos anteriores
+> **Nota**: El changelog completo con commits categorizados, archivo `releases/vX.X.X.md` y release en GitHub se generan automáticamente mediante un workflow de GitHub Actions configurado en el proyecto. Ver sección [🤖 Integración con GitHub Actions](#-integración-con-github-actions) para más detalles.
 
 ## ⚡ Casos de Uso
 
@@ -212,14 +183,27 @@ graph TD
     A[🚀 git rel] --> B[✅ Validar repo]
     B --> C[🔁 Merge dev → main]
     C --> D{¿Merge exitoso?}
-    D -->|✅ Sí| E[📝 Generar changelog]
+    D -->|✅ Sí| E[🏷️ Crear tag anotado básico]
     D -->|❌ No| F[🛠️ Resolver conflictos]
-    E --> G[🏷️ Crear tag anotado con changelog]
-    G --> H[📝 Generar archivos de changelog]
-    H --> I[🚀 Crear release en GitHub]
-    I --> J[🎉 Release completado]
-    F --> K[git rel-resolve]
+    E --> G[📤 Push tag a GitHub]
+    G --> H[🤖 GitHub Actions se dispara]
+    H --> I[📝 Generar changelog completo]
+    I --> J[📄 Crear archivo releases/vX.X.X.md]
+    J --> K[🚀 Crear release en GitHub]
+    K --> L[🎉 Release completado]
+    F --> M[git rel-resolve]
 ```
+
+### 🤖 Integración con GitHub Actions
+
+El script `git_rel.sh` crea el tag y lo sube a GitHub. Un workflow de GitHub Actions configurado en el proyecto se encarga automáticamente de:
+
+1. **Generar changelog completo**: Calcula commits desde el último tag hasta el actual
+2. **Categorizar commits**: Organiza por tipo (feat, fix, docs, etc.) con emojis
+3. **Crear archivo de release**: Genera `releases/vX.X.X.md` con el changelog
+4. **Crear release en GitHub**: Publica el release con el changelog completo
+
+**Configuración requerida**: Necesitas tener un workflow `.github/workflows/release.yml` en tu proyecto que se dispare cuando se crea un tag `v*`. Ver sección [🔧 Configuración de GitHub Actions](#-configuración-de-github-actions) para más detalles.
 
 ## 🔧 Configuración
 
@@ -245,6 +229,58 @@ BLUE='\033[0;34m'          # 💡 Información
 NC='\033[0m'               # Reset color
 ```
 
+### 🤖 Configuración de GitHub Actions
+
+Para que el changelog y release se generen automáticamente, necesitas crear un workflow en tu proyecto:
+
+**Ubicación**: `.github/workflows/release.yml`
+
+**Ejemplo básico**:
+```yaml
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Se dispara cuando se crea un tag que empiece con 'v'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Necesario para crear releases
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Necesario para obtener todo el historial de tags
+      
+      - name: Get tag name
+        id: tag
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Aquí va la lógica para generar el changelog
+          # desde el último tag hasta el actual
+          # y crear el archivo releases/${TAG_NAME}.md
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          name: Release ${{ steps.tag.outputs.tag_name }}
+          body_path: releases/${{ steps.tag.outputs.tag_name }}.md
+          draft: false
+          prerelease: false
+```
+
+> **Nota**: Este workflow debe estar en cada proyecto donde uses `git rel`, no en `dotfiles`. Los scripts de `dotfiles` son herramientas reutilizables, pero el workflow es específico de cada repositorio.
+
 ## ❓ FAQ
 
 ### 🤔 ¿Qué pasa si no hay cambios entre dev y main?
@@ -257,21 +293,16 @@ El script intenta automáticamente un merge con `--no-ff` y continúa.
 
 ### 🏷️ ¿Cómo funcionan los tags anotados?
 
-Los tags creados son **anotados** e incluyen el changelog completo como mensaje. Esto significa que cuando veas el tag en GitHub o con `git show`, verás toda la información del release.
+Los tags creados son **anotados** con un mensaje básico que indica que el changelog se generará automáticamente por GitHub Actions. El changelog completo y el release se crean automáticamente cuando el workflow de GitHub Actions detecta el nuevo tag.
 
 ### 🚀 ¿Cómo se crean los releases en GitHub?
 
-El script intenta crear automáticamente un release en GitHub usando `gh` CLI. Si `gh` CLI no está instalado o no está autenticado, el script mostrará el contenido del changelog para que puedas crearlo manualmente.
+Los releases se crean automáticamente mediante un workflow de GitHub Actions configurado en el proyecto. El workflow se dispara cuando se crea un tag `v*` y:
+1. Genera el changelog completo desde los commits
+2. Crea el archivo `releases/vX.X.X.md`
+3. Crea el release en GitHub con el changelog
 
-**Para habilitar releases automáticos:**
-```bash
-# Instalar gh CLI
-# En Ubuntu/Debian:
-sudo apt install gh
-
-# Autenticarse con permisos de repo
-gh auth login --scopes repo
-```
+**Configuración requerida**: Necesitas tener un workflow `.github/workflows/release.yml` en tu proyecto. Ver sección [🤖 Configuración de GitHub Actions](#-configuración-de-github-actions) para más detalles.
 
 ### 🏷️ ¿Cómo cambiar el formato de versiones?
 
@@ -285,29 +316,26 @@ Modifica la variable `TAG_PREFIX` en el script o usa versiones específicas con 
 
 ### 📝 ¿Dónde se generan los changelogs?
 
-Los changelogs se generan automáticamente y se guardan en:
-- `releases/TAG.md`: Changelog individual por release
-- `CHANGELOG.md`: Changelog principal con las últimas 5 releases
+Los changelogs se generan automáticamente por GitHub Actions cuando se crea el tag y se guardan en:
+- `releases/vX.X.X.md`: Changelog individual por release (generado por GitHub Actions)
+- `CHANGELOG.md`: Changelog principal con las últimas releases (opcional, si el workflow lo genera)
 
-**Formato del changelog:**
+**Formato del changelog** (generado por GitHub Actions):
 - Cada línea incluye: fecha, hora, hash del commit (en backticks), mensaje y autor
 - Los commits se categorizan automáticamente con emojis (✨ Added, 🐛 Fixed, 📚 Documentation, etc.)
-- **Cálculo preciso**: Solo incluye commits exclusivos de `dev` desde el commit base de `main` antes del merge
-- Similar a `git feat`, calcula solo los commits que realmente vienen de `dev` en este release
+- **Cálculo preciso**: El workflow calcula commits desde el último tag hasta el actual
 
-### 🔍 ¿Cómo calcula los commits del changelog?
+### 🔍 ¿Cómo se calculan los commits del changelog?
 
-El script usa una estrategia similar a `git feat` para calcular commits exclusivos:
+El workflow de GitHub Actions calcula los commits del changelog:
 
-1. **Guarda el commit base**: Antes del merge, guarda el commit actual de `main`
-2. **Calcula commits exclusivos**: Después del merge, calcula los commits de `dev` que no estaban en ese commit base
-3. **Usa el último tag como referencia**: Si no hay commit base, usa el último tag como punto de referencia
+1. **Obtiene el último tag**: Busca el tag anterior al que se acaba de crear
+2. **Calcula commits**: Obtiene todos los commits entre el último tag y el tag actual
+3. **Categoriza commits**: Organiza por tipo (feat, fix, docs, etc.) con emojis
+4. **Genera archivo**: Crea `releases/vX.X.X.md` con el changelog completo
+5. **Crea release**: Publica el release en GitHub con el changelog
 
-Esto asegura que solo se incluyan los commits que realmente vienen de `dev` en este release, evitando incluir commits de hotfixes directos en `main` u otros cambios no relacionados.
-
-### 🎯 ¿Por qué el cálculo es más preciso ahora?
-
-Anteriormente, el script usaba `last_tag..HEAD` que incluía todos los commits en `main`, incluso los que no venían de `dev`. Ahora, similar a `git feat`, calcula solo los commits exclusivos de `dev` desde el punto de integración, asegurando que el changelog refleje exactamente lo que se está liberando.
+> **Nota**: La lógica exacta de cálculo depende de cómo implementes el workflow de GitHub Actions en tu proyecto.
 
 ---
 
