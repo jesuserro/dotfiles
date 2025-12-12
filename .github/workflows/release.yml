@@ -65,18 +65,18 @@ jobs:
           
           # Generar contenido del changelog desde commits
           # Mostrar TODOS los commits entre el último tag y el actual (sin filtrar por fecha)
-          # Excluir commits de merge usando --no-merges y filtrar mensajes que empiecen con "merge("
+          # Excluir commits de merge y commits de documentación de releases generados automáticamente
           if [ -n "$LAST_TAG" ] && [ "$LAST_TAG" != "$TAG_NAME" ]; then
             echo "Generating changelog from $LAST_TAG to $TAG_NAME"
-            # Obtener todos los commits entre los tags excluyendo merges
+            # Obtener todos los commits entre los tags excluyendo merges y commits de changelog automáticos
             # --no-merges excluye commits de merge automáticamente
-            # grep -v filtra commits cuyo mensaje contenga "merge("
-            CHANGELOG_CONTENT=$(git log --no-merges --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}..${TAG_NAME}" 2>/dev/null | grep -vE "merge\(|^$" || echo "")
+            # grep -v filtra commits cuyo mensaje contenga "merge(" o "docs(release): add changelog"
+            CHANGELOG_CONTENT=$(git log --no-merges --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}..${TAG_NAME}" 2>/dev/null | grep -vE "merge\(|docs\(release\): add changelog|^$" || echo "")
           else
             echo "No previous tag found, generating changelog for all commits up to $TAG_NAME"
             # Si no hay tag anterior, mostrar commits del tag actual (limitado a 50 para no ser demasiado largo)
-            # Excluir merges también
-            CHANGELOG_CONTENT=$(git log --no-merges --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${TAG_NAME}" -n 50 2>/dev/null | grep -vE "merge\(|^$" || echo "")
+            # Excluir merges y commits de changelog automáticos también
+            CHANGELOG_CONTENT=$(git log --no-merges --pretty=format:"- %ad \`%h\` %s (%an)" --date=format:"%Y-%m-%d %H:%M" "${TAG_NAME}" -n 50 2>/dev/null | grep -vE "merge\(|docs\(release\): add changelog|^$" || echo "")
           fi
           
           if [ -z "$CHANGELOG_CONTENT" ]; then
