@@ -161,7 +161,218 @@ jobs:
             exit 1
           fi
       
-      - name: Commit changelog file
+      - name: Generate detailed CHANGELOG.md
+        id: detailed_changelog
+        run: |
+          set -e
+          TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+          LAST_TAG="${{ steps.previous_tag.outputs.previous_tag }}"
+          
+          # Obtener información del repositorio para generar enlaces
+          REPO_URL=$(git remote get-url origin 2>/dev/null | sed 's/\.git$//' | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/' || echo "")
+          
+          echo "Generating detailed CHANGELOG.md..."
+          
+          # Función para obtener el cuerpo de un commit (líneas después del título, excluyendo líneas vacías y footers)
+          get_commit_body() {
+            local commit_hash="$1"
+            # Obtener el mensaje completo del commit
+            local full_message=$(git log -1 --format="%B" "$commit_hash" 2>/dev/null || echo "")
+            
+            if [ -z "$full_message" ]; then
+              echo ""
+              return
+            fi
+            
+            # Extraer el cuerpo (todo después de la primera línea, excluyendo footers como Closes, Fixes, etc.)
+            local body=$(echo "$full_message" | sed -n '2,$p' | sed '/^$/d' | grep -vE "^(Closes|Fixes|Refs|See|Related to):" | head -n 5)
+            
+            # Limpiar líneas vacías al inicio y final
+            body=$(echo "$body" | sed '/./,$!d' | tac | sed '/./,$!d' | tac)
+            
+            echo "$body"
+          }
+          
+          # Generar contenido detallado para esta release
+          if [ -n "$LAST_TAG" ] && [ "$LAST_TAG" != "$TAG_NAME" ]; then
+            COMMITS=$(git log --no-merges --pretty=format:"%h|%ad|%s|%an" --date=format:"%Y-%m-%d %H:%M" "${LAST_TAG}..${TAG_NAME}" 2>/dev/null | grep -vE "merge\(|docs\(release\): add changelog" || echo "")
+          else
+            COMMITS=$(git log --no-merges --pretty=format:"%h|%ad|%s|%an" "${TAG_NAME}" -n 50 2>/dev/null | grep -vE "merge\(|docs\(release\): add changelog" || echo "")
+          fi
+          
+          # Procesar commits y generar entradas detalladas
+          FEAT_ENTRIES=""
+          FIX_ENTRIES=""
+          DOCS_ENTRIES=""
+          REFACTOR_ENTRIES=""
+          TEST_ENTRIES=""
+          STYLE_ENTRIES=""
+          CHORE_ENTRIES=""
+          OTHER_ENTRIES=""
+          
+          while IFS='|' read -r hash date subject author; do
+            if [ -z "$hash" ]; then continue; fi
+            
+            # Obtener cuerpo del commit
+            commit_body=$(get_commit_body "$hash")
+            
+            # Generar enlace al commit
+            if [ -n "$REPO_URL" ]; then
+              commit_link="[${hash}](https://github.com/${REPO_URL}/commit/${hash})"
+            else
+              commit_link="\`${hash}\`"
+            fi
+            
+            # Crear entrada base
+            entry="- ${date} ${commit_link} ${subject} (${author})"
+            
+            # Agregar cuerpo si existe y tiene contenido significativo
+            if [ -n "$commit_body" ] && [ $(echo "$commit_body" | wc -c) -gt 20 ]; then
+              # Formatear el cuerpo (indentar con 2 espacios, limitar a 3 líneas)
+              formatted_body=$(echo "$commit_body" | sed 's/^/  /' | head -n 3)
+              entry="${entry}"$'\n'"${formatted_body}"
+            fi
+            
+            # Categorizar según el tipo de commit
+            if echo "$subject" | grep -qE "^(feat|feature)"; then
+              FEAT_ENTRIES="${FEAT_ENTRIES}${entry}"$'\n'
+            elif echo "$subject" | grep -qE "^fix"; then
+              FIX_ENTRIES="${FIX_ENTRIES}${entry}"$'\n'
+            elif echo "$subject" | grep -qE "^docs"; then
+              DOCS_ENTRIES="${DOCS_ENTRIES}${entry}"$'\n'
+            elif echo "$subject" | grep -qE "^refactor"; then
+              REFACTOR_ENTRIES="${REFACTOR_ENTRIES}${entry}"$'\n'
+            elif echo "$subject" | grep -qE "^test"; then
+              TEST_ENTRIES="${TEST_ENTRIES}${entry}"$'\n'
+            elif echo "$subject" | grep -qE "^style"; then
+              STYLE_ENTRIES="${STYLE_ENTRIES}${entry}"$'\n'
+            elif echo "$subject" | grep -qE "^chore"; then
+              CHORE_ENTRIES="${CHORE_ENTRIES}${entry}"$'\n'
+            else
+              OTHER_ENTRIES="${OTHER_ENTRIES}${entry}"$'\n'
+            fi
+          done <<< "$COMMITS"
+          
+          # Construir sección detallada para esta release
+          TAG_DATE=$(git log -1 --format="%ad" --date=short "${TAG_NAME}" 2>/dev/null || date +%Y-%m-%d)
+          
+          NEW_RELEASE_SECTION="## [${TAG_NAME}] - ${TAG_DATE}"$'\n'$'\n'
+          NEW_RELEASE_SECTION+="## Changes"$'\n'
+          
+          if [ -n "$FEAT_ENTRIES" ]; then
+            NEW_RELEASE_SECTION+="### Added"$'\n'"$FEAT_ENTRIES"$'\n'
+          fi
+          if [ -n "$FIX_ENTRIES" ]; then
+            NEW_RELEASE_SECTION+="### Fixed"$'\n'"$FIX_ENTRIES"$'\n'
+          fi
+          if [ -n "$DOCS_ENTRIES" ]; then
+            NEW_RELEASE_SECTION+="### Documentation"$'\n'"$DOCS_ENTRIES"$'\n'
+          fi
+          if [ -n "$REFACTOR_ENTRIES" ]; then
+            NEW_RELEASE_SECTION+="### Refactored"$'\n'"$REFACTOR_ENTRIES"$'\n'
+          fi
+          if [ -n "$TEST_ENTRIES" ]; then
+            NEW_RELEASE_SECTION+="### Tests"$'\n'"$TEST_ENTRIES"$'\n'
+          fi
+          if [ -n "$STYLE_ENTRIES" ]; then
+            NEW_RELEASE_SECTION+="### Style"$'\n'"$STYLE_ENTRIES"$'\n'
+          fi
+          if [ -n "$CHORE_ENTRIES" ]; then
+            NEW_RELEASE_SECTION+="### Chores"$'\n'"$CHORE_ENTRIES"$'\n'
+          fi
+          if [ -n "$OTHER_ENTRIES" ]; then
+            NEW_RELEASE_SECTION+="### Other"$'\n'"$OTHER_ENTRIES"$'\n'
+          fi
+          
+          # Guardar la nueva sección en un archivo temporal
+          echo -n "$NEW_RELEASE_SECTION" > /tmp/new_release_section.txt
+          
+          echo "✅ Detailed release section generated"
+          echo "Section preview (first 40 lines):"
+          head -n 40 /tmp/new_release_section.txt
+      
+      - name: Update CHANGELOG.md
+        run: |
+          set -e
+          TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+          
+          # Definir encabezado por defecto
+          DEFAULT_HEADER="# Changelog"$'\n'$'\n'"Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio \`releases/\`."
+          
+          # Extraer encabezado del CHANGELOG existente
+          if [ -f "CHANGELOG.md" ]; then
+            # Buscar la primera línea que empiece con "## ["
+            first_release_line=$(grep -n "^## \[" CHANGELOG.md | head -n 1 | cut -d: -f1 2>/dev/null || echo "")
+            
+            if [ -n "$first_release_line" ] && [ "$first_release_line" -gt 1 ]; then
+              # Extraer líneas antes de la primera release
+              HEADER=$(head -n $((first_release_line - 1)) CHANGELOG.md)
+              # Si el encabezado está vacío o es muy corto, usar el por defecto
+              if [ -z "$HEADER" ] || [ $(echo "$HEADER" | wc -l) -lt 2 ]; then
+                HEADER="$DEFAULT_HEADER"
+              fi
+            else
+              # No se encontró release, usar encabezado por defecto
+              HEADER="$DEFAULT_HEADER"
+            fi
+          else
+            HEADER="$DEFAULT_HEADER"
+          fi
+          
+          # Extraer las últimas 4 releases del CHANGELOG existente
+          EXISTING_RELEASES=""
+          if [ -f "CHANGELOG.md" ]; then
+            # Encontrar todas las líneas que empiezan con "## ["
+            release_line_numbers=$(grep -n "^## \[" CHANGELOG.md | cut -d: -f1)
+            
+            if [ -n "$release_line_numbers" ]; then
+              # Contar cuántas releases hay
+              release_count=$(echo "$release_line_numbers" | wc -l)
+              
+              if [ "$release_count" -gt 0 ]; then
+                # Obtener las líneas de inicio de las releases
+                first_release_line=$(echo "$release_line_numbers" | head -n 1)
+                second_release_line=$(echo "$release_line_numbers" | head -n 2 | tail -n 1)
+                
+                # Si hay más de 4 releases, tomar solo las primeras 4 (las más recientes)
+                # Excluir la primera porque será reemplazada por la nueva
+                if [ "$release_count" -gt 4 ]; then
+                  # Obtener la línea de inicio de la quinta release (para saber dónde cortar)
+                  fifth_release_line=$(echo "$release_line_numbers" | head -n 5 | tail -n 1)
+                  
+                  # Extraer desde la segunda release hasta antes de la quinta (4 releases)
+                  if [ -n "$second_release_line" ]; then
+                    EXISTING_RELEASES=$(sed -n "${second_release_line},$((fifth_release_line - 1))p" CHANGELOG.md)
+                  fi
+                else
+                  # Si hay 4 o menos, tomar todas desde la segunda (excluyendo la primera que será reemplazada)
+                  if [ -n "$second_release_line" ]; then
+                    EXISTING_RELEASES=$(sed -n "${second_release_line},\$p" CHANGELOG.md)
+                  fi
+                fi
+              fi
+            fi
+          fi
+          
+          # Construir el nuevo CHANGELOG.md
+          {
+            echo "$HEADER"
+            echo ""
+            # Agregar la nueva release al principio
+            cat /tmp/new_release_section.txt
+            # Agregar las releases existentes si hay
+            if [ -n "$EXISTING_RELEASES" ]; then
+              echo ""
+              echo "$EXISTING_RELEASES"
+            fi
+          } > CHANGELOG.md
+          
+          echo "✅ CHANGELOG.md updated successfully"
+          echo "File size: $(wc -l < CHANGELOG.md) lines"
+          echo "Preview of first 50 lines:"
+          head -n 50 CHANGELOG.md
+      
+      - name: Commit changelog files
         continue-on-error: true
         run: |
           TAG_NAME="${{ steps.tag.outputs.tag_name }}"
@@ -171,17 +382,25 @@ jobs:
           # Hacer checkout de main para poder hacer commit (cuando se crea un tag, estamos en detached HEAD)
           git checkout main || git checkout dev || echo "Could not checkout branch, skipping commit"
           
-          # Verificar si el archivo existe y tiene cambios
+          # Agregar ambos archivos
+          FILES_TO_COMMIT=""
+          
           if [ -f "releases/${TAG_NAME}.md" ]; then
             git add "releases/${TAG_NAME}.md"
-            if ! git diff --cached --quiet; then
-              git commit -m "docs(release): add changelog for ${TAG_NAME}" || echo "Commit failed"
-              git push || echo "Push failed (may need permissions)"
-            else
-              echo "No changes to commit (file already exists and is up to date)"
-            fi
+            FILES_TO_COMMIT="${FILES_TO_COMMIT} releases/${TAG_NAME}.md"
+          fi
+          
+          if [ -f "CHANGELOG.md" ]; then
+            git add "CHANGELOG.md"
+            FILES_TO_COMMIT="${FILES_TO_COMMIT} CHANGELOG.md"
+          fi
+          
+          # Verificar si hay cambios para commitear
+          if [ -n "$FILES_TO_COMMIT" ] && ! git diff --cached --quiet; then
+            git commit -m "docs(release): add changelog and update CHANGELOG.md for ${TAG_NAME}" || echo "Commit failed"
+            git push || echo "Push failed (may need permissions)"
           else
-            echo "Changelog file not found, skipping commit"
+            echo "No changes to commit (files already exist and are up to date)"
           fi
       
       - name: Verify release file exists
