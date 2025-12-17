@@ -134,8 +134,6 @@ jobs:
           
           # Crear archivo de release
           {
-            echo "# Release ${TAG_NAME}"
-            echo ""
             echo "**Fecha:** ${TAG_DATE}"
             if [ -n "$LAST_TAG" ]; then
               echo "**Previous Release:** ${LAST_TAG}"

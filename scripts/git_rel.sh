@@ -348,9 +348,7 @@ if [ -n "$TAG_NAME" ]; then
   # Crear mensaje básico para el tag (el changelog completo lo generará GitHub Actions)
   tag_date=$(date +%Y-%m-%d)
   tag_time=$(date +%H:%M)
-  TAG_MESSAGE="Release ${TAG_NAME}
-
-**Release Date:** ${tag_date} ${tag_time}
+  TAG_MESSAGE="**Release Date:** ${tag_date} ${tag_time}
 
 Changelog will be generated automatically by GitHub Actions."
   
