@@ -1,2 +1,2 @@
-EXCLUDES="LICENSE"
+EXCLUDES="LICENSE node_modules"
 DOTFILES_DIRS="$HOME/dotfiles-local $HOME/dotfiles"

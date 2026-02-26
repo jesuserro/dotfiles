@@ -25,8 +25,8 @@ enabled = true
 # MCP: Postgres
 # ─────────────────────────────────────────────
 [mcp_servers.postgres]
-command = "npx"
-args = ["-y", "@modelcontextprotocol/server-postgres", "${POSTGRES_DSN}"]
+command = "/usr/bin/node"
+args = ["/home/jesus/.codex/mcp/postgres/server.mjs", "${POSTGRES_DSN}"]
 enabled = true
 
 # ─────────────────────────────────────────────
