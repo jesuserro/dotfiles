@@ -1,20 +1,42 @@
 #!/usr/bin/env node
+import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 function requireWithFallback(specifier) {
   const candidates = [];
+  const seen = new Set();
+
+  function pushCandidate(filePath) {
+    if (!filePath) return;
+    const resolved = path.resolve(filePath);
+    if (seen.has(resolved)) return;
+    seen.add(resolved);
+    candidates.push(resolved);
+  }
 
   if (process.argv[1]) {
-    candidates.push(path.resolve(process.argv[1]));
+    pushCandidate(process.argv[1]);
   }
-  candidates.push(fileURLToPath(import.meta.url));
+  const importMetaPath = fileURLToPath(import.meta.url);
+  pushCandidate(importMetaPath);
+
+  // If the script is executed from a dotfiles symlink target, also try the mirrored ~/.codex path.
+  // rcup commonly symlinks ~/.codex/... -> ~/dotfiles/codex/..., but Node resolves import.meta.url to the real path.
+  const homeDir = process.env.HOME ?? '';
+  const dotfilesPrefix = path.join(homeDir, 'dotfiles', 'codex') + path.sep;
+  if (importMetaPath.startsWith(dotfilesPrefix)) {
+    const mirrored = path.join(homeDir, '.codex', importMetaPath.slice(dotfilesPrefix.length));
+    pushCandidate(mirrored);
+  }
 
   let lastError;
   for (const filePath of candidates) {
     try {
-      const req = createRequire(pathToFileURL(filePath));
+      // Anchor require() to the directory, not the realpath of a symlinked script file.
+      const anchorPath = path.join(path.dirname(filePath), '__mcp_require_anchor__.cjs');
+      const req = createRequire(pathToFileURL(anchorPath));
       return req(specifier);
     } catch (error) {
       lastError = error;
@@ -36,7 +58,57 @@ const { StdioServerTransport } = stdioModule;
 
 const { Pool } = pg;
 
-const databaseUrl = process.argv[2] || process.env.POSTGRES_DSN || process.env.DATABASE_URL;
+function loadDotenvExports(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const values = {};
+    for (const rawLine of content.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith('#')) continue;
+      const match = line.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+      if (!match) continue;
+      const [, key, rawValue] = match;
+      let value = rawValue.trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"'))
+        || (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      values[key] = value;
+    }
+    return values;
+  } catch {
+    return {};
+  }
+}
+
+function isPostgresConnectionString(value) {
+  return typeof value === 'string'
+    && /^postgres(?:ql)?:\/\//i.test(value.trim());
+}
+
+function resolveArgvDsn(arg, envValues) {
+  if (!arg || typeof arg !== 'string') return undefined;
+  if (isPostgresConnectionString(arg)) return arg;
+
+  // Support literal placeholders like "${POSTGRES_DSN}" when the launcher doesn't expand them.
+  const placeholderMatch = arg.trim().match(/^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$/);
+  if (!placeholderMatch) return undefined;
+
+  const key = placeholderMatch[1];
+  const value = process.env[key] || envValues[key];
+  return isPostgresConnectionString(value) ? value : undefined;
+}
+
+const localSecretEnv = loadDotenvExports(path.join(process.env.HOME ?? '', '.secrets', 'codex.env'));
+const argvDsn = resolveArgvDsn(process.argv[2], localSecretEnv);
+const databaseUrl =
+  process.env.POSTGRES_DSN
+  || process.env.DATABASE_URL
+  || localSecretEnv.POSTGRES_DSN
+  || localSecretEnv.DATABASE_URL
+  || argvDsn;
 if (!databaseUrl) {
   console.error('Missing PostgreSQL DSN. Pass it as argv[2] or set POSTGRES_DSN/DATABASE_URL.');
   process.exit(1);
