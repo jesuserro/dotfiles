@@ -1,0 +1,61 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "medium"
+
+# Codex internal logs (keep separate from your ETL logs/)
+log_dir = "~/.codex-logs"
+
+# ─────────────────────────────────────────────
+# MCP: Excalidraw (diagramas)
+# ─────────────────────────────────────────────
+[mcp_servers.excalidraw]
+command = "/usr/bin/node"
+args = ["/home/jesus/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"]
+cwd = "/home/jesus/mcp-servers/excalidraw-mcp"
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: Context7 (documentación dinámica)
+# ─────────────────────────────────────────────
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: Postgres
+# ─────────────────────────────────────────────
+[mcp_servers.postgres]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-postgres", "${POSTGRES_DSN}"]
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: Trino
+# ─────────────────────────────────────────────
+[mcp_servers.trino]
+command = "python"
+args = ["-m", "trino_mcp"]
+enabled = true
+
+[mcp_servers.trino.env]
+TRINO_HOST = "localhost"
+TRINO_PORT = "8080"
+TRINO_USER = "admin"
+TRINO_CATALOG = "iceberg"
+TRINO_HTTP_SCHEME = "http"
+
+# ─────────────────────────────────────────────
+# MCP: Docker
+# ─────────────────────────────────────────────
+[mcp_servers.docker]
+command = "npx"
+args = ["-y", "@0xshariq/docker-mcp-server"]
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: GitHub
+# ─────────────────────────────────────────────
+[mcp_servers.github]
+command = "npx"
+args = ["-y", "@github/mcp-server"]
+enabled = true
