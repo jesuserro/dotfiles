@@ -256,13 +256,33 @@ export PATH=$PATH:$HOME/.local/bin
 # NPM Global packages
 export PATH=~/.npm-global/bin:$PATH
 
- # Configuración de Codex: vincula tus dotfiles/codex a los de ~/.codex
-if [ -d "$HOME/dotfiles/codex" ]; then
-  mkdir -p "$HOME/.codex"
-  for file in "$HOME/dotfiles/codex"/*; do
-    target="$HOME/.codex/$(basename "$file")"
-    if [ ! -L "$target" ]; then
-      ln -sf "$file" "$target"
+# =============================================================================
+# Codex dotfiles sync (robust + silent)
+# =============================================================================
+
+CODEX_SOURCE="$HOME/dotfiles/codex"
+CODEX_TARGET="$HOME/.codex"
+
+if [ -d "$CODEX_SOURCE" ]; then
+  mkdir -p "$CODEX_TARGET"
+
+  # Remove broken symlinks in target
+  find "$CODEX_TARGET" -xtype l -exec rm -f {} \; >/dev/null 2>&1
+
+  # Remove symlinks pointing to old codex dotfiles not present anymore
+  for target in "$CODEX_TARGET"/*; do
+    if [ -L "$target" ]; then
+      source_path=$(readlink -f "$target" 2>/dev/null)
+      if [[ "$source_path" == "$CODEX_SOURCE"* ]] && [ ! -e "$source_path" ]; then
+        rm -f "$target" >/dev/null 2>&1
+      fi
     fi
+  done
+
+  # Create/update symlinks (silent)
+  for file in "$CODEX_SOURCE"/*; do
+    [ -e "$file" ] || continue
+    target="$CODEX_TARGET/$(basename "$file")"
+    ln -sfn "$file" "$target" >/dev/null 2>&1
   done
 fi
