@@ -33,7 +33,7 @@ enabled = true
 # MCP: Trino
 # ─────────────────────────────────────────────
 [mcp_servers.trino]
-command = "python"
+command = "/home/jesus/.codex/mcp/trino/.venv/bin/python"
 args = ["-m", "trino_mcp"]
 enabled = true
 
@@ -43,13 +43,14 @@ TRINO_PORT = "8080"
 TRINO_USER = "admin"
 TRINO_CATALOG = "iceberg"
 TRINO_HTTP_SCHEME = "http"
+AUTH_METHOD = "NONE"
 
 # ─────────────────────────────────────────────
 # MCP: Docker
 # ─────────────────────────────────────────────
 [mcp_servers.docker]
-command = "npx"
-args = ["-y", "@0xshariq/docker-mcp-server"]
+command = "/usr/bin/node"
+args = ["/home/jesus/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"]
 enabled = true
 
 # ─────────────────────────────────────────────
