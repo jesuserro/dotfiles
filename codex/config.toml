@@ -56,6 +56,6 @@ enabled = true
 # MCP: GitHub
 # ─────────────────────────────────────────────
 [mcp_servers.github]
-command = "npx"
-args = ["-y", "@github/mcp-server"]
+command = "/home/jesus/.local/bin/codex-mcp-github"
+args = []
 enabled = true

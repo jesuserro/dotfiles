@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Load secrets for non-interactive processes (GUI / MCP runners)
+if [[ -f "$HOME/.secrets/codex.env" ]]; then
+  # shellcheck disable=SC1090
+  source "$HOME/.secrets/codex.env"
+fi
+
+exec npx -y @modelcontextprotocol/server-github
