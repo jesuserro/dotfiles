@@ -104,3 +104,23 @@ enabled = true
 [mcp_servers.loki.env]
 LOKI_BASE_URL = "http://localhost:3100"
 LOKI_TIMEOUT_SECONDS = "30"
+
+# ─────────────────────────────────────────────
+# MCP: Prometheus (OTEL metrics)
+# ─────────────────────────────────────────────
+[mcp_servers.prometheus]
+command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
+args = ["/home/jesus/dotfiles/codex/mcp/prometheus/server.py"]
+enabled = true
+
+[mcp_servers.prometheus.env]
+PROMETHEUS_URL = "http://localhost:9090"
+PROMETHEUS_TIMEOUT_SECONDS = "15"
+
+# ─────────────────────────────────────────────
+# MCP: Store-ETL Ops (curated make wrapper)
+# ─────────────────────────────────────────────
+[mcp_servers.store_etl_ops]
+command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
+args = ["/home/jesus/dotfiles/codex/mcp/store_etl_ops/server.py"]
+enabled = true

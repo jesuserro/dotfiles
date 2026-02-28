@@ -29,6 +29,21 @@ def _graphql(query: str, variables: dict[str, Any] | None = None) -> dict[str, A
     return body.get("data", {})
 
 
+def _normalize_tags(tags: dict[str, Any] | None) -> list[dict[str, str]]:
+    if not tags:
+        return []
+
+    normalized: list[dict[str, str]] = []
+    allowed = {"batch_id", "source_run_id", "entity_type"}
+    for key, value in tags.items():
+        if key not in allowed:
+            raise ValueError(f"Unsupported tag key '{key}'. Allowed: {sorted(allowed)}")
+        if value is None:
+            continue
+        normalized.append({"key": key, "value": str(value)})
+    return normalized
+
+
 @mcp.tool()
 def list_assets(limit: int = 100) -> list[dict[str, Any]]:
     """List Dagster assets via GraphQL assetNodes."""
@@ -131,6 +146,137 @@ def list_runs(limit: int = 20, statuses: list[str] | None = None) -> list[dict[s
     if block.get("__typename") != "Runs":
         raise RuntimeError(f"Dagster runs query failed: {block}")
     return block.get("results", [])
+
+
+@mcp.tool()
+def list_runs_by_tags(
+    tags: dict[str, Any],
+    limit: int = 20,
+    statuses: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """List runs filtered by Dagster tags (batch_id, source_run_id, entity_type)."""
+    query = """
+    query ListRunsByTags($limit: Int!, $filter: RunsFilter) {
+      runsOrError(limit: $limit, filter: $filter) {
+        __typename
+        ... on Runs {
+          results {
+            runId
+            status
+            pipelineName
+            startTime
+            endTime
+            tags { key value }
+          }
+        }
+        ... on PythonError { message stack }
+      }
+    }
+    """
+    run_filter: dict[str, Any] = {}
+    normalized_tags = _normalize_tags(tags)
+    if normalized_tags:
+        run_filter["tags"] = normalized_tags
+    if statuses:
+        run_filter["statuses"] = statuses
+
+    data = _graphql(query, {"limit": max(limit, 1), "filter": run_filter or None})
+    block = data.get("runsOrError", {})
+    if block.get("__typename") != "Runs":
+        raise RuntimeError(f"Dagster runs-by-tags query failed: {block}")
+    return block.get("results", [])
+
+
+@mcp.tool()
+def list_asset_materializations(
+    asset_keys: list[str] | None = None,
+    limit: int = 20,
+    after_cursor: str | None = None,
+) -> dict[str, Any]:
+    """List recent materialization events, optionally filtered by asset keys."""
+    query = """
+    query ListAssetMaterializations($runsLimit: Int!, $eventsLimit: Int!, $afterCursor: String) {
+      runsOrError(limit: $runsLimit) {
+        __typename
+        ... on Runs {
+          results {
+            runId
+            pipelineName
+            status
+            eventConnection(limit: $eventsLimit, afterCursor: $afterCursor) {
+              cursor
+              hasMore
+              events {
+                __typename
+                ... on MaterializationEvent {
+                  runId
+                  timestamp
+                  message
+                  partition
+                  stepKey
+                  assetKey { path }
+                  tags { key value }
+                }
+              }
+            }
+          }
+        }
+        ... on PythonError { message stack }
+      }
+    }
+    """
+    safe_limit = max(limit, 1)
+    runs_limit = min(max(safe_limit, 5), 100)
+    events_limit = min(max(safe_limit, 20), 200)
+    data = _graphql(
+        query,
+        {
+            "runsLimit": runs_limit,
+            "eventsLimit": events_limit,
+            "afterCursor": after_cursor,
+        },
+    )
+    block = data.get("runsOrError", {})
+    if block.get("__typename") != "Runs":
+        raise RuntimeError(f"Dagster materializations query failed: {block}")
+
+    wanted_keys = {k.strip() for k in (asset_keys or []) if k and k.strip()}
+    events: list[dict[str, Any]] = []
+    next_cursor = after_cursor
+    for run in block.get("results", []):
+        conn = run.get("eventConnection") or {}
+        if conn.get("cursor"):
+            next_cursor = conn["cursor"]
+        for event in conn.get("events", []):
+            if event.get("__typename") != "MaterializationEvent":
+                continue
+            path = (event.get("assetKey") or {}).get("path") or []
+            asset_key = "/".join(path)
+            if wanted_keys and asset_key not in wanted_keys:
+                continue
+            events.append(
+                {
+                    "run_id": event.get("runId"),
+                    "pipeline_name": run.get("pipelineName"),
+                    "run_status": run.get("status"),
+                    "timestamp_ms": event.get("timestamp"),
+                    "asset_key": asset_key,
+                    "partition": event.get("partition"),
+                    "step_key": event.get("stepKey"),
+                    "message": event.get("message"),
+                    "tags": event.get("tags", []),
+                }
+            )
+            if len(events) >= safe_limit:
+                return {
+                    "items": events,
+                    "next_cursor": next_cursor,
+                }
+
+    return {
+        "items": events,
+        "next_cursor": next_cursor,
+    }
 
 
 def smoke_test() -> int:
