@@ -25,11 +25,18 @@ rcup -v
 
 ## Configuración esperada
 
-`~/.codex/config.toml` debe apuntar a:
+La configuración real de MCPs ahora la gestiona **Chezmoi** a través de
+`~/.codex/config.toml`, generado desde `dot_codex/config.toml`.
+
+El bloque relevante para Postgres es:
 
 ```toml
 [mcp_servers.postgres]
-command = "/usr/bin/node"
-args = ["/home/jesus/.codex/mcp/postgres/server.mjs", "${POSTGRES_DSN}"]
+command = "/usr/bin/bash"
+args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec /usr/bin/node /home/jesus/.codex/mcp/postgres/server.mjs"]
 enabled = true
 ```
+
+La variable `POSTGRES_DSN` se inyecta desde `~/.config/store-etl/secrets.env`
+→ `~/.secrets/codex.env`, gestionados por Chezmoi + SOPS + Age (ver
+`docs/MIGRATION_MCP_CHEZMOI.md`).

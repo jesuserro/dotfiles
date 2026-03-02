@@ -1,10 +1,12 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-02 12:59:36
+**Generated:** 2026-03-02 19:07:40
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
 📁 .
+├── 📁 .chezmoiscripts
+│   └── 📄 run_after_00_gen_secrets.sh.tmpl
 ├── 📁 .github
 │   └── 📁 workflows
 │       └── ⚙️ release.yml
@@ -36,12 +38,19 @@
 │   ├── 📝 README.md
 │   └── ⚙️ config.toml
 ├── 📁 docs
-│   └── 📝 GIT_WORKFLOW.md
+│   ├── 📝 GIT_WORKFLOW.md
+│   └── 📝 MIGRATION_MCP_CHEZMOI.md
+├── 📁 dot_codex
+│   └── ⚙️ config.toml
+├── 📁 dot_cursor
+│   └── 📄 mcp.json.tmpl
 ├── 📁 git_hooks
 │   └── 📄 pre-commit
 ├── 📁 local
 ├── 📁 powerlevel10k
 │   └── 🔧 p10k.zsh
+├── 📁 private_dot_config
+│   └── 📁 store-etl
 ├── 📁 releases
 │   ├── 📝 branch_feature_test-branch-changelog.md
 │   ├── 📝 v2025.12.07_1051.md
@@ -100,7 +109,10 @@
 │   ├── 🔧 30-python.zsh
 │   ├── 🔧 50-aliases-dotfiles.zsh
 │   └── 🔧 90-local.zsh
+├── ⚙️ .chezmoi.toml
+├── 📄 .chezmoiignore
 ├── 📄 .gitignore
+├── ⚙️ .sops.yaml
 ├── 📝 CHANGELOG.md
 ├── 📝 README.md
 ├── 📝 STRUCTURE.md
@@ -110,6 +122,8 @@
 ├── 📄 gitignore
 ├── 📄 gitmessage
 ├── 📄 rcrc
+├── ⚙️ secrets.sops.yaml
+├── 📄 symlink_dot_secrets_codex.env
 ├── 📄 tmux.conf
 ├── 📄 vimrc
 ├── 📄 vimrc.bundles
