@@ -2,66 +2,55 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.02_1759] - 2026-03-02
+## [v2026.03.02_2158] - 2026-03-02
 
 ## Changes
 ### Added
-- 2026-03-02 14:06 [29eaadb](https://github.com/jesuserro/dotfiles/commit/29eaadb) feat(mcp): add MCP fetch server configuration (Jesús Erro)
-  - Added configuration for the MCP fetch server in `config.toml`, enabling HTTP GET requests to fetch URLs and convert HTML to markdown.
-  - Included installation instructions for the `mcp-server-fetch` tool to facilitate usage.
-- 2026-03-02 12:33 [e66dc9f](https://github.com/jesuserro/dotfiles/commit/e66dc9f) feat: enhance dotfiles structure and automation (Jesús Erro)
-  - Updated `STRUCTURE.md` to reflect the current file organization and improved formatting.
-  - Added a new `git_hooks/pre-commit` script to automatically regenerate `STRUCTURE.md` during commits.
-  - Introduced `scripts/treegen.sh` to generate the file tree structure dynamically, excluding specified directories and files.
-- 2026-02-28 17:58 [3191b54](https://github.com/jesuserro/dotfiles/commit/3191b54) feat(mcp): add Prometheus and Store-ETL Ops MCP wrappers (Jesús Erro)
-  - Introduced new MCP wrappers for Prometheus and Store-ETL Ops, enabling local stdio operations.
-  - Updated `config.toml` to include configurations for the new MCP servers.
-  - Implemented server scripts for Prometheus and Store-ETL Ops to handle respective API interactions and operations.
-- 2026-02-28 17:26 [8b3624c](https://github.com/jesuserro/dotfiles/commit/8b3624c) feat(mcp): add local stdio wrappers for Dagster, MinIO, Tempo, and Loki (Jesús Erro)
-  - Introduced new MCP wrappers for Dagster, MinIO/S3, Tempo, and Loki, enabling local stdio operations.
-  - Updated `config.toml` to include configurations for the new MCP servers.
-  - Added README files for each MCP wrapper detailing environment variables and smoke test instructions.
-- 2026-02-26 16:10 [e73711d](https://github.com/jesuserro/dotfiles/commit/e73711d) feat(postgres): add PostgreSQL server implementation with health and table metadata resources (Jesús Erro)
-  - Created package.json for PostgreSQL module with dependencies.
-  - Implemented server.mjs to handle PostgreSQL connections and expose resources:
-    - `/meta/health` for server health and metadata.
-- 2026-02-26 15:32 [e81883f](https://github.com/jesuserro/dotfiles/commit/e81883f) feat(zsh): clarify secrets sourcing and improve comments in local configuration (Jesús Erro)
-- 2026-02-26 14:57 [6f5060f](https://github.com/jesuserro/dotfiles/commit/6f5060f) feat(zsh): modularize configuration by splitting into separate files (Jesús Erro)
-- 2026-02-26 14:45 [169d34d](https://github.com/jesuserro/dotfiles/commit/169d34d) feat(config): update MCP GitHub command and streamline zshrc configuration (Jesús Erro)
-- 2026-02-26 10:48 [a0523bf](https://github.com/jesuserro/dotfiles/commit/a0523bf) feat(codex): enhance dotfiles synchronization with robust symlink management (Jesús Erro)
-- 2026-02-26 10:41 [f794d45](https://github.com/jesuserro/dotfiles/commit/f794d45) feat(config): add new config.toml for Codex and remove obsolete config files (Jesús Erro)
+- 2026-03-02 21:26 [1e47869](https://github.com/jesuserro/dotfiles/commit/1e47869) feat(mcp): add MCP configuration and virtual environment setup (Jesús Erro)
+  - Updated `.chezmoiignore` to include new MCP configuration files.
+  - Added symlink for MCP server configurations in `symlink_dot_codex_mcp`.
+  - Introduced a new script `run_after_10_setup_mcp_venv.sh.tmpl` to create a Python virtual environment for MCPs.
+- 2026-03-02 21:00 [dddc35a](https://github.com/jesuserro/dotfiles/commit/dddc35a) feat(mcp): reorganize server files and update configurations for MCPs (Jesús Erro)
+  - Updated `STRUCTURE.md` to reflect the new organization of MCP server files under `mcp/servers`.
+  - Added new server scripts for `dagster`, `loki`, `minio`, `prometheus`, `store_etl_ops`, `tempo`, and updated their configurations in `dot_codex/config.toml.tmpl` and related templates.
+  - Introduced `mcp/requirements.txt` for dependency management.
+- 2026-03-02 20:36 [fb94d2a](https://github.com/jesuserro/dotfiles/commit/fb94d2a) feat(store-etl): enhance MCP configuration and secret management (Jesús Erro)
+  - Updated `.chezmoi.toml` to include additional template data for store-etl.
+  - Modified `.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl` to improve secret handling for MinIO.
+  - Added new script `.chezmoiscripts/run_after_10_link_store_etl_mcp.sh.tmpl` to create symlinks for store-etl MCP.
+- 2026-03-02 18:55 [43552d8](https://github.com/jesuserro/dotfiles/commit/43552d8) feat(mcp): integrate Chezmoi with SOPS for secure MCP management (Jesús Erro)
+  - Added Chezmoi configuration in `.chezmoi.toml` to manage MCPs and secrets using SOPS and Age.
+  - Introduced `.sops.yaml` for SOPS configuration and `secrets.sops.yaml` for encrypted secrets management.
+  - Created a script in `.chezmoiscripts` to generate environment variables from secrets during apply.
 
 ### Fixed
-- 2026-02-26 16:44 [27ad904](https://github.com/jesuserro/dotfiles/commit/27ad904) fix(trino, docker): update command paths for Trino and Docker MCP servers (Jesús Erro)
-- 2026-02-26 16:30 [549a32f](https://github.com/jesuserro/dotfiles/commit/549a32f) fix(postgres): enhance PostgreSQL connection handling with dotenv support and improved require logic (Jesús Erro)
+- 2026-03-02 21:13 [b2bad80](https://github.com/jesuserro/dotfiles/commit/b2bad80) fix(secrets): update postgres DSN and metadata in secrets.sops.yaml (Jesús Erro)
+  - Changed the encrypted value for `postgres_dsn` to a new secure string.
+  - Updated `lastmodified` timestamp to reflect the latest modification date.
+  - Modified the `mac` value for enhanced security in the secrets management configuration.
 
 ### Documentation
-- 2026-03-02 11:36 [899848f](https://github.com/jesuserro/dotfiles/commit/899848f) docs: add file tree structure documentation for dotfiles (Jesús Erro)
-  - Introduced a new `STRUCTURE.md` file to provide a comprehensive overview of the dotfiles repository's organization.
-  - Included detailed listings of directories and files to improve user navigation and understanding of the project structure.
-- 2026-03-02 11:04 [cb94033](https://github.com/jesuserro/dotfiles/commit/cb94033) docs: add comprehensive file tree structure for dotfiles (Jesús Erro)
-  - Created a new `structure.md` file to document the organization and contents of the dotfiles repository.
-  - Included detailed directory and file listings to enhance clarity and navigation for users.
+- 2026-03-02 21:58 [df73dc1](https://github.com/jesuserro/dotfiles/commit/df73dc1) docs(changelog): implement feature changelog for migration to Chezmoi with SOPS and Age (Jesús Erro)
+- 2026-03-02 21:56 [07ec630](https://github.com/jesuserro/dotfiles/commit/07ec630) docs(secrets): add practical examples for managing secrets (Jesús Erro)
+  - Introduced a new `SECRETS_EXAMPLES.md` file detailing how to add and modify secrets in `secrets.sops.yaml` using SOPS and Age.
+  - Updated `README.md` and `CHEZMOI.md` to reference the new examples for better guidance on secret management.
+  - Revised `STRUCTURE.md` to include the new documentation file, enhancing overall organization.
+- 2026-03-02 21:52 [8335176](https://github.com/jesuserro/dotfiles/commit/8335176) docs(chezmoi): enhance documentation for Chezmoi and MCP management (Jesús Erro)
+  - Translated README.md to Spanish and expanded it with detailed architecture and installation instructions for Chezmoi and RCM.
+  - Created CHEZMOI.md as the main reference for managing dotfiles with Chezmoi, including setup, requirements, and secret management.
+  - Updated migration guides to clarify the transition from RCM to Chezmoi for MCPs and secrets.
 
 ### Refactored
-- 2025-12-26 12:34 [09580a1](https://github.com/jesuserro/dotfiles/commit/09580a1) refactor(git_feat): remove unused last commit info from changelog generation (Jesús Erro)
-  - Eliminated the retrieval of the last commit information for the feature branch, streamlining the changelog output.
-  - Updated the changelog format to maintain clarity while removing unnecessary details.
+- 2026-03-02 21:45 [7e13c77](https://github.com/jesuserro/dotfiles/commit/7e13c77) refactor(mcp): restructure MCP server files and update configurations (Jesús Erro)
+  - Removed obsolete MCP server files from `codex/mcp` and relocated them to `mcp/servers`.
+  - Updated paths in `codex/config.toml` and `README-mcp.md` to reflect new server locations.
+  - Adjusted `.gitignore` to exclude unnecessary directories and files.
 
 ### Chores
-- 2026-03-02 13:18 [5f3e9a5](https://github.com/jesuserro/dotfiles/commit/5f3e9a5) chore: update tree generation script to include additional file exclusions and icons (Jesús Erro)
-  - Modified `scripts/treegen.sh` to expand the list of ignored files and directories, including database files and logs.
-  - Added a new icon for CSV files to enhance the visual representation of the file tree structure.
-- 2026-03-02 12:59 [27c844e](https://github.com/jesuserro/dotfiles/commit/27c844e) chore: update file tree structure and icons in documentation (Jesús Erro)
-  - Updated `STRUCTURE.md` to reflect the latest file organization with new icons for better visual representation.
-  - Changed file type indicators from 📄 to 🔧 for scripts and configuration files to enhance clarity in the file tree structure.
-- 2026-03-02 12:48 [583c18d](https://github.com/jesuserro/dotfiles/commit/583c18d) chore: enhance tree generation script with additional file type icons (Jesús Erro)
-  - Updated `scripts/treegen.sh` to include new icons for various file types such as Docker, SQL, PDF, and more.
-  - Improved the visual representation of the file tree structure in the generated output for better clarity and usability.
-- 2026-03-02 12:38 [d3dcb82](https://github.com/jesuserro/dotfiles/commit/d3dcb82) chore: update file tree structure and enhance tree generation script (Jesús Erro)
-  - Updated `STRUCTURE.md` to reflect the current file organization with added icons for better visual representation.
-  - Modified `scripts/treegen.sh` to improve the file tree generation process, incorporating icons for directories and various file types.
-  - Enhanced the output format of the file tree for improved readability and navigation.
+- 2026-03-02 19:15 [cda05ee](https://github.com/jesuserro/dotfiles/commit/cda05ee) chore: update file structure and enhance MCP configuration (Jesús Erro)
+  - Updated `STRUCTURE.md` to reflect the latest file organization, including new directories and files.
+  - Modified `.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl` to improve secret management and compatibility with Docker Compose.
+  - Adjusted `config.toml` to source environment variables from `~/.secrets/codex.env` for MinIO and Postgres configurations.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
