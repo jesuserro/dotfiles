@@ -124,3 +124,13 @@ PROMETHEUS_TIMEOUT_SECONDS = "15"
 command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
 args = ["/home/jesus/dotfiles/codex/mcp/store_etl_ops/server.py"]
 enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: Fetch (HTTP GET, official MCP server)
+# ─────────────────────────────────────────────
+# Fetches URLs (e.g. FastAPI localhost:8000, OpenAPI, docs). HTML→markdown.
+# Install: uv (uvx) or pip install mcp-server-fetch. Docs: https://github.com/modelcontextprotocol/servers/tree/main/src/fetch
+[mcp_servers.fetch]
+command = "uvx"
+args = ["mcp-server-fetch"]
+enabled = true
