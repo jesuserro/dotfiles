@@ -58,6 +58,10 @@ rcup
 
 For more information on adding new files, visit [RCM Documentation](http://thoughtbot.github.io/rcm/).
 
+## MCP y secretos (Chezmoi + SOPS + Age)
+
+La gestión de MCPs de Cursor/Codex y los secretos se hace con **Chezmoi** (SOPS + Age). El resto de dotfiles sigue con **rcup**. Ver [docs/MIGRATION_MCP_CHEZMOI.md](docs/MIGRATION_MCP_CHEZMOI.md).
+
 ## Customizations
 
 Create a directory for your personal customizations:

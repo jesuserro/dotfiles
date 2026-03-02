@@ -1,0 +1,134 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "medium"
+
+# Codex internal logs (keep separate from your ETL logs/)
+log_dir = "~/.codex-logs"
+
+# ─────────────────────────────────────────────
+# MCP: Excalidraw (diagramas)
+# ─────────────────────────────────────────────
+[mcp_servers.excalidraw]
+command = "/usr/bin/node"
+args = ["/home/jesus/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"]
+cwd = "/home/jesus/mcp-servers/excalidraw-mcp"
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: Context7 (documentación dinámica)
+# ─────────────────────────────────────────────
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: Postgres (usa POSTGRES_DSN desde ~/.secrets/codex.env)
+# ─────────────────────────────────────────────
+[mcp_servers.postgres]
+command = "/usr/bin/bash"
+args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec /usr/bin/node /home/jesus/.codex/mcp/postgres/server.mjs"]
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: Trino
+# ─────────────────────────────────────────────
+[mcp_servers.trino]
+command = "/home/jesus/.codex/mcp/trino/.venv/bin/python"
+args = ["-m", "trino_mcp"]
+enabled = true
+
+[mcp_servers.trino.env]
+TRINO_HOST = "localhost"
+TRINO_PORT = "8080"
+TRINO_USER = "admin"
+TRINO_CATALOG = "iceberg"
+TRINO_HTTP_SCHEME = "http"
+AUTH_METHOD = "NONE"
+
+# ─────────────────────────────────────────────
+# MCP: Docker
+# ─────────────────────────────────────────────
+[mcp_servers.docker]
+command = "/usr/bin/node"
+args = ["/home/jesus/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"]
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: GitHub (usa GITHUB_TOKEN desde ~/.secrets/codex.env)
+# ─────────────────────────────────────────────
+[mcp_servers.github]
+command = "/usr/bin/bash"
+args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec /home/jesus/.local/bin/codex-mcp-github"]
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: Dagster (wrapper stdio local)
+# ─────────────────────────────────────────────
+[mcp_servers.dagster]
+command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
+args = ["/home/jesus/dotfiles/codex/mcp/dagster/server.py"]
+enabled = true
+
+[mcp_servers.dagster.env]
+DAGSTER_GRAPHQL_URL = "http://localhost:3000/graphql"
+DAGSTER_TIMEOUT_SECONDS = "30"
+
+# ─────────────────────────────────────────────
+# MCP: MinIO/S3 (usa MINIO_ACCESS_KEY/SECRET desde ~/.secrets/codex.env)
+# ─────────────────────────────────────────────
+[mcp_servers.minio]
+command = "/usr/bin/bash"
+args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec /home/jesus/dotfiles/codex/mcp/.venv/bin/python /home/jesus/dotfiles/codex/mcp/minio/server.py"]
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: OTEL/Tempo (wrapper stdio local)
+# ─────────────────────────────────────────────
+[mcp_servers.tempo]
+command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
+args = ["/home/jesus/dotfiles/codex/mcp/tempo/server.py"]
+enabled = true
+
+[mcp_servers.tempo.env]
+TEMPO_BASE_URL = "http://localhost:3200"
+TEMPO_TIMEOUT_SECONDS = "30"
+
+# ─────────────────────────────────────────────
+# MCP: Loki (wrapper stdio local)
+# ─────────────────────────────────────────────
+[mcp_servers.loki]
+command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
+args = ["/home/jesus/dotfiles/codex/mcp/loki/server.py"]
+enabled = true
+
+[mcp_servers.loki.env]
+LOKI_BASE_URL = "http://localhost:3100"
+LOKI_TIMEOUT_SECONDS = "30"
+
+# ─────────────────────────────────────────────
+# MCP: Prometheus (OTEL metrics)
+# ─────────────────────────────────────────────
+[mcp_servers.prometheus]
+command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
+args = ["/home/jesus/dotfiles/codex/mcp/prometheus/server.py"]
+enabled = true
+
+[mcp_servers.prometheus.env]
+PROMETHEUS_URL = "http://localhost:9090"
+PROMETHEUS_TIMEOUT_SECONDS = "15"
+
+# ─────────────────────────────────────────────
+# MCP: Store-ETL Ops (curated make wrapper)
+# ─────────────────────────────────────────────
+[mcp_servers.store_etl_ops]
+command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
+args = ["/home/jesus/dotfiles/codex/mcp/store_etl_ops/server.py"]
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: Fetch (HTTP GET, official MCP server)
+# ─────────────────────────────────────────────
+[mcp_servers.fetch]
+command = "uvx"
+args = ["mcp-server-fetch"]
+enabled = true
