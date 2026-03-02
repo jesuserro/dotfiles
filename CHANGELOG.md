@@ -2,14 +2,66 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2025.12.17_1032] - 2025-12-17
+## [v2026.03.02_1759] - 2026-03-02
 
 ## Changes
 ### Added
-- 2025-12-17 10:31 [ecf91cd](https://github.com/jesuserro/dotfiles/commit/ecf91cd) feat(release): enhance detailed changelog generation and update process (Jesús Erro)
-  - Introduced a new step to generate a detailed CHANGELOG.md that categorizes commits by type, improving readability and organization.
-  - Updated the workflow to commit both the new release changelog and the updated CHANGELOG.md, ensuring all relevant changes are captured.
-  - Enhanced error handling and output messages for better clarity during the release process.
+- 2026-03-02 14:06 [29eaadb](https://github.com/jesuserro/dotfiles/commit/29eaadb) feat(mcp): add MCP fetch server configuration (Jesús Erro)
+  - Added configuration for the MCP fetch server in `config.toml`, enabling HTTP GET requests to fetch URLs and convert HTML to markdown.
+  - Included installation instructions for the `mcp-server-fetch` tool to facilitate usage.
+- 2026-03-02 12:33 [e66dc9f](https://github.com/jesuserro/dotfiles/commit/e66dc9f) feat: enhance dotfiles structure and automation (Jesús Erro)
+  - Updated `STRUCTURE.md` to reflect the current file organization and improved formatting.
+  - Added a new `git_hooks/pre-commit` script to automatically regenerate `STRUCTURE.md` during commits.
+  - Introduced `scripts/treegen.sh` to generate the file tree structure dynamically, excluding specified directories and files.
+- 2026-02-28 17:58 [3191b54](https://github.com/jesuserro/dotfiles/commit/3191b54) feat(mcp): add Prometheus and Store-ETL Ops MCP wrappers (Jesús Erro)
+  - Introduced new MCP wrappers for Prometheus and Store-ETL Ops, enabling local stdio operations.
+  - Updated `config.toml` to include configurations for the new MCP servers.
+  - Implemented server scripts for Prometheus and Store-ETL Ops to handle respective API interactions and operations.
+- 2026-02-28 17:26 [8b3624c](https://github.com/jesuserro/dotfiles/commit/8b3624c) feat(mcp): add local stdio wrappers for Dagster, MinIO, Tempo, and Loki (Jesús Erro)
+  - Introduced new MCP wrappers for Dagster, MinIO/S3, Tempo, and Loki, enabling local stdio operations.
+  - Updated `config.toml` to include configurations for the new MCP servers.
+  - Added README files for each MCP wrapper detailing environment variables and smoke test instructions.
+- 2026-02-26 16:10 [e73711d](https://github.com/jesuserro/dotfiles/commit/e73711d) feat(postgres): add PostgreSQL server implementation with health and table metadata resources (Jesús Erro)
+  - Created package.json for PostgreSQL module with dependencies.
+  - Implemented server.mjs to handle PostgreSQL connections and expose resources:
+    - `/meta/health` for server health and metadata.
+- 2026-02-26 15:32 [e81883f](https://github.com/jesuserro/dotfiles/commit/e81883f) feat(zsh): clarify secrets sourcing and improve comments in local configuration (Jesús Erro)
+- 2026-02-26 14:57 [6f5060f](https://github.com/jesuserro/dotfiles/commit/6f5060f) feat(zsh): modularize configuration by splitting into separate files (Jesús Erro)
+- 2026-02-26 14:45 [169d34d](https://github.com/jesuserro/dotfiles/commit/169d34d) feat(config): update MCP GitHub command and streamline zshrc configuration (Jesús Erro)
+- 2026-02-26 10:48 [a0523bf](https://github.com/jesuserro/dotfiles/commit/a0523bf) feat(codex): enhance dotfiles synchronization with robust symlink management (Jesús Erro)
+- 2026-02-26 10:41 [f794d45](https://github.com/jesuserro/dotfiles/commit/f794d45) feat(config): add new config.toml for Codex and remove obsolete config files (Jesús Erro)
+
+### Fixed
+- 2026-02-26 16:44 [27ad904](https://github.com/jesuserro/dotfiles/commit/27ad904) fix(trino, docker): update command paths for Trino and Docker MCP servers (Jesús Erro)
+- 2026-02-26 16:30 [549a32f](https://github.com/jesuserro/dotfiles/commit/549a32f) fix(postgres): enhance PostgreSQL connection handling with dotenv support and improved require logic (Jesús Erro)
+
+### Documentation
+- 2026-03-02 11:36 [899848f](https://github.com/jesuserro/dotfiles/commit/899848f) docs: add file tree structure documentation for dotfiles (Jesús Erro)
+  - Introduced a new `STRUCTURE.md` file to provide a comprehensive overview of the dotfiles repository's organization.
+  - Included detailed listings of directories and files to improve user navigation and understanding of the project structure.
+- 2026-03-02 11:04 [cb94033](https://github.com/jesuserro/dotfiles/commit/cb94033) docs: add comprehensive file tree structure for dotfiles (Jesús Erro)
+  - Created a new `structure.md` file to document the organization and contents of the dotfiles repository.
+  - Included detailed directory and file listings to enhance clarity and navigation for users.
+
+### Refactored
+- 2025-12-26 12:34 [09580a1](https://github.com/jesuserro/dotfiles/commit/09580a1) refactor(git_feat): remove unused last commit info from changelog generation (Jesús Erro)
+  - Eliminated the retrieval of the last commit information for the feature branch, streamlining the changelog output.
+  - Updated the changelog format to maintain clarity while removing unnecessary details.
+
+### Chores
+- 2026-03-02 13:18 [5f3e9a5](https://github.com/jesuserro/dotfiles/commit/5f3e9a5) chore: update tree generation script to include additional file exclusions and icons (Jesús Erro)
+  - Modified `scripts/treegen.sh` to expand the list of ignored files and directories, including database files and logs.
+  - Added a new icon for CSV files to enhance the visual representation of the file tree structure.
+- 2026-03-02 12:59 [27c844e](https://github.com/jesuserro/dotfiles/commit/27c844e) chore: update file tree structure and icons in documentation (Jesús Erro)
+  - Updated `STRUCTURE.md` to reflect the latest file organization with new icons for better visual representation.
+  - Changed file type indicators from 📄 to 🔧 for scripts and configuration files to enhance clarity in the file tree structure.
+- 2026-03-02 12:48 [583c18d](https://github.com/jesuserro/dotfiles/commit/583c18d) chore: enhance tree generation script with additional file type icons (Jesús Erro)
+  - Updated `scripts/treegen.sh` to include new icons for various file types such as Docker, SQL, PDF, and more.
+  - Improved the visual representation of the file tree structure in the generated output for better clarity and usability.
+- 2026-03-02 12:38 [d3dcb82](https://github.com/jesuserro/dotfiles/commit/d3dcb82) chore: update file tree structure and enhance tree generation script (Jesús Erro)
+  - Updated `STRUCTURE.md` to reflect the current file organization with added icons for better visual representation.
+  - Modified `scripts/treegen.sh` to improve the file tree generation process, incorporating icons for directories and various file types.
+  - Enhanced the output format of the file tree for improved readability and navigation.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
