@@ -9,8 +9,8 @@ log_dir = "~/.codex-logs"
 # ─────────────────────────────────────────────
 [mcp_servers.excalidraw]
 command = "/usr/bin/node"
-args = ["/home/jesus/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"]
-cwd = "/home/jesus/mcp-servers/excalidraw-mcp"
+args = ["{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"]
+cwd = "{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp"
 enabled = true
 
 # ─────────────────────────────────────────────
@@ -26,14 +26,14 @@ enabled = true
 # ─────────────────────────────────────────────
 [mcp_servers.postgres]
 command = "/usr/bin/bash"
-args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec /usr/bin/node /home/jesus/.codex/mcp/postgres/server.mjs"]
+args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec /usr/bin/node {{ .chezmoi.homeDir }}/.codex/mcp/postgres/server.mjs"]
 enabled = true
 
 # ─────────────────────────────────────────────
 # MCP: Trino
 # ─────────────────────────────────────────────
 [mcp_servers.trino]
-command = "/home/jesus/.codex/mcp/trino/.venv/bin/python"
+command = "{{ .chezmoi.homeDir }}/.codex/mcp/trino/.venv/bin/python"
 args = ["-m", "trino_mcp"]
 enabled = true
 
@@ -50,7 +50,7 @@ AUTH_METHOD = "NONE"
 # ─────────────────────────────────────────────
 [mcp_servers.docker]
 command = "/usr/bin/node"
-args = ["/home/jesus/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"]
+args = ["{{ .chezmoi.homeDir }}/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"]
 enabled = true
 
 # ─────────────────────────────────────────────
@@ -58,15 +58,15 @@ enabled = true
 # ─────────────────────────────────────────────
 [mcp_servers.github]
 command = "/usr/bin/bash"
-args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec /home/jesus/.local/bin/codex-mcp-github"]
+args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec {{ .chezmoi.homeDir }}/.local/bin/codex-mcp-github"]
 enabled = true
 
 # ─────────────────────────────────────────────
 # MCP: Dagster (wrapper stdio local)
 # ─────────────────────────────────────────────
 [mcp_servers.dagster]
-command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
-args = ["/home/jesus/dotfiles/codex/mcp/dagster/server.py"]
+command = "{{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python"
+args = ["{{ .chezmoi.sourceDir }}/codex/mcp/dagster/server.py"]
 enabled = true
 
 [mcp_servers.dagster.env]
@@ -78,15 +78,15 @@ DAGSTER_TIMEOUT_SECONDS = "30"
 # ─────────────────────────────────────────────
 [mcp_servers.minio]
 command = "/usr/bin/bash"
-args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec /home/jesus/dotfiles/codex/mcp/.venv/bin/python /home/jesus/dotfiles/codex/mcp/minio/server.py"]
+args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec {{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python {{ .chezmoi.sourceDir }}/codex/mcp/minio/server.py"]
 enabled = true
 
 # ─────────────────────────────────────────────
 # MCP: OTEL/Tempo (wrapper stdio local)
 # ─────────────────────────────────────────────
 [mcp_servers.tempo]
-command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
-args = ["/home/jesus/dotfiles/codex/mcp/tempo/server.py"]
+command = "{{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python"
+args = ["{{ .chezmoi.sourceDir }}/codex/mcp/tempo/server.py"]
 enabled = true
 
 [mcp_servers.tempo.env]
@@ -97,8 +97,8 @@ TEMPO_TIMEOUT_SECONDS = "30"
 # MCP: Loki (wrapper stdio local)
 # ─────────────────────────────────────────────
 [mcp_servers.loki]
-command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
-args = ["/home/jesus/dotfiles/codex/mcp/loki/server.py"]
+command = "{{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python"
+args = ["{{ .chezmoi.sourceDir }}/codex/mcp/loki/server.py"]
 enabled = true
 
 [mcp_servers.loki.env]
@@ -109,8 +109,8 @@ LOKI_TIMEOUT_SECONDS = "30"
 # MCP: Prometheus (OTEL metrics)
 # ─────────────────────────────────────────────
 [mcp_servers.prometheus]
-command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
-args = ["/home/jesus/dotfiles/codex/mcp/prometheus/server.py"]
+command = "{{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python"
+args = ["{{ .chezmoi.sourceDir }}/codex/mcp/prometheus/server.py"]
 enabled = true
 
 [mcp_servers.prometheus.env]
@@ -121,8 +121,8 @@ PROMETHEUS_TIMEOUT_SECONDS = "15"
 # MCP: Store-ETL Ops (curated make wrapper)
 # ─────────────────────────────────────────────
 [mcp_servers.store_etl_ops]
-command = "/home/jesus/dotfiles/codex/mcp/.venv/bin/python"
-args = ["/home/jesus/dotfiles/codex/mcp/store_etl_ops/server.py"]
+command = "{{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python"
+args = ["{{ .chezmoi.sourceDir }}/codex/mcp/store_etl_ops/server.py"]
 enabled = true
 
 # ─────────────────────────────────────────────
@@ -132,3 +132,4 @@ enabled = true
 command = "uvx"
 args = ["mcp-server-fetch"]
 enabled = true
+

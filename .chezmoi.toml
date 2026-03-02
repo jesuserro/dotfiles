@@ -5,3 +5,5 @@
 [data]
     # SOPS decrypt at apply time; secrets.sops.yaml must exist and be decrypted by sops/age
     # Template uses: {{ (sops "mcp.key") }}
+    # Extra data for templates
+    storeEtlDir = "{{ .chezmoi.homeDir }}/proyectos/store-etl"

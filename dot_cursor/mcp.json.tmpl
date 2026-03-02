@@ -2,7 +2,7 @@
   "mcpServers": {
     "excalidraw": {
       "command": "/usr/bin/node",
-      "args": ["/home/jesus/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"],
+      "args": ["{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"],
       "env": {}
     },
     "context7": {
@@ -12,12 +12,12 @@
     },
     "docker": {
       "command": "/usr/bin/node",
-      "args": ["/home/jesus/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"],
+      "args": ["{{ .chezmoi.homeDir }}/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"],
       "env": {}
     },
     "github": {
       "command": "/usr/bin/bash",
-      "args": ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec /home/jesus/.local/bin/codex-mcp-github"],
+      "args": ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec {{ .chezmoi.homeDir }}/.local/bin/codex-mcp-github"],
       "env": {}
     },
     "fetch": {

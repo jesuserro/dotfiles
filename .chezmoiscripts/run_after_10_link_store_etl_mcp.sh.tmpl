@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Crea el symlink del MCP de proyecto store-etl después de apply.
+
+set -euo pipefail
+
+PROJECT_DIR="${HOME}/proyectos/store-etl"
+TARGET_DIR="${PROJECT_DIR}/.cursor"
+SRC="${HOME}/.config/store-etl/store-etl.mcp.json"
+
+mkdir -p "${TARGET_DIR}"
+
+if [[ -f "${SRC}" || -L "${SRC}" ]]; then
+  ln -sf "${SRC}" "${TARGET_DIR}/mcp.json"
+fi
+
+exit 0
+

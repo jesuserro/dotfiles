@@ -15,3 +15,7 @@
 !.secrets
 !.secrets/**
 !.secrets/codex.env
+!proyectos
+!proyectos/store-etl
+!proyectos/store-etl/.cursor
+!proyectos/store-etl/.cursor/mcp.json

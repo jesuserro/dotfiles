@@ -10,3 +10,6 @@
 
 # Aliases file
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
+
+export EDITOR=vim
+export VISUAL=vim

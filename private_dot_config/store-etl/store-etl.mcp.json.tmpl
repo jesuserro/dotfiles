@@ -1,0 +1,70 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "/usr/bin/bash",
+      "args": [
+        "-lc",
+        "source ~/.secrets/codex.env 2>/dev/null; exec /usr/bin/node {{ .chezmoi.homeDir }}/.codex/mcp/postgres/server.mjs"
+      ],
+      "env": {}
+    },
+    "trino": {
+      "command": "{{ .chezmoi.homeDir }}/.codex/mcp/trino/.venv/bin/python",
+      "args": ["-m", "trino_mcp"],
+      "env": {
+        "TRINO_HOST": "localhost",
+        "TRINO_PORT": "8080",
+        "TRINO_USER": "admin",
+        "TRINO_CATALOG": "iceberg",
+        "TRINO_HTTP_SCHEME": "http",
+        "AUTH_METHOD": "NONE"
+      }
+    },
+    "dagster": {
+      "command": "{{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python",
+      "args": ["{{ .chezmoi.sourceDir }}/codex/mcp/dagster/server.py"],
+      "env": {
+        "DAGSTER_GRAPHQL_URL": "http://localhost:3000/graphql",
+        "DAGSTER_TIMEOUT_SECONDS": "30"
+      }
+    },
+    "minio": {
+      "command": "/usr/bin/bash",
+      "args": [
+        "-lc",
+        "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec {{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python {{ .chezmoi.sourceDir }}/codex/mcp/minio/server.py"
+      ],
+      "env": {}
+    },
+    "tempo": {
+      "command": "{{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python",
+      "args": ["{{ .chezmoi.sourceDir }}/codex/mcp/tempo/server.py"],
+      "env": {
+        "TEMPO_BASE_URL": "http://localhost:3200",
+        "TEMPO_TIMEOUT_SECONDS": "30"
+      }
+    },
+    "loki": {
+      "command": "{{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python",
+      "args": ["{{ .chezmoi.sourceDir }}/codex/mcp/loki/server.py"],
+      "env": {
+        "LOKI_BASE_URL": "http://localhost:3100",
+        "LOKI_TIMEOUT_SECONDS": "30"
+      }
+    },
+    "prometheus": {
+      "command": "{{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python",
+      "args": ["{{ .chezmoi.sourceDir }}/codex/mcp/prometheus/server.py"],
+      "env": {
+        "PROMETHEUS_URL": "http://localhost:9090",
+        "PROMETHEUS_TIMEOUT_SECONDS": "15"
+      }
+    },
+    "store_etl_ops": {
+      "command": "{{ .chezmoi.sourceDir }}/codex/mcp/.venv/bin/python",
+      "args": ["{{ .chezmoi.sourceDir }}/codex/mcp/store_etl_ops/server.py"],
+      "env": {}
+    }
+  }
+}
+
