@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-02 19:07:40
+**Generated:** 2026-03-02 (post Iteración 3 MCP)
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -39,7 +39,8 @@
 │   └── ⚙️ config.toml
 ├── 📁 docs
 │   ├── 📝 GIT_WORKFLOW.md
-│   └── 📝 MIGRATION_MCP_CHEZMOI.md
+│   ├── 📝 MIGRATION_MCP_CHEZMOI.md
+│   └── 📝 MIGRATION_MCP_ITER3.md
 ├── 📁 dot_codex
 │   └── ⚙️ config.toml
 ├── 📁 dot_cursor
@@ -47,6 +48,21 @@
 ├── 📁 git_hooks
 │   └── 📄 pre-commit
 ├── 📁 local
+├── 📁 mcp
+│   ├── 📁 servers
+│   │   ├── 📁 dagster
+│   │   │   └── 🐍 server.py
+│   │   ├── 📁 loki
+│   │   │   └── 🐍 server.py
+│   │   ├── 📁 minio
+│   │   │   └── 🐍 server.py
+│   │   ├── 📁 prometheus
+│   │   │   └── 🐍 server.py
+│   │   ├── 📁 store_etl_ops
+│   │   │   └── 🐍 server.py
+│   │   └── 📁 tempo
+│   │       └── 🐍 server.py
+│   └── 📄 requirements.txt
 ├── 📁 powerlevel10k
 │   └── 🔧 p10k.zsh
 ├── 📁 private_dot_config
