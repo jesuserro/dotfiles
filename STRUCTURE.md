@@ -15,6 +15,7 @@
 │   ├── 📝 README.md
 │   └── ⚙️ config.toml
 ├── 📁 docs
+│   ├── 📝 CHEZMOI.md
 │   ├── 📝 GIT_WORKFLOW.md
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   └── 📝 MIGRATION_MCP_ITER3.md

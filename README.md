@@ -1,54 +1,94 @@
 # Dotfiles
 
-My **BETA** dotfiles for Ubuntu 20.04, Zsh, Oh My Zsh, TMUX, and NVim. Based on the [RCM](https://github.com/thoughtbot/rcm) dotfile framework. This project is in development mode, so you may encounter bugs. **Please don't use this if you're not familiar with these tools.**
+My **BETA** dotfiles para Ubuntu 20.04+, Zsh, Oh My Zsh, TMUX y NVim. Este proyecto está en desarrollo; puede haber bugs. **No uses esto si no estás familiarizado con estas herramientas.**
+
+## Arquitectura actual
+
+El repo usa **dos sistemas** en paralelo:
+
+| Sistema | Gestiona | Estado |
+|---------|-----------|--------|
+| **Chezmoi + SOPS + Age** | MCPs (Cursor/Codex), secretos, config MCP | ✅ Activo — embrión del futuro sustituto |
+| **RCM (rcup)** | zsh, tmux, vim, git, aliases, etc. | ✅ Activo — será migrado a Chezmoi |
+
+**Chezmoi** es el embrión que sustituirá a RCM/rcup. De momento solo gestiona MCPs y secretos; el resto sigue con rcup.
+
+```
+dotfiles (repo)
+ ├── mcp/servers/       → código MCP Python
+ ├── dot_codex/         → templates config Codex
+ ├── dot_cursor/        → templates MCP Cursor
+ └── secrets.sops.yaml   → secretos cifrados (SOPS/Age)
+
+HOME (runtime)
+ ├── ~/.config/mcp/     → venv + runtime MCP
+ ├── ~/.codex/mcp       → symlink compat
+ └── ~/.secrets/        → symlinks a secretos generados
+```
+
+📖 **Documentación:** [docs/](docs/README.md) — índice completo
+- [Chezmoi + SOPS + Age](docs/CHEZMOI.md) — referencia principal
+- [Migración MCP a Chezmoi](docs/MIGRATION_MCP_CHEZMOI.md) — detalles MCP
+
+---
 
 ## Install
 
-### RCM
+### 1. Chezmoi (MCPs y secretos)
 
 ```shell
-sudo apt update -y \
-&& sudo apt upgrade -y \
-&& sudo apt autoremove -y \
-&& sudo apt install -y rcm
+# Clonar repo
+git clone https://github.com/jesuserro/dotfiles.git ~/dotfiles
+
+# Chezmoi: instalar binario o usar el de dotfiles/bin
+# https://github.com/twpayne/chezmoi/releases
+# O: curl -sfL https://git.io/chezmoi | sh
+
+# Aplicar (genera ~/.config/store-etl/secrets.env, ~/.cursor/mcp.json, ~/.codex/config.toml, etc.)
+chezmoi --source=$HOME/dotfiles apply
 ```
 
-### Dotfiles
+**Requisitos:** Age, SOPS, yq o python3+PyYAML. Ver [docs/CHEZMOI.md](docs/CHEZMOI.md).
+
+### 2. RCM (resto de dotfiles)
 
 ```shell
-# Create local dotfiles directory
-mkdir -p ~/dotfiles-local
+sudo apt install -y rcm
 
-# Create example local dotfiles
+# Crear dotfiles locales
+mkdir -p ~/dotfiles-local
 touch ~/dotfiles-local/gitconfig.local
 touch ~/dotfiles-local/aliases.local
 
-# Clone dotfiles repository
-git clone https://github.com/jesuserro/dotfiles.git ~/dotfiles
-
-# Install the dotfiles (create symlinks)
+# Instalar symlinks
 env RCRC=$HOME/dotfiles/rcrc rcup
 ```
 
-After the initial installation, you can run `rcup` without setting the `RCRC` environment variable. This command will create symlinks for config files in your home directory:
+Tras la instalación inicial, `rcup` puede ejecutarse sin `RCRC`:
 
 ```shell
 rcup
 ```
 
+---
+
 ## Update
 
-To link any new files and install new vim plugins:
+Para sincronizar todo:
 
 ```shell
+# Chezmoi (MCPs, secretos)
+chezmoi --source=$HOME/dotfiles apply
+
+# RCM (zsh, tmux, vim, etc.)
 rcup
 source ~/.zshrc
 pkill -f tmux
 ```
 
-## Adding New Dots
+---
 
-You can add vim support by doing this:
+## Adding New Dots (RCM)
 
 ```shell
 touch ~/.vim
@@ -56,11 +96,7 @@ mkrc ~/.vim
 rcup
 ```
 
-For more information on adding new files, visit [RCM Documentation](http://thoughtbot.github.io/rcm/).
-
-## MCP y secretos (Chezmoi + SOPS + Age)
-
-La gestión de MCPs de Cursor/Codex y los secretos se hace con **Chezmoi** (SOPS + Age). El resto de dotfiles sigue con **rcup**. Ver [docs/MIGRATION_MCP_CHEZMOI.md](docs/MIGRATION_MCP_CHEZMOI.md).
+Para más información: [RCM Documentation](http://thoughtbot.github.io/rcm/).
 
 ## Customizations
 
@@ -592,6 +628,9 @@ curl 'https://raw.githubusercontent.com/jesuserro/dotfiles/main/termux/install.s
 
 ## Resources
 
+- [Chezmoi](https://www.chezmoi.io/) — dotfile manager
+- [SOPS](https://github.com/getsops/sops) — secretos cifrados
+- [Age](https://github.com/FiloSottile/age) — cifrado moderno
 - [Install ZSH in Ubuntu](https://www.tecmint.com/install-oh-my-zsh-in-ubuntu/)
 - [Oh My Zsh Plugins](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins)
 - [TMUX Configuration](https://github.com/gpakosz/.tmux)

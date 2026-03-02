@@ -92,7 +92,7 @@ From your dotfiles workspace:
 
 ```bash
 cd /home/jesus/dotfiles
-rcup
+chezmoi --source=$HOME/dotfiles apply
 ```
 
-That keeps `~/.codex/config.toml` synced from this repo.
+That keeps `~/.codex/config.toml` and `~/.cursor/mcp.json` synced from this repo. See [docs/CHEZMOI.md](../docs/CHEZMOI.md).

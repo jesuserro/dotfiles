@@ -30,6 +30,8 @@ El venv está en `~/.config/mcp/.venv`; los templates (`dot_codex/config.toml.tm
 
 ## Referencia
 
+- [CHEZMOI.md](CHEZMOI.md) — referencia principal Chezmoi + SOPS + Age.
+- [MIGRATION_MCP_CHEZMOI.md](MIGRATION_MCP_CHEZMOI.md) — migración MCP.
 - `STRUCTURE.md`: árbol actualizado con `mcp/servers` y `codex/` solo config + docs (sin `codex/mcp`).
 - Config global Codex: `dot_codex/config.toml.tmpl`.
 - Config Cursor store-etl: `private_proyectos/store-etl/dot_cursor/mcp.json.tmpl` y `private_dot_config/store-etl/store-etl.mcp.json.tmpl`.

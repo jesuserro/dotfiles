@@ -2,6 +2,10 @@
 
 Este documento describe la migración de la gestión de MCPs (Cursor/Codex) a **Chezmoi** con secretos cifrados con **SOPS** y **Age**, manteniendo **rcup** para el resto de dotfiles.
 
+📖 **Referencia principal:** [CHEZMOI.md](CHEZMOI.md)
+
+---
+
 ## Restricciones
 
 - **NO** se ha tocado rcup, zsh, tmux, vim, git.
@@ -14,89 +18,9 @@ Este documento describe la migración de la gestión de MCPs (Cursor/Codex) a **
 
 ---
 
-## Requisitos
+## Detalles MCP
 
-- **Chezmoi**: instalado en `~/dotfiles/bin/chezmoi` (o en PATH).
-- **Age**: para claves de cifrado.
-- **SOPS**: para cifrar `secrets.sops.yaml`.
-- **yq** o **python3 + PyYAML**: para que el script genere `secrets.env` desde SOPS.
-
-### Instalación de Age y SOPS (si no están)
-
-```bash
-# Age (binario oficial si no está en apt)
-sudo apt install -y age
-# o: https://github.com/FiloSottile/age/releases
-
-# SOPS (binario oficial)
-# https://github.com/getsops/sops/releases
-# Ejemplo: curl -LO https://github.com/getsops/sops/releases/download/v3.12.1/sops-v3.12.1.linux.amd64 && mv sops-v3.12.1.linux.amd64 ~/bin/sops && chmod +x ~/bin/sops
-```
-
----
-
-## Uso de Chezmoi
-
-Siempre usar el repo dotfiles como source:
-
-```bash
-export PATH="$HOME/dotfiles/bin:$PATH"   # si chezmoi está en dotfiles/bin
-chezmoi --source=/home/jesus/dotfiles status
-chezmoi --source=/home/jesus/dotfiles apply
-```
-
-O configurar el source por defecto en `~/.config/chezmoi/chezmoi.toml`:
-
-```toml
-[source]
-    path = "/home/jesus/dotfiles"
-```
-
-Luego:
-
-```bash
-chezmoi status
-chezmoi apply
-```
-
----
-
-## Configuración de Age + SOPS (una vez)
-
-1. **Generar clave Age**
-
-   ```bash
-   mkdir -p ~/.config/sops/age
-   age-keygen -o ~/.config/sops/age/keys.txt
-   grep "public key:" ~/.config/sops/age/keys.txt
-   ```
-
-2. **Editar `.sops.yaml`** en el repo dotfiles: reemplazar `AGE_PUBLIC_KEY_AQUI` por la public key obtenida.
-
-3. **Cifrar secretos**
-
-   ```bash
-   cd ~/dotfiles
-   sops secrets.sops.yaml
-   ```
-
-   Rellenar los valores reales en el YAML y guardar (SOPS cifrará al salir).
-
-4. **Aplicar**
-
-   ```bash
-   chezmoi --source=/home/jesus/dotfiles apply
-   ```
-
-   Se generará `~/.config/store-etl/secrets.env` desde `secrets.sops.yaml` y el symlink `~/.secrets/codex.env` apuntará a ese archivo.
-
----
-
-## Estructura de secretos
-
-- **`secrets.sops.yaml`** (en el repo, cifrado): contiene `mcp.github_personal_access_token`, `mcp.postgres_dsn`, `mcp.minio_access_key`, `mcp.minio_secret_key`.
-- **`~/.config/store-etl/secrets.env`**: generado por el script de Chezmoi al hacer `apply` (desencriptando con SOPS). No versionar.
-- **`~/.secrets/codex.env`**: symlink a `~/.config/store-etl/secrets.env` para compatibilidad con Codex/Cursor.
+Para requisitos, uso de Chezmoi, configuración Age+SOPS y estructura de secretos, ver [CHEZMOI.md](CHEZMOI.md).
 
 ---
 
