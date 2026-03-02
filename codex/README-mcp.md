@@ -11,14 +11,14 @@ Existing MCPs in `codex/config.toml` were left unchanged.
 ## Installed components
 
 - Shared Python venv for MCP wrappers:
-  - `/home/jesus/dotfiles/codex/mcp/.venv`
+  - `~/.config/mcp/.venv`
 - Shared Python dependencies file:
-  - `/home/jesus/dotfiles/codex/mcp/requirements.txt`
+  - `mcp/requirements.txt`
 - Servers:
-  - `/home/jesus/dotfiles/codex/mcp/dagster/server.py`
-  - `/home/jesus/dotfiles/codex/mcp/minio/server.py`
-  - `/home/jesus/dotfiles/codex/mcp/tempo/server.py`
-  - `/home/jesus/dotfiles/codex/mcp/loki/server.py`
+  - `mcp/servers/dagster/server.py`
+  - `mcp/servers/minio/server.py`
+  - `mcp/servers/tempo/server.py`
+  - `mcp/servers/loki/server.py`
 
 ## Required environment variables
 
@@ -30,9 +30,13 @@ export DAGSTER_GRAPHQL_URL="http://localhost:3000/graphql"
 export DAGSTER_TIMEOUT_SECONDS="30"
 
 # MinIO/S3
-# Loaded by config.toml via bash wrapper from:
-# ~/.secrets/store-etl/minio_access_key
-# ~/.secrets/store-etl/minio_secret_key
+# MinIO se configura leyendo `~/.secrets/codex.env`, que a su vez es un
+# symlink a `~/.config/store-etl/secrets.env` generado por Chezmoi+SOPS.
+# Las variables relevantes son:
+# - MINIO_ENDPOINT (por defecto http://localhost:9000)
+# - MINIO_ACCESS_KEY
+# - MINIO_SECRET_KEY
+# - MINIO_SECURE (false para HTTP local)
 
 # Tempo
 export TEMPO_BASE_URL="http://localhost:3200"
@@ -52,10 +56,9 @@ export LOKI_TIMEOUT_SECONDS="30"
 ## Install/reinstall dependencies
 
 ```bash
-cd /home/jesus/dotfiles/codex/mcp
-python3 -m venv .venv
-./.venv/bin/pip install --upgrade pip
-./.venv/bin/pip install -r requirements.txt
+cd /home/jesus/dotfiles
+chezmoi apply
+# or manually: python3 -m venv ~/.config/mcp/.venv && ~/.config/mcp/.venv/bin/pip install -r mcp/requirements.txt
 ```
 
 ## Smoke tests
@@ -63,10 +66,10 @@ python3 -m venv .venv
 Each command starts the server code and performs one live API call:
 
 ```bash
-/home/jesus/dotfiles/codex/mcp/.venv/bin/python /home/jesus/dotfiles/codex/mcp/dagster/server.py --smoke-test
-/home/jesus/dotfiles/codex/mcp/.venv/bin/python /home/jesus/dotfiles/codex/mcp/minio/server.py --smoke-test
-/home/jesus/dotfiles/codex/mcp/.venv/bin/python /home/jesus/dotfiles/codex/mcp/tempo/server.py --smoke-test
-/home/jesus/dotfiles/codex/mcp/.venv/bin/python /home/jesus/dotfiles/codex/mcp/loki/server.py --smoke-test
+~/.config/mcp/.venv/bin/python ~/dotfiles/mcp/servers/dagster/server.py --smoke-test
+~/.config/mcp/.venv/bin/python ~/dotfiles/mcp/servers/minio/server.py --smoke-test
+~/.config/mcp/.venv/bin/python ~/dotfiles/mcp/servers/tempo/server.py --smoke-test
+~/.config/mcp/.venv/bin/python ~/dotfiles/mcp/servers/loki/server.py --smoke-test
 ```
 
 For Loki queries, use a non-empty matcher:
@@ -89,7 +92,7 @@ From your dotfiles workspace:
 
 ```bash
 cd /home/jesus/dotfiles
-rcup
+chezmoi --source=$HOME/dotfiles apply
 ```
 
-That keeps `~/.codex/config.toml` synced from this repo.
+That keeps `~/.codex/config.toml` and `~/.cursor/mcp.json` synced from this repo. See [docs/CHEZMOI.md](../docs/CHEZMOI.md).

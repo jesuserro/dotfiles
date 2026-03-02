@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "excalidraw": {
+      "command": "/usr/bin/node",
+      "args": ["{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"],
+      "env": {}
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "env": {}
+    },
+    "docker": {
+      "command": "/usr/bin/node",
+      "args": ["{{ .chezmoi.homeDir }}/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"],
+      "env": {}
+    },
+    "github": {
+      "command": "/usr/bin/bash",
+      "args": ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec {{ .chezmoi.homeDir }}/.local/bin/codex-mcp-github"],
+      "env": {}
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "env": {}
+    }
+  }
+}

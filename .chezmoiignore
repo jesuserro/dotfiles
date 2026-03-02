@@ -1,0 +1,23 @@
+# Chezmoi: solo gestionar MCP + secrets (no tocar rcup/zsh/tmux/vim/git)
+# Los patrones se aplican a TARGET paths (~/.cursor, ~/.codex, etc.), no al source.
+*
+!.chezmoi.toml
+!.chezmoiignore
+!.chezmoiscripts
+!.chezmoiscripts/**
+!.sops.yaml
+!.cursor
+!.cursor/**
+!.codex
+!.codex/**
+!.config/store-etl
+!.config/store-etl/**
+!.config/mcp
+!.config/mcp/**
+!.secrets
+!.secrets/**
+!.secrets/codex.env
+!proyectos
+!proyectos/store-etl
+!proyectos/store-etl/.cursor
+!proyectos/store-etl/.cursor/mcp.json
