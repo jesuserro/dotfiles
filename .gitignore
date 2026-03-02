@@ -23,5 +23,3 @@ vim/pack/*
 .history
 
 *.log
-
-codex/mcp/postgres/node_modules

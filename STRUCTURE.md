@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-02 (post Iteración 3 MCP)
+**Generated:** 2026-03-02 (post Iteración 5 MCP — limpieza final)
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -11,29 +11,6 @@
 │   └── 📁 workflows
 │       └── ⚙️ release.yml
 ├── 📁 codex
-│   ├── 📁 mcp
-│   │   ├── 📁 dagster
-│   │   │   ├── 📝 README.md
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 loki
-│   │   │   ├── 📝 README.md
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 minio
-│   │   │   ├── 📝 README.md
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 postgres
-│   │   │   ├── 📝 README.md
-│   │   │   ├── ⚙️ package-lock.json
-│   │   │   ├── ⚙️ package.json
-│   │   │   └── 📜 server.mjs
-│   │   ├── 📁 prometheus
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 store_etl_ops
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 tempo
-│   │   │   ├── 📝 README.md
-│   │   │   └── 🐍 server.py
-│   │   └── 📄 requirements.txt
 │   ├── 📝 README-mcp.md
 │   ├── 📝 README.md
 │   └── ⚙️ config.toml
@@ -42,7 +19,7 @@
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   └── 📝 MIGRATION_MCP_ITER3.md
 ├── 📁 dot_codex
-│   └── ⚙️ config.toml
+│   └── 📄 config.toml.tmpl
 ├── 📁 dot_cursor
 │   └── 📄 mcp.json.tmpl
 ├── 📁 git_hooks
