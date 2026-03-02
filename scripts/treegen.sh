@@ -22,7 +22,7 @@ fi
 OUTPUT="$TARGET_DIR/STRUCTURE.md"
 RAW_TREE="$(cd "$TARGET_DIR" && tree -a -I "$TREE_IGNORE" --dirsfirst -n --noreport -F . 2>/dev/null)" || true
 
-# Add icons: 📁 dirs, 📝 .md, 🐍 .py, ⚙️ config (json/yml/toml), 📄 rest
+# Add icons: 📁 dirs, 📝 .md, 🐍 .py, 🐳 Docker/hcl, ⚙️ config, 🔒 lock, 🔧 sh, 🗄️ sql, 📕 pdf, 🖼️ img, 📓 ipynb, 📋 xml/log, 🪟 ps1, 🔨 make, 📄 rest
 # Prefix "── " is 3 chars (U+2500 U+2500 space), so name starts at RSTART+3
 TREE_OUT="$(echo "$RAW_TREE" | awk '
   /^\.\/$/ { print "📁 ."; next }
@@ -31,11 +31,25 @@ TREE_OUT="$(echo "$RAW_TREE" | awk '
     if (match($0, /── .*$/)) {
       name = substr($0, RSTART+3, RLENGTH-3)
       gsub(/\*$/, "", name)
-      if (name ~ /\.(md|markdown)$/)            icon = "📝"
-      else if (name ~ /\.py$/)                  icon = "🐍"
-      else if (name ~ /\.(json|yml|yaml|toml|lock)$/) icon = "⚙️"
-      else if (name ~ /\.(js|mjs|ts|tsx|jsx)$/) icon = "📜"
-      else if (name ~ /\.(sh|bash|zsh)$/)       icon = "📄"
+      if (name ~ /\.(md|markdown)$/)             icon = "📝"
+      else if (name ~ /\.py$/)                   icon = "🐍"
+      else if (name == "Dockerfile" || name ~ /^Dockerfile\./) icon = "🐳"
+      else if (name ~ /\.(json|yml|yaml|toml)$/) icon = "⚙️"
+      else if (name ~ /\.lock$/)                 icon = "🔒"
+      else if (name ~ /\.(js|mjs|ts|tsx|jsx)$/)  icon = "📜"
+      else if (name ~ /\.(sh|bash|zsh)$/)        icon = "🔧"
+      else if (name ~ /\.sql$/)                  icon = "🗄️"
+      else if (name ~ /\.hcl$/)                  icon = "🐳"
+      else if (name ~ /\.pdf$/)                  icon = "📕"
+      else if (name ~ /\.svg$/)                  icon = "🖼️"
+      else if (name ~ /\.(jpg|jpeg|gif)$/)       icon = "🖼️"
+      else if (name ~ /\.ipynb$/)                icon = "📓"
+      else if (name ~ /\.txt$/)                  icon = "📄"
+      else if (name ~ /\.ini$/)                  icon = "⚙️"
+      else if (name ~ /\.xml$/)                  icon = "📋"
+      else if (name ~ /\.log$/)                  icon = "📋"
+      else if (name ~ /\.ps1$/)                  icon = "🪟"
+      else if (name ~ /\.mk$/ || name ~ /^[Mm]akefile$/) icon = "🔨"
       else                                      icon = "📄"
       sub(/── .*$/, "── " icon " " name)
     }
