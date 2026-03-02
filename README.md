@@ -27,137 +27,71 @@ HOME (runtime)
 ```
 
 📖 **Documentación:** [docs/](docs/README.md) — índice completo
-- [Chezmoi + SOPS + Age](docs/CHEZMOI.md) — referencia principal
-- [Migración MCP a Chezmoi](docs/MIGRATION_MCP_CHEZMOI.md) — detalles MCP
+
+---
+
+## Refrescar cambios: comparativa
+
+| Antes (solo RCM) | Ahora (RCM + Chezmoi) |
+|------------------|----------------------|
+| `rcup -v` | `rcup -v` *(zsh, tmux, vim, etc.)* |
+| `source ~/.zshrc` | `source ~/.zshrc` |
+| — | `chezmoi --source=$HOME/dotfiles apply` *(MCPs, secretos)* |
+
+**Equivalente con Chezmoi** para lo que gestiona Chezmoi (MCPs, secretos, config Codex):
+
+```shell
+# Antes (RCM): 2 comandos para refrescar symlinks y recargar shell
+rcup -v
+source ~/.zshrc
+
+# Ahora (Chezmoi): 1 comando para MCPs y secretos
+chezmoi --source=$HOME/dotfiles apply
+```
+
+Para sincronizar **todo** (RCM + Chezmoi):
+
+```shell
+chezmoi --source=$HOME/dotfiles apply   # MCPs, secretos
+rcup -v                                 # symlinks zsh, tmux, vim...
+source ~/.zshrc
+```
 
 ---
 
 ## Install
 
-### 1. Chezmoi (MCPs y secretos)
+Ver [docs/CHEZMOI.md](docs/CHEZMOI.md) y [docs/README.md](docs/README.md).
 
-```shell
-# Clonar repo
-git clone https://github.com/jesuserro/dotfiles.git ~/dotfiles
-
-# Chezmoi: instalar binario o usar el de dotfiles/bin
-# https://github.com/twpayne/chezmoi/releases
-# O: curl -sfL https://git.io/chezmoi | sh
-
-# Aplicar (genera ~/.config/store-etl/secrets.env, ~/.cursor/mcp.json, ~/.codex/config.toml, etc.)
-chezmoi --source=$HOME/dotfiles apply
-```
-
-**Requisitos:** Age, SOPS, yq o python3+PyYAML. Ver [docs/CHEZMOI.md](docs/CHEZMOI.md).
-
-### 2. RCM (resto de dotfiles)
-
-```shell
-sudo apt install -y rcm
-
-# Crear dotfiles locales
-mkdir -p ~/dotfiles-local
-touch ~/dotfiles-local/gitconfig.local
-touch ~/dotfiles-local/aliases.local
-
-# Instalar symlinks
-env RCRC=$HOME/dotfiles/rcrc rcup
-```
-
-Tras la instalación inicial, `rcup` puede ejecutarse sin `RCRC`:
-
-```shell
-rcup
-```
+**Resumen:** clonar repo → instalar Chezmoi + Age + SOPS → `chezmoi apply` → instalar rcm → `rcup`.
 
 ---
 
 ## Update
 
-Para sincronizar todo:
-
 ```shell
-# Chezmoi (MCPs, secretos)
 chezmoi --source=$HOME/dotfiles apply
-
-# RCM (zsh, tmux, vim, etc.)
-rcup
+rcup -v
 source ~/.zshrc
-pkill -f tmux
 ```
 
 ---
 
-## Adding New Dots (RCM)
+## Secretos (GitHub, Postgres, MinIO)
 
-```shell
-touch ~/.vim
-mkrc ~/.vim
-rcup
-```
+Ver [docs/SECRETS_EXAMPLES.md](docs/SECRETS_EXAMPLES.md) — ejemplos prácticos para dar de alta tokens y claves.
 
-Para más información: [RCM Documentation](http://thoughtbot.github.io/rcm/).
+---
 
 ## Customizations
 
-Create a directory for your personal customizations:
+`~/dotfiles-local/*.local` — aliases, gitconfig, tmux, vimrc, zshrc. Ver [RCM Documentation](http://thoughtbot.github.io/rcm/).
 
-```shell
-mkdir -p ~/dotfiles-local
-```
-
-Put your customizations in `~/dotfiles-local` appended with `.local`:
-
-- `~/dotfiles-local/aliases.local`
-- `~/dotfiles-local/gitconfig.local`
-- `~/dotfiles-local/tmux.conf.local`
-- `~/dotfiles-local/vimrc.local`
-- `~/dotfiles-local/zshrc.local`
-
-## .zshrc Configuration
-
-Edit your `~/dotfiles/zshrc` like this:
-
-```shell
-# Powerlevel10k instant prompt
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
-# Oh My Zsh configuration
-export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="powerlevel10k/powerlevel10k"
-plugins=(
-  autoupdate
-  aws
-  colored-man-pages
-  colorize
-  composer
-  dirhistory
-  docker
-  extract
-  gh
-  git
-  history
-  jsontools
-  tmux
-  vi-mode
-  wp-cli
-  z
-  zsh-autosuggestions
-  zsh-completions
-  zsh-history-substring-search
-  zsh-syntax-highlighting
-)
-source $ZSH/oh-my-zsh.sh
-
-# User configuration
-[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local # export apikeys here
-[[ -f ~/.aliases ]] && source ~/.aliases
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-```
+---
 
 ## Git Commands
+
+📖 **Completo:** [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md)
 
 ### 🚀 git start-feature
 

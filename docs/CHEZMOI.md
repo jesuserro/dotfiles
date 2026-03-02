@@ -143,6 +143,7 @@ Requiere: `sops`, `yq` o `python3` con PyYAML.
 
 ## Documentación relacionada
 
+- [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md) — ejemplos prácticos para dar de alta secretos (GitHub, Postgres, MinIO)
 - [MIGRATION_MCP_CHEZMOI.md](MIGRATION_MCP_CHEZMOI.md) — detalles de la migración MCP
 - [MIGRATION_MCP_ITER3.md](MIGRATION_MCP_ITER3.md) — layout de servidores MCP
 - [codex/README-mcp.md](../codex/README-mcp.md) — MCPs locales y smoke tests

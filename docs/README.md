@@ -3,6 +3,7 @@
 ## Chezmoi + SOPS + Age
 
 - **[CHEZMOI.md](CHEZMOI.md)** — Referencia principal. Requisitos, uso, configuración Age+SOPS, estructura de secretos.
+- **[SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md)** — Ejemplos prácticos: dar de alta token GitHub, DSN Postgres, claves MinIO.
 - **[MIGRATION_MCP_CHEZMOI.md](MIGRATION_MCP_CHEZMOI.md)** — Migración MCP a Chezmoi. Qué gestiona, MCPs globales vs Store ETL.
 - **[MIGRATION_MCP_ITER3.md](MIGRATION_MCP_ITER3.md)** — Layout de servidores MCP (`mcp/servers`), venv, referencias.
 

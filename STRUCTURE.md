@@ -17,6 +17,7 @@
 ├── 📁 docs
 │   ├── 📝 CHEZMOI.md
 │   ├── 📝 GIT_WORKFLOW.md
+│   ├── 📝 SECRETS_EXAMPLES.md
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   └── 📝 MIGRATION_MCP_ITER3.md
 ├── 📁 dot_codex
