@@ -6,8 +6,8 @@
 
 set -e
 
-# Same exclusions as VS Code "files.exclude" style
-TREE_IGNORE='node_modules|dist|build|out|\.git|\.venv|venv|env|\.env|target|bin|obj|\.vs|\.idea|__pycache__|*.pyc|*.log|*.tmp|*.cache|\.ruff_cache|uncommitted|index_*|chunks|wal'
+# filetree-pro.exclude + py/db/logs + otel/dagster/grafana runtime (var, .nux, .telemetry, compute_logs)
+TREE_IGNORE='node_modules|dist|build|out|\.git|\.venv|venv|env|\.env|target|bin|obj|\.vs|\.idea|__pycache__|__none__|mypy_cache|\.mypy_cache|*.pyc|*.log|*.tmp|*.cache|\.ruff_cache|uncommitted|index_*|chunks|wal|*.db|*.db-shm|*.db-wal|logs|var|\.nux|\.telemetry|compute_logs'
 
 TARGET_DIR="${1:-.}"
 TARGET_DIR="$(cd "$TARGET_DIR" && pwd)"
@@ -22,7 +22,7 @@ fi
 OUTPUT="$TARGET_DIR/STRUCTURE.md"
 RAW_TREE="$(cd "$TARGET_DIR" && tree -a -I "$TREE_IGNORE" --dirsfirst -n --noreport -F . 2>/dev/null)" || true
 
-# Add icons: 📁 dirs, 📝 .md, 🐍 .py, 🐳 Docker/hcl, ⚙️ config, 🔒 lock, 🔧 sh, 🗄️ sql, 📕 pdf, 🖼️ img, 📓 ipynb, 📋 xml/log, 🪟 ps1, 🔨 make, 📄 rest
+# Add icons: 📁 dirs, 📝 .md, 🐍 .py, 🐳 Docker/hcl, ⚙️ config, 🔒 lock, 🐚 sh/zsh, 🗄️ sql, 📊 csv, 📕 pdf, 🖼️ img, 📓 ipynb, 📋 xml/log, 🪟 ps1, 🔨 make, 📄 rest
 # Prefix "── " is 3 chars (U+2500 U+2500 space), so name starts at RSTART+3
 TREE_OUT="$(echo "$RAW_TREE" | awk '
   /^\.\/$/ { print "📁 ."; next }
@@ -39,6 +39,7 @@ TREE_OUT="$(echo "$RAW_TREE" | awk '
       else if (name ~ /\.(js|mjs|ts|tsx|jsx)$/)  icon = "📜"
       else if (name ~ /\.(sh|bash|zsh)$/)        icon = "🔧"
       else if (name ~ /\.sql$/)                  icon = "🗄️"
+      else if (name ~ /\.csv$/)                  icon = "📊"
       else if (name ~ /\.hcl$/)                  icon = "🐳"
       else if (name ~ /\.pdf$/)                  icon = "📕"
       else if (name ~ /\.svg$/)                  icon = "🖼️"
