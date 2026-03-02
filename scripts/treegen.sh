@@ -20,7 +20,28 @@ if ! command -v tree &>/dev/null; then
 fi
 
 OUTPUT="$TARGET_DIR/STRUCTURE.md"
-TREE_OUT="$(cd "$TARGET_DIR" && tree -a -I "$TREE_IGNORE" --dirsfirst -n --noreport . 2>/dev/null)" || true
+RAW_TREE="$(cd "$TARGET_DIR" && tree -a -I "$TREE_IGNORE" --dirsfirst -n --noreport -F . 2>/dev/null)" || true
+
+# Add icons: 📁 dirs, 📝 .md, 🐍 .py, ⚙️ config (json/yml/toml), 📄 rest
+# Prefix "── " is 3 chars (U+2500 U+2500 space), so name starts at RSTART+3
+TREE_OUT="$(echo "$RAW_TREE" | awk '
+  /^\.\/$/ { print "📁 ."; next }
+  /\/$/  { sub(/\/$/, ""); sub(/── /, "── 📁 "); print; next }
+  {
+    if (match($0, /── .*$/)) {
+      name = substr($0, RSTART+3, RLENGTH-3)
+      gsub(/\*$/, "", name)
+      if (name ~ /\.(md|markdown)$/)            icon = "📝"
+      else if (name ~ /\.py$/)                  icon = "🐍"
+      else if (name ~ /\.(json|yml|yaml|toml|lock)$/) icon = "⚙️"
+      else if (name ~ /\.(js|mjs|ts|tsx|jsx)$/) icon = "📜"
+      else if (name ~ /\.(sh|bash|zsh)$/)       icon = "📄"
+      else                                      icon = "📄"
+      sub(/── .*$/, "── " icon " " name)
+    }
+    print
+  }
+')"
 
 {
   echo "# File Tree: $ROOT_NAME"
