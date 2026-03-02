@@ -15,6 +15,7 @@ for f in \
   "$ZSH_DOTFILES_DIR/10-path.zsh" \
   "$ZSH_DOTFILES_DIR/20-omz.zsh" \
   "$ZSH_DOTFILES_DIR/30-python.zsh" \
+  "$ZSH_DOTFILES_DIR/50-aliases-dotfiles.zsh" \
   "$ZSH_DOTFILES_DIR/90-local.zsh"
 do
   [[ -f "$f" ]] && source "$f"

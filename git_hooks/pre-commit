@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Global pre-commit: regenerate STRUCTURE.md in the repo where commit runs.
+# Requires: git config --global core.hooksPath ~/dotfiles/git_hooks
+
+exec "$HOME/dotfiles/scripts/treegen.sh"
