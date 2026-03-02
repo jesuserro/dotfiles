@@ -173,7 +173,6 @@ generate_feature_changelog() {
     local current_time=$(date +%H:%M)
     
     # Obtener información de la feature usando el commit base antes del merge
-    local branch_info=$(git log -1 --pretty=format:"%h - %s (%an)" "$feature_branch")
     local total_commits=$(git rev-list --count "${base_commit}..${feature_branch}" 2>/dev/null || echo "0")
     
     # Generar contenido del changelog (commits exclusivos de la feature usando el commit base)
@@ -184,8 +183,7 @@ generate_feature_changelog() {
 # Feature Changelog: ${feature_branch}
 
 **Fecha de integración:** ${current_date}  
-**Rama base:** ${base_branch}  
-**Último commit:** ${branch_info}
+**Rama base:** ${base_branch}
 
 ## Changes
 
