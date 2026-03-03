@@ -2,14 +2,18 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.03_1229] - 2026-03-03
+## [v2026.03.03_1309] - 2026-03-03
 
 ## Changes
 ### Refactored
-- 2026-03-03 12:29 [2a64c99](https://github.com/jesuserro/dotfiles/commit/2a64c99) refactor(secrets): update GitHub token management and enhance documentation (Jesús Erro)
-  - Updated the `github_personal_access_token` in `secrets.sops.yaml` for improved security.
-  - Added `TOKEN_GITHUB_GH.md` to clarify the use of classic GitHub tokens with the `gh` CLI.
-  - Enhanced `run_after_00_gen_secrets.sh.tmpl` to provide better context on GitHub token usage.
+- 2026-03-03 13:03 [5010d1b](https://github.com/jesuserro/dotfiles/commit/5010d1b) refactor(mcp): update MCP configurations and enhance documentation (Jesús Erro)
+  - Modified `run_after_10_setup_mcp_venv.sh.tmpl` to ensure consistent installation of requirements in the virtual environment.
+  - Revised documentation in `CHEZMOI.md`, `MIGRATION_MCP_CHEZMOI.md`, and `MIGRATION_MCP_ITER3.md` to clarify the status and configuration of MCPs, including updates for Postgres and Trino.
+  - Added new documentation file `VERIFICAR_MCP_STORE_ETL.md` for verifying MCP functionality post-setup.
+- 2026-03-03 12:53 [ecd7dc1](https://github.com/jesuserro/dotfiles/commit/ecd7dc1) refactor(secrets): streamline GitHub token usage and update related documentation (Jesús Erro)
+  - Revised `run_after_00_gen_secrets.sh.tmpl` to clarify GitHub token management, emphasizing the use of classic tokens.
+  - Updated `TOKEN_GITHUB_GH.md` and `CAMBIAR_TOKEN_GITHUB.md` to reflect the deprecation of fine-grained tokens and provide clearer guidance.
+  - Modified `SECRETS_EXAMPLES.md` to align with the new token policy.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
