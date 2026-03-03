@@ -2,55 +2,14 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.02_2158] - 2026-03-02
+## [v2026.03.03_1229] - 2026-03-03
 
 ## Changes
-### Added
-- 2026-03-02 21:26 [1e47869](https://github.com/jesuserro/dotfiles/commit/1e47869) feat(mcp): add MCP configuration and virtual environment setup (Jesús Erro)
-  - Updated `.chezmoiignore` to include new MCP configuration files.
-  - Added symlink for MCP server configurations in `symlink_dot_codex_mcp`.
-  - Introduced a new script `run_after_10_setup_mcp_venv.sh.tmpl` to create a Python virtual environment for MCPs.
-- 2026-03-02 21:00 [dddc35a](https://github.com/jesuserro/dotfiles/commit/dddc35a) feat(mcp): reorganize server files and update configurations for MCPs (Jesús Erro)
-  - Updated `STRUCTURE.md` to reflect the new organization of MCP server files under `mcp/servers`.
-  - Added new server scripts for `dagster`, `loki`, `minio`, `prometheus`, `store_etl_ops`, `tempo`, and updated their configurations in `dot_codex/config.toml.tmpl` and related templates.
-  - Introduced `mcp/requirements.txt` for dependency management.
-- 2026-03-02 20:36 [fb94d2a](https://github.com/jesuserro/dotfiles/commit/fb94d2a) feat(store-etl): enhance MCP configuration and secret management (Jesús Erro)
-  - Updated `.chezmoi.toml` to include additional template data for store-etl.
-  - Modified `.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl` to improve secret handling for MinIO.
-  - Added new script `.chezmoiscripts/run_after_10_link_store_etl_mcp.sh.tmpl` to create symlinks for store-etl MCP.
-- 2026-03-02 18:55 [43552d8](https://github.com/jesuserro/dotfiles/commit/43552d8) feat(mcp): integrate Chezmoi with SOPS for secure MCP management (Jesús Erro)
-  - Added Chezmoi configuration in `.chezmoi.toml` to manage MCPs and secrets using SOPS and Age.
-  - Introduced `.sops.yaml` for SOPS configuration and `secrets.sops.yaml` for encrypted secrets management.
-  - Created a script in `.chezmoiscripts` to generate environment variables from secrets during apply.
-
-### Fixed
-- 2026-03-02 21:13 [b2bad80](https://github.com/jesuserro/dotfiles/commit/b2bad80) fix(secrets): update postgres DSN and metadata in secrets.sops.yaml (Jesús Erro)
-  - Changed the encrypted value for `postgres_dsn` to a new secure string.
-  - Updated `lastmodified` timestamp to reflect the latest modification date.
-  - Modified the `mac` value for enhanced security in the secrets management configuration.
-
-### Documentation
-- 2026-03-02 21:58 [df73dc1](https://github.com/jesuserro/dotfiles/commit/df73dc1) docs(changelog): implement feature changelog for migration to Chezmoi with SOPS and Age (Jesús Erro)
-- 2026-03-02 21:56 [07ec630](https://github.com/jesuserro/dotfiles/commit/07ec630) docs(secrets): add practical examples for managing secrets (Jesús Erro)
-  - Introduced a new `SECRETS_EXAMPLES.md` file detailing how to add and modify secrets in `secrets.sops.yaml` using SOPS and Age.
-  - Updated `README.md` and `CHEZMOI.md` to reference the new examples for better guidance on secret management.
-  - Revised `STRUCTURE.md` to include the new documentation file, enhancing overall organization.
-- 2026-03-02 21:52 [8335176](https://github.com/jesuserro/dotfiles/commit/8335176) docs(chezmoi): enhance documentation for Chezmoi and MCP management (Jesús Erro)
-  - Translated README.md to Spanish and expanded it with detailed architecture and installation instructions for Chezmoi and RCM.
-  - Created CHEZMOI.md as the main reference for managing dotfiles with Chezmoi, including setup, requirements, and secret management.
-  - Updated migration guides to clarify the transition from RCM to Chezmoi for MCPs and secrets.
-
 ### Refactored
-- 2026-03-02 21:45 [7e13c77](https://github.com/jesuserro/dotfiles/commit/7e13c77) refactor(mcp): restructure MCP server files and update configurations (Jesús Erro)
-  - Removed obsolete MCP server files from `codex/mcp` and relocated them to `mcp/servers`.
-  - Updated paths in `codex/config.toml` and `README-mcp.md` to reflect new server locations.
-  - Adjusted `.gitignore` to exclude unnecessary directories and files.
-
-### Chores
-- 2026-03-02 19:15 [cda05ee](https://github.com/jesuserro/dotfiles/commit/cda05ee) chore: update file structure and enhance MCP configuration (Jesús Erro)
-  - Updated `STRUCTURE.md` to reflect the latest file organization, including new directories and files.
-  - Modified `.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl` to improve secret management and compatibility with Docker Compose.
-  - Adjusted `config.toml` to source environment variables from `~/.secrets/codex.env` for MinIO and Postgres configurations.
+- 2026-03-03 12:29 [2a64c99](https://github.com/jesuserro/dotfiles/commit/2a64c99) refactor(secrets): update GitHub token management and enhance documentation (Jesús Erro)
+  - Updated the `github_personal_access_token` in `secrets.sops.yaml` for improved security.
+  - Added `TOKEN_GITHUB_GH.md` to clarify the use of classic GitHub tokens with the `gh` CLI.
+  - Enhanced `run_after_00_gen_secrets.sh.tmpl` to provide better context on GitHub token usage.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
