@@ -2,6 +2,8 @@
 
 Cómo dar de alta o modificar secretos en `secrets.sops.yaml` (SOPS + Age).
 
+**Token GitHub y `gh` CLI:** Ver [TOKEN_GITHUB_GH.md](TOKEN_GITHUB_GH.md) — prioridad del token classic para Projects.
+
 ---
 
 ## Estructura del archivo
@@ -42,7 +44,8 @@ mcp:
    chezmoi --source=$HOME/dotfiles apply
    ```
 
-5. **Verificar:** el script post-apply genera `~/.config/store-etl/secrets.env` con `GITHUB_PERSONAL_ACCESS_TOKEN` y `GITHUB_TOKEN`.
+5. **Verificar:** el script post-apply genera `~/.config/store-etl/secrets.env` con `GITHUB_PERSONAL_ACCESS_TOKEN` y `GITHUB_TOKEN`.  
+   **Nota:** `gh` CLI usa `~/.config/gh/hosts.yml` (ver [TOKEN_GITHUB_GH.md](TOKEN_GITHUB_GH.md)).
 
 ---
 
