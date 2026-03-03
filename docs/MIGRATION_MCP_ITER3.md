@@ -23,10 +23,15 @@ El venv está en `~/.config/mcp/.venv`; los templates (`dot_codex/config.toml.tm
 - `command`: `{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python`
 - `args`: `{{ .chezmoi.sourceDir }}/mcp/servers/<name>/server.py`
 
-## Qué NO se movió (Iteración 4)
+## Migrado después (post-iteración 4)
 
-- MCPs instalados en HOME: **postgres**, **trino**, **docker** (siguen en `~/.codex/mcp/...`, runtime desacoplado del repo).
-- Symlinks en HOME ni `~/.config/mcp/servers` (queda para una iteración posterior).
+- **Postgres**: npx `@modelcontextprotocol/server-postgres` (sin .codex).
+- **Trino**: `trino-mcp` en `mcp/requirements.txt`, venv `~/.config/mcp/.venv`.
+
+## Qué NO se movió (pendiente)
+
+- **Docker** MCP: sigue en `~/.codex/mcp/docker/` (runtime desacoplado).
+- Symlinks en HOME ni `~/.config/mcp/servers` (queda para iteración posterior).
 
 ## Referencia
 

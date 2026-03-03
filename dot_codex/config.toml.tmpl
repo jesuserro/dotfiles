@@ -26,14 +26,14 @@ enabled = true
 # ─────────────────────────────────────────────
 [mcp_servers.postgres]
 command = "/usr/bin/bash"
-args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec /usr/bin/node {{ .chezmoi.homeDir }}/.codex/mcp/postgres/server.mjs"]
+args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec npx -y @modelcontextprotocol/server-postgres \"${POSTGRES_DSN}\""]
 enabled = true
 
 # ─────────────────────────────────────────────
 # MCP: Trino
 # ─────────────────────────────────────────────
 [mcp_servers.trino]
-command = "{{ .chezmoi.homeDir }}/.codex/mcp/trino/.venv/bin/python"
+command = "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python"
 args = ["-m", "trino_mcp"]
 enabled = true
 

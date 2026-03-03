@@ -137,7 +137,7 @@ Requiere: `sops`, `yq` o `python3` con PyYAML.
 
 - No eliminar rcup (aún gestiona el resto de dotfiles).
 - No tocar zsh, tmux, vim por ahora.
-- `~/.codex/mcp` es symlink a `~/.config/mcp`; postgres/trino/docker siguen ahí (runtime).
+- Postgres: npx. Trino: `~/.config/mcp/.venv` (trino-mcp). Docker: aún en `~/.codex/mcp/docker` si existe.
 
 ---
 
