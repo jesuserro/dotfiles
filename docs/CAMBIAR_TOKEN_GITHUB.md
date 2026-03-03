@@ -2,6 +2,8 @@
 
 Guía rápida para actualizar el token de GitHub en tus dotfiles (SOPS + Age + Chezmoi).
 
+**Política:** Solo token classic (`ghp_`). El fine-grained (`github_pat_`) está deprecado (sin permisos de Projects).
+
 ---
 
 ## Resumen del flujo

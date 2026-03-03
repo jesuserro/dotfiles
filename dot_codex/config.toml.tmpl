@@ -26,7 +26,7 @@ enabled = true
 # ─────────────────────────────────────────────
 [mcp_servers.postgres]
 command = "/usr/bin/bash"
-args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec /usr/bin/node {{ .chezmoi.homeDir }}/.codex/mcp/postgres/server.mjs"]
+args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec npx -y @modelcontextprotocol/server-postgres \"${POSTGRES_DSN}\""]
 enabled = true
 
 # ─────────────────────────────────────────────
