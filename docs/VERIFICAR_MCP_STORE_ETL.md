@@ -8,7 +8,7 @@ Comprobaciones tras `chezmoi apply` para dotfiles y proyecto store-etl.
 
 ```bash
 # Trino MCP — debe arrancar sin error
-~/.config/mcp/.venv/bin/python -m trino_mcp --help
+~/.config/ai/runtime/.venv/bin/python -m trino_mcp --help
 
 # Postgres MCP — requiere DSN (source codex.env)
 source ~/.secrets/codex.env
@@ -38,7 +38,7 @@ Verifica que los MCPs de store-etl funcionan:
 1. Lista los MCPs disponibles en este proyecto (revisa .cursor/mcp.json).
 2. Si Postgres MCP está activo: usa list_tables o una query simple para comprobar conexión.
 3. Si Trino MCP está activo: usa list_catalogs o execute_query_read_only con "SELECT 1".
-4. Confirma que postgres usa npx @modelcontextprotocol/server-postgres y trino usa ~/.config/mcp/.venv (trino-mcp).
+4. Confirma que postgres usa npx @modelcontextprotocol/server-postgres y trino usa ~/.config/ai/runtime/.venv (trino-mcp).
 
 Resume el resultado: qué MCPs responden OK y cuáles fallan (y por qué).
 ```
@@ -50,6 +50,6 @@ Resume el resultado: qué MCPs responden OK y cuáles fallan (y por qué).
 | MCP      | Comando / Origen                                      |
 |----------|--------------------------------------------------------|
 | postgres | npx @modelcontextprotocol/server-postgres + POSTGRES_DSN |
-| trino    | ~/.config/mcp/.venv + trino_mcp                        |
-| dagster  | ~/.config/mcp/.venv + mcp/servers/dagster/server.py   |
-| minio    | ~/.config/mcp/.venv + mcp/servers/minio/server.py     |
+| trino    | ~/.config/ai/runtime/.venv + trino_mcp                        |
+| dagster  | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/dagster/server.py   |
+| minio    | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/minio/server.py     |

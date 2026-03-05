@@ -21,7 +21,7 @@ dotfiles (repo)
  └── secrets.sops.yaml   → secretos cifrados (SOPS/Age)
 
 HOME (runtime)
- ├── ~/.config/mcp/     → venv + runtime MCP
+ ├── ~/.config/ai/      → hub IA (skills, runtime)
  ├── ~/.codex/mcp       → symlink compat
  └── ~/.secrets/        → symlinks a secretos generados
 ```

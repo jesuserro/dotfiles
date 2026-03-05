@@ -18,15 +18,15 @@ Layout neutro para MCPs Python en el repo: `mcp/servers/*` y `mcp/requirements.t
   - `mcp/servers/store_etl_ops/server.py`
   - `mcp/requirements.txt`
 
-El venv está en `~/.config/mcp/.venv`; los templates (`dot_codex/config.toml.tmpl` y el MCP de Cursor del proyecto store-etl) usan:
+El venv está en `~/.config/ai/runtime/.venv`; los templates (`dot_codex/config.toml.tmpl` y el MCP de Cursor del proyecto store-etl) usan:
 
-- `command`: `{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python`
+- `command`: `{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python`
 - `args`: `{{ .chezmoi.sourceDir }}/mcp/servers/<name>/server.py`
 
 ## Migrado después (post-iteración 4)
 
 - **Postgres**: npx `@modelcontextprotocol/server-postgres` (sin .codex).
-- **Trino**: `trino-mcp` en `mcp/requirements.txt`, venv `~/.config/mcp/.venv`.
+- **Trino**: `trino-mcp` en `ai/runtime/mcp/requirements.txt`, venv `~/.config/ai/runtime/.venv`.
 
 ## Qué NO se movió (pendiente)
 

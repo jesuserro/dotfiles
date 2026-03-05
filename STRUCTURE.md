@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-05 12:53:32
+**Generated:** 2026-03-05 13:33:56
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -8,10 +8,54 @@
 ├── 📁 .chezmoiscripts
 │   ├── 📄 run_after_00_gen_secrets.sh.tmpl
 │   ├── 📄 run_after_10_link_store_etl_mcp.sh.tmpl
-│   └── 📄 run_after_10_setup_mcp_venv.sh.tmpl
+│   ├── 📄 run_after_10_setup_ai_runtime.sh.tmpl
+│   └── 📄 run_after_11_link_ai_assets.sh.tmpl
 ├── 📁 .github
 │   └── 📁 workflows
 │       └── ⚙️ release.yml
+├── 📁 ai
+│   ├── 📁 adapters
+│   │   ├── 📁 claude
+│   │   │   └── 📝 README.md
+│   │   ├── 📁 codex
+│   │   │   └── 📝 README.md
+│   │   └── 📁 cursor
+│   │       └── 📝 README.md
+│   ├── 📁 assets
+│   │   ├── 📁 prompts
+│   │   │   └── 📄 .keep
+│   │   ├── 📁 rules
+│   │   │   └── 📄 .keep
+│   │   └── 📁 skills
+│   │       └── 📁 excalidraw-diagram
+│   │           ├── 📁 references
+│   │           │   ├── 📝 color-palette.md
+│   │           │   ├── 📝 element-templates.md
+│   │           │   ├── 📝 json-schema.md
+│   │           │   ├── ⚙️ pyproject.toml
+│   │           │   ├── 🐍 render_excalidraw.py
+│   │           │   └── 📄 render_template.html
+│   │           ├── 📄 .gitignore
+│   │           ├── 📝 README.md
+│   │           └── 📝 SKILL.md
+│   ├── 📁 runtime
+│   │   ├── 📁 mcp
+│   │   │   ├── 📁 servers
+│   │   │   │   ├── 📁 dagster
+│   │   │   │   │   └── 🐍 server.py
+│   │   │   │   ├── 📁 loki
+│   │   │   │   │   └── 🐍 server.py
+│   │   │   │   ├── 📁 minio
+│   │   │   │   │   └── 🐍 server.py
+│   │   │   │   ├── 📁 prometheus
+│   │   │   │   │   └── 🐍 server.py
+│   │   │   │   ├── 📁 store_etl_ops
+│   │   │   │   │   └── 🐍 server.py
+│   │   │   │   └── 📁 tempo
+│   │   │   │       └── 🐍 server.py
+│   │   │   └── 📄 requirements.txt
+│   │   └── 📄 .keep
+│   └── 📝 README.md
 ├── 📁 codex
 │   ├── 📝 README-mcp.md
 │   ├── 📝 README.md
@@ -38,21 +82,7 @@
 ├── 📁 git_hooks
 │   └── 📄 pre-commit
 ├── 📁 local
-├── 📁 mcp
-│   ├── 📁 servers
-│   │   ├── 📁 dagster
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 loki
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 minio
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 prometheus
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 store_etl_ops
-│   │   │   └── 🐍 server.py
-│   │   └── 📁 tempo
-│   │       └── 🐍 server.py
-│   └── 📄 requirements.txt
+├── 📁 mcp -> ai/runtime/mcp
 ├── 📁 powerlevel10k
 │   └── 🔧 p10k.zsh
 ├── 📁 private_dot_config
@@ -137,6 +167,9 @@
 ├── ⚙️ secrets.sops.yaml
 ├── 📄 secrets.sops.yaml.new
 ├── 📄 symlink_dot_codex_mcp
+├── 📄 symlink_dot_config_ai_prompts.tmpl
+├── 📄 symlink_dot_config_ai_rules.tmpl
+├── 📄 symlink_dot_config_ai_skills.tmpl
 ├── 📄 symlink_dot_secrets_codex.env
 ├── 📄 tmux.conf
 ├── 📄 vimrc

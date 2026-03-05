@@ -11,14 +11,14 @@ Existing MCPs in `codex/config.toml` were left unchanged.
 ## Installed components
 
 - Shared Python venv for MCP wrappers:
-  - `~/.config/mcp/.venv`
+  - `~/.config/ai/runtime/.venv`
 - Shared Python dependencies file:
   - `mcp/requirements.txt`
 - Servers:
-  - `mcp/servers/dagster/server.py`
-  - `mcp/servers/minio/server.py`
-  - `mcp/servers/tempo/server.py`
-  - `mcp/servers/loki/server.py`
+  - `ai/runtime/mcp/servers/dagster/server.py`
+  - `ai/runtime/mcp/servers/minio/server.py`
+  - `ai/runtime/mcp/servers/tempo/server.py`
+  - `ai/runtime/mcp/servers/loki/server.py`
 
 ## Required environment variables
 
@@ -58,7 +58,7 @@ export LOKI_TIMEOUT_SECONDS="30"
 ```bash
 cd /home/jesus/dotfiles
 chezmoi apply
-# or manually: python3 -m venv ~/.config/mcp/.venv && ~/.config/mcp/.venv/bin/pip install -r mcp/requirements.txt
+# or manually: python3 -m venv ~/.config/ai/runtime/.venv && ~/.config/ai/runtime/.venv/bin/pip install -r mcp/requirements.txt
 ```
 
 ## Smoke tests
@@ -66,10 +66,10 @@ chezmoi apply
 Each command starts the server code and performs one live API call:
 
 ```bash
-~/.config/mcp/.venv/bin/python ~/dotfiles/mcp/servers/dagster/server.py --smoke-test
-~/.config/mcp/.venv/bin/python ~/dotfiles/mcp/servers/minio/server.py --smoke-test
-~/.config/mcp/.venv/bin/python ~/dotfiles/mcp/servers/tempo/server.py --smoke-test
-~/.config/mcp/.venv/bin/python ~/dotfiles/mcp/servers/loki/server.py --smoke-test
+~/.config/ai/runtime/.venv/bin/python ~/dotfiles/ai/runtime/mcp/servers/dagster/server.py --smoke-test
+~/.config/ai/runtime/.venv/bin/python ~/dotfiles/ai/runtime/mcp/servers/minio/server.py --smoke-test
+~/.config/ai/runtime/.venv/bin/python ~/dotfiles/ai/runtime/mcp/servers/tempo/server.py --smoke-test
+~/.config/ai/runtime/.venv/bin/python ~/dotfiles/ai/runtime/mcp/servers/loki/server.py --smoke-test
 ```
 
 For Loki queries, use a non-empty matcher:

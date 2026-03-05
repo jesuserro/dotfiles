@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# Publica assets IA (skills, prompts, rules) hacia ~/.config/ai y cada agente. Idempotente.
+# Crea el hub ~/.config/ai/* si no existe, luego symlinks a agentes.
+
+set -euo pipefail
+
+SOURCE_DIR="{{ .chezmoi.sourceDir }}"
+CONFIG_AI="{{ .chezmoi.homeDir }}/.config/ai"
+
+# Hub: ~/.config/ai/{skills,prompts,rules} -> dotfiles/ai/assets/*
+mkdir -p "${CONFIG_AI}"
+ensure_symlink() {
+  local target="$1"
+  local link_path="$2"
+  if [[ -e "${link_path}" && ! -L "${link_path}" ]]; then
+    return 0
+  fi
+  if [[ -L "${link_path}" ]]; then
+    current=$(readlink -f "${link_path}" 2>/dev/null || true)
+    if [[ "${current}" == "$(readlink -f "${target}" 2>/dev/null)" ]]; then
+      return 0
+    fi
+  fi
+  ln -sf "${target}" "${link_path}"
+}
+ensure_symlink "${SOURCE_DIR}/ai/assets/skills" "${CONFIG_AI}/skills"
+ensure_symlink "${SOURCE_DIR}/ai/assets/prompts" "${CONFIG_AI}/prompts"
+ensure_symlink "${SOURCE_DIR}/ai/assets/rules" "${CONFIG_AI}/rules"
+
+# Agentes: symlinkear cada skill de ai/assets/skills/* en ~/.cursor/skills-cursor, ~/.codex/skills, ~/.claude/skills
+# (preserva contenido existente en esos directorios)
+AI_SKILLS_DIR="${CONFIG_AI}/skills"
+AGENT_DIRS=(
+  "{{ .chezmoi.homeDir }}/.cursor/skills-cursor"
+  "{{ .chezmoi.homeDir }}/.codex/skills"
+  "{{ .chezmoi.homeDir }}/.claude/skills"
+)
+
+# Eliminar symlink incorrecto "skills" si existe (de iteración anterior)
+for agent_dir in "${AGENT_DIRS[@]}"; do
+  wrong_link="${agent_dir}/skills"
+  if [[ -L "${wrong_link}" ]]; then
+    rm -f "${wrong_link}"
+  fi
+done
+
+if [[ -d "${AI_SKILLS_DIR}" || -L "${AI_SKILLS_DIR}" ]]; then
+  for agent_dir in "${AGENT_DIRS[@]}"; do
+    mkdir -p "${agent_dir}"
+    for skill_path in "${AI_SKILLS_DIR}"/*; do
+      [[ -e "${skill_path}" ]] || continue
+      skill_name=$(basename "${skill_path}")
+      link_path="${agent_dir}/${skill_name}"
+      if [[ -e "${link_path}" && ! -L "${link_path}" ]]; then
+        continue
+      fi
+      if [[ -L "${link_path}" ]]; then
+        current=$(readlink -f "${link_path}" 2>/dev/null || true)
+        if [[ "${current}" == "$(readlink -f "${skill_path}" 2>/dev/null)" ]]; then
+          continue
+        fi
+      fi
+      ln -sf "${skill_path}" "${link_path}"
+    done
+  done
+fi
+
+exit 0
