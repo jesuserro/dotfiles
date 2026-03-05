@@ -15,7 +15,7 @@ Personal dotfiles para Ubuntu 20.04+, Zsh, Oh My Zsh, TMUX y Neovim. Incluye **A
 ## Arquitectura
 
 ```mermaid
-flowchart TB
+flowchart LR
     subgraph repo [dotfiles repo]
         ai[ai/ MCPs + skills]
         cursor[dot_cursor/]
