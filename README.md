@@ -1,11 +1,5 @@
 # Dotfiles
 
-Personal dotfiles para Ubuntu 20.04+, Zsh, Oh My Zsh, TMUX y Neovim. Incluye **AI Workstation** (MCPs, skills, secretos) gestionado con Chezmoi.
-
----
-
-## Badges
-
 ![Chezmoi](https://img.shields.io/badge/chezmoi-dotfiles-00b0ff?style=flat-square)
 ![SOPS](https://img.shields.io/badge/SOPS-secrets-00b0ff?style=flat-square)
 ![Age](https://img.shields.io/badge/Age-encryption-00b0ff?style=flat-square)
@@ -13,6 +7,8 @@ Personal dotfiles para Ubuntu 20.04+, Zsh, Oh My Zsh, TMUX y Neovim. Incluye **A
 ![TMUX](https://img.shields.io/badge/TMUX-terminal-00b0ff?style=flat-square)
 ![Neovim](https://img.shields.io/badge/Neovim-editor-00b0ff?style=flat-square)
 ![MCP](https://img.shields.io/badge/MCP-Cursor%20%7C%20Codex-00b0ff?style=flat-square)
+
+Personal dotfiles para Ubuntu 20.04+, Zsh, Oh My Zsh, TMUX y Neovim. Incluye **AI Workstation** (MCPs, skills, secretos) gestionado con Chezmoi.
 
 ---
 
