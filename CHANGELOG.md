@@ -2,42 +2,14 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.05_1658] - 2026-03-05
+## [v2026.03.05_1933] - 2026-03-05
 
 ## Changes
-### Added
-- 2026-03-05 13:46 [5537bca](https://github.com/jesuserro/dotfiles/commit/5537bca) feat(ai): introduce AI framework and restructure MCP integration (Jesús Erro)
-  - Added a new AI directory structure under `~/.config/ai` for runtime, assets, and adapters.
-  - Created scripts for setting up the AI runtime environment and linking AI assets to various agents.
-  - Updated `.chezmoiignore` to include new AI configuration files and directories.
-
 ### Documentation
-- 2026-03-05 16:58 [7c142b0](https://github.com/jesuserro/dotfiles/commit/7c142b0) docs(changelog): added feature changelog for the integration of AI framework and MCP skills adapters. Documented recent changes including README updates, flowchart enhancements, and removal of outdated MCP runtime symlink. Integrated into the dev branch on 2026-03-05. (Jesús Erro)
-- 2026-03-05 14:31 [40d5e28](https://github.com/jesuserro/dotfiles/commit/40d5e28) docs(readme): enhance flowchart labeling in README.md for better understanding (Jesús Erro)
-  - Updated the flowchart in README.md to include a clearer label for the AI component, improving the overall clarity of the project's architecture.
-- 2026-03-05 14:27 [c2cf872](https://github.com/jesuserro/dotfiles/commit/c2cf872) docs(readme): update flowchart structure in README.md for clarity (Jesús Erro)
-  - Changed flowchart direction to left-right (LR) for better visual representation of the project's architecture.
-  - Streamlined connections between components in the flowchart to enhance readability.
-- 2026-03-05 14:21 [780dbe7](https://github.com/jesuserro/dotfiles/commit/780dbe7) docs(readme): update flowchart direction in README.md (Jesús Erro)
-  - Changed the flowchart direction from TB (top-bottom) to LR (left-right) for improved visual clarity.
-  - This adjustment enhances the representation of the project's architecture in the documentation.
-- 2026-03-05 14:17 [87c9a61](https://github.com/jesuserro/dotfiles/commit/87c9a61) docs(readme): streamline README content and reintroduce project description (Jesús Erro)
-  - Removed redundant sections from README.md to improve clarity.
-  - Reintroduced the project description for personal dotfiles and AI Workstation management with Chezmoi.
-  - Maintained badge section for key components to ensure visibility of important tools.
-- 2026-03-05 14:13 [c493273](https://github.com/jesuserro/dotfiles/commit/c493273) docs(ia workstation): update README and add installation and MCP guides (Jesús Erro)
-  - Revised README.md to clarify the purpose of the dotfiles and included badges for key components.
-  - Introduced INSTALL.md for step-by-step installation instructions.
-  - Added GUIA_MCP_AI.md to provide practical commands for managing MCPs and the AI Workstation.
-- 2026-03-05 12:54 [63c0879](https://github.com/jesuserro/dotfiles/commit/63c0879) docs(structure): refresh file tree and add new documentation (Jesús Erro)
-  - Updated the generated timestamp in `STRUCTURE.md` to reflect the latest changes.
-  - Added new template files for MCP setup and documentation, including `run_after_10_link_store_etl_mcp.sh.tmpl` and `store-etl.mcp.json.tmpl`.
-  - Enhanced documentation by including `VERIFICAR_MCP_STORE_ETL.md` and `README.md` in the `docs` directory.
-
-### Chores
-- 2026-03-05 13:53 [d2f2617](https://github.com/jesuserro/dotfiles/commit/d2f2617) chore(mcp): remove symlink to outdated MCP runtime (Jesús Erro)
-  - Deleted the symlink for the MCP runtime as part of the transition to the new AI framework.
-  - This change helps streamline the project structure by eliminating obsolete references.
+- 2026-03-05 17:45 [0c7d226](https://github.com/jesuserro/dotfiles/commit/0c7d226) docs(structure): update file tree and add LinkedIn project data (Jesús Erro)
+  - Updated the generated timestamp in `STRUCTURE.md`.
+  - Added new documentation files for LinkedIn project showcasing, including `PROJECT_DATA.md` and diagrams for architecture and AI workstation flow.
+  - Enhanced the file structure by including new `.excalidraw` files and their corresponding image formats for better visual representation.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
