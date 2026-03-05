@@ -15,19 +15,15 @@ Personal dotfiles para Ubuntu 20.04+, Zsh, Oh My Zsh, TMUX y Neovim. Incluye **A
 ## Arquitectura
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph repo [dotfiles repo]
-        ai[ai/ MCPs + skills]
-        cursor[dot_cursor/]
-        codex[dot_codex/]
-        secrets[secrets.sops.yaml]
+        direction LR
+        ai[ai/] --- cursor[dot_cursor/] --- codex[dot_codex/] --- secrets[secrets.sops.yaml]
     end
 
     subgraph home [HOME ~/]
-        config_ai[.config/ai/]
-        dot_cursor[.cursor/]
-        dot_codex[.codex/]
-        dot_secrets[.secrets/]
+        direction LR
+        config_ai[.config/ai/] --- dot_cursor[.cursor/] --- dot_codex[.codex/] --- dot_secrets[.secrets/]
     end
 
     repo -->|chezmoi apply| home
