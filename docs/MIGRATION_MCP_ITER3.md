@@ -1,42 +1,34 @@
-# Migración MCP — Iteración 3
+# Migración MCP — Iteración 3 (AI Workstation)
 
-**Fecha:** 2026-03-02
+**Fecha:** 2026-03-05
 
-## Objetivo
+## Estado actual
 
-Layout neutro para MCPs Python en el repo: `mcp/servers/*` y `mcp/requirements.txt`.
+Los servidores MCP Python están en `ai/runtime/mcp/` dentro del AI Workstation Framework. Ya no existe `mcp/` en la raíz del repo.
 
-## Qué se movió
+## Estructura
 
-- **Origen (eliminado):** `codex/mcp/<name>/server.py` y `codex/mcp/requirements.txt` — ya no existe en el repo.
-- **Destino:**
-  - `mcp/servers/dagster/server.py`
-  - `mcp/servers/minio/server.py`
-  - `mcp/servers/loki/server.py`
-  - `mcp/servers/tempo/server.py`
-  - `mcp/servers/prometheus/server.py`
-  - `mcp/servers/store_etl_ops/server.py`
-  - `mcp/requirements.txt`
+```
+ai/runtime/mcp/
+  requirements.txt
+  servers/
+    dagster/server.py
+    minio/server.py
+    loki/server.py
+    prometheus/server.py
+    store_etl_ops/server.py
+    tempo/server.py
+```
 
-El venv está en `~/.config/ai/runtime/.venv`; los templates (`dot_codex/config.toml.tmpl` y el MCP de Cursor del proyecto store-etl) usan:
+- **Venv:** `~/.config/ai/runtime/.venv`
+- **Templates:** `dot_codex/config.toml.tmpl`, `private_dot_config/store-etl/store-etl.mcp.json.tmpl`
+- **Rutas en templates:**
+  - `command`: `{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python`
+  - `args`: `{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/<name>/server.py`
 
-- `command`: `{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python`
-- `args`: `{{ .chezmoi.sourceDir }}/mcp/servers/<name>/server.py`
+## Referencias
 
-## Migrado después (post-iteración 4)
-
-- **Postgres**: npx `@modelcontextprotocol/server-postgres` (sin .codex).
-- **Trino**: `trino-mcp` en `ai/runtime/mcp/requirements.txt`, venv `~/.config/ai/runtime/.venv`.
-
-## Qué NO se movió (pendiente)
-
-- **Docker** MCP: sigue en `~/.codex/mcp/docker/` (runtime desacoplado).
-- Symlinks en HOME ni `~/.config/mcp/servers` (queda para iteración posterior).
-
-## Referencia
-
-- [CHEZMOI.md](CHEZMOI.md) — referencia principal Chezmoi + SOPS + Age.
-- [MIGRATION_MCP_CHEZMOI.md](MIGRATION_MCP_CHEZMOI.md) — migración MCP.
-- `STRUCTURE.md`: árbol actualizado con `mcp/servers` y `codex/` solo config + docs (sin `codex/mcp`).
-- Config global Codex: `dot_codex/config.toml.tmpl`.
-- Config Cursor store-etl: `private_proyectos/store-etl/dot_cursor/mcp.json.tmpl` y `private_dot_config/store-etl/store-etl.mcp.json.tmpl`.
+- [CHEZMOI.md](CHEZMOI.md) — referencia principal
+- [MIGRATION_MCP_CHEZMOI.md](MIGRATION_MCP_CHEZMOI.md) — migración MCP
+- [GUIA_MCP_AI.md](GUIA_MCP_AI.md) — guía práctica con comandos
+- [ai/README.md](../ai/README.md) — arquitectura AI Workstation

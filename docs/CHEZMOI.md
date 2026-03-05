@@ -143,9 +143,11 @@ Requiere: `sops`, `yq` o `python3` con PyYAML.
 
 ## Documentación relacionada
 
+- [GUIA_MCP_AI.md](GUIA_MCP_AI.md) — guía práctica con comandos (añadir MCP, skills, verificar)
 - [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md) — ejemplos prácticos para dar de alta secretos (GitHub, Postgres, MinIO)
 - [TOKEN_GITHUB_GH.md](TOKEN_GITHUB_GH.md) — prioridad del token classic para `gh` CLI (Projects API)
 - [MIGRATION_MCP_CHEZMOI.md](MIGRATION_MCP_CHEZMOI.md) — detalles de la migración MCP
 - [MIGRATION_MCP_ITER3.md](MIGRATION_MCP_ITER3.md) — layout de servidores MCP
 - [codex/README-mcp.md](../codex/README-mcp.md) — MCPs locales y smoke tests
+- [ai/README.md](../ai/README.md) — arquitectura AI Workstation
 - [STRUCTURE.md](../STRUCTURE.md) — árbol del repo

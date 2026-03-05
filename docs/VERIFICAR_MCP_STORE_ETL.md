@@ -47,9 +47,15 @@ Resume el resultado: qué MCPs responden OK y cuáles fallan (y por qué).
 
 ## Configuración actual (post-migración)
 
-| MCP      | Comando / Origen                                      |
-|----------|--------------------------------------------------------|
-| postgres | npx @modelcontextprotocol/server-postgres + POSTGRES_DSN |
-| trino    | ~/.config/ai/runtime/.venv + trino_mcp                        |
-| dagster  | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/dagster/server.py   |
-| minio    | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/minio/server.py     |
+| MCP          | Comando / Origen |
+|--------------|------------------|
+| postgres     | npx @modelcontextprotocol/server-postgres + POSTGRES_DSN |
+| trino        | ~/.config/ai/runtime/.venv + trino_mcp |
+| dagster      | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/dagster/server.py |
+| minio        | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/minio/server.py |
+| tempo        | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/tempo/server.py |
+| loki         | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/loki/server.py |
+| prometheus   | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/prometheus/server.py |
+| store_etl_ops| ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/store_etl_ops/server.py |
+
+Ver [GUIA_MCP_AI.md](GUIA_MCP_AI.md) para comandos de verificación y añadir nuevos MCPs.

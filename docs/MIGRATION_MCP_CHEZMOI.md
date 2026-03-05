@@ -45,4 +45,4 @@ Para requisitos, uso de Chezmoi, configuración Age+SOPS y estructura de secreto
 - Postgres: npx. Trino: venv mcp. Docker: `~/.codex/mcp/docker` si existe.
 - No eliminar rcup.
 - No tocar zsh, tmux, vim.
-- No mover los servidores MCP de dotfiles.
+- No mover los servidores MCP de `ai/runtime/mcp/`.

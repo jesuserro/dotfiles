@@ -56,3 +56,7 @@ Tras `chezmoi apply` (script `run_after_11_link_ai_assets`):
 | Prompts de proyecto X    | repo del proyecto   |
 
 El hub `ai/` contiene solo assets reutilizables entre proyectos.
+
+## Añadir un nuevo MCP servidor
+
+Ver [docs/GUIA_MCP_AI.md](../docs/GUIA_MCP_AI.md) — sección "Añadir un nuevo MCP servidor Python".

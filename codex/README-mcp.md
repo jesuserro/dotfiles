@@ -13,7 +13,7 @@ Existing MCPs in `codex/config.toml` were left unchanged.
 - Shared Python venv for MCP wrappers:
   - `~/.config/ai/runtime/.venv`
 - Shared Python dependencies file:
-  - `mcp/requirements.txt`
+  - `ai/runtime/mcp/requirements.txt`
 - Servers:
   - `ai/runtime/mcp/servers/dagster/server.py`
   - `ai/runtime/mcp/servers/minio/server.py`
@@ -58,7 +58,7 @@ export LOKI_TIMEOUT_SECONDS="30"
 ```bash
 cd /home/jesus/dotfiles
 chezmoi apply
-# or manually: python3 -m venv ~/.config/ai/runtime/.venv && ~/.config/ai/runtime/.venv/bin/pip install -r mcp/requirements.txt
+# or manually: python3 -m venv ~/.config/ai/runtime/.venv && ~/.config/ai/runtime/.venv/bin/pip install -r ai/runtime/mcp/requirements.txt
 ```
 
 ## Smoke tests
@@ -88,11 +88,9 @@ For Loki queries, use a non-empty matcher:
 
 ## How to apply via dotfiles
 
-From your dotfiles workspace:
-
 ```bash
-cd /home/jesus/dotfiles
+cd ~/dotfiles
 chezmoi --source=$HOME/dotfiles apply
 ```
 
-That keeps `~/.codex/config.toml` and `~/.cursor/mcp.json` synced from this repo. See [docs/CHEZMOI.md](../docs/CHEZMOI.md).
+Mantiene `~/.codex/config.toml` y `~/.cursor/mcp.json` sincronizados. Ver [docs/GUIA_MCP_AI.md](../docs/GUIA_MCP_AI.md) y [docs/CHEZMOI.md](../docs/CHEZMOI.md).

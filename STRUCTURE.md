@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-05 13:33:56
+**Generated:** 2026-03-05 14:05:31
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -64,6 +64,7 @@
 │   ├── 📝 CAMBIAR_TOKEN_GITHUB.md
 │   ├── 📝 CHEZMOI.md
 │   ├── 📝 GIT_WORKFLOW.md
+│   ├── 📝 GUIA_MCP_AI.md
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   ├── 📝 MIGRATION_MCP_ITER3.md
 │   ├── 📝 README.md
@@ -82,7 +83,6 @@
 ├── 📁 git_hooks
 │   └── 📄 pre-commit
 ├── 📁 local
-├── 📁 mcp -> ai/runtime/mcp
 ├── 📁 powerlevel10k
 │   └── 🔧 p10k.zsh
 ├── 📁 private_dot_config
@@ -167,9 +167,6 @@
 ├── ⚙️ secrets.sops.yaml
 ├── 📄 secrets.sops.yaml.new
 ├── 📄 symlink_dot_codex_mcp
-├── 📄 symlink_dot_config_ai_prompts.tmpl
-├── 📄 symlink_dot_config_ai_rules.tmpl
-├── 📄 symlink_dot_config_ai_skills.tmpl
 ├── 📄 symlink_dot_secrets_codex.env
 ├── 📄 tmux.conf
 ├── 📄 vimrc
