@@ -74,8 +74,9 @@ def render(
     output_path: Path | None = None,
     scale: int = 2,
     max_width: int = 1920,
+    format: str = "png",
 ) -> Path:
-    """Render an .excalidraw file to PNG. Returns the output PNG path."""
+    """Render an .excalidraw file to PNG or SVG. Returns the output path."""
     # Import playwright here so validation errors show before import errors
     try:
         from playwright.sync_api import sync_playwright
@@ -112,7 +113,7 @@ def render(
 
     # Output path
     if output_path is None:
-        output_path = excalidraw_path.with_suffix(".png")
+        output_path = excalidraw_path.with_suffix(f".{format}")
 
     # Template path (same directory as this script)
     template_path = Path(__file__).parent / "render_template.html"
@@ -156,14 +157,22 @@ def render(
         # Wait for render completion signal
         page.wait_for_function("window.__renderComplete === true", timeout=15000)
 
-        # Screenshot the SVG element
+        # Get the SVG element
         svg_el = page.query_selector("#root svg")
         if svg_el is None:
             print("ERROR: No SVG element found after render.", file=sys.stderr)
             browser.close()
             sys.exit(1)
 
-        svg_el.screenshot(path=str(output_path))
+        if format == "svg":
+            svg_html = page.evaluate("el => el.outerHTML", svg_el)
+            output_path.write_text(svg_html, encoding="utf-8")
+        else:
+            screenshot_format = "jpeg" if format in ("jpg", "jpeg") else "png"
+            opts = {"path": str(output_path), "type": screenshot_format}
+            if screenshot_format == "jpeg":
+                opts["quality"] = 95
+            svg_el.screenshot(**opts)
         browser.close()
 
     return output_path
@@ -172,8 +181,9 @@ def render(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Render Excalidraw JSON to PNG")
     parser.add_argument("input", type=Path, help="Path to .excalidraw JSON file")
-    parser.add_argument("--output", "-o", type=Path, default=None, help="Output PNG path (default: same name with .png)")
-    parser.add_argument("--scale", "-s", type=int, default=2, help="Device scale factor (default: 2)")
+    parser.add_argument("--output", "-o", type=Path, default=None, help="Output path (default: same name with .png or .svg)")
+    parser.add_argument("--format", "-f", choices=["png", "svg", "jpg", "jpeg"], default="png", help="Output format (default: png)")
+    parser.add_argument("--scale", "-s", type=int, default=2, help="Device scale factor for PNG (default: 2)")
     parser.add_argument("--width", "-w", type=int, default=1920, help="Max viewport width (default: 1920)")
     args = parser.parse_args()
 
@@ -181,8 +191,8 @@ def main() -> None:
         print(f"ERROR: File not found: {args.input}", file=sys.stderr)
         sys.exit(1)
 
-    png_path = render(args.input, args.output, args.scale, args.width)
-    print(str(png_path))
+    out_path = render(args.input, args.output, args.scale, args.width, args.format)
+    print(str(out_path))
 
 
 if __name__ == "__main__":

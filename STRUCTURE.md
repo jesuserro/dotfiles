@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-05 14:05:31
+**Generated:** 2026-03-05 17:44:54
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -34,7 +34,8 @@
 │   │           │   ├── 📝 json-schema.md
 │   │           │   ├── ⚙️ pyproject.toml
 │   │           │   ├── 🐍 render_excalidraw.py
-│   │           │   └── 📄 render_template.html
+│   │           │   ├── 📄 render_template.html
+│   │           │   └── 🔒 uv.lock
 │   │           ├── 📄 .gitignore
 │   │           ├── 📝 README.md
 │   │           └── 📝 SKILL.md
@@ -61,10 +62,20 @@
 │   ├── 📝 README.md
 │   └── ⚙️ config.toml
 ├── 📁 docs
+│   ├── 📁 linkedin
+│   │   ├── 📁 diagrams
+│   │   │   ├── 📄 ai-workstation-flow.excalidraw
+│   │   │   ├── 🖼️ ai-workstation-flow.jpg
+│   │   │   ├── 🖼️ ai-workstation-flow.svg
+│   │   │   ├── 📄 architecture-overview.excalidraw
+│   │   │   ├── 🖼️ architecture-overview.jpg
+│   │   │   └── 🖼️ architecture-overview.svg
+│   │   └── 📝 PROJECT_DATA.md
 │   ├── 📝 CAMBIAR_TOKEN_GITHUB.md
 │   ├── 📝 CHEZMOI.md
 │   ├── 📝 GIT_WORKFLOW.md
 │   ├── 📝 GUIA_MCP_AI.md
+│   ├── 📝 INSTALL.md
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   ├── 📝 MIGRATION_MCP_ITER3.md
 │   ├── 📝 README.md
@@ -94,6 +105,7 @@
 │           └── 📄 mcp.json.tmpl
 ├── 📁 releases
 │   ├── 📝 branch_feature_1-migration-to-chezmoi-sops-age.md
+│   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_test-branch-changelog.md
 │   ├── 📝 v2025.12.07_1051.md
 │   └── 📝 v2025.12.08_1037.md
