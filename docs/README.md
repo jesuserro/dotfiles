@@ -1,11 +1,17 @@
 # Documentación dotfiles
 
+## Instalación
+
+- **[INSTALL.md](INSTALL.md)** — Instalación paso a paso (clonar, Age, SOPS, apply).
+
 ## Chezmoi + SOPS + Age
 
 - **[CHEZMOI.md](CHEZMOI.md)** — Referencia principal. Requisitos, uso, configuración Age+SOPS, estructura de secretos.
 - **[SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md)** — Ejemplos prácticos: dar de alta token GitHub, DSN Postgres, claves MinIO.
 - **[MIGRATION_MCP_CHEZMOI.md](MIGRATION_MCP_CHEZMOI.md)** — Migración MCP a Chezmoi. Qué gestiona, MCPs globales vs Store ETL.
-- **[MIGRATION_MCP_ITER3.md](MIGRATION_MCP_ITER3.md)** — Layout de servidores MCP (`mcp/servers`), venv, referencias.
+- **[MIGRATION_MCP_ITER3.md](MIGRATION_MCP_ITER3.md)** — Layout de servidores MCP (`ai/runtime/mcp/`), venv.
+- **[GUIA_MCP_AI.md](GUIA_MCP_AI.md)** — Guía práctica: añadir MCPs, skills, verificar.
+- **[CAMBIAR_TOKEN_GITHUB.md](CAMBIAR_TOKEN_GITHUB.md)** — Cambiar token GitHub (PAT classic).
 
 ## Git
 

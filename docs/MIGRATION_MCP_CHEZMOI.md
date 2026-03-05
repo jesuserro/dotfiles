@@ -13,7 +13,7 @@ Este documento describe la migración de la gestión de MCPs (Cursor/Codex) a **
   - `~/.cursor/mcp.json` (MCPs globales: excalidraw, context7, docker, github, fetch)
   - `~/.codex/config.toml`
   - Symlink `~/.secrets/codex.env` → `~/.config/store-etl/secrets.env`
-- Los servidores MCP Python están en `~/dotfiles/mcp/servers/**`; runtime en `~/.config/mcp/`.
+- Los servidores MCP Python están en `~/dotfiles/ai/runtime/mcp/servers/**`; runtime en `~/.config/ai/runtime/`.
 - Secreto canónico: `~/.config/store-etl/secrets.env` (generado desde `secrets.sops.yaml`).
 
 ---
@@ -45,4 +45,4 @@ Para requisitos, uso de Chezmoi, configuración Age+SOPS y estructura de secreto
 - Postgres: npx. Trino: venv mcp. Docker: `~/.codex/mcp/docker` si existe.
 - No eliminar rcup.
 - No tocar zsh, tmux, vim.
-- No mover los servidores MCP de dotfiles.
+- No mover los servidores MCP de `ai/runtime/mcp/`.

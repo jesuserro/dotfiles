@@ -14,6 +14,8 @@
 !.config/store-etl/**
 !.config/mcp
 !.config/mcp/**
+!.config/ai
+!.config/ai/**
 !.secrets
 !.secrets/**
 !.secrets/codex.env

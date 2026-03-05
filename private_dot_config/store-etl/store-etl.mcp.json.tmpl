@@ -9,7 +9,7 @@
       "env": {}
     },
     "trino": {
-      "command": "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python",
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
       "args": ["-m", "trino_mcp"],
       "env": {
         "TRINO_HOST": "localhost",
@@ -21,8 +21,8 @@
       }
     },
     "dagster": {
-      "command": "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python",
-      "args": ["{{ .chezmoi.sourceDir }}/mcp/servers/dagster/server.py"],
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
+      "args": ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/dagster/server.py"],
       "env": {
         "DAGSTER_GRAPHQL_URL": "http://localhost:3000/graphql",
         "DAGSTER_TIMEOUT_SECONDS": "30"
@@ -32,37 +32,37 @@
       "command": "/usr/bin/bash",
       "args": [
         "-lc",
-        "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec {{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python {{ .chezmoi.sourceDir }}/mcp/servers/minio/server.py"
+        "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec {{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python {{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/minio/server.py"
       ],
       "env": {}
     },
     "tempo": {
-      "command": "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python",
-      "args": ["{{ .chezmoi.sourceDir }}/mcp/servers/tempo/server.py"],
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
+      "args": ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/tempo/server.py"],
       "env": {
         "TEMPO_BASE_URL": "http://localhost:3200",
         "TEMPO_TIMEOUT_SECONDS": "30"
       }
     },
     "loki": {
-      "command": "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python",
-      "args": ["{{ .chezmoi.sourceDir }}/mcp/servers/loki/server.py"],
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
+      "args": ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/loki/server.py"],
       "env": {
         "LOKI_BASE_URL": "http://localhost:3100",
         "LOKI_TIMEOUT_SECONDS": "30"
       }
     },
     "prometheus": {
-      "command": "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python",
-      "args": ["{{ .chezmoi.sourceDir }}/mcp/servers/prometheus/server.py"],
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
+      "args": ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/prometheus/server.py"],
       "env": {
         "PROMETHEUS_URL": "http://localhost:9090",
         "PROMETHEUS_TIMEOUT_SECONDS": "15"
       }
     },
     "store_etl_ops": {
-      "command": "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python",
-      "args": ["{{ .chezmoi.sourceDir }}/mcp/servers/store_etl_ops/server.py"],
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
+      "args": ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/store_etl_ops/server.py"],
       "env": {}
     }
   }

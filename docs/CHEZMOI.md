@@ -18,7 +18,7 @@
 | `~/.codex/config.toml` | `dot_codex/config.toml.tmpl` |
 | `~/.config/store-etl/secrets.env` | Generado desde `secrets.sops.yaml` (SOPS) |
 | `~/.secrets/codex.env` | Symlink → `~/.config/store-etl/secrets.env` |
-| `~/.config/mcp/` | Runtime (venv, symlinks) — ver `mcp/README` |
+| `~/.config/ai/runtime/` | Runtime (venv) — ver `ai/README.md` |
 
 ---
 
@@ -137,15 +137,17 @@ Requiere: `sops`, `yq` o `python3` con PyYAML.
 
 - No eliminar rcup (aún gestiona el resto de dotfiles).
 - No tocar zsh, tmux, vim por ahora.
-- Postgres: npx. Trino: `~/.config/mcp/.venv` (trino-mcp). Docker: aún en `~/.codex/mcp/docker` si existe.
+- Postgres: npx. Trino: `~/.config/ai/runtime/.venv` (trino-mcp). Docker: aún en `~/.codex/mcp/docker` si existe.
 
 ---
 
 ## Documentación relacionada
 
+- [GUIA_MCP_AI.md](GUIA_MCP_AI.md) — guía práctica con comandos (añadir MCP, skills, verificar)
 - [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md) — ejemplos prácticos para dar de alta secretos (GitHub, Postgres, MinIO)
 - [TOKEN_GITHUB_GH.md](TOKEN_GITHUB_GH.md) — prioridad del token classic para `gh` CLI (Projects API)
 - [MIGRATION_MCP_CHEZMOI.md](MIGRATION_MCP_CHEZMOI.md) — detalles de la migración MCP
 - [MIGRATION_MCP_ITER3.md](MIGRATION_MCP_ITER3.md) — layout de servidores MCP
 - [codex/README-mcp.md](../codex/README-mcp.md) — MCPs locales y smoke tests
+- [ai/README.md](../ai/README.md) — arquitectura AI Workstation
 - [STRUCTURE.md](../STRUCTURE.md) — árbol del repo

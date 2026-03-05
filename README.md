@@ -1,75 +1,71 @@
 # Dotfiles
 
-My **BETA** dotfiles para Ubuntu 20.04+, Zsh, Oh My Zsh, TMUX y NVim. Este proyecto está en desarrollo; puede haber bugs. **No uses esto si no estás familiarizado con estas herramientas.**
+![Chezmoi](https://img.shields.io/badge/chezmoi-dotfiles-00b0ff?style=flat-square)
+![SOPS](https://img.shields.io/badge/SOPS-secrets-00b0ff?style=flat-square)
+![Age](https://img.shields.io/badge/Age-encryption-00b0ff?style=flat-square)
+![Zsh](https://img.shields.io/badge/Zsh-shell-00b0ff?style=flat-square)
+![TMUX](https://img.shields.io/badge/TMUX-terminal-00b0ff?style=flat-square)
+![Neovim](https://img.shields.io/badge/Neovim-editor-00b0ff?style=flat-square)
+![MCP](https://img.shields.io/badge/MCP-Cursor%20%7C%20Codex-00b0ff?style=flat-square)
 
-## Arquitectura actual
-
-El repo usa **dos sistemas** en paralelo:
-
-| Sistema | Gestiona | Estado |
-|---------|-----------|--------|
-| **Chezmoi + SOPS + Age** | MCPs (Cursor/Codex), secretos, config MCP | ✅ Activo — embrión del futuro sustituto |
-| **RCM (rcup)** | zsh, tmux, vim, git, aliases, etc. | ✅ Activo — será migrado a Chezmoi |
-
-**Chezmoi** es el embrión que sustituirá a RCM/rcup. De momento solo gestiona MCPs y secretos; el resto sigue con rcup.
-
-```
-dotfiles (repo)
- ├── mcp/servers/       → código MCP Python
- ├── dot_codex/         → templates config Codex
- ├── dot_cursor/        → templates MCP Cursor
- └── secrets.sops.yaml   → secretos cifrados (SOPS/Age)
-
-HOME (runtime)
- ├── ~/.config/mcp/     → venv + runtime MCP
- ├── ~/.codex/mcp       → symlink compat
- └── ~/.secrets/        → symlinks a secretos generados
-```
-
-📖 **Documentación:** [docs/](docs/README.md) — índice completo
+Personal dotfiles para Ubuntu 20.04+, Zsh, Oh My Zsh, TMUX y Neovim. Incluye **AI Workstation** (MCPs, skills, secretos) gestionado con Chezmoi.
 
 ---
 
-## Refrescar cambios: comparativa
+## Arquitectura
 
-| Antes (solo RCM) | Ahora (RCM + Chezmoi) |
-|------------------|----------------------|
-| `rcup -v` | `rcup -v` *(zsh, tmux, vim, etc.)* |
-| `source ~/.zshrc` | `source ~/.zshrc` |
-| — | `chezmoi --source=$HOME/dotfiles apply` *(MCPs, secretos)* |
+```mermaid
+flowchart TB
+    subgraph repo [dotfiles repo]
+        direction LR
+        ai["AI<br/>(MCPs + Skills)"] --- cursor[dot_cursor/] --- codex[dot_codex/] --- secrets[secrets.sops.yaml]
+    end
 
-**Equivalente con Chezmoi** para lo que gestiona Chezmoi (MCPs, secretos, config Codex):
+    subgraph home [HOME ~/]
+        direction LR
+        config_ai[.config/ai/] --- dot_cursor[.cursor/] --- dot_codex[.codex/] --- dot_secrets[.secrets/]
+    end
 
-```shell
-# Antes (RCM): 2 comandos para refrescar symlinks y recargar shell
-rcup -v
-source ~/.zshrc
-
-# Ahora (Chezmoi): 1 comando para MCPs y secretos
-chezmoi --source=$HOME/dotfiles apply
+    repo -->|chezmoi apply| home
 ```
 
-Para sincronizar **todo** (RCM + Chezmoi):
-
-```shell
-chezmoi --source=$HOME/dotfiles apply   # MCPs, secretos
-rcup -v                                 # symlinks zsh, tmux, vim...
-source ~/.zshrc
-```
+| Sistema | Gestiona | Doc |
+|---------|----------|-----|
+| **Chezmoi + SOPS + Age** | MCPs, secretos, AI Workstation | [CHEZMOI.md](docs/CHEZMOI.md) |
+| **RCM (rcup)** | zsh, tmux, vim, aliases | [RCM](http://thoughtbot.github.io/rcm/) |
 
 ---
 
 ## Install
 
-Ver [docs/CHEZMOI.md](docs/CHEZMOI.md) y [docs/README.md](docs/README.md).
+```bash
+git clone https://github.com/jesuserro/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+chezmoi --source=$HOME/dotfiles apply
+rcup -v && source ~/.zshrc
+```
 
-**Resumen:** clonar repo → instalar Chezmoi + Age + SOPS → `chezmoi apply` → instalar rcm → `rcup`.
+**Guía completa:** [docs/INSTALL.md](docs/INSTALL.md) — requisitos, Age, SOPS, secretos.
+
+---
+
+## Guías rápidas
+
+| Tarea | Doc |
+|-------|-----|
+| Añadir un **MCP** servidor | [GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md#3-añadir-un-nuevo-mcp-servidor-python) |
+| Añadir un **skill** | [GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md#4-añadir-un-skill) |
+| Añadir un **secreto** (Postgres, MinIO) | [SECRETS_EXAMPLES.md](docs/SECRETS_EXAMPLES.md) |
+| Cambiar **token GitHub** | [CAMBIAR_TOKEN_GITHUB.md](docs/CAMBIAR_TOKEN_GITHUB.md) |
+| Aplicar cambios | `chezmoi --source=$HOME/dotfiles apply` |
 
 ---
 
 ## Update
 
-```shell
+```bash
+cd ~/dotfiles
+git pull
 chezmoi --source=$HOME/dotfiles apply
 rcup -v
 source ~/.zshrc
@@ -77,501 +73,50 @@ source ~/.zshrc
 
 ---
 
-## Secretos (GitHub, Postgres, MinIO)
+## Documentación
 
-Ver [docs/SECRETS_EXAMPLES.md](docs/SECRETS_EXAMPLES.md) — ejemplos prácticos para dar de alta tokens y claves.
+| Doc | Contenido |
+|-----|-----------|
+| [docs/README.md](docs/README.md) | Índice completo |
+| [docs/INSTALL.md](docs/INSTALL.md) | Instalación paso a paso |
+| [docs/GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md) | MCPs, skills, comandos |
+| [docs/CHEZMOI.md](docs/CHEZMOI.md) | Chezmoi + SOPS + Age |
+| [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md) | Git (feat, rel, changelog) |
+| [ai/README.md](ai/README.md) | AI Workstation Framework |
+
+---
+
+## Estructura del repo
+
+```
+dotfiles/
+├── ai/                 # AI Workstation (MCPs, skills)
+├── dot_cursor/         # Templates MCP Cursor
+├── dot_codex/          # Templates Codex
+├── docs/               # Documentación
+├── zsh, tmux, vim/     # Shell, terminal, editor
+└── secrets.sops.yaml   # Secretos cifrados
+```
 
 ---
 
 ## Customizations
 
-`~/dotfiles-local/*.local` — aliases, gitconfig, tmux, vimrc, zshrc. Ver [RCM Documentation](http://thoughtbot.github.io/rcm/).
+`~/dotfiles-local/*.local` — aliases, gitconfig, tmux, vimrc, zshrc. Ver [RCM](http://thoughtbot.github.io/rcm/).
 
 ---
 
-## Git Commands
-
-📖 **Completo:** [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md)
-
-### 🚀 git start-feature
-
-Creates a new feature branch from dev, pushes it to the remote, and checks it out locally.
-
-```shell
-git start-feature 33-export-csv
-```
-
-### 🧼 git merge-cleanup (DEPRECATED)
-
-**⚠️  This command has been deprecated and replaced by `git feat`.**
-
-Merges dev into main, then merges your feature branch into dev, and finally deletes the feature branch (both locally and remotely).
-You can pass the feature name with or without the feature/ prefix.
-
-```shell
-git merge-cleanup 33-export-csv
-# or
-git merge-cleanup feature/33-export-csv
-```
-
-**Migration:** Use `git feat` instead for the new workflow.
-
-### 🤖 git codexpick
-
-Brings changes from a specific Codex commit to your current branch, leaving the changes uncommitted for review. It's especially useful when working with branches generated by Codex/ChatGPT.
-
-```shell
-# Using full commit hash
-git codexpick abc1234def5678
-
-# Using abbreviated hash (minimum 4 characters)
-git codexpick abc1
-```
-
-Features:
-- Verifies you're in a Git repository
-- Checks that the working directory is clean
-- Validates that the commit hash exists
-- Supports abbreviated hashes (minimum 4 characters)
-- Shows the full hash when using an abbreviated one
-- Applies changes without committing (`-n` flag)
-- Shows clear error messages
-- Suggests solutions when there are conflicts
-
-### 🔍 Localizar el hash de un commit en una rama remota de Codex
-
-Para localizar el hash de un commit en una rama remota de Codex, puedes usar los siguientes comandos:
-
-```shell
-# 1. Actualizar la información de las ramas remotas
-git fetch origin
-
-# 2. Ver el último commit de la rama remota de Codex
-git log origin/codex/nombre-de-la-rama -1
-
-# 3. Ver todos los commits de la rama remota de Codex
-git log origin/codex/nombre-de-la-rama
-
-# 4. Ver los commits de forma más compacta
-git log --oneline origin/codex/nombre-de-la-rama
-```
-
-Características:
-- Muestra el hash completo del commit
-- Incluye el mensaje del commit
-- Muestra la fecha y el autor
-- Permite ver el historial completo de commits en la rama
-- Formato compacto disponible con `--oneline`
-
-### 🚀 git feat
-
-Integrates a feature branch into dev, archives the feature branch, and cleans up. This is the new workflow command that replaces the old `git merge-cleanup`.
-
-```shell
-# From any branch (including your feature branch)
-git feat mi-nueva-funcionalidad
-
-# The script automatically:
-# 1. Moves to dev branch
-# 2. Pulls latest changes from dev
-# 3. Merges your feature into dev
-# 4. Archives your feature branch as archive/feature/mi-nueva-funcionalidad
-# 5. Deletes the original feature branch from remote
-# 6. Ends up in dev branch
-```
-
-**Features:**
-- Works from any branch (automatically switches to dev)
-- Detects feature branches with or without `feature/` prefix
-- Checks for potential conflicts before merging
-- Archives feature branches instead of deleting them completely
-- Provides clear error messages and suggestions
-- Validates clean working directory
-
-**Conflict Handling:**
-- Detects potential conflicts before merging
-- If conflicts occur during merge, provides clear instructions
-- Allows manual conflict resolution with helpful guidance
-
-### 🎯 git rel
-
-Creates a release by merging dev into main, running tests, and creating a version tag. This is the new workflow command for production releases.
-
-```shell
-# Release with automatic version (vYYYY.MM.DD_HHMM)
-git rel
-
-# Release with specific version
-git rel 1.2.3
-
-# Release skipping tests (when tests are failing)
-git rel --force
-# or
-git rel --skip-tests
-
-# Release with specific version and skipping tests
-git rel 1.2.3 --force
-
-# Show help
-git rel --help
-```
-
-**Features:**
-- Works from any branch (automatically switches to main)
-- Runs tests automatically (detects multiple frameworks)
-- Creates version tags automatically
-- Supports manual version specification
-- Provides options to skip tests when needed
-- Interactive conflict resolution
-
-**Supported Test Frameworks:**
-- Node.js (`npm test`)
-- Python (`pytest`)
-- Java/Maven (`mvn test`)
-- Java/Gradle (`./gradlew test`)
-- Rust (`cargo test`)
-- Go (`go test ./...`)
-- PHP (`composer test`)
-- Ruby (`bundle exec rspec`)
-- Makefile (`make test` or `make tests`)
-- Custom scripts (`scripts/test.sh`)
-
-**Test Handling:**
-- Automatically detects and runs tests
-- If tests fail, asks if you want to continue
-- Option to skip tests completely with `--force` or `--skip-tests`
-- Provides helpful suggestions for test configuration
-
-**Changelog Generation:**
-- Automatically generates changelogs for each release
-- Creates individual changelog files in `releases/` directory
-- Updates main `CHANGELOG.md` with recent releases
-- Categorizes commits by type (feat, fix, docs, etc.)
-- Maintains last 5 releases in main changelog
-
-**Conflict Resolution:**
-- If `git rel` fails due to conflicts, use `git rel-resolve` to handle them automatically
-- Detects and cleans up problematic files (like untracked directories)
-- Provides step-by-step guidance for manual conflict resolution
-- Automatically generates tags and changelogs after conflict resolution
-
-### 🔧 git rel-resolve
-
-Automatically resolves conflicts that occur during `git rel` and generates the missing tag and changelog. This is essential when the normal release process fails due to merge conflicts.
-
-```shell
-# Resolve conflicts and complete the release process
-git rel-resolve
-
-# Skip merge (if already resolved manually) and only generate tag/changelog
-git rel-resolve --skip-merge
-
-# Use a specific tag instead of auto-generated one
-git rel-resolve --tag v1.2.3
-
-# Show help
-git rel-resolve --help
-```
-
-**When to use:**
-- When `git rel` fails with merge conflicts
-- When you've manually resolved conflicts and need to complete the release
-- When you need to regenerate tags and changelogs after a failed release
-
-**What it does automatically:**
-1. **🧹 Cleans problematic files** (like untracked directories that cause conflicts)
-2. **🔁 Attempts the merge** of `dev` → `main`
-3. **🏷️ Creates the tag** automatically (format: `vYYYY.MM.DD_HHMM`)
-4. **📝 Generates the changelog** using the corrected script
-5. **📤 Pushes all changes** to the repository
-
-**Complete workflow for conflicts:**
-```shell
-# 1. Try normal release
-git rel
-
-# 2. If it fails with conflicts, use the resolver
-git rel-resolve
-
-# 3. If the resolver detects conflicts, it will guide you to resolve them manually
-# 4. After manual resolution, complete the process:
-git rel-resolve --skip-merge
-```
-
-### 📝 git changelog
-
-Generates professional changelogs for releases, categorizing commits and maintaining both individual release files and a main changelog.
-
-```shell
-# Generate changelog for a specific tag (auto-detects previous tag)
-git changelog v1.2.3
-
-# Generate changelog between two specific tags
-git changelog v1.2.3 v1.2.2
-
-# Show help
-git changelog --help
-```
-
-**Features:**
-- Automatically detects previous tag if not specified
-- Categorizes commits by type (feat, fix, docs, chore, etc.)
-- Creates individual changelog files in `releases/` directory
-- Updates main `CHANGELOG.md` with recent releases
-- Maintains professional formatting and structure
-- Supports Conventional Commits format
-
-**Generated Structure:**
-```
-proyecto/
-├── CHANGELOG.md                    # Last 5 releases (quick view)
-└── releases/                       # Complete history by release
-    ├── v2024.01.15_1430.md
-    ├── v2024.01.20_0915.md
-    └── v2024.01.25_1645.md
-```
-
-**Example Output:**
-```markdown
-# Release v2024.01.15_1430
-
-**Fecha:** 2024-01-15
-
-## Changes
-
-### Added
-- feat(auth): implement OAuth2 authentication system
-- feat(api): add user profile management endpoints
-
-### Fixed
-- fix(mobile): resolve login timeout issue
-
-### Chores
-- chore(deps): update security dependencies
-
-## Technical Details
-- Tag: v2024.01.15_1430
-- Previous tag: v2024.01.10_0915
-- Total commits: 15
-```
-
-### 📝 git-save
-
-Enhanced script to perform add, commit, and push in a single command, with messages formatted according to the conventional standard.
-
-```shell
-# Basic usage (quick commit)
-git-save
-
-# With custom description
-git-save "update configuration"
-
-# With specific type
-git-save feat "add Google login"
-
-# With type and scope
-git-save fix api "fix authentication endpoint error"
-```
-
-### 🔄 git-cc
-
-Script to create commits with conventional format, allowing you to specify type, scope, and description.
-
-```shell
-# With type and description
-git-cc feat "new feature"
-
-# With type, scope, and description
-git-cc fix api "fix authentication error"
-```
-
-### 📊 Other Useful Git Aliases
-
-| Alias | Command | Description |
-|-------|---------|-------------|
-| `git prettylog` | `git log --color=always --pretty=format:"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset"` | Shows commit history with improved formatting |
-| `git diffstat` | `git diff --stat --color=always` | Shows change statistics |
-| `git taglist` | `git for-each-ref --sort=-creatordate --format='🏷️  %(refname:short) | %(creatordate:format:%Y-%m-%d %H:%M) | %(objectname:short)'` | Lists tags with improved formatting |
-| `git prettysince` | `git log --color=always --pretty=format:"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset"` | Shows commits added since a branch |
-| `git prettyuntil` | `git log --color=always --pretty=format:"%C(auto)%h %Cblue%ad %Cgreen%an %C(yellow)%s%Creset"` | Shows commits that need to be updated |
-| `git rel-resolve` | `bash ~/dotfiles/scripts/git_rel_resolve.sh` | Resolves conflicts from failed `git rel` and generates missing tag/changelog |
-
-## Oh My ZSH Plugins
-
-Here are some popular plugins to enhance your `Oh My Zsh` experience:
-
-| Plugin                          | Git Command                                                                                                                    | Description                                                                                                                |
-|---------------------------------|---------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| autoupdate                      | `git clone https://github.com/TamCore/autoupdate-oh-my-zsh-plugins ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/autoupdate`  | Automatically updates `oh-my-zsh` and its plugins.                                                                         |
-| aws                             | `git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/aws ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/aws`       | Adds auto-completion for AWS CLI commands.                                                                                 |
-| docker                          | `git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/docker ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/docker` | Adds auto-completion and aliases for Docker.                                                                               |
-| gh                              | `git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/gh ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/gh`         | Adds auto-completion and aliases for GitHub CLI.                                                                           |
-| vi-mode                         | `git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/vi-mode ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/vi-mode` | Adds vi keybindings for command line editing.                                                                              |
-| wp-cli                          | `git clone https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/wp-cli ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/wp-cli` | Adds auto-completion for WP-CLI commands.                                                                                  |
-| z                               | `git clone https://github.com/rupa/z ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/z`                                          | Quickly navigates to directories you use frequently.                                                                       |
-| zsh-autosuggestions             | `git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions` | Suggests commands based on history as you type.                                                                            |
-| zsh-completions                 | `git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-completions`         | Provides additional completions for many commands.                                                                         |
-| zsh-history-substring-search    | `git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-history-substring-search` | Searches your command history by substring.                                                                                |
-| zsh-nvm                         | `git clone https://github.com/lukechilds/zsh-nvm ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-nvm`                       | Manages Node.js versions.                                                                                                  |
-| zsh-syntax-highlighting         | `git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting` | Highlights syntax in your command line.  |
-
-Installing Github Copilot (gh) extension:
-
-```shell
-sudo apt update -y \
-&& sudo apt install -y gh
-
-gh extension install github/gh-copilot
-```
-
-## Cursor CLI Integration
-
-### Installation
-
-Cursor CLI has been integrated into these dotfiles to provide AI-powered development assistance directly from the terminal.
-
-**Installation command:**
-```shell
-curl https://cursor.com/install -fsS | bash
-```
-
-**Expected output:**
-```
-Cursor Agent Installer
-
-✓ Detected linux/x64
-✓ Package downloaded and extracted
-✓ Package installed successfully
-✓ Bin directory ready
-✓ Symlink created
-
-✨ Installation Complete!
-
-Next Steps
-
-1. Add ~/.local/bin to your PATH:
-   For zsh:
-   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-   source ~/.zshrc
-
-2. Start using Cursor Agent:
-   cursor-agent
-
-Happy coding! 🚀
-```
-
-### Configuration
-
-The dotfiles automatically configure Cursor CLI with:
-
-1. **PATH Configuration**: `~/.local/bin` is added to PATH in `.zshrc` (line 254)
-2. **Useful Aliases**: Added to `aliases` file:
-   - `cursor.` - Open Cursor in current directory
-   - `cur` - Shortcut for `cursor-agent`
-   - `cura` - Show Cursor CLI help
-
-### Usage Examples
-
-**Basic commands:**
-```shell
-# Open Cursor in current directory
-cursor.
-
-# Start Cursor Agent
-cur
-
-# Show help
-cura
-```
-
-**Practical examples:**
-```shell
-# Analyze and refactor code
-cur "Analyze this Python project and suggest performance improvements"
-
-# Generate code from scratch
-cur "Create a REST API with FastAPI including JWT authentication and CRUD operations"
-
-# Debug and fix errors
-cur "This code has a bug, help me find and fix it"
-
-# Generate documentation
-cur "Generate complete documentation for this project including README and docstrings"
-
-# Security audit
-cur "Review this code for security vulnerabilities and suggest fixes"
-```
-
-**Authentication:**
-```shell
-# Login to Cursor
-cur login
-
-# Check authentication status
-cur status
-
-# Logout
-cur logout
-```
-
-**Shell Integration:**
-```shell
-# Install shell integration for better terminal experience
-cur install-shell-integration
-
-# Uninstall shell integration
-cur uninstall-shell-integration
-```
-
-### Features
-
-- **AI-Powered Development**: Get intelligent code suggestions and assistance
-- **Multi-Language Support**: Works with any programming language
-- **Context Awareness**: Maintains context of your current terminal session
-- **Script Integration**: Can be integrated into development scripts
-- **Background Mode**: Run in background for continuous assistance
-- **Model Selection**: Choose between different AI models (GPT-5, Sonnet-4, etc.)
-
-### Advanced Usage
-
-**Background mode:**
-```shell
-cur --background
-```
-
-**Print mode (for scripts):**
-```shell
-cur --print "Generate a Dockerfile for this Node.js app"
-```
-
-**Specific model:**
-```shell
-cur --model gpt-5 "Optimize this database query"
-```
-
-**Force mode (allows all commands):**
-```shell
-cur --force "Refactor this entire codebase"
-```
-
-## Termux Installation
-
-```shell
-curl 'https://raw.githubusercontent.com/jesuserro/dotfiles/main/termux/install.sh' | sh
-```
-
 ## Resources
 
-- [Chezmoi](https://www.chezmoi.io/) — dotfile manager
-- [SOPS](https://github.com/getsops/sops) — secretos cifrados
-- [Age](https://github.com/FiloSottile/age) — cifrado moderno
-- [Install ZSH in Ubuntu](https://www.tecmint.com/install-oh-my-zsh-in-ubuntu/)
-- [Oh My Zsh Plugins](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins)
-- [TMUX Configuration](https://github.com/gpakosz/.tmux)
-- [Neovim](https://neovim.io/)
-- [Vim Color Schemes](https://vimcolorschemes.com/)
+| Recurso | Enlace |
+|---------|--------|
+| Chezmoi | [chezmoi.io](https://www.chezmoi.io/) |
+| SOPS | [github.com/getsops/sops](https://github.com/getsops/sops) |
+| Age | [github.com/FiloSottile/age](https://github.com/FiloSottile/age) |
+| RCM | [thoughtbot.github.io/rcm](http://thoughtbot.github.io/rcm/) |
 
-## Inspired by
+---
 
-- [thoughtbot/dotfiles](https://github.com/thoughtbot/dotfiles)
-- [thoughtbot/rcm](https://github.com/thoughtbot/rcm)
+## License
+
+MIT

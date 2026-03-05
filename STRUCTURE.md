@@ -1,52 +1,99 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-02 (post Iteración 5 MCP — limpieza final)
+**Generated:** 2026-03-05 14:05:31
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
 📁 .
 ├── 📁 .chezmoiscripts
-│   └── 📄 run_after_00_gen_secrets.sh.tmpl
+│   ├── 📄 run_after_00_gen_secrets.sh.tmpl
+│   ├── 📄 run_after_10_link_store_etl_mcp.sh.tmpl
+│   ├── 📄 run_after_10_setup_ai_runtime.sh.tmpl
+│   └── 📄 run_after_11_link_ai_assets.sh.tmpl
 ├── 📁 .github
 │   └── 📁 workflows
 │       └── ⚙️ release.yml
+├── 📁 ai
+│   ├── 📁 adapters
+│   │   ├── 📁 claude
+│   │   │   └── 📝 README.md
+│   │   ├── 📁 codex
+│   │   │   └── 📝 README.md
+│   │   └── 📁 cursor
+│   │       └── 📝 README.md
+│   ├── 📁 assets
+│   │   ├── 📁 prompts
+│   │   │   └── 📄 .keep
+│   │   ├── 📁 rules
+│   │   │   └── 📄 .keep
+│   │   └── 📁 skills
+│   │       └── 📁 excalidraw-diagram
+│   │           ├── 📁 references
+│   │           │   ├── 📝 color-palette.md
+│   │           │   ├── 📝 element-templates.md
+│   │           │   ├── 📝 json-schema.md
+│   │           │   ├── ⚙️ pyproject.toml
+│   │           │   ├── 🐍 render_excalidraw.py
+│   │           │   └── 📄 render_template.html
+│   │           ├── 📄 .gitignore
+│   │           ├── 📝 README.md
+│   │           └── 📝 SKILL.md
+│   ├── 📁 runtime
+│   │   ├── 📁 mcp
+│   │   │   ├── 📁 servers
+│   │   │   │   ├── 📁 dagster
+│   │   │   │   │   └── 🐍 server.py
+│   │   │   │   ├── 📁 loki
+│   │   │   │   │   └── 🐍 server.py
+│   │   │   │   ├── 📁 minio
+│   │   │   │   │   └── 🐍 server.py
+│   │   │   │   ├── 📁 prometheus
+│   │   │   │   │   └── 🐍 server.py
+│   │   │   │   ├── 📁 store_etl_ops
+│   │   │   │   │   └── 🐍 server.py
+│   │   │   │   └── 📁 tempo
+│   │   │   │       └── 🐍 server.py
+│   │   │   └── 📄 requirements.txt
+│   │   └── 📄 .keep
+│   └── 📝 README.md
 ├── 📁 codex
 │   ├── 📝 README-mcp.md
 │   ├── 📝 README.md
 │   └── ⚙️ config.toml
 ├── 📁 docs
-│   ├── 📝 CHEZMOI.md
+│   ├── 📝 CAMBIAR_TOKEN_GITHUB.md
+│   ├── 📝 CHEZMOI.md
 │   ├── 📝 GIT_WORKFLOW.md
-│   ├── 📝 SECRETS_EXAMPLES.md
-│   ├── 📝 MIGRATION_MCP_CHEZMOI.md
-│   └── 📝 MIGRATION_MCP_ITER3.md
+│   ├── 📝 GUIA_MCP_AI.md
+│   ├── 📝 MIGRATION_MCP_CHEZMOI.md
+│   ├── 📝 MIGRATION_MCP_ITER3.md
+│   ├── 📝 README.md
+│   ├── 📝 SECRETS_EXAMPLES.md
+│   ├── 📝 TOKEN_GITHUB_GH.md
+│   └── 📝 VERIFICAR_MCP_STORE_ETL.md
 ├── 📁 dot_codex
-│   └── 📄 config.toml.tmpl
+│   └── 📄 config.toml.tmpl
+├── 📁 dot_config
+│   └── 📁 mcp
+│       ├── 📁 servers
+│       │   └── 📄 .keep
+│       └── 📄 .keep
 ├── 📁 dot_cursor
 │   └── 📄 mcp.json.tmpl
 ├── 📁 git_hooks
 │   └── 📄 pre-commit
 ├── 📁 local
-├── 📁 mcp
-│   ├── 📁 servers
-│   │   ├── 📁 dagster
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 loki
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 minio
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 prometheus
-│   │   │   └── 🐍 server.py
-│   │   ├── 📁 store_etl_ops
-│   │   │   └── 🐍 server.py
-│   │   └── 📁 tempo
-│   │       └── 🐍 server.py
-│   └── 📄 requirements.txt
 ├── 📁 powerlevel10k
 │   └── 🔧 p10k.zsh
 ├── 📁 private_dot_config
 │   └── 📁 store-etl
+│       └── 📄 store-etl.mcp.json.tmpl
+├── 📁 private_proyectos
+│   └── 📁 store-etl
+│       └── 📁 dot_cursor
+│           └── 📄 mcp.json.tmpl
 ├── 📁 releases
+│   ├── 📝 branch_feature_1-migration-to-chezmoi-sops-age.md
 │   ├── 📝 branch_feature_test-branch-changelog.md
 │   ├── 📝 v2025.12.07_1051.md
 │   └── 📝 v2025.12.08_1037.md
@@ -118,6 +165,8 @@
 ├── 📄 gitmessage
 ├── 📄 rcrc
 ├── ⚙️ secrets.sops.yaml
+├── 📄 secrets.sops.yaml.new
+├── 📄 symlink_dot_codex_mcp
 ├── 📄 symlink_dot_secrets_codex.env
 ├── 📄 tmux.conf
 ├── 📄 vimrc

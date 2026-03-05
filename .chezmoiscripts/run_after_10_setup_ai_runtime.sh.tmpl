@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Crea venv neutro en ~/.config/mcp/.venv para MCPs Python.
+# Crea venv en ~/.config/ai/runtime/.venv para MCPs Python.
 # Se ejecuta después de apply. Requiere: python3.
 set -e
 
-VENV_DIR="$HOME/.config/mcp/.venv"
-REQUIREMENTS="{{ .chezmoi.sourceDir }}/mcp/requirements.txt"
+VENV_DIR="$HOME/.config/ai/runtime/.venv"
+REQUIREMENTS="{{ .chezmoi.sourceDir }}/ai/runtime/mcp/requirements.txt"
 
+mkdir -p "$(dirname "$VENV_DIR")"
 if [ ! -d "$VENV_DIR" ]; then
   python3 -m venv "$VENV_DIR"
   "$VENV_DIR/bin/pip" install --upgrade pip

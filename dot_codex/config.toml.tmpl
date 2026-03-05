@@ -33,7 +33,7 @@ enabled = true
 # MCP: Trino
 # ─────────────────────────────────────────────
 [mcp_servers.trino]
-command = "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python"
+command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
 args = ["-m", "trino_mcp"]
 enabled = true
 
@@ -65,8 +65,8 @@ enabled = true
 # MCP: Dagster (wrapper stdio local)
 # ─────────────────────────────────────────────
 [mcp_servers.dagster]
-command = "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python"
-args = ["{{ .chezmoi.sourceDir }}/mcp/servers/dagster/server.py"]
+command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
+args = ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/dagster/server.py"]
 enabled = true
 
 [mcp_servers.dagster.env]
@@ -78,15 +78,15 @@ DAGSTER_TIMEOUT_SECONDS = "30"
 # ─────────────────────────────────────────────
 [mcp_servers.minio]
 command = "/usr/bin/bash"
-args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec {{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python {{ .chezmoi.sourceDir }}/mcp/servers/minio/server.py"]
+args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec {{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python {{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/minio/server.py"]
 enabled = true
 
 # ─────────────────────────────────────────────
 # MCP: OTEL/Tempo (wrapper stdio local)
 # ─────────────────────────────────────────────
 [mcp_servers.tempo]
-command = "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python"
-args = ["{{ .chezmoi.sourceDir }}/mcp/servers/tempo/server.py"]
+command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
+args = ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/tempo/server.py"]
 enabled = true
 
 [mcp_servers.tempo.env]
@@ -97,8 +97,8 @@ TEMPO_TIMEOUT_SECONDS = "30"
 # MCP: Loki (wrapper stdio local)
 # ─────────────────────────────────────────────
 [mcp_servers.loki]
-command = "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python"
-args = ["{{ .chezmoi.sourceDir }}/mcp/servers/loki/server.py"]
+command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
+args = ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/loki/server.py"]
 enabled = true
 
 [mcp_servers.loki.env]
@@ -109,8 +109,8 @@ LOKI_TIMEOUT_SECONDS = "30"
 # MCP: Prometheus (OTEL metrics)
 # ─────────────────────────────────────────────
 [mcp_servers.prometheus]
-command = "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python"
-args = ["{{ .chezmoi.sourceDir }}/mcp/servers/prometheus/server.py"]
+command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
+args = ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/prometheus/server.py"]
 enabled = true
 
 [mcp_servers.prometheus.env]
@@ -121,8 +121,8 @@ PROMETHEUS_TIMEOUT_SECONDS = "15"
 # MCP: Store-ETL Ops (curated make wrapper)
 # ─────────────────────────────────────────────
 [mcp_servers.store_etl_ops]
-command = "{{ .chezmoi.homeDir }}/.config/mcp/.venv/bin/python"
-args = ["{{ .chezmoi.sourceDir }}/mcp/servers/store_etl_ops/server.py"]
+command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
+args = ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/store_etl_ops/server.py"]
 enabled = true
 
 # ─────────────────────────────────────────────
