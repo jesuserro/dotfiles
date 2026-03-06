@@ -197,6 +197,70 @@ ups() {
     _ups_info "Oh My Zsh no está instalado, omitiendo actualización"
   fi
   
+  # 🔌 Sección: Actualización de servidores MCP
+  _ups_section "🔌 Actualización de servidores MCP"
+  
+  # 1. excalidraw-mcp: repo git en ~/mcp-servers/excalidraw-mcp
+  if [ -d "$HOME/mcp-servers/excalidraw-mcp/.git" ]; then
+    _ups_progress "Actualizando excalidraw-mcp (git pull + build)..."
+    local mcp_start=$(date +%s)
+    if (cd "$HOME/mcp-servers/excalidraw-mcp" && git pull --rebase 2>/dev/null && (pnpm install 2>/dev/null || npm install 2>/dev/null) && (pnpm run build 2>/dev/null || npm run build 2>/dev/null)); then
+      local mcp_time=$(($(date +%s) - mcp_start))
+      _ups_success "excalidraw-mcp actualizado (${mcp_time}s)"
+    else
+      _ups_warning "No se pudo actualizar excalidraw-mcp (puede requerir intervención manual)"
+    fi
+  else
+    _ups_info "excalidraw-mcp no encontrado en ~/mcp-servers/excalidraw-mcp, omitiendo"
+  fi
+  
+  # 2. Servidores npm en ~/.config/mcp/servers/* (docker, postgres, etc.)
+  if [ -d "$HOME/.config/mcp/servers" ]; then
+    for mcp_dir in "$HOME/.config/mcp/servers"/*/; do
+      [ -d "$mcp_dir" ] || continue
+      local pkg_json="$mcp_dir/package.json"
+      if [ -f "$pkg_json" ]; then
+        local mcp_name=$(basename "$mcp_dir")
+        _ups_progress "Actualizando MCP npm: $mcp_name..."
+        local mcp_start=$(date +%s)
+        if (cd "$mcp_dir" && npm update 2>/dev/null); then
+          local mcp_time=$(($(date +%s) - mcp_start))
+          _ups_success "MCP $mcp_name actualizado (${mcp_time}s)"
+        else
+          _ups_warning "No se pudo actualizar MCP $mcp_name"
+        fi
+      fi
+    done
+  fi
+  
+  # 3. Herramienta uv: mcp-server-fetch (install instala si no existe, actualiza si ya está)
+  if command -v uv >/dev/null 2>&1; then
+    _ups_progress "Actualizando uv tool: mcp-server-fetch..."
+    local mcp_start=$(date +%s)
+    if uv tool install mcp-server-fetch 2>/dev/null; then
+      local mcp_time=$(($(date +%s) - mcp_start))
+      _ups_success "mcp-server-fetch actualizado (${mcp_time}s)"
+    else
+      _ups_warning "No se pudo instalar/actualizar mcp-server-fetch"
+    fi
+  fi
+  
+  # 4. Runtime Python MCP (venv en ~/.config/ai/runtime)
+  local ai_venv="$HOME/.config/ai/runtime/.venv"
+  local ai_req="$HOME/dotfiles/ai/runtime/mcp/requirements.txt"
+  if [ -f "$ai_venv/bin/pip" ] && [ -f "$ai_req" ]; then
+    _ups_progress "Actualizando dependencias Python MCP (dagster, minio, etc.)..."
+    local mcp_start=$(date +%s)
+    if "$ai_venv/bin/pip" install -r "$ai_req" -U -q 2>/dev/null; then
+      local mcp_time=$(($(date +%s) - mcp_start))
+      _ups_success "Dependencias Python MCP actualizadas (${mcp_time}s)"
+    else
+      _ups_warning "Error al actualizar dependencias Python MCP"
+    fi
+  fi
+  
+  _ups_info "context7 y github usan npx: se obtiene la última versión al ejecutarse"
+  
   # 🔄 Sección: Reinicio de servicios
   _ups_section "🔄 Reinicio de servicios"
   if command -v apache2 >/dev/null 2>&1; then
