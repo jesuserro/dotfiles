@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-05 17:44:54
+**Generated:** 2026-03-06 11:13:41
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -10,6 +10,9 @@
 │   ├── 📄 run_after_10_link_store_etl_mcp.sh.tmpl
 │   ├── 📄 run_after_10_setup_ai_runtime.sh.tmpl
 │   └── 📄 run_after_11_link_ai_assets.sh.tmpl
+├── 📁 .cursor
+│   └── 📁 rules
+│       └── 📄 aliases-conventions.mdc
 ├── 📁 .github
 │   └── 📁 workflows
 │       └── ⚙️ release.yml
@@ -27,17 +30,19 @@
 │   │   ├── 📁 rules
 │   │   │   └── 📄 .keep
 │   │   └── 📁 skills
-│   │       └── 📁 excalidraw-diagram
-│   │           ├── 📁 references
-│   │           │   ├── 📝 color-palette.md
-│   │           │   ├── 📝 element-templates.md
-│   │           │   ├── 📝 json-schema.md
-│   │           │   ├── ⚙️ pyproject.toml
-│   │           │   ├── 🐍 render_excalidraw.py
-│   │           │   ├── 📄 render_template.html
-│   │           │   └── 🔒 uv.lock
-│   │           ├── 📄 .gitignore
-│   │           ├── 📝 README.md
+│   │       ├── 📁 excalidraw-diagram
+│   │       │   ├── 📁 references
+│   │       │   │   ├── 📝 color-palette.md
+│   │       │   │   ├── 📝 element-templates.md
+│   │       │   │   ├── 📝 json-schema.md
+│   │       │   │   ├── ⚙️ pyproject.toml
+│   │       │   │   ├── 🐍 render_excalidraw.py
+│   │       │   │   ├── 📄 render_template.html
+│   │       │   │   └── 🔒 uv.lock
+│   │       │   ├── 📄 .gitignore
+│   │       │   ├── 📝 README.md
+│   │       │   └── 📝 SKILL.md
+│   │       └── 📁 ups-workflow
 │   │           └── 📝 SKILL.md
 │   ├── 📁 runtime
 │   │   ├── 📁 mcp
@@ -81,6 +86,7 @@
 │   ├── 📝 README.md
 │   ├── 📝 SECRETS_EXAMPLES.md
 │   ├── 📝 TOKEN_GITHUB_GH.md
+│   ├── 📝 UPS.md
 │   └── 📝 VERIFICAR_MCP_STORE_ETL.md
 ├── 📁 dot_codex
 │   └── 📄 config.toml.tmpl

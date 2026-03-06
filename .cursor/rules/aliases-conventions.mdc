@@ -1,0 +1,32 @@
+---
+description: Convenciones para editar el archivo aliases (función ups, helpers, alias)
+globs: aliases
+alwaysApply: false
+---
+
+# Convenciones para aliases
+
+Al editar el archivo `aliases`, mantener estas convenciones.
+
+## Función ups() y helpers
+
+- **Prefijo interno:** Variables y funciones auxiliares usan `_ups_` (ej: `_ups_green`, `_ups_section`).
+- **Helpers de output:** Usar `_ups_section()`, `_ups_success()`, `_ups_error()`, `_ups_info()`, `_ups_warning()`, `_ups_progress()` en lugar de `echo` directo con códigos ANSI.
+- **Errores:** Críticos → `((errors++))` y `error_messages+=("...")`. No críticos → `_ups_warning()`.
+
+## Patrón de sección
+
+```bash
+_ups_section "🔌 Título"
+_ups_progress "Paso..."
+local start=$(date +%s)
+if comando; then
+  _ups_success "OK ($(($(date +%s) - start))s)"
+else
+  _ups_warning "Falló"
+fi
+```
+
+## Documentación
+
+Tras cambiar la estructura de `ups`, actualizar [docs/UPS.md](docs/UPS.md).
