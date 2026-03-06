@@ -204,7 +204,7 @@ ups() {
   if [ -d "$HOME/mcp-servers/excalidraw-mcp/.git" ]; then
     _ups_progress "Actualizando excalidraw-mcp (git pull + build)..."
     local mcp_start=$(date +%s)
-    if (cd "$HOME/mcp-servers/excalidraw-mcp" && git pull --rebase 2>/dev/null && (pnpm install 2>/dev/null || npm install 2>/dev/null) && (pnpm run build 2>/dev/null || npm run build 2>/dev/null)); then
+    if (cd "$HOME/mcp-servers/excalidraw-mcp" && git pull --rebase --autostash 2>/dev/null && (pnpm install 2>/dev/null || npm install 2>/dev/null) && (pnpm run build 2>/dev/null || npm run build 2>/dev/null)); then
       local mcp_time=$(($(date +%s) - mcp_start))
       _ups_success "excalidraw-mcp actualizado (${mcp_time}s)"
     else
