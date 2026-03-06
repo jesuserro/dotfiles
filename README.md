@@ -53,6 +53,7 @@ rcup -v && source ~/.zshrc
 
 | Tarea | Doc |
 |-------|-----|
+| **Actualizar sistema** (APT, MCPs, Oh My Zsh) | [UPS.md](docs/UPS.md) |
 | Añadir un **MCP** servidor | [GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md#3-añadir-un-nuevo-mcp-servidor-python) |
 | Añadir un **skill** | [GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md#4-añadir-un-skill) |
 | Añadir un **secreto** (Postgres, MinIO) | [SECRETS_EXAMPLES.md](docs/SECRETS_EXAMPLES.md) |
@@ -71,6 +72,8 @@ rcup -v
 source ~/.zshrc
 ```
 
+**Actualización integral del sistema:** `ups` — APT, npm, Oh My Zsh, MCPs. Ver [docs/UPS.md](docs/UPS.md).
+
 ---
 
 ## Documentación
@@ -78,6 +81,7 @@ source ~/.zshrc
 | Doc | Contenido |
 |-----|-----------|
 | [docs/README.md](docs/README.md) | Índice completo |
+| [docs/UPS.md](docs/UPS.md) | Comando `ups` — actualización del sistema |
 | [docs/INSTALL.md](docs/INSTALL.md) | Instalación paso a paso |
 | [docs/GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md) | MCPs, skills, comandos |
 | [docs/CHEZMOI.md](docs/CHEZMOI.md) | Chezmoi + SOPS + Age |

@@ -115,3 +115,19 @@ chezmoi --source=$HOME/dotfiles apply
 | Hub skills      | `ai/assets/skills/`       | `~/.config/ai/skills` (symlink) |
 | Config Cursor   | `dot_cursor/mcp.json.tmpl` | `~/.cursor/mcp.json`          |
 | Config Codex    | `dot_codex/config.toml.tmpl` | `~/.codex/config.toml`     |
+
+---
+
+## 7. Actualización de MCPs con `ups`
+
+El alias `ups` incluye una sección que actualiza los servidores MCP:
+
+| MCP / Origen | Qué hace `ups` |
+|--------------|----------------|
+| **excalidraw** | `~/mcp-servers/excalidraw-mcp` — `git pull` + `pnpm install` + `pnpm run build` |
+| **docker, postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` |
+| **fetch** | `uv tool install mcp-server-fetch` (instala o actualiza) |
+| **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
+| **context7, github** | Usan `npx` — obtienen la última versión al ejecutarse (no requieren actualización) |
+
+Tras ejecutar `ups`, aplica los cambios del shell con: `source ~/.zshrc`
