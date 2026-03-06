@@ -4,6 +4,10 @@
 
 - **[INSTALL.md](INSTALL.md)** — Instalación paso a paso (clonar, Age, SOPS, apply).
 
+## Comandos
+
+- **[UPS.md](UPS.md)** — Comando `ups`: actualización integral (APT, npm, Oh My Zsh, MCPs).
+
 ## Chezmoi + SOPS + Age
 
 - **[CHEZMOI.md](CHEZMOI.md)** — Referencia principal. Requisitos, uso, configuración Age+SOPS, estructura de secretos.
