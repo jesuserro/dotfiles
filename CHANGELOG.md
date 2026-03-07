@@ -2,31 +2,14 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.06_1117] - 2026-03-06
+## [v2026.03.07_1206] - 2026-03-07
 
 ## Changes
-### Added
-- 2026-03-06 10:56 [8149fda](https://github.com/jesuserro/dotfiles/commit/8149fda) feat(ups): add update process for MCP servers in `ups` alias and document in GUIA_MCP_AI.md (Jesús Erro)
-  - Implemented a new section in the `ups` alias to automate updates for various MCP servers, including `excalidraw-mcp`, npm servers, `mcp-server-fetch`, and Python dependencies.
-  - Updated `GUIA_MCP_AI.md` to include detailed instructions on the new update process for MCPs, enhancing user guidance on managing these components.
-
 ### Fixed
-- 2026-03-06 11:08 [a63a92a](https://github.com/jesuserro/dotfiles/commit/a63a92a) fix(ups): update git pull command in `ups` alias to use --autostash (Jesús Erro)
-  - Modified the `ups` alias to include the `--autostash` option in the `git pull` command for better handling of local changes during updates.
-  - This change improves the update process for the `excalidraw-mcp` server by preventing potential merge conflicts.
-
-### Documentation
-- 2026-03-06 11:17 [8f1b03b](https://github.com/jesuserro/dotfiles/commit/8f1b03b) docs(changelog): add feature changelog for ups alias enhancements with AI upgrades (Jesús Erro)
-  - Introduced a new changelog file detailing the integration of enhancements to the `ups` alias, including updates to the git pull command, new skill documentation, and the addition of an update process for MCP servers.
-  - Documented four key commits that improve the functionality and usability of the `ups` command, ensuring better user guidance and system update processes.
-- 2026-03-06 11:15 [50ce8bd](https://github.com/jesuserro/dotfiles/commit/50ce8bd) docs(skills): add ups-workflow skill documentation and update UPS.md (Jesús Erro)
-  - Introduced a new skill documentation for `ups-workflow`, detailing the development and extension of the `ups` system update alias.
-  - Added conventions for editing the `aliases` file and guidelines for error handling within the `ups` function.
-  - Updated `UPS.md` to include a reference to the new `ups-workflow` skill, enhancing the overall documentation for the `ups` command.
-- 2026-03-06 11:08 [1f2795d](https://github.com/jesuserro/dotfiles/commit/1f2795d) docs(ups): enhance documentation for `ups` command and add new `UPS.md` file (Jesús Erro)
-  - Updated `README.md` to include a new section for the `ups` command, linking to detailed documentation in `UPS.md`.
-  - Created `UPS.md` to provide comprehensive instructions on the `ups` command, detailing its functionality for system updates including APT, npm, and MCP servers.
-  - Improved clarity in `docs/README.md` by adding a dedicated section for commands and their descriptions.
+- 2026-03-07 12:06 [1e9e8d2](https://github.com/jesuserro/dotfiles/commit/1e9e8d2) fix(release): rename job and add release existence check (Jesús Erro)
+  - Renamed the release job from 'create-release' to 'release' for clarity.
+  - Implemented a check to determine if a release already exists for a given tag, preventing duplicate releases.
+  - Added conditional steps to skip release creation if it already exists, improving workflow efficiency.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
