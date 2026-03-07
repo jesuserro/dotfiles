@@ -1,4 +1,4 @@
-name: Create Release
+name: Release
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - 'v*'  # Se dispara cuando se crea un tag que empieza con 'v'
 
 jobs:
-  create-release:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write  # Necesario para crear releases
@@ -24,6 +24,29 @@ jobs:
           TAG_NAME=${GITHUB_REF#refs/tags/}
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "Tag name: $TAG_NAME"
+
+      - name: Check if release already exists
+        id: release_check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tagName = '${{ steps.tag.outputs.tag_name }}';
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tagName,
+              });
+              core.setOutput('exists', 'true');
+              console.log(`Release for tag ${tagName} already exists, skipping creation.`);
+            } catch (err) {
+              if (err.status === 404) {
+                core.setOutput('exists', 'false');
+                console.log(`No release for tag ${tagName} yet, will create.`);
+              } else {
+                throw err;
+              }
+            }
       
       - name: Get previous tag
         id: previous_tag
@@ -416,6 +439,7 @@ jobs:
           head -n 20 "releases/${TAG_NAME}.md"
       
       - name: Create Release
+        if: steps.release_check.outputs.exists != 'true'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.tag.outputs.tag_name }}
@@ -425,3 +449,7 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release already exists (skip)
+        if: steps.release_check.outputs.exists == 'true'
+        run: echo "Release for ${{ steps.tag.outputs.tag_name }} already exists, nothing to do."
