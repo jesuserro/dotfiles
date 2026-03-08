@@ -2,14 +2,14 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.07_1206] - 2026-03-07
+## [v2026.03.08_0900] - 2026-03-08
 
 ## Changes
-### Fixed
-- 2026-03-07 12:06 [1e9e8d2](https://github.com/jesuserro/dotfiles/commit/1e9e8d2) fix(release): rename job and add release existence check (Jesús Erro)
-  - Renamed the release job from 'create-release' to 'release' for clarity.
-  - Implemented a check to determine if a release already exists for a given tag, preventing duplicate releases.
-  - Added conditional steps to skip release creation if it already exists, improving workflow efficiency.
+### Documentation
+- 2026-03-08 09:00 [b71f376](https://github.com/jesuserro/dotfiles/commit/b71f376) docs(readme, chezmoi): add guidance on using rcup, source, and chezmoi (Jesús Erro)
+  - Updated README.md and CHEZMOI.md to include a new section explaining when to use `rcup`, `source`, and `chezmoi` for applying changes in the dotfiles setup.
+  - Enhanced clarity on the functionality of each command and provided a typical workflow after a `git pull`.
+  - Added a warning in README.md about the risks of using these dotfiles without sufficient Linux experience.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
