@@ -10,6 +10,8 @@
 
 Personal dotfiles para Ubuntu 20.04+, Zsh, Oh My Zsh, TMUX y Neovim. Incluye **AI Workstation** (MCPs, skills, secretos) gestionado con Chezmoi.
 
+> **Aviso:** Este es un proyecto personal. No experimentes con estos dotfiles si no tienes un mínimo de experiencia con Linux y la terminal: podrías sobrescribir o romper configuraciones en tu sistema.
+
 ---
 
 ## Arquitectura
@@ -33,6 +35,22 @@ flowchart TB
 |---------|----------|-----|
 | **Chezmoi + SOPS + Age** | MCPs, secretos, AI Workstation | [CHEZMOI.md](docs/CHEZMOI.md) |
 | **RCM (rcup)** | zsh, tmux, vim, aliases | [RCM](http://thoughtbot.github.io/rcm/) |
+
+---
+
+## Cuándo usar qué: rcup, source y chezmoi
+
+En este proyecto conviven tres formas de aplicar cambios. Usa cada una en su momento:
+
+| Acción | Cuándo usarla |
+|--------|----------------|
+| **`rcup -v`** | Cuando cambias archivos del repo que RCM gestiona (zsh, tmux, vim, aliases). Crea o actualiza symlinks en tu `$HOME`. |
+| **`source ~/.zshrc`** | Después de `rcup` o de `ups`: recarga en la sesión actual los aliases, funciones y el PATH. No modifica archivos en disco. |
+| **`chezmoi --source=$HOME/dotfiles apply`** | Cuando cambias en el repo lo que Chezmoi gestiona (MCPs, plantillas en `dot_cursor/`, `dot_codex/`, secretos, runtime AI). Lleva esos cambios a `~/.cursor/`, `~/.codex/`, etc. |
+
+**Ejemplo:** Si solo ejecutas `ups` (actualizar sistema y MCPs), no hace falta chezmoi; basta `source ~/.zshrc` para que la shell use la configuración actual. Chezmoi solo es necesario cuando **tú** editas plantillas o archivos del repo (por ejemplo añades un MCP en `dot_cursor/mcp.json.tmpl`).
+
+**Detalle:** [docs/CHEZMOI.md#cuándo-usar-rcup-source-y-chezmoi](docs/CHEZMOI.md#cuándo-usar-rcup-source-y-chezmoi).
 
 ---
 
