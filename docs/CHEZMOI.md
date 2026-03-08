@@ -10,6 +10,20 @@
 
 ---
 
+## Cuándo usar rcup, source y chezmoi
+
+En este proyecto conviven tres mecanismos para aplicar cambios. Resumen:
+
+| Mecanismo | Qué hace | Cuándo usarlo |
+|-----------|----------|----------------|
+| **`rcup -v`** | Crea o actualiza symlinks desde el repo hacia `$HOME` para los archivos que RCM gestiona (zsh, tmux, vim, aliases, etc.). | Cuando has modificado en el repo esos archivos (p. ej. `aliases`, `zshrc`, `tmux.conf`) y quieres que tu HOME refleje los cambios. |
+| **`source ~/.zshrc`** | Recarga en la **sesión actual** de la terminal el contenido de `~/.zshrc`: aliases, funciones (como `ups`), PATH, etc. No escribe archivos. | Después de `rcup` para que la shell use los nuevos aliases/funciones. También después de `ups`: con eso basta para que la sesión vea binarios actualizados (pnpm, etc.); **no** hace falta chezmoi solo por haber ejecutado `ups`. |
+| **`chezmoi --source=$HOME/dotfiles apply`** | Aplica las plantillas y archivos que Chezmoi gestiona desde el repo a tu HOME: `~/.cursor/mcp.json`, `~/.codex/config.toml`, `~/.config/ai/`, secretos generados, etc. | Cuando **tú** has editado en el repo lo que Chezmoi controla (p. ej. `dot_cursor/mcp.json.tmpl`, `dot_codex/config.toml.tmpl`, `ai/runtime/mcp/`, secretos). No es necesario ejecutarlo solo por haber corrido `ups` (que solo actualiza código/deps de los servidores MCP). |
+
+Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si hay cambios en lo que Chezmoi gestiona), `rcup -v` (si hay cambios en lo que RCM gestiona), y `source ~/.zshrc` para la sesión actual.
+
+---
+
 ## Qué gestiona Chezmoi hoy
 
 | Target en HOME | Origen en repo |
