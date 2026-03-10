@@ -2,14 +2,13 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.08_0900] - 2026-03-08
+## [v2026.03.10_0916] - 2026-03-10
 
 ## Changes
-### Documentation
-- 2026-03-08 09:00 [b71f376](https://github.com/jesuserro/dotfiles/commit/b71f376) docs(readme, chezmoi): add guidance on using rcup, source, and chezmoi (Jesús Erro)
-  - Updated README.md and CHEZMOI.md to include a new section explaining when to use `rcup`, `source`, and `chezmoi` for applying changes in the dotfiles setup.
-  - Enhanced clarity on the functionality of each command and provided a typical workflow after a `git pull`.
-  - Added a warning in README.md about the risks of using these dotfiles without sufficient Linux experience.
+### Added
+- 2026-03-10 09:16 [25de5ba](https://github.com/jesuserro/dotfiles/commit/25de5ba) feat(ups): add pnpm update process with corepack support (Jesús Erro)
+  - Enhanced the `ups` alias to include an update process for `pnpm` using `corepack`, allowing for automatic activation of the latest stable version.
+  - Updated documentation in `UPS.md` to reflect the new `pnpm` update functionality and its conditional execution based on `corepack` availability.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
