@@ -22,7 +22,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 | 🔐 **Autenticación sudo** | Verifica credenciales |
 | 📦 **APT** | `apt-get update`, `apt-get upgrade`, `apt-get autoremove` |
 | 🧹 **Limpieza** | Elimina paquetes no utilizados |
-| 📚 **NPM** | `npm update -g codex` |
+| 📚 **NPM** | `npm update -g codex` + `corepack prepare pnpm@latest --activate` |
 | ⚡ **Oh My Zsh** | `omz update`, `upgrade_oh_my_zsh_custom` |
 | 🔌 **MCP** | excalidraw, docker/postgres, fetch, Python MCPs |
 | 🔄 **Servicios** | Reinicio Apache y MySQL (si están instalados) |
@@ -45,6 +45,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 
 - **WSL:** Detecta Ubuntu WSL y lo indica al inicio.
 - **Errores:** Si una sección falla, el proceso continúa. El resumen final muestra el total de errores.
+- **pnpm:** Si `corepack` está disponible, `ups` intenta activar la última versión estable de `pnpm`.
 - **excalidraw:** Puede mostrar un warning de pnpm sobre "Ignored build scripts"; el build completa correctamente.
 - **Termux:** Usa `alias ups="pkg update -y && pkg upgrade -y && omz update && upgrade_oh_my_zsh_custom"` (ver `termux/install.sh`).
 
