@@ -167,6 +167,29 @@ ups() {
     else
       _ups_warning "No se pudo actualizar el paquete npm 'codex' (puede no estar instalado)"
     fi
+
+    if command -v corepack >/dev/null 2>&1; then
+      _ups_progress "Actualizando pnpm con corepack..."
+      local pnpm_before=""
+      local pnpm_after=""
+      pnpm_before=$(pnpm --version 2>/dev/null || true)
+      local pnpm_start=$(date +%s)
+      if corepack prepare pnpm@latest --activate 2>&1 | tee /tmp/ups_pnpm.log; then
+        local pnpm_time=$(($(date +%s) - pnpm_start))
+        pnpm_after=$(pnpm --version 2>/dev/null || true)
+        if [ -n "$pnpm_before" ] && [ -n "$pnpm_after" ] && [ "$pnpm_before" != "$pnpm_after" ]; then
+          _ups_success "pnpm actualizado (${pnpm_before} -> ${pnpm_after}, ${pnpm_time}s)"
+        elif [ -n "$pnpm_after" ]; then
+          _ups_success "pnpm verificado/actualizado (${pnpm_after}, ${pnpm_time}s)"
+        else
+          _ups_success "pnpm actualizado (${pnpm_time}s)"
+        fi
+      else
+        _ups_warning "No se pudo actualizar pnpm con corepack"
+      fi
+    else
+      _ups_info "corepack no está instalado, omitiendo actualización de pnpm"
+    fi
   else
     _ups_info "npm no está instalado, omitiendo actualización de paquetes npm"
   fi
