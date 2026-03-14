@@ -84,6 +84,7 @@ ups() {
   local start_time=$(date +%s)
   local errors=0
   local error_messages=()
+  local is_wsl=0
   
   # Encabezado inicial
   echo -e "\n${_ups_magenta}${_ups_bold}╔═══════════════════════════════════════════════════════════════╗${_ups_nc}"
@@ -92,7 +93,32 @@ ups() {
   
   # Detectar entorno WSL
   if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
+    is_wsl=1
     _ups_info "Entorno detectado: Ubuntu WSL"
+  fi
+
+  # 🪟 Sección: Actualización de paquetes Windows con winget
+  if [ $is_wsl -eq 1 ]; then
+    _ups_section "🪟 Actualización de paquetes Windows"
+    if command -v wt.exe >/dev/null 2>&1 && command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+      _ups_progress "Abriendo nueva pestaña de PowerShell para ejecutar winget..."
+      local winget_start=$(date +%s)
+      local winget_script="/tmp/ups-winget-update.ps1"
+      local winget_script_windows=""
+      cat > "$winget_script" <<'EOF'
+winget source update
+winget upgrade --all --include-unknown --silent --accept-package-agreements --accept-source-agreements
+EOF
+      winget_script_windows=$(wslpath -w "$winget_script")
+      if wt.exe new-tab --title "ups - winget" powershell.exe -NoExit -ExecutionPolicy Bypass -File "$winget_script_windows" >/dev/null 2>&1; then
+        local winget_time=$(($(date +%s) - winget_start))
+        _ups_success "Pestaña de PowerShell abierta con actualización winget (${winget_time}s)"
+      else
+        _ups_warning "No se pudo abrir la pestaña de PowerShell para winget"
+      fi
+    else
+      _ups_info "wt.exe, powershell.exe o wslpath no están disponibles, omitiendo actualización winget"
+    fi
   fi
   
   # 🔐 Sección: Autenticación sudo

@@ -1,6 +1,6 @@
 # Comando `ups`
 
-Actualización integral del sistema: paquetes APT, npm, Oh My Zsh, servidores MCP y servicios.
+Actualización integral del sistema: Windows/winget en WSL, paquetes APT, npm, Oh My Zsh, servidores MCP y servicios.
 
 **Definición:** `aliases` (gestionado por RCM/rcup)
 
@@ -19,6 +19,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 
 | Sección | Qué hace |
 |--------|----------|
+| 🪟 **Windows** | En WSL, abre una nueva pestaña de PowerShell y ejecuta `winget source update` + `winget upgrade --all --include-unknown --silent --accept-package-agreements --accept-source-agreements` |
 | 🔐 **Autenticación sudo** | Verifica credenciales |
 | 📦 **APT** | `apt-get update`, `apt-get upgrade`, `apt-get autoremove` |
 | 🧹 **Limpieza** | Elimina paquetes no utilizados |
@@ -44,6 +45,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 ## Notas
 
 - **WSL:** Detecta Ubuntu WSL y lo indica al inicio.
+- **winget en WSL:** Si `wt.exe` y `powershell.exe` están disponibles, `ups` abre una nueva pestaña de Windows Terminal y lanza la actualización de paquetes de Windows en paralelo.
 - **Errores:** Si una sección falla, el proceso continúa. El resumen final muestra el total de errores.
 - **pnpm:** Si `corepack` está disponible, `ups` intenta activar la última versión estable de `pnpm`.
 - **excalidraw:** Puede mostrar un warning de pnpm sobre "Ignored build scripts"; el build completa correctamente.
