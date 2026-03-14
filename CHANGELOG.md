@@ -2,13 +2,24 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.10_0916] - 2026-03-10
+## [v2026.03.14_1052] - 2026-03-14
 
 ## Changes
 ### Added
-- 2026-03-10 09:16 [25de5ba](https://github.com/jesuserro/dotfiles/commit/25de5ba) feat(ups): add pnpm update process with corepack support (Jesús Erro)
-  - Enhanced the `ups` alias to include an update process for `pnpm` using `corepack`, allowing for automatic activation of the latest stable version.
-  - Updated documentation in `UPS.md` to reflect the new `pnpm` update functionality and its conditional execution based on `corepack` availability.
+- 2026-03-14 10:33 [c3b3ed5](https://github.com/jesuserro/dotfiles/commit/c3b3ed5) feat(ups): add RenderCV update process for jesuserro repository (Jesús Erro)
+  - Introduced a new section in the `ups` alias to update the `jesuserro` repository and refresh the `RenderCV` installation within its virtual environment, maintaining the version pin to `2.7`.
+  - Updated documentation in `UPS.md` to include details about the new functionality for managing the `jesuserro` project and its dependencies.
+- 2026-03-14 10:08 [4a772dd](https://github.com/jesuserro/dotfiles/commit/4a772dd) feat(ups): add Windows package update support in WSL (Jesús Erro)
+  - Enhanced the `ups` alias to detect WSL environments and execute Windows package updates using `winget` in a new PowerShell tab.
+  - Updated documentation in `UPS.md` to reflect the new functionality for Windows updates in WSL, including prerequisites and process details.
+
+### Fixed
+- 2026-03-14 10:43 [352817a](https://github.com/jesuserro/dotfiles/commit/352817a) fix(python): remove redundant deactivate alias and ensure proper file termination (Jesús Erro)
+  - Removed the redundant alias for `deactivate` in the Python aliases file to streamline the configuration.
+  - Ensured the file ends with a newline for better compatibility and adherence to coding standards.
+- 2026-03-14 10:11 [1ede2b4](https://github.com/jesuserro/dotfiles/commit/1ede2b4) fix(ups): specify window for new PowerShell tab in winget update (Jesús Erro)
+  - Updated the `ups` alias to include the `-w 0` option in the `wt.exe` command, ensuring the new PowerShell tab for `winget` updates opens in the correct window context.
+  - This change improves the user experience by preventing potential issues with tab management during updates.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
