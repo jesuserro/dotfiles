@@ -2,24 +2,24 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.14_1052] - 2026-03-14
+## [v2026.03.15_0927] - 2026-03-15
 
 ## Changes
 ### Added
-- 2026-03-14 10:33 [c3b3ed5](https://github.com/jesuserro/dotfiles/commit/c3b3ed5) feat(ups): add RenderCV update process for jesuserro repository (Jesús Erro)
-  - Introduced a new section in the `ups` alias to update the `jesuserro` repository and refresh the `RenderCV` installation within its virtual environment, maintaining the version pin to `2.7`.
-  - Updated documentation in `UPS.md` to include details about the new functionality for managing the `jesuserro` project and its dependencies.
-- 2026-03-14 10:08 [4a772dd](https://github.com/jesuserro/dotfiles/commit/4a772dd) feat(ups): add Windows package update support in WSL (Jesús Erro)
-  - Enhanced the `ups` alias to detect WSL environments and execute Windows package updates using `winget` in a new PowerShell tab.
-  - Updated documentation in `UPS.md` to reflect the new functionality for Windows updates in WSL, including prerequisites and process details.
+- 2026-03-15 09:27 [51ba81c](https://github.com/jesuserro/dotfiles/commit/51ba81c) feat(ups): streamline OpenCode CLI update process and enhance documentation (Jesús Erro)
+  - Removed the previous OpenCode CLI installation logic and replaced it with a more robust update mechanism that checks the current version before installation.
+  - Updated the `UPS.md` documentation to include OpenCode in the system update overview, clarifying the update process for users.
+  - Improved user feedback during the OpenCode update process with detailed success messages based on version changes.
+- 2026-03-15 09:23 [fd23994](https://github.com/jesuserro/dotfiles/commit/fd23994) feat(ups): integrate OpenCode CLI installation and update process (Jesús Erro)
+  - Added functionality to the `ups` alias for installing and updating the OpenCode CLI using a curl command, enhancing the package management capabilities.
+  - Updated the `bashrc` and `10-path.zsh` files to ensure the OpenCode CLI path is included in the user's environment.
+  - Revised documentation in `UPS.md` to reflect the new OpenCode CLI installation process, providing users with clear instructions for setup and updates.
 
-### Fixed
-- 2026-03-14 10:43 [352817a](https://github.com/jesuserro/dotfiles/commit/352817a) fix(python): remove redundant deactivate alias and ensure proper file termination (Jesús Erro)
-  - Removed the redundant alias for `deactivate` in the Python aliases file to streamline the configuration.
-  - Ensured the file ends with a newline for better compatibility and adherence to coding standards.
-- 2026-03-14 10:11 [1ede2b4](https://github.com/jesuserro/dotfiles/commit/1ede2b4) fix(ups): specify window for new PowerShell tab in winget update (Jesús Erro)
-  - Updated the `ups` alias to include the `-w 0` option in the `wt.exe` command, ensuring the new PowerShell tab for `winget` updates opens in the correct window context.
-  - This change improves the user experience by preventing potential issues with tab management during updates.
+### Refactored
+- 2026-03-15 09:07 [6963433](https://github.com/jesuserro/dotfiles/commit/6963433) refactor(ups): synchronize pnpm version for excalidraw-mcp during updates (Jesús Erro)
+  - Added a function to check and synchronize the pnpm version specified in the excalidraw-mcp project with the active pnpm version before executing updates.
+  - Enhanced the ups alias to ensure that the correct pnpm version is used, preventing issues with outdated package managers.
+  - Updated documentation in UPS.md to reflect the new synchronization process for pnpm in the excalidraw-mcp repository.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
