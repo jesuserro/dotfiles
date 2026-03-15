@@ -35,7 +35,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 
 | MCP / Origen | Acción |
 |--------------|--------|
-| **excalidraw** | `~/mcp-servers/excalidraw-mcp` — `git pull --rebase --autostash` + `pnpm install` + `pnpm run build` |
+| **excalidraw** | `~/mcp-servers/excalidraw-mcp` — si el repo fija un `packageManager` antiguo, `ups` lo sincroniza con el `pnpm` activo; después ejecuta `git pull --rebase --autostash` + `pnpm install` + `pnpm run build` |
 | **docker, postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` |
 | **fetch** | `uv tool install mcp-server-fetch` |
 | **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
@@ -47,8 +47,8 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 
 - **WSL:** Detecta Ubuntu WSL y lo indica al inicio.
 - **winget en WSL:** Si `wt.exe` y `powershell.exe` están disponibles, `ups` abre una nueva pestaña de Windows Terminal y lanza la actualización de paquetes de Windows en paralelo.
-- **Errores:** Si una sección falla, el proceso continúa. El resumen final muestra el total de errores.
-- **pnpm:** Si `corepack` está disponible, `ups` intenta activar la última versión estable de `pnpm`.
+- **Errores:** Si una sección falla, el proceso continúa. El resumen final muestra el total de errores. Las tuberías con `tee` respetan el código de salida real del comando.
+- **pnpm:** Si `corepack` está disponible, `ups` intenta activar la última versión estable de `pnpm`. En proyectos que fijan `packageManager` con `pnpm`, `ups` sincroniza ese pin antes de construirlos para evitar quedarse en una versión antigua.
 - **jesuserro:** Si existe `~/proyectos/jesuserro`, `ups` actualiza el repo y refresca la instalación de `rendercv[full]==2.7` dentro de `./.venv`, manteniendo deliberadamente ese pin para no desalinearlo del schema `v2.7` usado en la plantilla. No regenera el CV.
 - **Versiones futuras de RenderCV:** El salto a `2.8` o superior debe hacerse manualmente cuando se revise la compatibilidad del YAML y del schema del proyecto.
 - **excalidraw:** Puede mostrar un warning de pnpm sobre "Ignored build scripts"; el build completa correctamente.

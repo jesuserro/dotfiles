@@ -79,12 +79,27 @@ _ups_progress() {
   echo -e "${_ups_yellow}⏳ $1${_ups_nc}"
 }
 
+_ups_pnpm_project_version() {
+  local project_dir="$1"
+  if ! command -v node >/dev/null 2>&1 || [ ! -f "$project_dir/package.json" ]; then
+    return 0
+  fi
+
+  (
+    cd "$project_dir" &&
+      node -p "const pm=require('./package.json').packageManager || ''; pm.startsWith('pnpm@') ? pm.slice(5).split('+')[0] : ''" 2>/dev/null
+  )
+}
+
 # Función principal de actualización del sistema
 ups() {
+  setopt local_options pipe_fail
+
   local start_time=$(date +%s)
   local errors=0
   local error_messages=()
   local is_wsl=0
+  local current_pnpm_version=""
   
   # Encabezado inicial
   echo -e "\n${_ups_magenta}${_ups_bold}╔═══════════════════════════════════════════════════════════════╗${_ups_nc}"
@@ -203,6 +218,7 @@ EOF
       if corepack prepare pnpm@latest --activate 2>&1 | tee /tmp/ups_pnpm.log; then
         local pnpm_time=$(($(date +%s) - pnpm_start))
         pnpm_after=$(pnpm --version 2>/dev/null || true)
+        current_pnpm_version="$pnpm_after"
         if [ -n "$pnpm_before" ] && [ -n "$pnpm_after" ] && [ "$pnpm_before" != "$pnpm_after" ]; then
           _ups_success "pnpm actualizado (${pnpm_before} -> ${pnpm_after}, ${pnpm_time}s)"
         elif [ -n "$pnpm_after" ]; then
@@ -283,7 +299,32 @@ EOF
   if [ -d "$HOME/mcp-servers/excalidraw-mcp/.git" ]; then
     _ups_progress "Actualizando excalidraw-mcp (git pull + build)..."
     local mcp_start=$(date +%s)
-    if (cd "$HOME/mcp-servers/excalidraw-mcp" && git pull --rebase --autostash 2>/dev/null && (pnpm install 2>/dev/null || npm install 2>/dev/null) && (pnpm run build 2>/dev/null || npm run build 2>/dev/null)); then
+    local excalidraw_dir="$HOME/mcp-servers/excalidraw-mcp"
+    local excalidraw_pnpm_before=""
+    local excalidraw_pnpm_after=""
+
+    excalidraw_pnpm_before=$(_ups_pnpm_project_version "$excalidraw_dir")
+
+    if [ -n "$current_pnpm_version" ] && command -v corepack >/dev/null 2>&1; then
+      if [ -n "$excalidraw_pnpm_before" ] && [ "$excalidraw_pnpm_before" != "$current_pnpm_version" ]; then
+        _ups_progress "Sincronizando pnpm de excalidraw-mcp (${excalidraw_pnpm_before} -> ${current_pnpm_version})..."
+        if (cd "$excalidraw_dir" && corepack use "pnpm@${current_pnpm_version}" 2>&1 | tee /tmp/ups_excalidraw_pnpm.log); then
+          excalidraw_pnpm_after=$(_ups_pnpm_project_version "$excalidraw_dir")
+          if [ -n "$excalidraw_pnpm_after" ]; then
+            _ups_success "pnpm de excalidraw-mcp sincronizado (${excalidraw_pnpm_after})"
+          fi
+        else
+          _ups_warning "No se pudo sincronizar el pin de pnpm en excalidraw-mcp"
+        fi
+      fi
+    fi
+
+    if (
+      cd "$excalidraw_dir" &&
+        git pull --rebase --autostash 2>&1 | tee /tmp/ups_excalidraw_git.log &&
+        (pnpm install 2>&1 | tee /tmp/ups_excalidraw_install.log || npm install 2>&1 | tee /tmp/ups_excalidraw_install.log) &&
+        (pnpm run build 2>&1 | tee /tmp/ups_excalidraw_build.log || npm run build 2>&1 | tee /tmp/ups_excalidraw_build.log)
+    ); then
       local mcp_time=$(($(date +%s) - mcp_start))
       _ups_success "excalidraw-mcp actualizado (${mcp_time}s)"
     else
