@@ -8,6 +8,9 @@ path_prepend "/usr/bin"
 # Local binaries (includes Cursor CLI)
 path_append "$HOME/.local/bin"
 
+# OpenCode CLI
+path_prepend "$HOME/.opencode/bin"
+
 # NPM Global packages
 path_prepend "$HOME/.npm-global/bin"
 

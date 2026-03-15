@@ -116,6 +116,10 @@ if ! shopt -oq posix; then
   fi
 fi
 export PATH=$(echo "$PATH" | sed -e 's/:\/mnt[^:]*//g') # strip out problematic Windows %PATH%
+case ":$PATH:" in
+    *":$HOME/.opencode/bin:"*) ;;
+    *) export PATH="$HOME/.opencode/bin:$PATH" ;;
+esac
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

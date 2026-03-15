@@ -23,7 +23,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 | 🔐 **Autenticación sudo** | Verifica credenciales |
 | 📦 **APT** | `apt-get update`, `apt-get upgrade`, `apt-get autoremove` |
 | 🧹 **Limpieza** | Elimina paquetes no utilizados |
-| 📚 **NPM** | `npm update -g codex` + `corepack prepare pnpm@latest --activate` |
+| 📚 **NPM / CLI** | `npm update -g codex` + `curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path` + `corepack prepare pnpm@latest --activate` |
 | ⚡ **Oh My Zsh** | `omz update`, `upgrade_oh_my_zsh_custom` |
 | 📄 **RenderCV (jesuserro)** | `~/proyectos/jesuserro` — `git pull --rebase --autostash` + `uv pip install --python .venv/bin/python -U "rendercv[full]==2.7"` |
 | 🔌 **MCP** | excalidraw, docker/postgres, fetch, Python MCPs |
@@ -48,6 +48,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 - **WSL:** Detecta Ubuntu WSL y lo indica al inicio.
 - **winget en WSL:** Si `wt.exe` y `powershell.exe` están disponibles, `ups` abre una nueva pestaña de Windows Terminal y lanza la actualización de paquetes de Windows en paralelo.
 - **Errores:** Si una sección falla, el proceso continúa. El resumen final muestra el total de errores. Las tuberías con `tee` respetan el código de salida real del comando.
+- **opencode.ai:** `ups` ejecuta el instalador oficial por `curl` con `--no-modify-path`, para cubrir instalación inicial y actualización sin depender de permisos de `npm -g` en `/usr`.
 - **pnpm:** Si `corepack` está disponible, `ups` intenta activar la última versión estable de `pnpm`. En proyectos que fijan `packageManager` con `pnpm`, `ups` sincroniza ese pin antes de construirlos para evitar quedarse en una versión antigua.
 - **jesuserro:** Si existe `~/proyectos/jesuserro`, `ups` actualiza el repo y refresca la instalación de `rendercv[full]==2.7` dentro de `./.venv`, manteniendo deliberadamente ese pin para no desalinearlo del schema `v2.7` usado en la plantilla. No regenera el CV.
 - **Versiones futuras de RenderCV:** El salto a `2.8` o superior debe hacerse manualmente cuando se revise la compatibilidad del YAML y del schema del proyecto.
