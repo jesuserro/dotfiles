@@ -209,15 +209,6 @@ EOF
       _ups_warning "No se pudo actualizar el paquete npm 'codex' (puede no estar instalado)"
     fi
 
-    _ups_progress "Instalando/actualizando OpenCode CLI..."
-    local opencode_start=$(date +%s)
-    if curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path 2>&1 | tee /tmp/ups_opencode.log; then
-      local opencode_time=$(($(date +%s) - opencode_start))
-      _ups_success "OpenCode CLI instalado/actualizado (${opencode_time}s)"
-    else
-      _ups_warning "No se pudo instalar/actualizar OpenCode CLI"
-    fi
-
     if command -v corepack >/dev/null 2>&1; then
       _ups_progress "Actualizando pnpm con corepack..."
       local pnpm_before=""
@@ -243,6 +234,27 @@ EOF
     fi
   else
     _ups_info "npm no está instalado, omitiendo actualización de paquetes npm"
+  fi
+
+  # 🤖 Sección: Actualización OpenCode
+  _ups_section "🤖 Actualización de OpenCode"
+  _ups_progress "Comprobando e instalando/actualizando OpenCode CLI..."
+  local opencode_before=""
+  local opencode_after=""
+  opencode_before=$(opencode --version 2>/dev/null || true)
+  local opencode_start=$(date +%s)
+  if curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path 2>&1 | tee /tmp/ups_opencode.log; then
+    local opencode_time=$(($(date +%s) - opencode_start))
+    opencode_after=$(opencode --version 2>/dev/null || true)
+    if [ -n "$opencode_before" ] && [ -n "$opencode_after" ] && [ "$opencode_before" != "$opencode_after" ]; then
+      _ups_success "OpenCode actualizado (${opencode_before} -> ${opencode_after}, ${opencode_time}s)"
+    elif [ -n "$opencode_after" ]; then
+      _ups_success "OpenCode verificado/actualizado (${opencode_after}, ${opencode_time}s)"
+    else
+      _ups_success "OpenCode instalado/actualizado (${opencode_time}s)"
+    fi
+  else
+    _ups_warning "No se pudo instalar/actualizar OpenCode CLI"
   fi
   
   # ⚡ Sección: Actualización Oh My Zsh

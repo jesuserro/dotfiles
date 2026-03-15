@@ -1,6 +1,6 @@
 # Comando `ups`
 
-Actualización integral del sistema: Windows/winget en WSL, paquetes APT, npm, Oh My Zsh, repositorios auxiliares, servidores MCP y servicios.
+Actualización integral del sistema: Windows/winget en WSL, paquetes APT, npm, OpenCode, Oh My Zsh, repositorios auxiliares, servidores MCP y servicios.
 
 **Definición:** `aliases` (gestionado por RCM/rcup)
 
@@ -23,7 +23,8 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 | 🔐 **Autenticación sudo** | Verifica credenciales |
 | 📦 **APT** | `apt-get update`, `apt-get upgrade`, `apt-get autoremove` |
 | 🧹 **Limpieza** | Elimina paquetes no utilizados |
-| 📚 **NPM / CLI** | `npm update -g codex` + `curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path` + `corepack prepare pnpm@latest --activate` |
+| 📚 **NPM** | `npm update -g codex` + `corepack prepare pnpm@latest --activate` |
+| 🤖 **OpenCode** | `curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path` |
 | ⚡ **Oh My Zsh** | `omz update`, `upgrade_oh_my_zsh_custom` |
 | 📄 **RenderCV (jesuserro)** | `~/proyectos/jesuserro` — `git pull --rebase --autostash` + `uv pip install --python .venv/bin/python -U "rendercv[full]==2.7"` |
 | 🔌 **MCP** | excalidraw, docker/postgres, fetch, Python MCPs |
