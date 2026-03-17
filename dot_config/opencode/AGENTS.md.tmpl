@@ -6,21 +6,27 @@ IMPORTANT FOR AI AGENTS:
 - The source path is dot_config/opencode/ because Chezmoi maps dot_config/* → ~/.config/*
 - Do NOT attempt to "normalize" this to dot_opencode/ - it would break materialization
 - The visual asymmetry with dot_cursor/ and dot_codex/ is intentional and correct
-- See docs/OPENCODE.md for the full architectural rationale
 
-MCP POLICY:
-- Platform MCPs (dagster, loki, minio, prometheus, tempo, store_etl_ops) are globally defined but disabled by default
-- Do NOT change to enabled: true without explicit reason - they require local services running
-- Workstation MCPs (docker, github, fetch, context7, excalidraw, playwright) are enabled by default
-- Database MCPs (postgres, trino): runtime can be global but connection config is project-specific - see docs/OPENCODE.md
-- NOT ALL dot_config/* IS GLOBAL: dot_config/store-etl/ is project-specific config, NOT global workstation config
+MCP DESIGN CONVENTION (see docs/OPENCODE.md for full details):
 
-DATABASE MCPs CONVENTION (2025+):
-- PostgreSQL: uses ~/bin/mcp-postgres-launcher wrapper with MCP_POSTGRES_SECRETS env var
-- Trino: uses ~/.config/ai/runtime/.venv/bin/python -m trino_mcp with env block
-- Connection profile (DSN/credentials) MUST be project-specific, not global
-- Secrets file: ~/.config/mcp-secrets.env (NOT ~/.secrets/codex.env - that's legacy)
-- DO NOT simplify database MCPs as "global" just because runtime is shared - keep connection project-specific
+  LAYER              | SCOPE                    | ENABLED DEFAULT
+  -------------------|--------------------------|-----------------
+  Core Workstation   | All projects             | true
+  Platform           | All projects, opt-in    | false
+  Connection-Specific| Project-specific only   | per-project
+
+  ANTI-PATTERNS TO AVOID:
+  - Hardcoding DSN/global database connections
+  - Setting enabled:true for platform MCPs by default
+  - Treating project-specific MCPs as global
+  - Mixing runtime (shared) with connection profile (project-specific)
+
+  QUICK REF:
+  - Core: docker, github, fetch, context7, excalidraw, playwright
+  - Platform: dagster, loki, minio, prometheus, tempo, store_etl_ops
+  - Connection-Specific: postgres, trino (runtime shared, connection project-specific)
+
+  SECRETS: Use ~/.config/mcp-secrets.env (neutral name, not tied to client)
 */ -}}
 
 This file provides global instructions for OpenCode across all projects.

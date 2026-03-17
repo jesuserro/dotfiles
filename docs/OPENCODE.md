@@ -272,3 +272,96 @@ PostgreSQL and Trino follow this pattern:
 - The launcher receives connection via `MCP_POSTGRES_SECRETS` env var or direct argument
 
 Do NOT add postgres/trino to `dot_config/opencode/opencode.json.tmpl` as "global" connections. They belong in project-specific configs like `dot_config/store-etl/`.
+
+---
+
+## MCP Design Convention (2025+)
+
+### The Three Layers
+
+| Layer | Scope | `enabled` default | Examples |
+|-------|-------|-------------------|----------|
+| **Core Workstation** | All projects, all sessions | `true` | `docker`, `github`, `fetch`, `context7`, `excalidraw`, `playwright` |
+| **Platform Specialized** | All projects, optional per-project | `false` | `dagster`, `loki`, `prometheus`, `tempo`, `minio`, `store_etl_ops` |
+| **Data / Connection-Specific** | Project-specific only | Per-project | `postgres`, `trino`, future DB connectors |
+
+### Decision Criteria
+
+**A. MCP should be Core Workstation when:**
+- It's a transversal tool used in **any** project
+- No external service dependency (or always available: Docker, network)
+- Examples: Docker CLI, GitHub API, HTTP fetch, documentation lookup, diagrams, browser automation
+
+**B. MCP should be Platform Specialized when:**
+- Depends on a **specific local service** (localhost:XXXX)
+- Useful only for particular stacks or projects
+- Must be `enabled: false` by default to avoid connection noise
+
+**C. MCP should be Connection-Specific when:**
+- Requires **project-specific credentials** (DSN, secrets, tokens)
+- Has **per-project configuration** (host, port, catalog, schema)
+- The same MCP tool could connect to different instances per project
+- Examples: Database connectors (PostgreSQL, Trino, MySQL), API clients with project keys
+
+### Runtime vs Connection Profile
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  MCP Tool (shared)                                      │
+│  - npx package                                          │
+│  - python -m module                                     │
+│  - docker image                                         │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│  Connection Profile (project-specific)                   │
+│  - DSN / endpoint                                       │
+│  - Credentials / secrets                                │
+│  - Catalog / schema / namespace                         │
+│  - Auth method                                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Key distinction:**
+- **Runtime/Launcher**: The tool itself (npx, python module). Can be shared globally.
+- **Connection Profile**: The specific endpoint + credentials. Must be project-specific.
+
+### Anti-Patterns to Avoid
+
+| Anti-Pattern | Why it's wrong | Correct approach |
+|--------------|----------------|-----------------|
+| Hardcoded DSN in global config | Couples all projects to one database | Use project-specific config or env vars |
+| "Global" database MCP | Assumes one DSN fits all projects | Keep connection profile per-project |
+| `enabled: true` for platform MCPs | Causes errors when services aren't running | Default to `false`, enable per-project |
+| Secrets file named after a client | Couples secrets to tool naming | Use neutral names like `mcp-secrets.env` |
+| Runtime path hardcoded in project | Duplicates tool installation | Reference shared runtime paths |
+
+### Adding a New MCP
+
+1. **Classify it**: Core / Platform / Connection-Specific?
+2. **Set default `enabled`**:
+   - Core → `true`
+   - Platform → `false`
+   - Connection-Specific → per-project config (not global)
+3. **Define runtime path**: Use shared paths (`~/.config/ai/runtime/.venv`, `npx`, etc.)
+4. **Define connection profile**: Keep in project-specific config or env block
+5. **Document**: Add to this convention with the appropriate layer
+
+### Quick Reference
+
+```
+# Global workstation (enabled: true)
+docker, github, fetch, context7, excalidraw, playwright
+
+# Platform specialized (enabled: false)
+dagster, loki, minio, prometheus, tempo, store_etl_ops
+
+# Connection-specific (project-only)
+postgres, trino, [future DB MCPs]
+```
+
+This convention ensures:
+- No cross-project credential leakage
+- No connection errors from missing services
+- Clear separation between shared tooling and project configuration
+- Scalable pattern for future MCP integrations
