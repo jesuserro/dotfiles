@@ -210,3 +210,45 @@ This principle ensures:
 - Configuration works out of the box after `chezmoi apply`
 - No manual symlinks or overrides needed
 - Future tool updates won't break assumptions
+
+## Understanding `dot_config/` Semantics
+
+### The distinction: Global Client vs Project-Specific
+
+In this repository, `dot_config/` contains **two fundamentally different types** of configuration:
+
+| Path | Type | Scope | Materialization |
+|------|------|-------|-----------------|
+| `dot_config/opencode/` | Global client config | Workstation-wide, all projects | `~/.config/opencode/` |
+| `dot_config/store-etl/` | Project/stack config | Specific to `store-etl` project | `~/.config/store-etl/` |
+
+**Why this matters:**
+- `dot_config/opencode/` defines MCPs available to **any** project opened with OpenCode
+- `dot_config/store-etl/` defines MCPs specific to the **store-etl** stack (postgres, trino, dagster, etc.)
+
+### Historical context: The `private_dot_config/` migration
+
+Previously, project-specific configuration lived in `private_dot_config/store-etl/`. The "private_" prefix provided **semantic separation** from global configs, not security (there were no secrets hardcoded).
+
+This was migrated to `dot_config/store-etl/` to fix a chezmoi inconsistency. However, this **does not** make it a "global" configuration in the functional sense.
+
+### Key principle
+
+**"Under `dot_config/` ≠ automatically global."**
+
+The directory structure reflects:
+1. Where the tool expects its config (XDG: `~/.config/...`)
+2. The project or stack context
+
+When adding new configs:
+- Client-wide tools → `dot_config/opencode/`
+- Project-specific stacks → `dot_config/<project-name>/`
+
+### Database MCPs: Runtime global, connection project-specific
+
+PostgreSQL and Trino follow this pattern:
+- **Runtime** (npx, trino-mcp): available in the workstation
+- **Connection** (DSN, env vars): defined per-project
+- **Why?** Each project has different hosts, catalogs, credentials
+
+Do NOT add postgres/trino to `dot_config/opencode/opencode.json.tmpl` as "global" connections. They belong in project-specific configs like `dot_config/store-etl/`.

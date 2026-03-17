@@ -13,6 +13,7 @@ MCP POLICY:
 - Do NOT change to enabled: true without explicit reason - they require local services running
 - Workstation MCPs (docker, github, fetch, context7, excalidraw, playwright) are enabled by default
 - Database MCPs (postgres, trino): runtime can be global but connection config is project-specific - see docs/OPENCODE.md
+- NOT ALL dot_config/* IS GLOBAL: dot_config/store-etl/ is project-specific config, NOT global workstation config
 */ -}}
 
 This file provides global instructions for OpenCode across all projects.
