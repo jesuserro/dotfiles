@@ -17,6 +17,8 @@ dot_config/opencode/
 └── skills/.keep         # Future: global skills
 ```
 
+> **See also:** [ADR: MCP Governance](./adr/0001-mcp-governance.md) — Formal architectural decision on MCP layered classification, runtime vs connection separation, and activation policy.
+
 ## MCP Servers Organization
 
 ### Layer 1: Core Shared Workstation

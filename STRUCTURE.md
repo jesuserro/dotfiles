@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-17 19:45:45
+**Generated:** 2026-03-17 20:03:21
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -76,6 +76,8 @@
 │   │   │   ├── 🖼️ architecture-overview.jpg
 │   │   │   └── 🖼️ architecture-overview.svg
 │   │   └── 📝 PROJECT_DATA.md
+│   ├── 📁 adr
+│   │   │   └── 📝 0001-mcp-governance.md
 │   ├── 📝 CAMBIAR_TOKEN_GITHUB.md
 │   ├── 📝 CHEZMOI.md
 │   ├── 📝 GIT_WORKFLOW.md
