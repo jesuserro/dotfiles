@@ -30,8 +30,8 @@ Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si ha
 |----------------|----------------|
 | `~/.cursor/mcp.json` | `dot_cursor/mcp.json.tmpl` |
 | `~/.codex/config.toml` | `dot_codex/config.toml.tmpl` |
-| `~/.config/store-etl/secrets.env` | Generado desde `secrets.sops.yaml` (SOPS) |
-| `~/.secrets/codex.env` | Symlink → `~/.config/store-etl/secrets.env` |
+| `~/.config/mcp-secrets.env` | Generado desde `secrets.sops.yaml` (SOPS) — nombre neutro |
+| `~/.secrets/codex.env` | Symlink → `~/.config/mcp-secrets.env` (legacy, mantener por compatibilidad) |
 | `~/.config/ai/runtime/` | Runtime (venv) — ver `ai/README.md` |
 
 ---
@@ -104,7 +104,7 @@ Rellenar los valores reales en el YAML y guardar (SOPS cifra al salir).
 chezmoi --source=$HOME/dotfiles apply
 ```
 
-Se genera `~/.config/store-etl/secrets.env` desde `secrets.sops.yaml` y el symlink `~/.secrets/codex.env` apunta a ese archivo.
+Se genera `~/.config/mcp-secrets.env` desde `secrets.sops.yaml` y el symlink `~/.secrets/codex.env` apunta a ese archivo (compatibilidad).
 
 ---
 
@@ -113,8 +113,8 @@ Se genera `~/.config/store-etl/secrets.env` desde `secrets.sops.yaml` y el symli
 | Archivo | Descripción |
 |---------|-------------|
 | `secrets.sops.yaml` | En repo, cifrado. Contiene `mcp.github_personal_access_token`, `mcp.postgres_dsn`, `mcp.minio_access_key`, `mcp.minio_secret_key`. |
-| `~/.config/store-etl/secrets.env` | Generado por Chezmoi al hacer `apply`. No versionar. |
-| `~/.secrets/codex.env` | Symlink a `~/.config/store-etl/secrets.env` para compatibilidad Codex/Cursor. |
+| `~/.config/mcp-secrets.env` | Generado por Chezmoi al hacer `apply`. Nombre neutro para MCPs. No versionar. |
+| `~/.secrets/codex.env` | Symlink legacy a `~/.config/mcp-secrets.env` (mantener por compatibilidad). |
 
 ---
 
@@ -123,8 +123,8 @@ Se genera `~/.config/store-etl/secrets.env` desde `secrets.sops.yaml` y el symli
 El script `.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl` se ejecuta tras `apply`:
 
 1. Desencripta `secrets.sops.yaml` con SOPS.
-2. Genera `~/.config/store-etl/secrets.env` (variables export).
-3. Crea symlink `~/.secrets/codex.env`.
+2. Genera `~/.config/mcp-secrets.env` (variables export, nombre neutro).
+3. Copia a `~/.config/mcp-secrets.env` y crea symlink legacy `~/.secrets/codex.env`.
 4. Crea archivos de compatibilidad para docker-compose en `~/.secrets/store-etl/`.
 
 Requiere: `sops`, `yq` o `python3` con PyYAML.

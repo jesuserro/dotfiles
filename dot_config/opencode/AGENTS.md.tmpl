@@ -14,6 +14,13 @@ MCP POLICY:
 - Workstation MCPs (docker, github, fetch, context7, excalidraw, playwright) are enabled by default
 - Database MCPs (postgres, trino): runtime can be global but connection config is project-specific - see docs/OPENCODE.md
 - NOT ALL dot_config/* IS GLOBAL: dot_config/store-etl/ is project-specific config, NOT global workstation config
+
+DATABASE MCPs CONVENTION (2025+):
+- PostgreSQL: uses ~/bin/mcp-postgres-launcher wrapper with MCP_POSTGRES_SECRETS env var
+- Trino: uses ~/.config/ai/runtime/.venv/bin/python -m trino_mcp with env block
+- Connection profile (DSN/credentials) MUST be project-specific, not global
+- Secrets file: ~/.config/mcp-secrets.env (NOT ~/.secrets/codex.env - that's legacy)
+- DO NOT simplify database MCPs as "global" just because runtime is shared - keep connection project-specific
 */ -}}
 
 This file provides global instructions for OpenCode across all projects.

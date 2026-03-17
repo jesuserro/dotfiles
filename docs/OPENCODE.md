@@ -55,7 +55,7 @@ Platform MCPs depend on specific local services running. Enabling them globally 
 
 **Defined at project level, not globally.** The runtime tools exist in the workstation, but connections are project-specific:
 
-- `postgres` - PostgreSQL database (uses `npx @modelcontextprotocol/server-postgres`)
+- `postgres` - PostgreSQL database (uses `~/bin/mcp-postgres-launcher`)
 - `trino` - Trino query engine (uses `~/.config/ai/runtime/.venv/bin/python -m trino_mcp`)
 
 #### Why NOT global?
@@ -63,7 +63,7 @@ Platform MCPs depend on specific local services running. Enabling them globally 
 Database connections depend on project-specific context:
 - Host, port, database/schema/catalog
 - User, password, authentication method
-- Project secrets (DSN from `~/.secrets/codex.env`)
+- Project secrets (DSN from `~/.config/mcp-secrets.env`)
 - Stack-specific configuration (e.g., Trino catalog)
 
 A "global" PostgreSQL or Trino connection would incorrectly couple all projects to one DSN, which is wrong.
@@ -71,20 +71,35 @@ A "global" PostgreSQL or Trino connection would incorrectly couple all projects 
 #### The correct model: Runtime Global + Connection Project-Specific
 
 ```
-Runtime (tooling):      Shared globally in workstation
-Connection (config):   Project-specific (env vars, DSN, secrets)
-Activation:            Per-project via local opencode.json or .cursor/mcp.json
+Runtime (tooling):      ~/bin/mcp-postgres-launcher or ~/.config/ai/runtime/.venv
+Connection (config):   Project-specific (env vars, secrets file)
+Activation:            Per-project via local mcp.json or opencode.json
 ```
 
+**Architecture:**
+
+| Component | PostgreSQL | Trino |
+|----------|------------|-------|
+| Launcher/Runtime | `~/bin/mcp-postgres-launcher` | `~/.config/ai/runtime/.venv/bin/python -m trino_mcp` |
+| Connection Config | `~/.config/mcp-secrets.env` (POSTGRES_DSN) | `env` block (TRINO_HOST, etc.) |
+
+**Pattern:**
+- Both follow the same architecture: launcher + connection profile
+- The launcher handles runtime (npx/Python)
+- Connection profile provides credentials and endpoint details
+- Project-specific config keeps secrets isolated per project/stack
+
 **Current implementation:**
-- `store-etl` project has its own `mcp.json.tmpl` with postgres/trino config
-- Runtime tools (npx, trino-mcp) are available in the workstation
-- Each project defines its own connection parameters
+- `store-etl` project uses `dot_config/store-etl/store-etl.mcp.json.tmpl`
+- Wrapper: `~/bin/mcp-postgres-launcher` (created 2025)
+- Secrets: `~/.config/mcp-secrets.env` (renamed from legacy `~/.secrets/codex.env`)
+- Trino uses `env` block for connection (same pattern as `dagster`, `loki`, etc.)
 
 This separation ensures:
 - No duplicated runtime installation
 - No cross-project credential leakage
 - Clean project boundaries
+- Consistent pattern across all database MCPs
 
 **Example: `dagster`**
 - Defined globally so it's available in all projects without duplication
@@ -247,8 +262,13 @@ When adding new configs:
 ### Database MCPs: Runtime global, connection project-specific
 
 PostgreSQL and Trino follow this pattern:
-- **Runtime** (npx, trino-mcp): available in the workstation
-- **Connection** (DSN, env vars): defined per-project
+- **Runtime** (launcher): `~/bin/mcp-postgres-launcher` or `~/.config/ai/runtime/.venv/bin/python -m trino_mcp`
+- **Connection** (secrets/env): `~/.config/mcp-secrets.env` or env block
 - **Why?** Each project has different hosts, catalogs, credentials
+
+**Convention (2025+):**
+- Database MCPs use a **launcher wrapper** for runtime isolation
+- Connection profile is **project-specific** (secrets file or env block)
+- The launcher receives connection via `MCP_POSTGRES_SECRETS` env var or direct argument
 
 Do NOT add postgres/trino to `dot_config/opencode/opencode.json.tmpl` as "global" connections. They belong in project-specific configs like `dot_config/store-etl/`.

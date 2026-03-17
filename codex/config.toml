@@ -22,12 +22,15 @@ args = ["-y", "@upstash/context7-mcp"]
 enabled = true
 
 # ─────────────────────────────────────────────
-# MCP: Postgres
+# MCP: Postgres (Runtime Global + Connection Project-Specific)
+# Uses: ~/.local/share/chezmoi/bin/mcp-postgres-launcher with ~/.config/mcp-secrets.env
 # ─────────────────────────────────────────────
 [mcp_servers.postgres]
-command = "/usr/bin/node"
-args = ["/home/jesus/.codex/mcp/postgres/server.mjs", "${POSTGRES_DSN}"]
+command = "/home/jesus/.local/share/chezmoi/bin/mcp-postgres-launcher"
 enabled = true
+
+[mcp_servers.postgres.env]
+MCP_POSTGRES_SECRETS = "/home/jesus/.config/mcp-secrets.env"
 
 # ─────────────────────────────────────────────
 # MCP: Trino
