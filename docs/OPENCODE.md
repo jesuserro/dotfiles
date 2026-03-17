@@ -30,15 +30,30 @@ Available in all projects, enabled by default:
 - `excalidraw` - Diagram creation (enabled by default)
 
 ### Layer 3: Platform / Data Stack
-Disabled by default, enable per-project when needed:
-- `dagster` - Dagster orchestrator
-- `loki` - Log aggregation
-- `minio` - S3-compatible storage
-- `prometheus` - Metrics
-- `tempo` - Trace visualization
+
+**Defined globally but disabled by default.** Enable per-project when needed:
+- `dagster` - Dagster orchestrator (requires `localhost:3000`)
+- `loki` - Log aggregation (requires `localhost:3100`)
+- `minio` - S3-compatible storage (requires `localhost:9000`)
+- `prometheus` - Metrics (requires `localhost:9090`)
+- `tempo` - Trace visualization (requires `localhost:3200`)
 - `store_etl_ops` - Store ETL operations
 
-Platform MCPs are disabled by default because they require specific local services (Docker containers, local servers) to be running. Enabling them globally would cause connection errors on startup.
+#### Why disabled by default?
+
+Platform MCPs depend on specific local services running. Enabling them globally would cause:
+- Connection errors on startup (services not running)
+- Noise in projects where they're irrelevant
+- Confusion about available tools
+
+**The policy is conservative by design:**
+- MCPs that are general workstation tools → `enabled: true`
+- MCPs that are platform-specific → `enabled: false` unless explicitly needed
+
+**Example: `dagster`**
+- Defined globally so it's available in all projects without duplication
+- Disabled by default because most projects don't have a Dagster instance at `localhost:3000`
+- In `store_etl` or similar projects, enable it via project-local `opencode.json`
 
 ## Materialization
 

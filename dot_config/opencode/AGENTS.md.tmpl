@@ -7,6 +7,11 @@ IMPORTANT FOR AI AGENTS:
 - Do NOT attempt to "normalize" this to dot_opencode/ - it would break materialization
 - The visual asymmetry with dot_cursor/ and dot_codex/ is intentional and correct
 - See docs/OPENCODE.md for the full architectural rationale
+
+MCP POLICY:
+- Platform MCPs (dagster, loki, minio, prometheus, tempo, store_etl_ops) are globally defined but disabled by default
+- Do NOT change to enabled: true without explicit reason - they require local services running
+- Workstation MCPs (docker, github, fetch, context7, excalidraw) are enabled by default
 */ -}}
 
 This file provides global instructions for OpenCode across all projects.
