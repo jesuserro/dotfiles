@@ -26,6 +26,11 @@
       "command": ["/usr/bin/node", "{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"],
       "enabled": true
     },
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "-y", "@executeautomation/playwright-mcp-server"],
+      "enabled": true
+    },
     "dagster": {
       "type": "local",
       "command": ["{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python", "{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/dagster/server.py"],

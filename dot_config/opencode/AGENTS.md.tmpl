@@ -11,7 +11,8 @@ IMPORTANT FOR AI AGENTS:
 MCP POLICY:
 - Platform MCPs (dagster, loki, minio, prometheus, tempo, store_etl_ops) are globally defined but disabled by default
 - Do NOT change to enabled: true without explicit reason - they require local services running
-- Workstation MCPs (docker, github, fetch, context7, excalidraw) are enabled by default
+- Workstation MCPs (docker, github, fetch, context7, excalidraw, playwright) are enabled by default
+- Database MCPs (postgres, trino): runtime can be global but connection config is project-specific - see docs/OPENCODE.md
 */ -}}
 
 This file provides global instructions for OpenCode across all projects.
@@ -27,6 +28,7 @@ OpenCode is configured with shared MCP servers defined globally in `~/.config/op
 - `github` - GitHub operations (requires GITHUB_TOKEN)
 - `fetch` - HTTP requests
 - `context7` - Dynamic documentation lookup
+- `playwright` - Browser automation and testing
 
 **Visual / Architecture:**
 - `excalidraw` - Diagram creation and editing

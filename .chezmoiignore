@@ -10,14 +10,8 @@
 !.cursor/**
 !.codex
 !.codex/**
-!.config/store-etl
-!.config/store-etl/**
-!.config/opencode
-!.config/opencode/**
-!.config/mcp
-!.config/mcp/**
-!.config/ai
-!.config/ai/**
+!.config
+!.config/**
 !.secrets
 !.secrets/**
 !.secrets/codex.env
