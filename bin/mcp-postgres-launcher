@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# MCP PostgreSQL Launcher
+# Separates runtime (npx) from connection profile (POSTGRES_DSN)
+# Usage: mcp-postgres-launcher [optional: path to secrets file]
+#
+# This launcher follows the "Runtime Global + Connection Project-Specific" pattern:
+# - Runtime: npx @modelcontextprotocol/server-postgres (shared workstation tool)
+# - Connection: POSTGRES_DSN from project-specific secrets
+
+set -euo pipefail
+
+# Handle --help flag
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    echo "MCP PostgreSQL Launcher"
+    echo "Usage: $0 [secrets-file]"
+    echo ""
+    echo "Environment:"
+    echo "  MCP_POSTGRES_SECRETS  Path to secrets file (default: ~/.config/mcp-secrets.env)"
+    echo "  POSTGRES_DSN         PostgreSQL connection string"
+    echo ""
+    echo "The launcher loads POSTGRES_DSN from the secrets file and executes"
+    echo "the MCP PostgreSQL server with that connection string."
+    exit 0
+fi
+
+# Default secrets location (project-specific)
+# Also checks legacy location for backwards compatibility
+DEFAULT_SECRETS="${HOME}/.config/mcp-secrets.env"
+LEGACY_SECRETS="${HOME}/.config/store-etl/secrets.env"
+
+# Use default if exists, fallback to legacy
+if [[ -f "$DEFAULT_SECRETS" ]]; then
+    DEFAULT_SECRETS="$DEFAULT_SECRETS"
+elif [[ -f "$LEGACY_SECRETS" ]]; then
+    DEFAULT_SECRETS="$LEGACY_SECRETS"
+fi
+
+# Allow override via argument or environment
+SECRETS_FILE="${1:-${MCP_POSTGRES_SECRETS:-$DEFAULT_SECRETS}}"
+
+# Load project-specific connection profile
+if [[ -f "$SECRETS_FILE" ]]; then
+    # shellcheck source=/dev/null
+    source "$SECRETS_FILE"
+else
+    echo "WARNING: Secrets file not found: $SECRETS_FILE" >&2
+    echo "Expected POSTGRES_DSN in environment" >&2
+fi
+
+# Validate required connection parameter
+if [[ -z "${POSTGRES_DSN:-}" ]]; then
+    echo "ERROR: POSTGRES_DSN not set. Configure in: $SECRETS_FILE" >&2
+    exit 1
+fi
+
+# Execute MCP server with runtime
+exec npx -y "@modelcontextprotocol/server-postgres" "$POSTGRES_DSN"

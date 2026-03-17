@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-17 15:35:55
+**Generated:** 2026-03-17 20:22:22
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -42,6 +42,8 @@
 │   │       │   ├── 📄 .gitignore
 │   │       │   ├── 📝 README.md
 │   │       │   └── 📝 SKILL.md
+│   │       ├── 📁 mcp-governance
+│   │       │   └── 📝 SKILL.md
 │   │       └── 📁 ups-workflow
 │   │           └── 📝 SKILL.md
 │   ├── 📁 runtime
@@ -67,6 +69,9 @@
 │   ├── 📝 README.md
 │   └── ⚙️ config.toml
 ├── 📁 docs
+│   ├── 📁 adr
+│   │   ├── 📝 0001-mcp-governance.md
+│   │   └── 📝 template.md
 │   ├── 📁 linkedin
 │   │   ├── 📁 diagrams
 │   │   │   ├── 📄 ai-workstation-flow.excalidraw
@@ -81,6 +86,7 @@
 │   ├── 📝 GIT_WORKFLOW.md
 │   ├── 📝 GUIA_MCP_AI.md
 │   ├── 📝 INSTALL.md
+│   ├── 📝 MCP_QUICKREF.md
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   ├── 📝 MIGRATION_MCP_ITER3.md
 │   ├── 📝 OPENCODE.md
@@ -96,15 +102,17 @@
 │   │   ├── 📁 servers
 │   │   │   └── 📄 .keep
 │   │   └── 📄 .keep
-│   └── 📁 opencode
-│       ├── 📁 commands
-│       │   └── 📄 .keep
-│       ├── 📁 plugins
-│       │   └── 📄 .keep
-│       ├── 📁 skills
-│       │   └── 📄 .keep
-│       ├── 📄 AGENTS.md.tmpl
-│       └── 📄 opencode.json.tmpl
+│   ├── 📁 opencode
+│   │   ├── 📁 commands
+│   │   │   └── 📄 .keep
+│   │   ├── 📁 plugins
+│   │   │   └── 📄 .keep
+│   │   ├── 📁 skills
+│   │   │   └── 📄 .keep
+│   │   ├── 📄 AGENTS.md.tmpl
+│   │   └── 📄 opencode.json.tmpl
+│   └── 📁 store-etl
+│       └── 📄 store-etl.mcp.json.tmpl
 ├── 📁 dot_cursor
 │   └── 📄 mcp.json.tmpl
 ├── 📁 git_hooks
@@ -112,9 +120,6 @@
 ├── 📁 local
 ├── 📁 powerlevel10k
 │   └── 🔧 p10k.zsh
-├── 📁 private_dot_config
-│   └── 📁 store-etl
-│       └── 📄 store-etl.mcp.json.tmpl
 ├── 📁 private_proyectos
 │   └── 📁 store-etl
 │       └── 📁 dot_cursor
@@ -123,6 +128,7 @@
 │   ├── 📝 branch_feature_1-migration-to-chezmoi-sops-age.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
+│   ├── 📝 branch_feature_4-adding-opencode.md
 │   ├── 📝 branch_feature_test-branch-changelog.md
 │   ├── 📝 v2025.12.07_1051.md
 │   └── 📝 v2025.12.08_1037.md

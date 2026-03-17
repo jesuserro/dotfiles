@@ -6,12 +6,27 @@ IMPORTANT FOR AI AGENTS:
 - The source path is dot_config/opencode/ because Chezmoi maps dot_config/* → ~/.config/*
 - Do NOT attempt to "normalize" this to dot_opencode/ - it would break materialization
 - The visual asymmetry with dot_cursor/ and dot_codex/ is intentional and correct
-- See docs/OPENCODE.md for the full architectural rationale
 
-MCP POLICY:
-- Platform MCPs (dagster, loki, minio, prometheus, tempo, store_etl_ops) are globally defined but disabled by default
-- Do NOT change to enabled: true without explicit reason - they require local services running
-- Workstation MCPs (docker, github, fetch, context7, excalidraw) are enabled by default
+MCP DESIGN CONVENTION (see docs/OPENCODE.md for full details):
+
+  LAYER              | SCOPE                    | ENABLED DEFAULT
+  -------------------|--------------------------|-----------------
+  Core Workstation   | All projects             | true
+  Platform           | All projects, opt-in    | false
+  Connection-Specific| Project-specific only   | per-project
+
+  ANTI-PATTERNS TO AVOID:
+  - Hardcoding DSN/global database connections
+  - Setting enabled:true for platform MCPs by default
+  - Treating project-specific MCPs as global
+  - Mixing runtime (shared) with connection profile (project-specific)
+
+  QUICK REF:
+  - Core: docker, github, fetch, context7, excalidraw, playwright
+  - Platform: dagster, loki, minio, prometheus, tempo, store_etl_ops
+  - Connection-Specific: postgres, trino (runtime shared, connection project-specific)
+
+  SECRETS: Use ~/.config/mcp-secrets.env (neutral name, not tied to client)
 */ -}}
 
 This file provides global instructions for OpenCode across all projects.
@@ -27,6 +42,7 @@ OpenCode is configured with shared MCP servers defined globally in `~/.config/op
 - `github` - GitHub operations (requires GITHUB_TOKEN)
 - `fetch` - HTTP requests
 - `context7` - Dynamic documentation lookup
+- `playwright` - Browser automation and testing
 
 **Visual / Architecture:**
 - `excalidraw` - Diagram creation and editing

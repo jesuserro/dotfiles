@@ -22,12 +22,15 @@ args = ["-y", "@upstash/context7-mcp"]
 enabled = true
 
 # ─────────────────────────────────────────────
-# MCP: Postgres (usa POSTGRES_DSN desde ~/.secrets/codex.env)
+# MCP: Postgres (usa POSTGRES_DSN desde ~/.config/mcp-secrets.env)
+# Pattern: Runtime Global + Connection Project-Specific
 # ─────────────────────────────────────────────
 [mcp_servers.postgres]
-command = "/usr/bin/bash"
-args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec npx -y @modelcontextprotocol/server-postgres \"${POSTGRES_DSN}\""]
+command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-postgres-launcher"
 enabled = true
+
+[mcp_servers.postgres.env]
+MCP_POSTGRES_SECRETS = "{{ .chezmoi.homeDir }}/.config/mcp-secrets.env"
 
 # ─────────────────────────────────────────────
 # MCP: Trino

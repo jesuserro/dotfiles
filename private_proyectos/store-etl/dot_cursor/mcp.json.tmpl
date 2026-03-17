@@ -1,12 +1,11 @@
 {
   "mcpServers": {
     "postgres": {
-      "command": "/usr/bin/bash",
-      "args": [
-        "-lc",
-        "source ~/.secrets/codex.env 2>/dev/null; exec npx -y @modelcontextprotocol/server-postgres \"${POSTGRES_DSN}\""
-      ],
-      "env": {}
+      "command": "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-postgres-launcher",
+      "args": [],
+      "env": {
+        "MCP_POSTGRES_SECRETS": "{{ .chezmoi.homeDir }}/.config/mcp-secrets.env"
+      }
     },
     "trino": {
       "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
