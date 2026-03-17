@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+# MCP Governance Validator
+# Validates MCP configuration follows the layered architecture convention
+# See: docs/adr/0001-mcp-governance.md
+
+set -euo pipefail
+
+ERRORS=0
+WARNINGS=0
+
+log_error() {
+    echo "❌ ERROR: $1" >&2
+    ((ERRORS++))
+}
+
+log_warning() {
+    echo "⚠️  WARNING: $1" >&2
+    ((WARNINGS++))
+}
+
+log_success() {
+    echo "✅ $1"
+}
+
+echo "========================================"
+echo "MCP Governance Validator"
+echo "========================================"
+echo ""
+
+# Find dotfiles source
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+if [[ ! -d "$DOTFILES_DIR" ]]; then
+    log_error "dotfiles directory not found at $DOTFILES_DIR"
+    exit 1
+fi
+
+# ============================================
+# Check 1: OpenCode global config should NOT contain database MCPs with hardcoded DSN
+# ============================================
+echo "📋 Checking OpenCode global MCP config..."
+
+GLOBAL_OPENCODE="$DOTFILES_DIR/dot_config/opencode/opencode.json.tmpl"
+GLOBAL_CODEX="$DOTFILES_DIR/dot_codex/config.toml.tmpl"
+
+# For OpenCode: database MCPs should NOT be in global config at all
+if [[ -f "$GLOBAL_OPENCODE" ]]; then
+    if grep -q '"postgres"' "$GLOBAL_OPENCODE" 2>/dev/null; then
+        log_error "postgres found in OpenCode global config - should be project-specific only"
+    fi
+    
+    # Trino in OpenCode global is OK only if disabled (platform pattern)
+    if grep -q '"trino"' "$GLOBAL_OPENCODE" 2>/dev/null; then
+        if grep -A5 '"trino"' "$GLOBAL_OPENCODE" | grep -q '"enabled": true' 2>/dev/null; then
+            log_warning "trino enabled in OpenCode global - should be disabled by default (platform pattern)"
+        fi
+    fi
+fi
+
+# For Codex: database MCPs can exist but should use env vars, not hardcoded values
+if [[ -f "$GLOBAL_CODEX" ]]; then
+    if grep -q "postgres" "$GLOBAL_CODEX" 2>/dev/null; then
+        # Check if using wrapper (good) vs hardcoded DSN (bad)
+        if grep -q "mcp-postgres-launcher" "$GLOBAL_CODEX" 2>/dev/null; then
+            log_success "postgres in Codex uses launcher wrapper pattern"
+        elif grep -q 'DSN=' "$GLOBAL_CODEX" 2>/dev/null; then
+            log_error "postgres in Codex has hardcoded DSN - use wrapper instead"
+        fi
+    fi
+fi
+
+# ============================================
+# Check 2: Platform MCPs should be disabled by default
+# ============================================
+echo "📋 Checking platform MCPs are disabled by default..."
+
+PLATFORM_MCPS="dagster loki minio prometheus tempo store_etl_ops"
+
+if [[ -f "$GLOBAL_OPENCODE" ]]; then
+    for mcp in $PLATFORM_MCPS; do
+        if grep -q "\"$mcp\"" "$GLOBAL_OPENCODE" 2>/dev/null; then
+            if grep -q "\"enabled\": true" "$GLOBAL_OPENCODE" 2>/dev/null; then
+                # More precise check - is this specific MCP enabled?
+                if grep -A5 "\"$mcp\"" "$GLOBAL_OPENCODE" | grep -q '"enabled": true'; then
+                    log_error "Platform MCP '$mcp' should be disabled by default in global config"
+                fi
+            fi
+        fi
+    done
+fi
+
+# ============================================
+# Check 3: Project-specific configs exist for database MCPs
+# ============================================
+echo "📋 Checking project-specific configs..."
+
+STORE_ETL_CONFIG="$DOTFILES_DIR/dot_config/store-etl/store-etl.mcp.json.tmpl"
+
+if [[ -f "$STORE_ETL_CONFIG" ]]; then
+    if grep -q "postgres" "$STORE_ETL_CONFIG" 2>/dev/null; then
+        log_success "postgres found in project-specific config (store-etl)"
+    else
+        log_warning "postgres not found in store-etl project config"
+    fi
+    
+    if grep -q "trino" "$STORE_ETL_CONFIG" 2>/dev/null; then
+        log_success "trino found in project-specific config (store-etl)"
+    else
+        log_warning "trino not found in store-etl project config"
+    fi
+fi
+
+# ============================================
+# Check 4: Secrets file uses neutral naming
+# ============================================
+echo "📋 Checking secrets file naming..."
+
+SECRETS_SCRIPT="$DOTFILES_DIR/.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl"
+if [[ -f "$SECRETS_SCRIPT" ]]; then
+    if grep -q "mcp-secrets.env" "$SECRETS_SCRIPT" 2>/dev/null; then
+        log_success "Secrets file uses neutral naming (mcp-secrets.env)"
+    fi
+    
+    if grep -q 'codex\.env' "$SECRETS_SCRIPT" 2>/dev/null; then
+        log_warning "Legacy 'codex.env' reference found - ensure it's for backwards compatibility only"
+    fi
+fi
+
+# ============================================
+# Check 5: Wrapper script exists for postgres
+# ============================================
+echo "📋 Checking MCP launcher scripts..."
+
+WRAPPER="$DOTFILES_DIR/bin/mcp-postgres-launcher"
+if [[ -f "$WRAPPER" ]]; then
+    log_success "PostgreSQL launcher wrapper exists"
+else
+    log_warning "PostgreSQL launcher wrapper not found at $WRAPPER"
+fi
+
+# ============================================
+# Check 6: ADR exists
+# ============================================
+echo "📋 Checking ADR documentation..."
+
+ADR="$DOTFILES_DIR/docs/adr/0001-mcp-governance.md"
+if [[ -f "$ADR" ]]; then
+    log_success "ADR for MCP governance exists"
+else
+    log_warning "ADR not found at $ADR"
+fi
+
+# ============================================
+# Summary
+# ============================================
+echo ""
+echo "========================================"
+echo "Summary"
+echo "========================================"
+echo "Errors:   $ERRORS"
+echo "Warnings: $WARNINGS"
+echo ""
+
+if [[ $ERRORS -gt 0 ]]; then
+    echo "❌ Validation FAILED"
+    echo ""
+    echo "Fix the errors above before committing."
+    exit 1
+elif [[ $WARNINGS -gt 0 ]]; then
+    echo "⚠️  Validation PASSED with warnings"
+    exit 0
+else
+    echo "✅ Validation PASSED"
+    exit 0
+fi
