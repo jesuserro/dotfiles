@@ -110,3 +110,50 @@ If an MCP fails to start:
 - **Disabled platform MCPs**: Platform-specific MCPs (dagster, loki, etc.) are disabled by default to avoid connection errors when their services aren't running
 - **Reused paths**: MCP server paths follow the same patterns as Codex configuration to maintain consistency
 - **Global-first**: MCPs are defined globally to avoid duplication across projects
+
+## Why `dot_config/opencode/`? (Architectural Decision)
+
+### The Visual Asymmetry
+
+You may notice that OpenCode uses `dot_config/opencode/` while other AI tools use different patterns:
+
+| Tool     | Source in dotfiles       | Destination in `$HOME`       |
+|----------|--------------------------|------------------------------|
+| Cursor   | `dot_cursor/`            | `~/.cursor/`                 |
+| Codex    | `dot_codex/`             | `~/.codex/`                  |
+| OpenCode | `dot_config/opencode/`   | `~/.config/opencode/`        |
+
+This is **not an inconsistency** or an error. It's the correct pattern for each tool.
+
+### Why OpenCode uses XDG convention
+
+OpenCode follows the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html), which is the standard convention for application configuration on Linux/Unix systems. By convention:
+
+- User config lives in `$XDG_CONFIG_HOME` (default: `~/.config`)
+- Therefore, OpenCode expects its config at `~/.config/opencode/`
+
+### How Chezmoi handles this
+
+Chezmoi has a specific mapping rule:
+- `dot_foo/` → `~/.foo/` (hidden file/directory in home)
+- `dot_config/foo/` → `~/.config/foo/` (XDG-compliant path)
+
+This is why `dot_config/opencode/` is the correct source path - it maps exactly to where OpenCode looks for its configuration.
+
+### Why we don't normalize to `dot_opencode/`
+
+We could rename it to `dot_opencode/` for visual symmetry with Cursor/Codex, but that would break the materialization. The destination path is determined by the runtime convention (XDG for OpenCode, home-hidden for others), not by our aesthetic preferences.
+
+### Architectural Principle
+
+**"Respect the runtime's native convention, not the repo's visual symmetry."**
+
+When integrating any new AI tool into dotfiles:
+1. Find where the tool expects its config in the user's home directory
+2. Use the Chezmoi source path that maps to that exact destination
+3. Prioritize correctness over visual uniformity
+
+This principle ensures:
+- Configuration works out of the box after `chezmoi apply`
+- No manual symlinks or overrides needed
+- Future tool updates won't break assumptions

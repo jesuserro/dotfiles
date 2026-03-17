@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-10 09:16:20
+**Generated:** 2026-03-17 15:35:55
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -83,6 +83,7 @@
 │   ├── 📝 INSTALL.md
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   ├── 📝 MIGRATION_MCP_ITER3.md
+│   ├── 📝 OPENCODE.md
 │   ├── 📝 README.md
 │   ├── 📝 SECRETS_EXAMPLES.md
 │   ├── 📝 TOKEN_GITHUB_GH.md
@@ -91,10 +92,19 @@
 ├── 📁 dot_codex
 │   └── 📄 config.toml.tmpl
 ├── 📁 dot_config
-│   └── 📁 mcp
-│       ├── 📁 servers
+│   ├── 📁 mcp
+│   │   ├── 📁 servers
+│   │   │   └── 📄 .keep
+│   │   └── 📄 .keep
+│   └── 📁 opencode
+│       ├── 📁 commands
 │       │   └── 📄 .keep
-│       └── 📄 .keep
+│       ├── 📁 plugins
+│       │   └── 📄 .keep
+│       ├── 📁 skills
+│       │   └── 📄 .keep
+│       ├── 📄 AGENTS.md.tmpl
+│       └── 📄 opencode.json.tmpl
 ├── 📁 dot_cursor
 │   └── 📄 mcp.json.tmpl
 ├── 📁 git_hooks
