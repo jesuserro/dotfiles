@@ -2,24 +2,25 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.15_0927] - 2026-03-15
+## [v2026.03.17_1559] - 2026-03-17
 
 ## Changes
 ### Added
-- 2026-03-15 09:27 [51ba81c](https://github.com/jesuserro/dotfiles/commit/51ba81c) feat(ups): streamline OpenCode CLI update process and enhance documentation (Jesús Erro)
-  - Removed the previous OpenCode CLI installation logic and replaced it with a more robust update mechanism that checks the current version before installation.
-  - Updated the `UPS.md` documentation to include OpenCode in the system update overview, clarifying the update process for users.
-  - Improved user feedback during the OpenCode update process with detailed success messages based on version changes.
-- 2026-03-15 09:23 [fd23994](https://github.com/jesuserro/dotfiles/commit/fd23994) feat(ups): integrate OpenCode CLI installation and update process (Jesús Erro)
-  - Added functionality to the `ups` alias for installing and updating the OpenCode CLI using a curl command, enhancing the package management capabilities.
-  - Updated the `bashrc` and `10-path.zsh` files to ensure the OpenCode CLI path is included in the user's environment.
-  - Revised documentation in `UPS.md` to reflect the new OpenCode CLI installation process, providing users with clear instructions for setup and updates.
+- 2026-03-17 15:32 [d44d809](https://github.com/jesuserro/dotfiles/commit/d44d809) feat(opencode): add OpenCode integration and documentation (Jesús Erro)
+  - Introduced OpenCode configuration files and documentation to streamline integration into the dotfiles workstation.
+  - Created `opencode.json.tmpl` for global MCP server definitions and added `AGENTS.md.tmpl` for global instructions.
+  - Updated `.chezmoiignore` to include OpenCode configuration files, ensuring they are tracked.
 
-### Refactored
-- 2026-03-15 09:07 [6963433](https://github.com/jesuserro/dotfiles/commit/6963433) refactor(ups): synchronize pnpm version for excalidraw-mcp during updates (Jesús Erro)
-  - Added a function to check and synchronize the pnpm version specified in the excalidraw-mcp project with the active pnpm version before executing updates.
-  - Enhanced the ups alias to ensure that the correct pnpm version is used, preventing issues with outdated package managers.
-  - Updated documentation in UPS.md to reflect the new synchronization process for pnpm in the excalidraw-mcp repository.
+### Documentation
+- 2026-03-17 15:59 [ee18709](https://github.com/jesuserro/dotfiles/commit/ee18709) docs(changelog): added changelog for OpenCode integration feature, summarizing three commits that clarify MCP policy, update documentation, and implement OpenCode functionality. (Jesús Erro)
+- 2026-03-17 15:54 [f652469](https://github.com/jesuserro/dotfiles/commit/f652469) docs(opencode): clarify MCP policy and enablement rationale in documentation (Jesús Erro)
+  - Updated `OPENCODE.md` to specify that platform MCPs are globally defined but disabled by default, requiring local services to run.
+  - Added detailed explanations on why certain MCPs are disabled by default, including potential connection errors and project noise.
+  - Revised `AGENTS.md.tmpl` to reflect the MCP policy, emphasizing the need for explicit reasons to enable platform MCPs.
+- 2026-03-17 15:46 [138d9d2](https://github.com/jesuserro/dotfiles/commit/138d9d2) docs(opencode): update file tree and documentation for OpenCode integration (Jesús Erro)
+  - Updated the generated timestamp in `STRUCTURE.md` to reflect the latest changes.
+  - Added `OPENCODE.md` documentation to clarify the architectural decisions behind the OpenCode configuration.
+  - Introduced new configuration files in `dot_config/opencode/`, including `AGENTS.md.tmpl` and `opencode.json.tmpl`, to support OpenCode's integration.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
