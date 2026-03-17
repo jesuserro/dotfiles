@@ -2,25 +2,60 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.17_1559] - 2026-03-17
+## [v2026.03.17_2026] - 2026-03-17
 
 ## Changes
 ### Added
-- 2026-03-17 15:32 [d44d809](https://github.com/jesuserro/dotfiles/commit/d44d809) feat(opencode): add OpenCode integration and documentation (Jesús Erro)
-  - Introduced OpenCode configuration files and documentation to streamline integration into the dotfiles workstation.
-  - Created `opencode.json.tmpl` for global MCP server definitions and added `AGENTS.md.tmpl` for global instructions.
-  - Updated `.chezmoiignore` to include OpenCode configuration files, ensuring they are tracked.
+- 2026-03-17 16:32 [65b411b](https://github.com/jesuserro/dotfiles/commit/65b411b) feat(opencode): enhance MCP configuration and documentation (Jesús Erro)
+  - Updated `.chezmoiignore` to simplify configuration tracking by including the entire `.config` directory.
+  - Added `playwright` as a new global workstation MCP for browser automation in `AGENTS.md.tmpl`.
+  - Expanded `OPENCODE.md` to clarify the separation of database MCPs as project-specific while maintaining global runtime tools.
 
 ### Documentation
-- 2026-03-17 15:59 [ee18709](https://github.com/jesuserro/dotfiles/commit/ee18709) docs(changelog): added changelog for OpenCode integration feature, summarizing three commits that clarify MCP policy, update documentation, and implement OpenCode functionality. (Jesús Erro)
-- 2026-03-17 15:54 [f652469](https://github.com/jesuserro/dotfiles/commit/f652469) docs(opencode): clarify MCP policy and enablement rationale in documentation (Jesús Erro)
-  - Updated `OPENCODE.md` to specify that platform MCPs are globally defined but disabled by default, requiring local services to run.
-  - Added detailed explanations on why certain MCPs are disabled by default, including potential connection errors and project noise.
-  - Revised `AGENTS.md.tmpl` to reflect the MCP policy, emphasizing the need for explicit reasons to enable platform MCPs.
-- 2026-03-17 15:46 [138d9d2](https://github.com/jesuserro/dotfiles/commit/138d9d2) docs(opencode): update file tree and documentation for OpenCode integration (Jesús Erro)
+- 2026-03-17 20:25 [b11d560](https://github.com/jesuserro/dotfiles/commit/b11d560) docs(changelog): added feature changelog for MCP global enhancements (Jesús Erro)
+  - Created a new changelog file detailing the integration of the feature branch `feature/5-adding-mcps-globales-especializados`.
+  - Summarized 10 commits including updates to documentation, validation scripts, and MCP governance guidelines.
+  - Highlighted significant additions such as the MCP Quick Reference guide, ADR templates, and comprehensive governance documentation.
+- 2026-03-17 20:24 [1719ad5](https://github.com/jesuserro/dotfiles/commit/1719ad5) docs(structure): update file tree and add new directories and files (Jesús Erro)
   - Updated the generated timestamp in `STRUCTURE.md` to reflect the latest changes.
-  - Added `OPENCODE.md` documentation to clarify the architectural decisions behind the OpenCode configuration.
-  - Introduced new configuration files in `dot_config/opencode/`, including `AGENTS.md.tmpl` and `opencode.json.tmpl`, to support OpenCode's integration.
+  - Added a new directory for `mcp-governance` containing a `SKILL.md` file.
+  - Introduced a new `adr` directory with an architectural decision record and a template for future ADRs.
+- 2026-03-17 20:20 [1ec8de5](https://github.com/jesuserro/dotfiles/commit/1ec8de5) docs(mcp-quickref): add MCP Quick Reference guide (Jesús Erro)
+  - Introduced a new `MCP_QUICKREF.md` file providing a concise overview of MCP layers, anti-patterns, key files, and guidelines for adding MCPs.
+  - Structured the document to assist AI agents in understanding the classification and management of MCPs within the repository.
+  - Included visual aids and clear instructions to enhance usability and compliance with MCP governance standards.
+- 2026-03-17 20:19 [6394b48](https://github.com/jesuserro/dotfiles/commit/6394b48) docs(adr): add ADR template and guidelines for new ADRs (Jesús Erro)
+  - Introduced a new ADR template to standardize documentation of architectural decisions.
+  - Added guidelines for creating new ADRs, including naming conventions and the review process.
+  - Enhanced the existing MCP governance documentation by providing a clear structure for future ADRs.
+- 2026-03-17 20:15 [0cc91f0](https://github.com/jesuserro/dotfiles/commit/0cc91f0) docs(mcp-governance): add comprehensive MCP governance documentation (Jesús Erro)
+  - Introduced a new `SKILL.md` file detailing the classification, integration, and maintenance of MCP servers within a layered architecture.
+  - Provided guidelines for adding new MCPs, defining runtime and connection profiles, and avoiding common anti-patterns.
+  - Included a checklist for ensuring proper MCP configuration and verification steps for active MCPs.
+- 2026-03-17 20:10 [31a9516](https://github.com/jesuserro/dotfiles/commit/31a9516) docs(adr): add MCP governance decision document and update references (Jesús Erro)
+  - Introduced a new architectural decision record (ADR) for MCP governance, detailing the layered architecture for database and platform MCPs.
+  - Updated `OPENCODE.md` to include a reference to the new ADR, enhancing the documentation on MCP classification and activation policies.
+  - Modified `STRUCTURE.md` to reflect the addition of the ADR file in the project structure.
+- 2026-03-17 19:57 [548594e](https://github.com/jesuserro/dotfiles/commit/548594e) docs(opencode): expand MCP design convention and anti-patterns (Jesús Erro)
+  - Added a comprehensive section on MCP design conventions to `OPENCODE.md`, detailing the three layers of MCPs: Core Workstation, Platform Specialized, and Connection-Specific.
+  - Included decision criteria for classifying MCPs and guidelines for adding new MCPs.
+  - Updated `AGENTS.md.tmpl` to reflect the new design convention and emphasize the importance of project-specific configurations.
+- 2026-03-17 16:35 [8d32409](https://github.com/jesuserro/dotfiles/commit/8d32409) docs(opencode): clarify configuration semantics and project-specific settings (Jesús Erro)
+  - Expanded `OPENCODE.md` to detail the distinction between global and project-specific configurations within `dot_config/`.
+  - Emphasized that `dot_config/store-etl/` is project-specific, while `dot_config/opencode/` serves as global client configuration.
+  - Updated `AGENTS.md.tmpl` to reflect the clarification that not all configurations in `dot_config/*` are global, reinforcing the need for proper context in MCP definitions.
+
+### Refactored
+- 2026-03-17 19:51 [e7733bd](https://github.com/jesuserro/dotfiles/commit/e7733bd) refactor(mcp): rename secrets file and enhance PostgreSQL launcher (Jesús Erro)
+  - Updated the secrets file path from `~/.config/store-etl/secrets.env` to `~/.config/mcp-secrets.env` for clarity and neutrality.
+  - Introduced a new `mcp-postgres-launcher` script to handle PostgreSQL connections, separating runtime from connection profiles.
+  - Updated configuration files to utilize the new launcher and secrets file, ensuring project-specific settings are maintained.
+
+### Tests
+- 2026-03-17 20:18 [eae5a2c](https://github.com/jesuserro/dotfiles/commit/eae5a2c) test(validation): add MCP governance validation script (Jesús Erro)
+  - Introduced a new `validate-mcp-governance` script to validate MCP configurations against governance rules.
+  - Implemented checks for hardcoded database connections, platform MCP defaults, project-specific configurations, and naming conventions for secrets.
+  - Enhanced error and warning logging to provide clear feedback on validation results, ensuring compliance with MCP governance standards.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
