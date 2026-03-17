@@ -1,0 +1,60 @@
+{{- /*
+This file is materialized by Chezmoi to ~/.config/opencode/AGENTS.md
+
+IMPORTANT FOR AI AGENTS:
+- OpenCode uses XDG Base Directory spec ( ~/.config/opencode/ )
+- The source path is dot_config/opencode/ because Chezmoi maps dot_config/* → ~/.config/*
+- Do NOT attempt to "normalize" this to dot_opencode/ - it would break materialization
+- The visual asymmetry with dot_cursor/ and dot_codex/ is intentional and correct
+- See docs/OPENCODE.md for the full architectural rationale
+
+MCP POLICY:
+- Platform MCPs (dagster, loki, minio, prometheus, tempo, store_etl_ops) are globally defined but disabled by default
+- Do NOT change to enabled: true without explicit reason - they require local services running
+- Workstation MCPs (docker, github, fetch, context7, excalidraw) are enabled by default
+*/ -}}
+
+This file provides global instructions for OpenCode across all projects.
+
+## MCP Servers
+
+OpenCode is configured with shared MCP servers defined globally in `~/.config/opencode/opencode.json`, generated from dotfiles via Chezmoi.
+
+### Available Global MCPs
+
+**Core Workstation (always available):**
+- `docker` - Docker management
+- `github` - GitHub operations (requires GITHUB_TOKEN)
+- `fetch` - HTTP requests
+- `context7` - Dynamic documentation lookup
+
+**Visual / Architecture:**
+- `excalidraw` - Diagram creation and editing
+
+**Platform / Data Stack (disabled by default):**
+- `dagster` - Dagster orchestrator
+- `loki` - Log aggregation
+- `minio` - S3-compatible storage
+- `prometheus` - Metrics
+- `tempo` - Trace visualization
+- `store_etl_ops` - Store ETL operations
+
+Platform MCPs are disabled by default because they require specific local services to be running. Enable them per-project when needed.
+
+## Configuration Philosophy
+
+1. **Single source of truth**: All global MCP configuration lives in `~/dotfiles` and is materialized via `chezmoi apply`
+2. **Minimal project overrides**: Only override global MCPs when a project genuinely needs different configuration
+3. **Project-specific rules**: Any project-specific agent instructions should live in the project's own `AGENTS.md`, not here
+
+## Adding Project-Specific MCPs
+
+To add MCPs for a specific project, create a local `opencode.json` or use the `mcp` key in the project's configuration. Global MCPs will be merged with project-specific ones.
+
+## Validation
+
+Check MCP status:
+```bash
+opencode mcp list
+opencode mcp debug <server-name>
+```

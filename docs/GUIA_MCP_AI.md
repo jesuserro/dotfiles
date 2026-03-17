@@ -115,6 +115,9 @@ chezmoi --source=$HOME/dotfiles apply
 | Hub skills      | `ai/assets/skills/`       | `~/.config/ai/skills` (symlink) |
 | Config Cursor   | `dot_cursor/mcp.json.tmpl` | `~/.cursor/mcp.json`          |
 | Config Codex    | `dot_codex/config.toml.tmpl` | `~/.codex/config.toml`     |
+| Config OpenCode | `dot_config/opencode/`     | `~/.config/opencode/` (XDG)   |
+
+> **Nota arquitectónica:** Cada tool usa su convención nativa (Cursor/Codex → `~/.`, OpenCode → XDG). No forces simetría visual. Ver [docs/OPENCODE.md](./OPENCODE.md) para detalles.
 
 ---
 

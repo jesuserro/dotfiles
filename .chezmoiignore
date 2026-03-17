@@ -12,6 +12,8 @@
 !.codex/**
 !.config/store-etl
 !.config/store-etl/**
+!.config/opencode
+!.config/opencode/**
 !.config/mcp
 !.config/mcp/**
 !.config/ai
