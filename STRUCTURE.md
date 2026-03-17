@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-17 20:03:21
+**Generated:** 2026-03-17 20:22:22
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -42,6 +42,8 @@
 │   │       │   ├── 📄 .gitignore
 │   │       │   ├── 📝 README.md
 │   │       │   └── 📝 SKILL.md
+│   │       ├── 📁 mcp-governance
+│   │       │   └── 📝 SKILL.md
 │   │       └── 📁 ups-workflow
 │   │           └── 📝 SKILL.md
 │   ├── 📁 runtime
@@ -67,6 +69,9 @@
 │   ├── 📝 README.md
 │   └── ⚙️ config.toml
 ├── 📁 docs
+│   ├── 📁 adr
+│   │   ├── 📝 0001-mcp-governance.md
+│   │   └── 📝 template.md
 │   ├── 📁 linkedin
 │   │   ├── 📁 diagrams
 │   │   │   ├── 📄 ai-workstation-flow.excalidraw
@@ -76,13 +81,12 @@
 │   │   │   ├── 🖼️ architecture-overview.jpg
 │   │   │   └── 🖼️ architecture-overview.svg
 │   │   └── 📝 PROJECT_DATA.md
-│   ├── 📁 adr
-│   │   │   └── 📝 0001-mcp-governance.md
 │   ├── 📝 CAMBIAR_TOKEN_GITHUB.md
 │   ├── 📝 CHEZMOI.md
 │   ├── 📝 GIT_WORKFLOW.md
 │   ├── 📝 GUIA_MCP_AI.md
 │   ├── 📝 INSTALL.md
+│   ├── 📝 MCP_QUICKREF.md
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   ├── 📝 MIGRATION_MCP_ITER3.md
 │   ├── 📝 OPENCODE.md
