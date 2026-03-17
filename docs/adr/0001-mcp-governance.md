@@ -92,3 +92,19 @@ trino MCP:
 - Operational guide: `docs/OPENCODE.md`
 - Agent instructions: `dot_config/opencode/AGENTS.md.tmpl`
 - Implementation: `dot_config/store-etl/store-etl.mcp.json.tmpl`
+
+---
+
+## Adding New ADRs
+
+New architectural decisions should be documented as ADRs in this folder.
+
+**Naming convention:** `XXXX-title-slug.md` (4-digit sequence + descriptive slug)
+
+**Template:** See `docs/adr/template.md`
+
+**Process:**
+1. Copy template to new file with appropriate sequence number
+2. Fill in the sections
+3. Set status to "Proposed"
+4. After review/acceptance, update status to "Accepted"
