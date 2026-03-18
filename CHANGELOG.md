@@ -2,35 +2,31 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.18_1247] - 2026-03-18
+## [v2026.03.18_1355] - 2026-03-18
 
 ## Changes
 ### Added
-- 2026-03-18 12:30 [1523c27](https://github.com/jesuserro/dotfiles/commit/1523c27) feat(mcp): introduce Obsidian MCP and update related documentation (Jesús Erro)
-  - Added support for the Obsidian MCP (mcpvault) to enable semantic operations on vaults, including notes, frontmatter, and tags.
-  - Updated aliases and documentation to reflect changes in the MCP structure, including installation and runtime behavior for Obsidian and Git.
-  - Clarified the relationship between the Filesystem MCP and the new Obsidian MCP, emphasizing their complementary roles.
-- 2026-03-18 12:15 [3e90859](https://github.com/jesuserro/dotfiles/commit/3e90859) feat(vault): update filesystem launcher and documentation to include new allowed root (Jesús Erro)
-  - Updated `mcp-filesystem-launcher` to include `/mnt/c/Users/jesus/Documents/vault` in the allowed roots.
-  - Modified `validate-mcp-governance` to check for the new allowed root.
-  - Revised `MCP_QUICKREF.md` and `0001-mcp-governance.md` to reflect the updated whitelist policy.
-- 2026-03-18 12:07 [6684be4](https://github.com/jesuserro/dotfiles/commit/6684be4) feat(mcp): add filesystem and git launchers with documentation updates (Jesús Erro)
-  - Introduced two new MCP launchers: `mcp-filesystem-launcher` for controlled filesystem access and `mcp-git-launcher` for dynamic Git operations.
-  - Updated documentation in `MCP_QUICKREF.md`, `AGENTS.md`, and `OPENCODE.md` to include new MCPs and their usage.
-  - Enhanced `validate-mcp-governance` script to check for the existence and correctness of the new launchers.
+- 2026-03-18 13:34 [651f336](https://github.com/jesuserro/dotfiles/commit/651f336) feat(tests): add comprehensive testing framework for dotfiles (Jesús Erro)
+  - Introduced a new Makefile to manage testing targets and dependencies for the dotfiles project.
+  - Created detailed documentation in `README.md` and `docs/TESTING.md` outlining testing procedures, installation requirements, and available commands.
+  - Implemented a suite of Bats tests for various scripts, including `mcp-filesystem-launcher`, `mcp-git-launcher`, and `validate-mcp-governance`, ensuring robust validation of functionality and structure.
+
+### Fixed
+- 2026-03-18 13:52 [ccf254e](https://github.com/jesuserro/dotfiles/commit/ccf254e) fix(tests): enhance Makefile for improved testing and linting (Jesús Erro)
+  - Updated the Makefile to include additional shell scripts for linting, specifically excluding third-party directories.
+  - Introduced new CI testing targets for comprehensive test execution with JUnit/XML output.
+  - Improved help documentation for clarity on testing commands and their purposes.
+- 2026-03-18 13:43 [06c1d3c](https://github.com/jesuserro/dotfiles/commit/06c1d3c) fix(tests): enhance mcp launchers with mock execution for testing (Jesús Erro)
+  - Added mock `npx` and `uvx` scripts to avoid blocking during tests in `mcp-filesystem-launcher.bats` and `mcp-git-launcher.bats`.
+  - Updated tests to utilize the mock scripts, improving reliability and execution flow.
+  - Removed redundant checks for launcher existence in tests, streamlining the test cases.
 
 ### Documentation
-- 2026-03-18 12:47 [71fb294](https://github.com/jesuserro/dotfiles/commit/71fb294) docs(changelog): add feature changelog for global MCPs integration (Jesús Erro)
-  - Created a new changelog file for the feature branch `feature/7-adding-new-global-mcps`, summarizing 5 commits related to the addition of new global MCPs.
-  - Documented changes including the introduction of the Obsidian MCP, updates to filesystem and git launchers, and enhancements to related documentation.
-  - Provided technical details on integration status and commit history for clarity.
-- 2026-03-18 12:40 [a0da100](https://github.com/jesuserro/dotfiles/commit/a0da100) docs(mcp): add MCP taxonomy document and update references (Jesús Erro)
-  - Introduced `MCP_TAXONOMY.md` as a canonical reference for MCP classification, detailing layers, operational policies, and criteria for MCP management.
-  - Updated `README.md`, `UPS.md`, and `MCP_QUICKREF.md` to include links to the new taxonomy document, enhancing documentation clarity and accessibility.
-  - Revised the timestamp in `STRUCTURE.md` to reflect the latest changes.
-- 2026-03-18 12:25 [7acd471](https://github.com/jesuserro/dotfiles/commit/7acd471) docs(mcp): add MCP Obsidian proposal and update file structure (Jesús Erro)
-  - Introduced `MCP_OBSIDIAN_PROPOSAL.md` detailing the proposed MCP for Obsidian, including context, additional capabilities, and implementation steps.
-  - Updated `STRUCTURE.md` to include the new proposal file and refreshed the generated timestamp.
+- 2026-03-18 13:55 [76d3d3c](https://github.com/jesuserro/dotfiles/commit/76d3d3c) docs(changelog): update STRUCTURE.md with new files and generated timestamp; add feature changelog for testing enhancements (Jesús Erro)
+- 2026-03-18 13:54 [cd2235f](https://github.com/jesuserro/dotfiles/commit/cd2235f) docs(tests): update testing documentation and procedures (Jesús Erro)
+  - Added a new step to the code modification verification process to include running `make test-fast` for test suite validation.
+  - Clarified the description of the `make test-fast` command in the documentation.
+  - Introduced a new section on lint policy and output modes to enhance understanding of testing outputs and their use cases.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
