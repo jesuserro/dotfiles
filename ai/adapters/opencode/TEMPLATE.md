@@ -27,7 +27,13 @@ description: <descripción del command>
 ## Ubicación del Artefacto Generado
 
 ```
-dot_config/opencode/commands/<command-id>.md
+build/commands/opencode/<command-id>.md
+```
+
+## Runtime Final
+
+```
+~/.config/opencode/commands/<command-id>.md
 ```
 
 ## Invocación
@@ -44,3 +50,4 @@ Ejemplo: `/sos`
 - El frontmatter DEBE empezar en la primera línea
 - No incluir headers HTML ni comentarios antes del frontmatter
 - El separador `---` marca el fin del frontmatter
+- Tras el frontmatter se permite un marcador de gestión del sistema

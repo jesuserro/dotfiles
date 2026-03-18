@@ -7,9 +7,15 @@ setup() {
     DOTFILES_DIR="$(get_dotfiles_dir)"
     COMMANDS_DIR="${DOTFILES_DIR}/ai/assets/commands"
     REGISTRY_FILE="${COMMANDS_DIR}/registry.yaml"
-    OPENCODE_COMMANDS="${DOTFILES_DIR}/dot_config/opencode/commands"
-    CURSOR_COMMANDS="${DOTFILES_DIR}/dot_config/cursor/commands"
-    CODEX_PROMPTS="${DOTFILES_DIR}/dot_config/codex/prompts"
+    BUILD_COMMANDS="${DOTFILES_DIR}/build/commands"
+    OPENCODE_BUILD="${BUILD_COMMANDS}/opencode"
+    CURSOR_BUILD="${BUILD_COMMANDS}/cursor"
+    CODEX_BUILD="${BUILD_COMMANDS}/codex"
+    TEST_HOME_ROOT="$(mktemp -d)"
+}
+
+teardown() {
+    rm -rf "${TEST_HOME_ROOT}"
 }
 
 # =============================================================================
@@ -191,27 +197,41 @@ PYEOF
     [[ $status -eq 0 ]]
 }
 
-@test "generate-commands produces sos.md for opencode" {
+@test "materialize-commands script exists and is executable" {
+    materialize_script="${DOTFILES_DIR}/scripts/materialize-commands.sh"
+    [[ -f "${materialize_script}" ]]
+    [[ -x "${materialize_script}" ]]
+}
+
+@test "validate-commands passes when build artifacts do not exist yet" {
+    rm -rf "${BUILD_COMMANDS}"
+
+    run bash "${DOTFILES_DIR}/scripts/validate-commands-structure.sh"
+    [[ $status -eq 0 ]]
+    [[ "$output" == *"Build artifacts not generated yet"* ]]
+}
+
+@test "generate-commands produces sos.md for opencode build" {
     run bash "${DOTFILES_DIR}/scripts/generate-commands.sh" -c sos
     [[ $status -eq 0 ]]
 
-    sos_file="${OPENCODE_COMMANDS}/sos.md"
+    sos_file="${OPENCODE_BUILD}/sos.md"
     [[ -f "${sos_file}" ]]
 }
 
-@test "generate-commands produces sos.md for cursor" {
+@test "generate-commands produces sos.md for cursor build" {
     run bash "${DOTFILES_DIR}/scripts/generate-commands.sh" -c sos
     [[ $status -eq 0 ]]
 
-    sos_file="${CURSOR_COMMANDS}/sos.md"
+    sos_file="${CURSOR_BUILD}/sos.md"
     [[ -f "${sos_file}" ]]
 }
 
-@test "generate-commands produces sos.md for codex" {
+@test "generate-commands produces sos.md for codex build" {
     run bash "${DOTFILES_DIR}/scripts/generate-commands.sh" -c sos
     [[ $status -eq 0 ]]
 
-    sos_file="${CODEX_PROMPTS}/sos.md"
+    sos_file="${CODEX_BUILD}/sos.md"
     [[ -f "${sos_file}" ]]
 }
 
@@ -220,49 +240,55 @@ PYEOF
 # =============================================================================
 
 @test "generated opencode sos.md has frontmatter" {
-    sos_file="${OPENCODE_COMMANDS}/sos.md"
+    sos_file="${OPENCODE_BUILD}/sos.md"
     run grep -q "^---$" "${sos_file}"
     [[ $status -eq 0 ]]
 }
 
 @test "generated opencode sos.md has description in frontmatter" {
-    sos_file="${OPENCODE_COMMANDS}/sos.md"
+    sos_file="${OPENCODE_BUILD}/sos.md"
     run grep -q "^description:" "${sos_file}"
     [[ $status -eq 0 ]]
 }
 
+@test "generated opencode sos.md has managed marker" {
+    sos_file="${OPENCODE_BUILD}/sos.md"
+    run grep -q "managed-by: dotfiles-global-commands" "${sos_file}"
+    [[ $status -eq 0 ]]
+}
+
 @test "generated opencode sos.md has correct content" {
-    sos_file="${OPENCODE_COMMANDS}/sos.md"
+    sos_file="${OPENCODE_BUILD}/sos.md"
     run grep -q "SOS Command" "${sos_file}"
     [[ $status -eq 0 ]]
 }
 
 @test "generated cursor sos.md does NOT have frontmatter" {
-    sos_file="${CURSOR_COMMANDS}/sos.md"
+    sos_file="${CURSOR_BUILD}/sos.md"
     run head -n 1 "${sos_file}"
-    [[ "$output" != "---" ]]
+    [[ "$output" == "<!-- managed-by: dotfiles-global-commands -->" ]]
 }
 
 @test "generated cursor sos.md starts with Markdown header" {
-    sos_file="${CURSOR_COMMANDS}/sos.md"
-    run head -n 1 "${sos_file}"
+    sos_file="${CURSOR_BUILD}/sos.md"
+    run sed -n '3p' "${sos_file}"
     [[ "$output" == "# "* ]]
 }
 
 @test "generated codex sos.md has frontmatter" {
-    sos_file="${CODEX_PROMPTS}/sos.md"
+    sos_file="${CODEX_BUILD}/sos.md"
     run grep -q "^---$" "${sos_file}"
     [[ $status -eq 0 ]]
 }
 
 @test "generated codex sos.md has description in frontmatter" {
-    sos_file="${CODEX_PROMPTS}/sos.md"
+    sos_file="${CODEX_BUILD}/sos.md"
     run grep -q "^description:" "${sos_file}"
     [[ $status -eq 0 ]]
 }
 
 @test "generated codex sos.md has correct content" {
-    sos_file="${CODEX_PROMPTS}/sos.md"
+    sos_file="${CODEX_BUILD}/sos.md"
     run grep -q "SOS Command" "${sos_file}"
     [[ $status -eq 0 ]]
 }
@@ -272,16 +298,55 @@ PYEOF
 # =============================================================================
 
 @test "opencode invocation is /sos" {
-    sos_file="${OPENCODE_COMMANDS}/sos.md"
+    sos_file="${OPENCODE_BUILD}/sos.md"
     [[ -f "${sos_file}" ]]
 }
 
 @test "cursor invocation is /sos" {
-    sos_file="${CURSOR_COMMANDS}/sos.md"
+    sos_file="${CURSOR_BUILD}/sos.md"
     [[ -f "${sos_file}" ]]
 }
 
 @test "codex invocation is /prompts:sos" {
-    sos_file="${CODEX_PROMPTS}/sos.md"
+    sos_file="${CODEX_BUILD}/sos.md"
     [[ -f "${sos_file}" ]]
+}
+
+@test "materialize-commands publishes to a configurable home root" {
+    run env COMMANDS_HOME_ROOT="${TEST_HOME_ROOT}" bash "${DOTFILES_DIR}/scripts/materialize-commands.sh"
+    [[ $status -eq 0 ]]
+
+    [[ -f "${TEST_HOME_ROOT}/.config/opencode/commands/sos.md" ]]
+    [[ -f "${TEST_HOME_ROOT}/.cursor/commands/sos.md" ]]
+    [[ -f "${TEST_HOME_ROOT}/.codex/prompts/sos.md" ]]
+}
+
+@test "materialize-commands removes obsolete managed files but preserves manual files" {
+    managed_dir="${TEST_HOME_ROOT}/.cursor/commands"
+    mkdir -p "${managed_dir}"
+
+    cat > "${managed_dir}/obsolete.md" <<'EOF'
+<!-- managed-by: dotfiles-global-commands -->
+old content
+EOF
+
+    cat > "${managed_dir}/manual.md" <<'EOF'
+manual content
+EOF
+
+    run env COMMANDS_HOME_ROOT="${TEST_HOME_ROOT}" bash "${DOTFILES_DIR}/scripts/materialize-commands.sh"
+    [[ $status -eq 0 ]]
+
+    [[ ! -f "${managed_dir}/obsolete.md" ]]
+    [[ -f "${managed_dir}/manual.md" ]]
+}
+
+@test "materialize-commands can reuse an existing build without regenerating" {
+    run bash "${DOTFILES_DIR}/scripts/generate-commands.sh"
+    [[ $status -eq 0 ]]
+
+    run env COMMANDS_HOME_ROOT="${TEST_HOME_ROOT}" bash "${DOTFILES_DIR}/scripts/materialize-commands.sh" --skip-generate
+    [[ $status -eq 0 ]]
+
+    [[ -f "${TEST_HOME_ROOT}/.config/opencode/commands/sos.md" ]]
 }

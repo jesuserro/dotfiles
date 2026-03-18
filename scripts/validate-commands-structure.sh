@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Validates the structure and quality of commands in ai/assets/commands/
-# Checks format, content, architectural compliance, and multi-platform artifacts.
+# Validates canonical command structure and, when present, generated build artifacts.
 
 set -euo pipefail
 
@@ -9,15 +8,10 @@ DOTFILES_DIR="$(dirname "${SCRIPT_DIR}")"
 COMMANDS_DIR="${DOTFILES_DIR}/ai/assets/commands"
 REGISTRY_FILE="${COMMANDS_DIR}/registry.yaml"
 ADAPTERS_DIR="${DOTFILES_DIR}/ai/adapters"
-
-OPENCODE_COMMANDS="${DOTFILES_DIR}/dot_config/opencode/commands"
-CURSOR_COMMANDS="${DOTFILES_DIR}/dot_config/cursor/commands"
-CODEX_PROMPTS="${DOTFILES_DIR}/dot_config/codex/prompts"
+BUILD_DIR="${DOTFILES_DIR}/build/commands"
 
 ERRORS=0
 WARNINGS=0
-
-VALID_PLATFORMS=("opencode" "cursor" "codex")
 
 log_error() {
     echo "  [ERROR] $*"
@@ -31,6 +25,10 @@ log_warn() {
 
 log_ok() {
     echo "  [OK] $*"
+}
+
+log_info() {
+    echo "  [INFO] $*"
 }
 
 check_registry_exists() {
@@ -58,13 +56,14 @@ check_yaml_valid() {
 
 check_registry_version() {
     local version
-    version=$(python3 - "${REGISTRY_FILE}" 2>/dev/null << 'PYEOF'
+    version=$(python3 - "${REGISTRY_FILE}" <<'PYEOF'
 import sys
 import yaml
-registry = sys.argv[1]
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
-print(data.get('version', ''))
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    data = yaml.safe_load(handle)
+
+print(data.get("version", ""))
 PYEOF
     )
 
@@ -82,23 +81,25 @@ check_command_ids_unique() {
     echo "Checking command IDs..."
 
     local id_count unique_count
-    id_count=$(python3 - "${REGISTRY_FILE}" 2>/dev/null << 'PYEOF'
+    id_count=$(python3 - "${REGISTRY_FILE}" <<'PYEOF'
 import sys
 import yaml
-registry = sys.argv[1]
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
-print(len(data.get('commands', [])))
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    data = yaml.safe_load(handle)
+
+print(len(data.get("commands", [])))
 PYEOF
     )
 
-    unique_count=$(python3 - "${REGISTRY_FILE}" 2>/dev/null << 'PYEOF'
+    unique_count=$(python3 - "${REGISTRY_FILE}" <<'PYEOF'
 import sys
 import yaml
-registry = sys.argv[1]
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
-ids = [c.get('id', '') for c in data.get('commands', [])]
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    data = yaml.safe_load(handle)
+
+ids = [command.get("id", "") for command in data.get("commands", [])]
 print(len(set(ids)))
 PYEOF
     )
@@ -113,21 +114,21 @@ PYEOF
 check_command_structure() {
     echo "Checking command structure..."
 
-    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" 2>/dev/null << 'PYEOF'
+    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" <<'PYEOF'
+import os
 import sys
 import yaml
-import os
 
 registry = sys.argv[1]
 commands_dir = sys.argv[2]
-valid_platforms = ['opencode', 'cursor', 'codex']
+valid_platforms = ["opencode", "cursor", "codex"]
 errors = 0
 
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
+with open(registry, "r", encoding="utf-8") as handle:
+    data = yaml.safe_load(handle)
 
-for cmd in data.get('commands', []):
-    cmd_id = cmd.get('id', '')
+for cmd in data.get("commands", []):
+    cmd_id = cmd.get("id", "")
     if not cmd_id:
         print("  [ERROR] Command missing id field")
         errors += 1
@@ -135,8 +136,7 @@ for cmd in data.get('commands', []):
 
     print(f"  Checking command: {cmd_id}")
 
-    # Check source
-    source = cmd.get('source', '')
+    source = cmd.get("source", "")
     if not source:
         print(f"  [ERROR] Command '{cmd_id}' missing 'source' field")
         errors += 1
@@ -148,21 +148,19 @@ for cmd in data.get('commands', []):
         else:
             print(f"  [OK] Command '{cmd_id}': source exists")
 
-    # Check platforms
-    platforms = cmd.get('platforms', [])
+    platforms = cmd.get("platforms", [])
     if not platforms:
         print(f"  [ERROR] Command '{cmd_id}' missing 'platforms' field")
         errors += 1
     else:
-        for p in platforms:
-            if p in valid_platforms:
-                print(f"  [OK] Platform '{p}' is valid")
+        for platform in platforms:
+            if platform in valid_platforms:
+                print(f"  [OK] Platform '{platform}' is valid")
             else:
-                print(f"  [ERROR] Command '{cmd_id}': invalid platform '{p}'")
+                print(f"  [ERROR] Command '{cmd_id}': invalid platform '{platform}'")
                 errors += 1
 
-    # Check enabled
-    enabled = cmd.get('enabled')
+    enabled = cmd.get("enabled")
     if enabled is None:
         print(f"  [ERROR] Command '{cmd_id}' missing 'enabled' field")
         errors += 1
@@ -177,203 +175,38 @@ PYEOF
 check_command_content() {
     echo "Checking command content..."
 
-    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" 2>/dev/null << 'PYEOF'
+    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" <<'PYEOF'
+import os
 import sys
 import yaml
-import os
 
-registry = sys.argv[1]
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    data = yaml.safe_load(handle)
+
 commands_dir = sys.argv[2]
 
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
-
-for cmd in data.get('commands', []):
-    cmd_id = cmd.get('id', '')
-    source = cmd.get('source', '')
+for cmd in data.get("commands", []):
+    cmd_id = cmd.get("id", "")
+    source = cmd.get("source", "")
 
     if not source:
         continue
 
     source_file = os.path.join(commands_dir, source)
-
     if not os.path.exists(source_file):
         continue
 
-    with open(source_file, 'r') as f:
-        content = f.read()
+    with open(source_file, "r", encoding="utf-8") as handle:
+        content = handle.read()
 
-    # Check for title
-    if not any(line.strip().startswith('# ') for line in content.split('\n')):
+    if not any(line.strip().startswith("# ") for line in content.split("\n")):
         print(f"  [ERROR] Command '{cmd_id}': COMMAND.md missing title (should start with '# ')")
 
-    # Check for sections
-    if not any(line.strip().startswith('## ') for line in content.split('\n')):
+    if not any(line.strip().startswith("## ") for line in content.split("\n")):
         print(f"  [WARN] Command '{cmd_id}': COMMAND.md missing sections (should have '## ' headings)")
 
-    # Check for minimal content
-    line_count = len(content.split('\n'))
-    if line_count < 10:
+    if len(content.split("\n")) < 10:
         print(f"  [WARN] Command '{cmd_id}': COMMAND.md seems minimal (< 10 lines)")
-PYEOF
-}
-
-check_opencode_artifacts() {
-    echo "Checking OpenCode artifacts..."
-
-    if [[ ! -d "${OPENCODE_COMMANDS}" ]]; then
-        log_warn "OpenCode commands directory not found: ${OPENCODE_COMMANDS}"
-        return 0
-    fi
-
-    python3 - "${REGISTRY_FILE}" "${OPENCODE_COMMANDS}" 2>/dev/null << 'PYEOF'
-import sys
-import yaml
-import os
-import re
-
-registry = sys.argv[1]
-opencode_dir = sys.argv[2]
-errors = 0
-
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
-
-for cmd in data.get('commands', []):
-    cmd_id = cmd.get('id', '')
-    enabled = cmd.get('enabled', False)
-    platforms = cmd.get('platforms', [])
-
-    if enabled and 'opencode' in platforms:
-        expected_file = os.path.join(opencode_dir, f"{cmd_id}.md")
-        if os.path.exists(expected_file):
-            print(f"  [OK] OpenCode artifact exists: {cmd_id}.md")
-
-            with open(expected_file, 'r') as f:
-                content = f.read()
-
-            # Check for frontmatter
-            if content.startswith('---'):
-                # Extract frontmatter
-                match = re.match(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
-                if match:
-                    fm_text = match.group(1)
-                    if 'description:' in fm_text:
-                        print(f"  [OK] OpenCode has frontmatter with description")
-                    else:
-                        print(f"  [WARN] OpenCode frontmatter missing 'description:'")
-                else:
-                    print(f"  [WARN] OpenCode frontmatter format may be invalid")
-            else:
-                print(f"  [ERROR] OpenCode artifact missing frontmatter")
-                errors += 1
-        else:
-            print(f"  [WARN] OpenCode artifact not found: {cmd_id}.md (run generate-commands.sh)")
-            errors += 1
-
-sys.exit(errors)
-PYEOF
-}
-
-check_cursor_artifacts() {
-    echo "Checking Cursor artifacts..."
-
-    if [[ ! -d "${CURSOR_COMMANDS}" ]]; then
-        log_warn "Cursor commands directory not found: ${CURSOR_COMMANDS}"
-        return 0
-    fi
-
-    python3 - "${REGISTRY_FILE}" "${CURSOR_COMMANDS}" 2>/dev/null << 'PYEOF'
-import sys
-import yaml
-import os
-
-registry = sys.argv[1]
-cursor_dir = sys.argv[2]
-errors = 0
-
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
-
-for cmd in data.get('commands', []):
-    cmd_id = cmd.get('id', '')
-    enabled = cmd.get('enabled', False)
-    platforms = cmd.get('platforms', [])
-
-    if enabled and 'cursor' in platforms:
-        expected_file = os.path.join(cursor_dir, f"{cmd_id}.md")
-        if os.path.exists(expected_file):
-            print(f"  [OK] Cursor artifact exists: {cmd_id}.md")
-
-            with open(expected_file, 'r') as f:
-                content = f.read()
-
-            # Cursor expects Markdown without frontmatter
-            if not content.startswith('---'):
-                print(f"  [OK] Cursor artifact has correct Markdown format (no frontmatter)")
-            else:
-                print(f"  [WARN] Cursor artifact should not have frontmatter")
-        else:
-            print(f"  [WARN] Cursor artifact not found: {cmd_id}.md (run generate-commands.sh)")
-            errors += 1
-
-sys.exit(errors)
-PYEOF
-}
-
-check_codex_artifacts() {
-    echo "Checking Codex artifacts..."
-
-    if [[ ! -d "${CODEX_PROMPTS}" ]]; then
-        log_warn "Codex prompts directory not found: ${CODEX_PROMPTS}"
-        return 0
-    fi
-
-    python3 - "${REGISTRY_FILE}" "${CODEX_PROMPTS}" 2>/dev/null << 'PYEOF'
-import sys
-import yaml
-import os
-import re
-
-registry = sys.argv[1]
-codex_dir = sys.argv[2]
-errors = 0
-
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
-
-for cmd in data.get('commands', []):
-    cmd_id = cmd.get('id', '')
-    enabled = cmd.get('enabled', False)
-    platforms = cmd.get('platforms', [])
-
-    if enabled and 'codex' in platforms:
-        expected_file = os.path.join(codex_dir, f"{cmd_id}.md")
-        if os.path.exists(expected_file):
-            print(f"  [OK] Codex artifact exists: {cmd_id}.md")
-
-            with open(expected_file, 'r') as f:
-                content = f.read()
-
-            # Check for frontmatter
-            if content.startswith('---'):
-                match = re.match(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
-                if match:
-                    fm_text = match.group(1)
-                    if 'description:' in fm_text:
-                        print(f"  [OK] Codex has frontmatter with description")
-                    else:
-                        print(f"  [WARN] Codex frontmatter missing 'description:'")
-                else:
-                    print(f"  [WARN] Codex frontmatter format may be invalid")
-            else:
-                print(f"  [ERROR] Codex artifact missing frontmatter")
-                errors += 1
-        else:
-            print(f"  [WARN] Codex artifact not found: {cmd_id}.md (run generate-commands.sh)")
-            errors += 1
-
-sys.exit(errors)
 PYEOF
 }
 
@@ -391,7 +224,74 @@ check_adapters_exist() {
         fi
     done
 
-    return ${missing}
+    return "${missing}"
+}
+
+check_build_artifacts() {
+    local platform="$1"
+    local platform_dir="${BUILD_DIR}/${platform}"
+
+    echo "Checking ${platform} build artifacts..."
+
+    if [[ ! -d "${platform_dir}" ]]; then
+        log_info "Build artifacts not generated yet for ${platform}: ${platform_dir}"
+        return 0
+    fi
+
+    python3 - "${REGISTRY_FILE}" "${platform}" "${platform_dir}" <<'PYEOF'
+import os
+import re
+import sys
+import yaml
+
+registry, platform, build_dir = sys.argv[1:4]
+errors = 0
+
+with open(registry, "r", encoding="utf-8") as handle:
+    data = yaml.safe_load(handle)
+
+for cmd in data.get("commands", []):
+    cmd_id = cmd.get("id", "")
+    enabled = cmd.get("enabled", False)
+    platforms = cmd.get("platforms", [])
+
+    if not enabled or platform not in platforms:
+        continue
+
+    expected_file = os.path.join(build_dir, f"{cmd_id}.md")
+    if not os.path.exists(expected_file):
+        print(f"  [ERROR] Missing build artifact: {platform}/{cmd_id}.md")
+        errors += 1
+        continue
+
+    print(f"  [OK] Build artifact exists: {platform}/{cmd_id}.md")
+
+    with open(expected_file, "r", encoding="utf-8") as handle:
+        content = handle.read()
+
+    if "managed-by: dotfiles-global-commands" not in content:
+        print(f"  [ERROR] Missing managed marker in {platform}/{cmd_id}.md")
+        errors += 1
+
+    if platform in {"opencode", "codex"}:
+        if not content.startswith("---"):
+            print(f"  [ERROR] {platform}/{cmd_id}.md missing frontmatter")
+            errors += 1
+        else:
+            match = re.match(r"^---\s*\n(.*?)\n---", content, re.DOTALL)
+            if not match or "description:" not in match.group(1):
+                print(f"  [ERROR] {platform}/{cmd_id}.md frontmatter missing description")
+                errors += 1
+    elif platform == "cursor":
+        if content.startswith("---"):
+            print(f"  [ERROR] cursor/{cmd_id}.md should not have frontmatter")
+            errors += 1
+        if not content.lstrip().startswith("<!-- managed-by: dotfiles-global-commands -->"):
+            print(f"  [ERROR] cursor/{cmd_id}.md should start with managed marker")
+            errors += 1
+
+sys.exit(errors)
+PYEOF
 }
 
 main() {
@@ -417,27 +317,15 @@ main() {
 
     echo ""
     echo "========================================"
-    echo "OPENCODE ARTIFACTS CHECK"
+    echo "BUILD ARTIFACTS CHECK"
     echo "========================================"
     echo ""
 
-    check_opencode_artifacts || true
-
+    check_build_artifacts opencode || true
     echo ""
-    echo "========================================"
-    echo "CURSOR ARTIFACTS CHECK"
-    echo "========================================"
+    check_build_artifacts cursor || true
     echo ""
-
-    check_cursor_artifacts || true
-
-    echo ""
-    echo "========================================"
-    echo "CODEX ARTIFACTS CHECK"
-    echo "========================================"
-    echo ""
-
-    check_codex_artifacts || true
+    check_build_artifacts codex || true
 
     echo ""
     echo "========================================"

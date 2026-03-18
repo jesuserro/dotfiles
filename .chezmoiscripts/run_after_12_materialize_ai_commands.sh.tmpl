@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Materializa commands globales al HOME final. Orquestación mínima.
+
+set -euo pipefail
+
+SOURCE_DIR="{{ .chezmoi.sourceDir }}"
+SCRIPT_PATH="${SOURCE_DIR}/scripts/materialize-commands.sh"
+
+echo "[chezmoi] Materializing AI commands"
+
+if [[ ! -x "${SCRIPT_PATH}" ]]; then
+  echo "[chezmoi][ERROR] Script not executable: ${SCRIPT_PATH}" >&2
+  exit 1
+fi
+
+"${SCRIPT_PATH}"

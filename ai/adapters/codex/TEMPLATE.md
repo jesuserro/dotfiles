@@ -27,7 +27,13 @@ description: <descripción del command>
 ## Ubicación del Artefacto Generado
 
 ```
-dot_config/codex/prompts/<command-id>.md
+build/commands/codex/<command-id>.md
+```
+
+## Runtime Final
+
+```
+~/.codex/prompts/<command-id>.md
 ```
 
 ## Invocación
@@ -47,3 +53,4 @@ Ejemplo: `/prompts:sos`
 - No incluir headers HTML ni comentarios antes del frontmatter
 - El separador `---` marca el fin del frontmatter
 - Codex requiere reiniciar sesión para cargar nuevos prompts
+- Tras el frontmatter se permite un marcador de gestión del sistema

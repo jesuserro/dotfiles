@@ -30,7 +30,7 @@ BLUE := \033[0;34m
 NC := \033[0m
 
 .PHONY: test test-fast test-lint test-bats test-chezmoi test-install fmt-shell help
-.PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands
+.PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands
 
 help:
 	@echo "Testing targets for dotfiles"
@@ -46,6 +46,7 @@ help:
 	@echo ""
 	@echo "  make generate-commands  - Generate command artifacts"
 	@echo "  make validate-commands  - Validate command structure"
+	@echo "  make materialize-commands - Materialize commands into runtime paths"
 	@echo ""
 	@echo "  make test-ci      - Run all tests with CI output (JUnit/XML)"
 	@echo ""
@@ -289,6 +290,15 @@ validate-commands:
 		$(DOTFILES_DIR)/scripts/validate-commands-structure.sh; \
 	else \
 		echo "$(RED)==>$NC validate-commands-structure.sh not found or not executable"; \
+		exit 1; \
+	fi
+
+materialize-commands:
+	@echo "$(BLUE)==>$NC Materializing commands..."
+	@if [ -x "$(DOTFILES_DIR)/scripts/materialize-commands.sh" ]; then \
+		$(DOTFILES_DIR)/scripts/materialize-commands.sh; \
+	else \
+		echo "$(RED)==>$NC materialize-commands.sh not found or not executable"; \
 		exit 1; \
 	fi
 

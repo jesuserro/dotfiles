@@ -24,7 +24,13 @@ Cursor reconoce commands personalizados en `~/.cursor/commands/` como archivos M
 ## Ubicación del Artefacto Generado
 
 ```
-dot_config/cursor/commands/<command-id>.md
+build/commands/cursor/<command-id>.md
+```
+
+## Runtime Final
+
+```
+~/.cursor/commands/<command-id>.md
 ```
 
 ## Invocación
@@ -41,3 +47,4 @@ Ejemplo: `/sos`
 - Cursor no parsea frontmatter
 - El archivo es Markdown puro
 - Puede contener el título original del COMMAND.md
+- El sistema añade un marcador HTML de gestión al inicio para limpieza segura

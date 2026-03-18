@@ -7,7 +7,7 @@ Capa de adaptación entre el contenido canónico de dotfiles y las convenciones 
 ```
 ai/assets/commands/    ← Canonical content (source of truth)
 ai/adapters/          ← Platform adapters (formato por plataforma)
-dot_config/           ← Generated artifacts (derivados finales)
+build/commands/       ← Generated artifacts (derivados efímeros)
 ```
 
 ## Adapters Disponibles
@@ -20,7 +20,7 @@ dot_config/           ← Generated artifacts (derivados finales)
 
 ## Uso
 
-Los adapters son utilizados por `scripts/generate-commands.sh` para producir los artefactos finales en `dot_config/`.
+Los adapters son utilizados por `scripts/generate-commands.sh` para producir artefactos efímeros en `build/commands/`.
 
 ## Añadir un Nuevo Adapter
 
@@ -28,6 +28,7 @@ Los adapters son utilizados por `scripts/generate-commands.sh` para producir los
 2. Añadir el platform al registry en `ai/assets/commands/registry.yaml`
 3. Asegurar que `generate-commands.sh` handle el nuevo platform
 4. Regenerar: `./scripts/generate-commands.sh`
+5. Materializar al runtime: `./scripts/materialize-commands.sh` o `chezmoi apply`
 
 ## Relación con Skills
 

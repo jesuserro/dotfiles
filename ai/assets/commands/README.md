@@ -11,16 +11,16 @@ This directory contains **global, project-agnostic commands** that can be invoke
 ## Architecture
 
 ```
-ai/assets/commands/           <- Source of truth (here)
-├── registry.yaml             <- Command metadata and platform mapping
-├── README.md                <- This file
-└── <command>/               <- One directory per command
-    └── COMMAND.md           <- Command content (required)
+ai/assets/commands/            <- Source of truth (here)
+├── registry.yaml              <- Command metadata and platform mapping
+├── README.md                  <- This file
+└── <command>/                 <- One directory per command
+    └── COMMAND.md             <- Command content (required)
 
-dot_config/opencode/commands/ <- Surface for OpenCode (generated)
+build/commands/                <- Generated artifacts (ephemeral)
 ```
 
-Do not edit files in surface directories (`dot_config/opencode/commands/`, etc.) directly. Changes belong here.
+Do not edit generated artifacts. Changes belong here.
 
 ## Command Structure
 
@@ -81,19 +81,29 @@ What kind of response or action is expected.
    ```
 4. Generate: `./scripts/generate-commands.sh`
 5. Validate: `./scripts/validate-commands-structure.sh`
-6. Apply: `chezmoi apply`
+6. Materialize:
+   - Manual: `./scripts/materialize-commands.sh`
+   - Via Chezmoi: `chezmoi apply`
 
 ## Distribution
 
-After `./scripts/generate-commands.sh`, commands are copied to surface directories:
+The flow is now explicit:
 
 ```
-~/.config/opencode/commands/<command-id>.md     → Invoked as /<command>
-~/.cursor/commands/<command-id>.md              → Invoked as /<command>
-~/.codex/prompts/<command-id>.md                → Invoked as /prompts:<command>
+ai/assets/commands/...          -> canonical source
+build/commands/...              -> generated artifacts
+~/.config/opencode/commands/... -> runtime
+~/.cursor/commands/...          -> runtime
+~/.codex/prompts/...            -> runtime
 ```
 
 > **Note:** Codex requires the `/prompts:<command>` invocation syntax.
+
+For tests and debug, materialization also supports:
+
+```bash
+COMMANDS_HOME_ROOT=/tmp/commands-home ./scripts/materialize-commands.sh
+```
 
 ## Commands vs Skills
 

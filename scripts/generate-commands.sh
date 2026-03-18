@@ -1,87 +1,26 @@
 #!/usr/bin/env bash
-# Generates command artifacts from canonical source to platform surfaces.
+# Generates command artifacts from canonical source into build/commands/.
 #
-# Architecture (3 layers):
+# Architecture (4 layers):
 #   1. Canonical: ai/assets/commands/<id>/COMMAND.md
-#   2. Adapter:  ai/adapters/<platform>/TEMPLATE.md
-#   3. Artifact: dot_config/<platform>/.../<id>.md
-#
-# Usage:
-#   ./scripts/generate-commands.sh          # Generate all commands
-#   ./scripts/generate-commands.sh -c <id>   # Generate specific command
-#   ./scripts/generate-commands.sh --list    # List available commands
-#   ./scripts/generate-commands.sh --validate # Validate and generate
+#   2. Adapter:   ai/adapters/<platform>/TEMPLATE.md
+#   3. Build:     build/commands/<platform>/<id>.md
+#   4. Runtime:   ~/.config/... materialized separately
 
 set -euo pipefail
 
-# === Paths ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(dirname "${SCRIPT_DIR}")"
 COMMANDS_DIR="${DOTFILES_DIR}/ai/assets/commands"
 REGISTRY_FILE="${COMMANDS_DIR}/registry.yaml"
 ADAPTERS_DIR="${DOTFILES_DIR}/ai/adapters"
+BUILD_DIR="${DOTFILES_DIR}/build/commands"
+MANAGED_MARKER="managed-by: dotfiles-global-commands"
 
-# === Platform configurations ===
-declare -A PLATFORM_DEST
-PLATFORM_DEST[opencode]="${DOTFILES_DIR}/dot_config/opencode/commands"
-PLATFORM_DEST[cursor]="${DOTFILES_DIR}/dot_config/cursor/commands"
-PLATFORM_DEST[codex]="${DOTFILES_DIR}/dot_config/codex/prompts"
-
-declare -A PLATFORM_EXT
-PLATFORM_EXT[opencode]=".md"
-PLATFORM_EXT[cursor]=".md"
-PLATFORM_EXT[codex]=".md"
-
-# === Logging ===
 log_info()  { echo "[INFO] $*"; }
-log_warn() { echo "[WARN] $*" >&2; }
-log_error(){ echo "[ERROR] $*" >&2; }
+log_warn()  { echo "[WARN] $*" >&2; }
+log_error() { echo "[ERROR] $*" >&2; }
 
-# === Platform renderers ===
-# Each function renders content for a specific platform.
-# Signature: render_<platform> <content> <description> <dest_file>
-
-render_opencode() {
-    local content="$1"
-    local description="$2"
-    local dest_file="$3"
-
-    cat > "${dest_file}" << EOF
----
-description: ${description}
----
-
-${content}
-EOF
-}
-
-render_cursor() {
-    local content="$1"
-    local description="$2"
-    local dest_file="$3"
-
-    cat > "${dest_file}" << EOF
-# Cursor Commands
-
-${content}
-EOF
-}
-
-render_codex() {
-    local content="$1"
-    local description="$2"
-    local dest_file="$3"
-
-    cat > "${dest_file}" << EOF
----
-description: ${description}
----
-
-${content}
-EOF
-}
-
-# === Check dependencies ===
 check_dependencies() {
     if ! python3 -c "import yaml" 2>/dev/null; then
         log_error "Python yaml module is required but not installed."
@@ -89,233 +28,159 @@ check_dependencies() {
     fi
 }
 
-# === List commands ===
 list_commands() {
     log_info "Available commands in registry:"
     echo ""
 
-    python3 - "${REGISTRY_FILE}" 2>/dev/null << 'PYEOF'
+    python3 - "${REGISTRY_FILE}" <<'PYEOF'
 import sys
 import yaml
 
-registry = sys.argv[1] if len(sys.argv) > 1 else ''
-if not registry:
-    sys.exit(1)
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    data = yaml.safe_load(handle)
 
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
-
-for cmd in data.get('commands', []):
-    cmd_id = cmd.get('id', '')
-    platforms = ', '.join(cmd.get('platforms', []))
-    enabled = 'enabled' if cmd.get('enabled') else 'disabled'
+for cmd in data.get("commands", []):
+    cmd_id = cmd.get("id", "")
+    platforms = ", ".join(cmd.get("platforms", []))
+    enabled = "enabled" if cmd.get("enabled") else "disabled"
     print(f"  - {cmd_id} [{platforms}] ({enabled})")
 PYEOF
     echo ""
 }
 
-# === Generate artifacts for a single command ===
-generate_command() {
-    local cmd_id="$1"
+generate_commands() {
+    local target_command="${1:-}"
+    local clean_build="${2:-false}"
 
-    python3 - "${REGISTRY_FILE}" "${cmd_id}" "${COMMANDS_DIR}" "${DOTFILES_DIR}" 2>/dev/null << 'PYEOF'
+    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" "${BUILD_DIR}" "${target_command}" "${clean_build}" "${MANAGED_MARKER}" <<'PYEOF'
+import os
+import shutil
 import sys
 import yaml
-import os
 
-registry = sys.argv[1]
-cmd_id = sys.argv[2]
-commands_dir = sys.argv[3]
-dotfiles_dir = sys.argv[4]
+registry_file, commands_dir, build_dir, target_command, clean_build, managed_marker = sys.argv[1:7]
 
-# Platform renderers (defined in parent shell)
 platforms = {
-    'opencode': {
-        'dest': os.path.join(dotfiles_dir, 'dot_config', 'opencode', 'commands'),
-        'ext': '.md'
-    },
-    'cursor': {
-        'dest': os.path.join(dotfiles_dir, 'dot_config', 'cursor', 'commands'),
-        'ext': '.md'
-    },
-    'codex': {
-        'dest': os.path.join(dotfiles_dir, 'dot_config', 'codex', 'prompts'),
-        'ext': '.md'
-    }
+    "opencode": {"subdir": "opencode"},
+    "cursor": {"subdir": "cursor"},
+    "codex": {"subdir": "codex"},
 }
 
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
+with open(registry_file, "r", encoding="utf-8") as handle:
+    data = yaml.safe_load(handle)
 
-for cmd in data.get('commands', []):
-    if cmd.get('id') == cmd_id:
-        if not cmd.get('enabled', False):
-            print(f"[INFO] Skipping disabled command: {cmd_id}")
-            sys.exit(0)
+commands = data.get("commands", [])
+command_map = {cmd.get("id"): cmd for cmd in commands if cmd.get("id")}
 
-        source = cmd.get('source', '')
-        if not source:
-            print(f"[ERROR] No source defined for command: {cmd_id}", file=sys.stderr)
-            sys.exit(1)
+if target_command:
+    if target_command not in command_map:
+        print(f"[ERROR] Command not found: {target_command}", file=sys.stderr)
+        sys.exit(1)
+    commands = [command_map[target_command]]
 
-        source_file = os.path.join(commands_dir, source)
-        if not os.path.exists(source_file):
-            print(f"[ERROR] Source file not found: {source_file}", file=sys.stderr)
-            sys.exit(1)
+if clean_build.lower() == "true":
+    shutil.rmtree(build_dir, ignore_errors=True)
 
-        with open(source_file, 'r') as f:
-            content = f.read()
+generated = 0
 
-        description = cmd.get('description', '')
-
-        for platform in cmd.get('platforms', []):
-            if platform not in platforms:
-                print(f"[WARN] Unknown platform '{platform}' for command: {cmd_id}")
-                continue
-
-            config = platforms[platform]
-            dest_dir = config['dest']
-            os.makedirs(dest_dir, exist_ok=True)
-            dest_file = os.path.join(dest_dir, f"{cmd_id}{config['ext']}")
-
-            print(f"[INFO] Generated {platform}: {dest_file}")
-
-        sys.exit(0)
-
-print(f"[ERROR] Command not found: {cmd_id}", file=sys.stderr)
-sys.exit(1)
-PYEOF
-}
-
-# === Main generation logic ===
-generate_all() {
-    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" "${DOTFILES_DIR}" 2>/dev/null << 'PYEOF'
-import sys
-import yaml
-import os
-
-registry = sys.argv[1]
-commands_dir = sys.argv[2]
-dotfiles_dir = sys.argv[3]
-
-if not registry:
-    sys.exit(1)
-
-# Platform configurations
-platforms = {
-    'opencode': {
-        'dest': os.path.join(dotfiles_dir, 'dot_config', 'opencode', 'commands'),
-        'ext': '.md'
-    },
-    'cursor': {
-        'dest': os.path.join(dotfiles_dir, 'dot_config', 'cursor', 'commands'),
-        'ext': '.md'
-    },
-    'codex': {
-        'dest': os.path.join(dotfiles_dir, 'dot_config', 'codex', 'prompts'),
-        'ext': '.md'
-    }
-}
-
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
-
-for cmd in data.get('commands', []):
-    cmd_id = cmd.get('id', '')
-
-    if not cmd.get('enabled', False):
+for cmd in commands:
+    cmd_id = cmd.get("id", "")
+    if not cmd.get("enabled", False):
         print(f"[INFO] Skipping disabled command: {cmd_id}")
         continue
 
-    source = cmd.get('source', '')
+    source = cmd.get("source", "")
     if not source:
         print(f"[ERROR] No source defined for command: {cmd_id}", file=sys.stderr)
-        continue
+        sys.exit(1)
 
     source_file = os.path.join(commands_dir, source)
     if not os.path.exists(source_file):
         print(f"[ERROR] Source file not found: {source_file}", file=sys.stderr)
-        continue
+        sys.exit(1)
 
-    with open(source_file, 'r') as f:
-        content = f.read()
+    with open(source_file, "r", encoding="utf-8") as handle:
+        content = handle.read().rstrip() + "\n"
 
-    description = cmd.get('description', '')
+    description = cmd.get("description", "")
 
-    for platform in cmd.get('platforms', []):
+    for platform in cmd.get("platforms", []):
         if platform not in platforms:
             print(f"[WARN] Unknown platform '{platform}' for command: {cmd_id}")
             continue
 
-        config = platforms[platform]
-        dest_dir = config['dest']
+        dest_dir = os.path.join(build_dir, platforms[platform]["subdir"])
         os.makedirs(dest_dir, exist_ok=True)
-        dest_file = os.path.join(dest_dir, f"{cmd_id}{config['ext']}")
+        dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
 
-        # Render based on platform
-        if platform == 'opencode':
-            output = f"""---
-description: {description}
----
+        if platform in {"opencode", "codex"}:
+            rendered = (
+                "---\n"
+                f"description: {description}\n"
+                "---\n\n"
+                f"<!-- {managed_marker} -->\n\n"
+                f"{content}"
+            )
+        elif platform == "cursor":
+            rendered = (
+                f"<!-- {managed_marker} -->\n\n"
+                "# Cursor Commands\n\n"
+                f"{content}"
+            )
+        else:
+            continue
 
-{content}
-"""
-        elif platform == 'cursor':
-            output = f"""# Cursor Commands
-
-{content}
-"""
-        elif platform == 'codex':
-            output = f"""---
-description: {description}
----
-
-{content}
-"""
-
-        with open(dest_file, 'w') as dst:
-            dst.write(output)
+        with open(dest_file, "w", encoding="utf-8") as handle:
+            handle.write(rendered)
 
         print(f"[INFO] Generated {platform}: {dest_file}")
+        generated += 1
+
+if target_command and generated == 0:
+    print(f"[WARN] No artifacts generated for command: {target_command}")
 PYEOF
 }
 
-# === Help ===
 show_help() {
     cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
 
-Generates command artifacts from canonical source to platform surfaces.
+Generates command artifacts from canonical source into build/commands/.
 
 OPTIONS:
     -h, --help        Show this help message
-    -c, --command     Generate only this command (by ID)
-    -l, --list       List all commands in registry
+    -c, --command ID  Generate only this command
+    -l, --list        List all commands in registry
     -v, --validate    Validate registry before generating
 
 ARCHITECTURE:
-    Layer 1: ai/assets/commands/<id>/COMMAND.md    (canonical source)
-    Layer 2: ai/adapters/<platform>/TEMPLATE.md   (platform format)
-    Layer 3: dot_config/<platform>/.../<id>.md    (generated artifact)
+    Layer 1: ai/assets/commands/<id>/COMMAND.md
+    Layer 2: ai/adapters/<platform>/TEMPLATE.md
+    Layer 3: build/commands/<platform>/<id>.md
+    Layer 4: runtime materialization via materialize-commands.sh
 
-PLATFORMS:
+BUILD OUTPUT:
+    opencode  -> build/commands/opencode/<id>.md
+    cursor    -> build/commands/cursor/<id>.md
+    codex     -> build/commands/codex/<id>.md
+
+RUNTIME DESTINATIONS:
     opencode  -> ~/.config/opencode/commands/<id>.md
     cursor    -> ~/.cursor/commands/<id>.md
     codex     -> ~/.codex/prompts/<id>.md
 
 EXAMPLES:
-    $(basename "$0")                  # Generate all commands
-    $(basename "$0") --list           # List available commands
-    $(basename "$0") -c sos          # Generate only 'sos' command
-    $(basename "$0") --validate      # Validate and generate
+    $(basename "$0")
+    $(basename "$0") --list
+    $(basename "$0") -c sos
+    $(basename "$0") --validate
 
 SOURCE: ${COMMANDS_DIR}
 ADAPTERS: ${ADAPTERS_DIR}
-
+BUILD: ${BUILD_DIR}
 EOF
 }
 
-# === Main ===
 main() {
     local target_command=""
     local do_validate=false
@@ -327,6 +192,10 @@ main() {
                 exit 0
                 ;;
             -c|--command)
+                if [[ $# -lt 2 ]]; then
+                    log_error "Missing value for $1"
+                    exit 1
+                fi
                 target_command="$2"
                 shift 2
                 ;;
@@ -356,26 +225,25 @@ main() {
 
     if [[ "${do_validate}" == "true" ]]; then
         log_info "Running validation..."
-        if ! "${SCRIPT_DIR}/validate-commands-structure.sh" &>/dev/null; then
+        if ! "${SCRIPT_DIR}/validate-commands-structure.sh" >/dev/null; then
             log_error "Validation failed. Fix errors before generating."
             exit 1
         fi
         log_info "Validation passed."
     fi
 
-    log_info "Generating commands..."
+    log_info "Generating commands into ${BUILD_DIR}"
     echo ""
 
     if [[ -n "${target_command}" ]]; then
-        generate_command "${target_command}"
+        generate_commands "${target_command}" false
     else
-        generate_all
+        generate_commands "" true
     fi
 
     echo ""
     log_info "Generation complete."
-    echo ""
-    log_info "To apply to your home directory, run: chezmoi apply"
+    log_info "To materialize into runtime destinations, run: ./scripts/materialize-commands.sh"
 }
 
 main "$@"
