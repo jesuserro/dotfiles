@@ -105,6 +105,7 @@ These are complementary, not interchangeable. Enable both for full Obsidian inte
 
 ## Key Files
 
+- `docs/MCP_TAXONOMY.md` — Canonical taxonomy (layers, policies, criteria)
 - `docs/adr/0001-mcp-governance.md` — Full ADR
 - `docs/OPENCODE.md` — Operational guide
 - `ai/assets/skills/mcp-governance/SKILL.md` — Skill for agents

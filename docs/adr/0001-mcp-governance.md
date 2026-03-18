@@ -104,6 +104,7 @@ trino MCP:
 
 ## References
 
+- Taxonomía: `docs/MCP_TAXONOMY.md`
 - Operational guide: `docs/OPENCODE.md`
 - Agent instructions: `dot_config/opencode/AGENTS.md.tmpl`
 - Implementation: `dot_config/store-etl/store-etl.mcp.json.tmpl`

@@ -81,6 +81,7 @@ Estos MCPs usan `npx -y` o `uvx` y obtienen la última versión automáticamente
 
 | Doc | Contenido |
 |-----|-----------|
+| [MCP_TAXONOMY.md](MCP_TAXONOMY.md) | Taxonomía de MCPs (capas y políticas) |
 | [GUIA_MCP_AI.md](GUIA_MCP_AI.md#7-actualización-de-mcps-con-ups) | Actualización MCP con ups |
 | [INSTALL.md](INSTALL.md) | Instalación inicial |
 | [README.md](README.md) | Índice de documentación |
