@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-17 20:22:22
+**Generated:** 2026-03-18 11:05:14
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -16,10 +16,12 @@
 ├── 📁 .github
 │   └── 📁 workflows
 │       └── ⚙️ release.yml
+├── 📁 .gitnexus
+│   ├── 📁 wiki
+│   ├── 📄 lbug
+│   └── ⚙️ meta.json
 ├── 📁 ai
 │   ├── 📁 adapters
-│   │   ├── 📁 claude
-│   │   │   └── 📝 README.md
 │   │   ├── 📁 codex
 │   │   │   └── 📝 README.md
 │   │   └── 📁 cursor
@@ -42,6 +44,19 @@
 │   │       │   ├── 📄 .gitignore
 │   │       │   ├── 📝 README.md
 │   │       │   └── 📝 SKILL.md
+│   │       ├── 📁 gitnexus
+│   │       │   ├── 📁 gitnexus-cli
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 gitnexus-debugging
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 gitnexus-exploring
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 gitnexus-guide
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 gitnexus-impact-analysis
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   └── 📁 gitnexus-refactoring
+│   │       │       └── 📝 SKILL.md
 │   │       ├── 📁 mcp-governance
 │   │       │   └── 📝 SKILL.md
 │   │       └── 📁 ups-workflow
@@ -71,6 +86,7 @@
 ├── 📁 docs
 │   ├── 📁 adr
 │   │   ├── 📝 0001-mcp-governance.md
+│   │   ├── 📝 0002-gitnexus-mcp.md
 │   │   └── 📝 template.md
 │   ├── 📁 linkedin
 │   │   ├── 📁 diagrams
@@ -81,6 +97,7 @@
 │   │   │   ├── 🖼️ architecture-overview.jpg
 │   │   │   └── 🖼️ architecture-overview.svg
 │   │   └── 📝 PROJECT_DATA.md
+│   ├── 📁 wiki
 │   ├── 📝 CAMBIAR_TOKEN_GITHUB.md
 │   ├── 📝 CHEZMOI.md
 │   ├── 📝 GIT_WORKFLOW.md
@@ -102,17 +119,15 @@
 │   │   ├── 📁 servers
 │   │   │   └── 📄 .keep
 │   │   └── 📄 .keep
-│   ├── 📁 opencode
-│   │   ├── 📁 commands
-│   │   │   └── 📄 .keep
-│   │   ├── 📁 plugins
-│   │   │   └── 📄 .keep
-│   │   ├── 📁 skills
-│   │   │   └── 📄 .keep
-│   │   ├── 📄 AGENTS.md.tmpl
-│   │   └── 📄 opencode.json.tmpl
-│   └── 📁 store-etl
-│       └── 📄 store-etl.mcp.json.tmpl
+│   └── 📁 opencode
+│       ├── 📁 commands
+│       │   └── 📄 .keep
+│       ├── 📁 plugins
+│       │   └── 📄 .keep
+│       ├── 📁 skills
+│       │   └── 📄 .keep
+│       ├── 📄 AGENTS.md.tmpl
+│       └── 📄 opencode.json.tmpl
 ├── 📁 dot_cursor
 │   └── 📄 mcp.json.tmpl
 ├── 📁 git_hooks
@@ -120,15 +135,12 @@
 ├── 📁 local
 ├── 📁 powerlevel10k
 │   └── 🔧 p10k.zsh
-├── 📁 private_proyectos
-│   └── 📁 store-etl
-│       └── 📁 dot_cursor
-│           └── 📄 mcp.json.tmpl
 ├── 📁 releases
 │   ├── 📝 branch_feature_1-migration-to-chezmoi-sops-age.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
+│   ├── 📝 branch_feature_5-adding-mcps-globales-especializados.md
 │   ├── 📝 branch_feature_test-branch-changelog.md
 │   ├── 📝 v2025.12.07_1051.md
 │   └── 📝 v2025.12.08_1037.md
@@ -158,6 +170,7 @@
 │   ├── 📝 git_start_feature.md
 │   ├── 🔧 git_start_feature.sh
 │   ├── 🔧 git_workflow.sh
+│   ├── 🔧 install-gitnexus.sh
 │   ├── 🔧 show_branches_with_dates.sh
 │   ├── 🔧 system_info.sh
 │   ├── 📄 test.sh.example
@@ -190,6 +203,7 @@
 ├── 📄 .chezmoiignore
 ├── 📄 .gitignore
 ├── ⚙️ .sops.yaml
+├── 📝 AGENTS.md
 ├── 📝 CHANGELOG.md
 ├── 📝 README.md
 ├── 📝 STRUCTURE.md

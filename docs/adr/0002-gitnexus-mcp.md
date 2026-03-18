@@ -88,6 +88,8 @@ This convention:
 - Works with gitignored `.gitnexus/` directory
 - Follows common documentation patterns
 
+> **Note:** `.gitnexus/` is GitNexus internal local state, stored per-project. It is ignored by git (see `.gitignore`). The official project documentation lives in `docs/wiki/`.
+
 ### 6. LLM Requirement for Wiki
 
 **Important:** GitNexus wiki generation requires an LLM API key because it generates documentation using AI.
@@ -141,4 +143,4 @@ Without an API key, `gnx-wiki-here` provides clear guidance.
 - MCP Governance ADR: `docs/adr/0001-mcp-governance.md`
 - MCP Quick Reference: `docs/MCP_QUICKREF.md`
 - GitNexus CLI: `scripts/install-gitnexus.sh`
-- GitNexus skills: `.claude/skills/gitnexus/`
+- GitNexus skills: `ai/assets/skills/gitnexus/`

@@ -8,7 +8,7 @@ Hub neutral de infraestructura IA para dotfiles: runtime ejecutable, assets de c
 ai/
   runtime/     # Código ejecutable (MCP servers, runtimes)
   assets/      # Conocimiento consumido por agentes (skills, prompts, rules)
-  adapters/    # Wiring específico de cada agente (cursor, codex, claude)
+  adapters/    # Wiring específico de cada agente (cursor, codex, opencode)
 ```
 
 ## Principios
@@ -34,7 +34,7 @@ Tras `chezmoi apply` (script `run_after_11_link_ai_assets`):
 # Cada skill en ai/assets/skills/* se symlinkea en:
 ~/.cursor/skills-cursor/<skill>  → ~/.config/ai/skills/<skill>
 ~/.codex/skills/<skill>          → ~/.config/ai/skills/<skill>
-~/.claude/skills/<skill>         → ~/.config/ai/skills/<skill>
+~/.config/opencode/skills/<skill> → ~/.config/ai/skills/<skill>
 ```
 
 ## Añadir skills

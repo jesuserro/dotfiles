@@ -27,13 +27,13 @@ ensure_symlink "${SOURCE_DIR}/ai/assets/skills" "${CONFIG_AI}/skills"
 ensure_symlink "${SOURCE_DIR}/ai/assets/prompts" "${CONFIG_AI}/prompts"
 ensure_symlink "${SOURCE_DIR}/ai/assets/rules" "${CONFIG_AI}/rules"
 
-# Agentes: symlinkear cada skill de ai/assets/skills/* en ~/.cursor/skills-cursor, ~/.codex/skills, ~/.claude/skills
+# Agentes: symlinkear cada skill de ai/assets/skills/* en ~/.cursor/skills-cursor, ~/.codex/skills, ~/.config/opencode/skills
 # (preserva contenido existente en esos directorios)
 AI_SKILLS_DIR="${CONFIG_AI}/skills"
 AGENT_DIRS=(
   "{{ .chezmoi.homeDir }}/.cursor/skills-cursor"
   "{{ .chezmoi.homeDir }}/.codex/skills"
-  "{{ .chezmoi.homeDir }}/.claude/skills"
+  "{{ .chezmoi.homeDir }}/.config/opencode/skills"
 )
 
 # Eliminar symlink incorrecto "skills" si existe (de iteración anterior)

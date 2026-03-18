@@ -12,11 +12,11 @@ Use this data to showcase the dotfiles project on your LinkedIn profile (March 2
 
 ## Description
 
-A production-ready dotfiles repository that turns your development environment into version-controlled, reproducible infrastructure. Built around an **AI Workstation** layer integrating MCP (Model Context Protocol), agent skills, and encrypted secrets—enabling AI assistants (Cursor, Codex, Claude) to multiply developer productivity through structured tool access.
+A production-ready dotfiles repository that turns your development environment into version-controlled, reproducible infrastructure. Built around an **AI Workstation** layer integrating MCP (Model Context Protocol), agent skills, and encrypted secrets—enabling AI assistants (Cursor, Codex, OpenCode) to multiply developer productivity through structured tool access.
 
 **Highlights:**
 - **MCP Integration**: Custom MCP servers (GitHub, Docker, Dagster, MinIO, Prometheus, Loki, Tempo) give AI agents direct access to real tools
-- **Agent Skills**: Reusable skills for diagram generation, rules creation, and IDE configuration—shared across Cursor, Codex, and Claude
+- **Agent Skills**: Reusable skills for diagram generation, rules creation, and IDE configuration—shared across Cursor, Codex, and OpenCode
 - **Infrastructure as Code**: Chezmoi + SOPS + Age for declarative, encrypted secret management
 - **Hub-Neutral AI Framework**: Single source of truth for runtime, assets, and adapters—works with any AI-powered IDE
 
@@ -26,7 +26,7 @@ A production-ready dotfiles repository that turns your development environment i
 
 ## Skills
 
-- **AI / LLM Tooling**: Model Context Protocol (MCP), AI agents, Cursor, Claude
+- **AI / LLM Tooling**: Model Context Protocol (MCP), AI agents, Cursor, OpenCode
 - **Infrastructure as Code**: Chezmoi, declarative configuration
 - **Security**: SOPS, Age encryption, secrets management
 - **DevOps**: Shell scripting (Zsh), TMUX, Neovim
