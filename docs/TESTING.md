@@ -66,12 +66,30 @@ make fmt-shell
 | Target | Description |
 |--------|-------------|
 | `make test` | Full test suite |
-| `make test-fast` | Lint + bats (no chezmoi) |
+| `make test-fast` | Lint + bats (no chezmoi smoke) |
 | `make test-lint` | shellcheck + shfmt |
 | `make test-bats` | All bats tests |
 | `make test-chezmoi` | Chezmoi smoke tests |
 | `make test-install` | Install dependencies |
 | `make fmt-shell` | Format shell scripts |
+| `make test-ci` | Full suite with JUnit/XML output (for CI) |
+
+## Lint Policy
+
+| Tool | Reports | Fails build |
+|------|---------|-------------|
+| shellcheck | `WARN` per file | No |
+| shfmt | `DIFF` per file | No |
+
+Lint reports findings but does not fail. Use `make fmt-shell` to auto-format.
+
+## Output Modes
+
+| Target | Output | Use case |
+|--------|--------|----------|
+| `make test` | Human-readable | Local development |
+| `make test-bats` | Human-readable | Local debugging |
+| `make test-ci` | JUnit/XML | CI/CD pipelines |
 
 ## Coverage
 
