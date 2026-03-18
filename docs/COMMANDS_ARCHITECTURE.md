@@ -226,6 +226,41 @@ After `chezmoi apply`, commands are available at:
 
 OpenCode users can invoke with `/sos`.
 
+## Generated File Headers
+
+Generated artifacts include a header marking them as derived:
+
+```html
+<!--
+  DO NOT EDIT MANUALLY
+  This file is generated from ai/assets/commands/
+  Run ./scripts/generate-commands.sh to regenerate
+-->
+```
+
+**This header is intentional.** It:
+- Makes the derived nature visible at a glance
+- Discourages direct editing of artifacts
+- Documents the regeneration workflow
+
+## Versioning Policy
+
+**Generated artifacts are NOT versioned in Git.**
+
+Rationale:
+- Artifacts are reproducible from the canonical source
+- Versioning them would create drift between source and derived
+- The `.keep` file maintains directory structure in Git
+- Chezmoi handles materialization to the final destination
+
+The `.gitignore` enforces this policy:
+
+```gitignore
+# Generated command artifacts (regenerated from ai/assets/commands/)
+dot_config/opencode/commands/*.md
+!dot_config/opencode/commands/.keep
+```
+
 ## Commands vs Skills
 
 | Concept | Purpose | Pattern |

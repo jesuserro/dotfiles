@@ -14,6 +14,12 @@ OPENCODE_COMMANDS="${DOTFILES_DIR}/dot_config/opencode/commands"
 
 VALID_PLATFORMS=("opencode" "codex" "cursor")
 
+GENERATED_HEADER='<!--
+  DO NOT EDIT MANUALLY
+  This file is generated from ai/assets/commands/
+  Run ./scripts/generate-commands.sh to regenerate
+-->'
+
 log_info() {
     echo "[INFO] $*"
 }
@@ -57,6 +63,17 @@ PYEOF
     echo ""
 }
 
+generate_with_header() {
+    local source_file="$1"
+    local dest_file="$2"
+    
+    {
+        echo "${GENERATED_HEADER}"
+        echo ""
+        cat "${source_file}"
+    } > "${dest_file}"
+}
+
 generate_command() {
     local cmd_id="$1"
     
@@ -64,7 +81,6 @@ generate_command() {
 import sys
 import yaml
 import os
-import shutil
 
 registry = sys.argv[1] if len(sys.argv) > 1 else ''
 cmd_id = sys.argv[2] if len(sys.argv) > 2 else ''
@@ -100,7 +116,17 @@ for cmd in data.get('commands', []):
             if platform == 'opencode':
                 dest_file = os.path.join(opencode_dir, f"{cmd_id}.md")
                 os.makedirs(opencode_dir, exist_ok=True)
-                shutil.copy2(source_file, dest_file)
+                with open(source_file, 'r') as src:
+                    content = src.read()
+                header = '''<!--
+  DO NOT EDIT MANUALLY
+  This file is generated from ai/assets/commands/
+  Run ./scripts/generate-commands.sh to regenerate
+-->
+'''
+                with open(dest_file, 'w') as dst:
+                    dst.write(header)
+                    dst.write(content)
                 print(f"[INFO] Generated: {dest_file}")
             elif platform in ('codex', 'cursor'):
                 print(f"[INFO] Platform {platform} not yet implemented for command: {cmd_id}")
@@ -195,7 +221,6 @@ main() {
 import sys
 import yaml
 import os
-import shutil
 
 registry = sys.argv[1] if len(sys.argv) > 1 else ''
 dotfiles_dir = sys.argv[2] if len(sys.argv) > 2 else ''
@@ -205,6 +230,13 @@ if not registry or not dotfiles_dir:
 
 commands_dir = os.path.dirname(registry)
 opencode_dir = os.path.join(dotfiles_dir, 'dot_config', 'opencode', 'commands')
+
+header = '''<!--
+  DO NOT EDIT MANUALLY
+  This file is generated from ai/assets/commands/
+  Run ./scripts/generate-commands.sh to regenerate
+-->
+'''
 
 with open(registry, 'r') as f:
     data = yaml.safe_load(f)
@@ -231,7 +263,11 @@ for cmd in data.get('commands', []):
         if platform == 'opencode':
             dest_file = os.path.join(opencode_dir, f"{cmd_id}.md")
             os.makedirs(opencode_dir, exist_ok=True)
-            shutil.copy2(source_file, dest_file)
+            with open(source_file, 'r') as src:
+                content = src.read()
+            with open(dest_file, 'w') as dst:
+                dst.write(header)
+                dst.write(content)
             print(f"[INFO] Generated: {dest_file}")
         elif platform in ('codex', 'cursor'):
             print(f"[INFO] Platform {platform} not yet implemented for command: {cmd_id}")
