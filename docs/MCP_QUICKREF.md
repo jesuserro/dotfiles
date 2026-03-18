@@ -79,6 +79,23 @@ gnx-wiki-here    # Generate wiki (requires OPENAI_API_KEY)
 
 This MCP is from the official MCP repository. It provides cognitive support for reasoning but does not have direct system access.
 
+## Obsidian MCP (mcpvault)
+
+| Aspect | Value |
+|--------|-------|
+| **Type** | Domain-specific MCP (Obsidian operations) |
+| **Scope** | Global optional |
+| **Config Pattern** | `npx -y @bitbonsai/mcpvault /mnt/c/Users/jesus/Documents/vault` |
+| **Enabled** | false (opt-in) |
+| **Vault** | `/mnt/c/Users/jesus/Documents/vault` |
+
+### Relationship with Filesystem MCP
+
+- **Filesystem MCP**: Provides raw file access to vault directory
+- **mcpvault**: Provides semantic operations (notes, frontmatter, tags, search)
+
+These are complementary, not interchangeable. Enable both for full Obsidian integration.
+
 ## Anti-Patterns
 
 - ❌ Hardcoded DSN in global config

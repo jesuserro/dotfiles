@@ -130,10 +130,13 @@ El alias `ups` incluye una sección que actualiza los servidores MCP:
 | **excalidraw** | `~/mcp-servers/excalidraw-mcp` — `git pull` + `pnpm install` + `pnpm run build` |
 | **docker, postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` |
 | **fetch** | `uv tool install mcp-server-fetch` (instala o actualiza) |
-| **filesystem** | `~/.local/share/chezmoi/bin/mcp-filesystem-launcher` (wrapper, no requiere actualización) |
-| **git** | `~/.local/share/chezmoi/bin/mcp-git-launcher` (wrapper, requiere uv para mcp-server-git) |
+| **filesystem** | Launcher local — no requiere actualización |
+| **git** | `uvx mcp-server-git` — se actualiza al ejecutarse |
 | **sequential-thinking** | `npx -y @modelcontextprotocol/server-sequential-thinking` (obtiene latest al ejecutar) |
+| **obsidian** | `npx -y @bitbonsai/mcpvault` (obtiene latest al ejecutar) |
 | **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
-| **context7, github** | Usan `npx` — obtienen la última versión al ejecutarse (no requieren actualización) |
+| **context7, github, gitnexus (MCP)** | Usan `npx` — obtienen la última versión al ejecutarse |
+
+**gitnexus CLI** se actualiza por separado: `npm install -g --prefix=~/.local gitnexus@latest`
 
 Tras ejecutar `ups`, aplica los cambios del shell con: `source ~/.zshrc`

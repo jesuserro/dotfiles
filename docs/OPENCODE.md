@@ -38,7 +38,13 @@ Available in all projects, enabled by default:
 ### Layer 3: Knowledge / Semantic
 - `gitnexus` - Code understanding and documentation generation
 
-### Layer 3: Platform / Data Stack
+### Layer 4: Domain-Specific (Optional)
+- `obsidian` - Obsidian vault operations (notes, frontmatter, tags, search)
+  - **Note:** Requires Obsidian vault at `/mnt/c/Users/jesus/Documents/vault`
+  - **Enabled:** false (opt-in, see docs/MCP_OBSIDIAN_PROPOSAL.md)
+  - **Complementary to:** Filesystem MCP (raw file access)
+
+### Layer 4: Platform / Data Stack
 
 **Defined globally but disabled by default.** Enable per-project when needed:
 - `dagster` - Dagster orchestrator (requires `localhost:3000`)

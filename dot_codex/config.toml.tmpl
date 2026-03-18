@@ -171,3 +171,13 @@ command = "npx"
 args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
 enabled = true
 
+# ─────────────────────────────────────────────
+# MCP: Obsidian/mcpvault (operaciones semánticas sobre vault)
+# Complemento de Filesystem MCP - acceso a notas, frontmatter, tags
+# Global opcional - habilitar si se usa Obsidian
+# ─────────────────────────────────────────────
+[mcp_servers.obsidian]
+command = "npx"
+args = ["-y", "@bitbonsai/mcpvault", "/mnt/c/Users/jesus/Documents/vault"]
+enabled = false
+
