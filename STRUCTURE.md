@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-18 20:46:18
+**Generated:** 2026-03-18 21:22:46
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -9,7 +9,8 @@
 │   ├── 📄 run_after_00_gen_secrets.sh.tmpl
 │   ├── 📄 run_after_10_link_store_etl_mcp.sh.tmpl
 │   ├── 📄 run_after_10_setup_ai_runtime.sh.tmpl
-│   └── 📄 run_after_11_link_ai_assets.sh.tmpl
+│   ├── 📄 run_after_11_link_ai_assets.sh.tmpl
+│   └── 📄 run_after_12_materialize_ai_commands.sh.tmpl
 ├── 📁 .cursor
 │   └── 📁 rules
 │       └── 📄 aliases-conventions.mdc
@@ -131,6 +132,9 @@
 │   │   │   ├── 🖼️ architecture-overview.jpg
 │   │   │   └── 🖼️ architecture-overview.svg
 │   │   └── 📝 PROJECT_DATA.md
+│   ├── 📁 plans
+│   │   ├── 📝 PLAN_000009.md
+│   │   └── 📄 PLAN_000009.md:Zone.Identifier
 │   ├── 📁 wiki
 │   ├── 📝 CAMBIAR_TOKEN_GITHUB.md
 │   ├── 📝 CHEZMOI.md
@@ -155,18 +159,13 @@
 ├── 📁 dot_config
 │   ├── 📁 codex
 │   │   └── 📁 prompts
-│   │       └── 📝 sos.md
 │   ├── 📁 cursor
 │   │   └── 📁 commands
-│   │       └── 📝 sos.md
 │   ├── 📁 mcp
 │   │   ├── 📁 servers
 │   │   │   └── 📄 .keep
 │   │   └── 📄 .keep
 │   └── 📁 opencode
-│       ├── 📁 commands
-│       │   ├── 📄 .keep
-│       │   └── 📝 sos.md
 │       ├── 📁 plugins
 │       │   └── 📄 .keep
 │       ├── 📁 skills
@@ -190,6 +189,7 @@
 │   ├── 📝 branch_feature_6-adding-gitnexus-mcp.md
 │   ├── 📝 branch_feature_7-adding-new-global-mcps.md
 │   ├── 📝 branch_feature_8-adding-tests.md
+│   ├── 📝 branch_feature_9-adding-commands-and-skills.md
 │   ├── 📝 branch_feature_test-branch-changelog.md
 │   ├── 📝 v2025.12.07_1051.md
 │   └── 📝 v2025.12.08_1037.md
@@ -221,6 +221,7 @@
 │   ├── 🔧 git_start_feature.sh
 │   ├── 🔧 git_workflow.sh
 │   ├── 🔧 install-gitnexus.sh
+│   ├── 🔧 materialize-commands.sh
 │   ├── 🔧 show_branches_with_dates.sh
 │   ├── 🔧 system_info.sh
 │   ├── 📄 test.sh.example
