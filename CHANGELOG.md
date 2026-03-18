@@ -2,60 +2,35 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.17_2026] - 2026-03-17
+## [v2026.03.18_1118] - 2026-03-18
 
 ## Changes
 ### Added
-- 2026-03-17 16:32 [65b411b](https://github.com/jesuserro/dotfiles/commit/65b411b) feat(opencode): enhance MCP configuration and documentation (Jesús Erro)
-  - Updated `.chezmoiignore` to simplify configuration tracking by including the entire `.config` directory.
-  - Added `playwright` as a new global workstation MCP for browser automation in `AGENTS.md.tmpl`.
-  - Expanded `OPENCODE.md` to clarify the separation of database MCPs as project-specific while maintaining global runtime tools.
+- 2026-03-18 10:23 [414a5d7](https://github.com/jesuserro/dotfiles/commit/414a5d7) feat(gitnexus): integrate GitNexus CLI and documentation (Jesús Erro)
+  - Added GitNexus CLI installation script for global setup.
+  - Introduced new commands and aliases for GitNexus functionality in the aliases file.
+  - Created comprehensive documentation in AGENTS.md and CLAUDE.md for GitNexus usage, including impact analysis, debugging, and refactoring workflows.
 
 ### Documentation
-- 2026-03-17 20:25 [b11d560](https://github.com/jesuserro/dotfiles/commit/b11d560) docs(changelog): added feature changelog for MCP global enhancements (Jesús Erro)
-  - Created a new changelog file detailing the integration of the feature branch `feature/5-adding-mcps-globales-especializados`.
-  - Summarized 10 commits including updates to documentation, validation scripts, and MCP governance guidelines.
-  - Highlighted significant additions such as the MCP Quick Reference guide, ADR templates, and comprehensive governance documentation.
-- 2026-03-17 20:24 [1719ad5](https://github.com/jesuserro/dotfiles/commit/1719ad5) docs(structure): update file tree and add new directories and files (Jesús Erro)
-  - Updated the generated timestamp in `STRUCTURE.md` to reflect the latest changes.
-  - Added a new directory for `mcp-governance` containing a `SKILL.md` file.
-  - Introduced a new `adr` directory with an architectural decision record and a template for future ADRs.
-- 2026-03-17 20:20 [1ec8de5](https://github.com/jesuserro/dotfiles/commit/1ec8de5) docs(mcp-quickref): add MCP Quick Reference guide (Jesús Erro)
-  - Introduced a new `MCP_QUICKREF.md` file providing a concise overview of MCP layers, anti-patterns, key files, and guidelines for adding MCPs.
-  - Structured the document to assist AI agents in understanding the classification and management of MCPs within the repository.
-  - Included visual aids and clear instructions to enhance usability and compliance with MCP governance standards.
-- 2026-03-17 20:19 [6394b48](https://github.com/jesuserro/dotfiles/commit/6394b48) docs(adr): add ADR template and guidelines for new ADRs (Jesús Erro)
-  - Introduced a new ADR template to standardize documentation of architectural decisions.
-  - Added guidelines for creating new ADRs, including naming conventions and the review process.
-  - Enhanced the existing MCP governance documentation by providing a clear structure for future ADRs.
-- 2026-03-17 20:15 [0cc91f0](https://github.com/jesuserro/dotfiles/commit/0cc91f0) docs(mcp-governance): add comprehensive MCP governance documentation (Jesús Erro)
-  - Introduced a new `SKILL.md` file detailing the classification, integration, and maintenance of MCP servers within a layered architecture.
-  - Provided guidelines for adding new MCPs, defining runtime and connection profiles, and avoiding common anti-patterns.
-  - Included a checklist for ensuring proper MCP configuration and verification steps for active MCPs.
-- 2026-03-17 20:10 [31a9516](https://github.com/jesuserro/dotfiles/commit/31a9516) docs(adr): add MCP governance decision document and update references (Jesús Erro)
-  - Introduced a new architectural decision record (ADR) for MCP governance, detailing the layered architecture for database and platform MCPs.
-  - Updated `OPENCODE.md` to include a reference to the new ADR, enhancing the documentation on MCP classification and activation policies.
-  - Modified `STRUCTURE.md` to reflect the addition of the ADR file in the project structure.
-- 2026-03-17 19:57 [548594e](https://github.com/jesuserro/dotfiles/commit/548594e) docs(opencode): expand MCP design convention and anti-patterns (Jesús Erro)
-  - Added a comprehensive section on MCP design conventions to `OPENCODE.md`, detailing the three layers of MCPs: Core Workstation, Platform Specialized, and Connection-Specific.
-  - Included decision criteria for classifying MCPs and guidelines for adding new MCPs.
-  - Updated `AGENTS.md.tmpl` to reflect the new design convention and emphasize the importance of project-specific configurations.
-- 2026-03-17 16:35 [8d32409](https://github.com/jesuserro/dotfiles/commit/8d32409) docs(opencode): clarify configuration semantics and project-specific settings (Jesús Erro)
-  - Expanded `OPENCODE.md` to detail the distinction between global and project-specific configurations within `dot_config/`.
-  - Emphasized that `dot_config/store-etl/` is project-specific, while `dot_config/opencode/` serves as global client configuration.
-  - Updated `AGENTS.md.tmpl` to reflect the clarification that not all configurations in `dot_config/*` are global, reinforcing the need for proper context in MCP definitions.
+- 2026-03-18 11:18 [cf6afff](https://github.com/jesuserro/dotfiles/commit/cf6afff) docs(changelog): add feature changelog for GitNexus MCP integration (Jesús Erro)
+  - Created a new changelog file for the feature branch `feature/6-adding-gitnexus-mcp`.
+  - Summarized 5 commits related to GitNexus integration, including updates to documentation and the addition of GitNexus CLI.
+  - Documented changes in AGENTS.md, README.md, and introduced a new architectural decision record (ADR) for GitNexus.
+- 2026-03-18 11:18 [c42cc8d](https://github.com/jesuserro/dotfiles/commit/c42cc8d) docs(ai): update README.md with skills directory convention and adapters documentation (Jesús Erro)
+  - Added a note clarifying the shared naming convention for the `.claude/skills/` directory used by Claude Code and OpenCode.
+  - Documented the `ai/adapters/` directory, detailing the specific wiring for agents and including references to Codex and Cursor adapters.
+  - Enhanced the README to provide clearer guidance on the structure and usage of skills within the repository.
+- 2026-03-18 11:06 [f246c69](https://github.com/jesuserro/dotfiles/commit/f246c69) docs(gitnexus): update AGENTS.md and remove CLAUDE.md (Jesús Erro)
+  - Updated AGENTS.md to reflect changes in skill file paths and added a note about the GitNexus internal state.
+  - Removed CLAUDE.md as it is no longer needed.
+  - Added new skill files for GitNexus CLI commands, debugging, exploring, impact analysis, and refactoring.
+- 2026-03-18 10:31 [e0e0b1f](https://github.com/jesuserro/dotfiles/commit/e0e0b1f) docs(gitnexus): add GitNexus ADR and update documentation (Jesús Erro)
+  - Introduced a new architectural decision record (ADR) for GitNexus as a global Knowledge/Semantic MCP, detailing its classification, execution pattern, and multi-repo index architecture.
+  - Updated MCP Quick Reference and governance documentation to include GitNexus integration and its operational guidelines.
+  - Enhanced existing documentation with new commands and helpers for GitNexus functionality, ensuring clarity on installation and usage.
 
-### Refactored
-- 2026-03-17 19:51 [e7733bd](https://github.com/jesuserro/dotfiles/commit/e7733bd) refactor(mcp): rename secrets file and enhance PostgreSQL launcher (Jesús Erro)
-  - Updated the secrets file path from `~/.config/store-etl/secrets.env` to `~/.config/mcp-secrets.env` for clarity and neutrality.
-  - Introduced a new `mcp-postgres-launcher` script to handle PostgreSQL connections, separating runtime from connection profiles.
-  - Updated configuration files to utilize the new launcher and secrets file, ensuring project-specific settings are maintained.
-
-### Tests
-- 2026-03-17 20:18 [eae5a2c](https://github.com/jesuserro/dotfiles/commit/eae5a2c) test(validation): add MCP governance validation script (Jesús Erro)
-  - Introduced a new `validate-mcp-governance` script to validate MCP configurations against governance rules.
-  - Implemented checks for hardcoded database connections, platform MCP defaults, project-specific configurations, and naming conventions for secrets.
-  - Enhanced error and warning logging to provide clear feedback on validation results, ensuring compliance with MCP governance standards.
+### Other
+- 2026-03-18 09:17 [3d0a7a3](https://github.com/jesuserro/dotfiles/commit/3d0a7a3) Remove store-etl from tracking (Jesús Erro)
 
 
 ## [v2025.12.07_1051] - 2025-12-07
