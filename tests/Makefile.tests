@@ -1,0 +1,221 @@
+# Makefile.tests - Testing targets for dotfiles
+# Include from root Makefile: include tests/Makefile.tests
+
+TESTS_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+DOTFILES_DIR := $(TESTS_DIR)/..
+BATS_DIR := $(TESTS_DIR)/bats
+BATS_HELPERS := $(BATS_DIR)/helpers/common.bash
+
+# Shell scripts to lint
+SHELL_SCRIPTS := $(shell find $(DOTFILES_DIR) -name '*.sh' -type f | grep -v '.git/' | grep -v 'node_modules/')
+SHELL_LAUNCHERS := $(shell find $(DOTFILES_DIR)/bin -name 'mcp-*-launcher' -type f 2>/dev/null || true)
+SHELL_CHEZMOI := $(shell find $(DOTFILES_DIR)/.chezmoiscripts -name '*.tmpl' -type f 2>/dev/null || true)
+
+# All shell files to lint
+SHELL_FILES := $(SHELL_SCRIPTS) $(SHELL_LAUNCHERS) $(SHELL_CHEZMOI)
+
+# bats tests
+BATS_TESTS := $(wildcard $(BATS_DIR)/**/*.bats)
+BATS_TESTS_MCP := $(wildcard $(BATS_DIR)/mcp/*.bats)
+BATS_TESTS_CHEZMOI := $(wildcard $(BATS_DIR)/chezmoi/*.bats)
+
+# Color codes for output
+RED := \033[0;31m
+GREEN := \033[0;32m
+YELLOW := \033[1;33m
+BLUE := \033[0;34m
+NC := \033[0m
+
+.PHONY: test test-fast test-lint test-bats test-chezmoi test-install fmt-shell help
+
+help:
+	@echo "Testing targets for dotfiles"
+	@echo ""
+	@echo "  make test         - Run all tests (lint + bats + chezmoi)"
+	@echo "  make test-fast    - Run tests excluding chezmoi smoke tests"
+	@echo "  make test-lint    - Run shellcheck and shfmt checks"
+	@echo "  make test-bats    - Run bats tests only"
+	@echo "  make test-chezmoi - Run chezmoi smoke tests only"
+	@echo "  make test-install - Install test dependencies (bats, shellcheck, shfmt)"
+	@echo "  make fmt-shell    - Format shell scripts with shfmt"
+	@echo ""
+	@echo "  make help         - Show this help"
+
+# ============================================
+# Installation
+# ============================================
+
+test-install:
+	@echo "$(BLUE)==>$NC Installing test dependencies..."
+	@command -v apt-get &>/dev/null && { \
+		sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck 2>/dev/null || true; \
+	} || true
+	@command -v apt-get &>/dev/null && { \
+		sudo apt-get install -y -qq shfmt 2>/dev/null || true; \
+	} || true
+	@if ! command -v shfmt &>/dev/null; then \
+		if command -v go &>/dev/null; then \
+			echo "$(BLUE)==>$NC Installing shfmt via Go..."; \
+			go install mvdan.cc/sh/v3/cmd/shfmt@latest; \
+		else \
+			echo "$(YELLOW)==>$NC shfmt not found and Go not available. Install via:"; \
+			echo "  - Ubuntu: sudo apt install shfmt"; \
+			echo "  - macOS: brew install shfmt"; \
+			echo "  - Go: go install mvdan.cc/sh/v3/cmd/shfmt@latest"; \
+		fi \
+	fi
+	@if [ ! -d "/usr/share/bats" ] && [ ! -d "$$HOME/.local/share/bats" ]; then \
+		echo "$(BLUE)==>$NC Installing bats-core..."; \
+		git clone -q https://github.com/bats-core/bats-core.git /tmp/bats-core 2>/dev/null || true; \
+		cd /tmp/bats-core && ./install.sh $$HOME/.local 2>/dev/null || true; \
+		rm -rf /tmp/bats-core; \
+	fi
+	@echo "$(GREEN)==>$NC Test dependencies ready"
+
+# ============================================
+# Linting
+# ============================================
+
+test-lint: lint-shellcheck lint-shfmt
+	@echo "$(GREEN)==>$NC Lint passed"
+
+lint-shellcheck:
+	@echo "$(BLUE)==>$NC Running shellcheck..."
+	@if command -v shellcheck &>/dev/null; then \
+		for f in $(SHELL_FILES); do \
+			if shellcheck -x -S warning "$$f" 2>/dev/null; then \
+				echo "$(GREEN)  OK$(NC) $$f"; \
+			else \
+				echo "$(YELLOW)  WARN$(NC) $$f"; \
+			fi \
+		done \
+		&& echo "$(GREEN)==>$NC shellcheck done" \
+		|| echo "$(YELLOW)==>$NC shellcheck completed with warnings"; \
+	else \
+		echo "$(YELLOW)==>$NC shellcheck not installed. Run: make test-install"; \
+	fi
+
+lint-shfmt:
+	@echo "$(BLUE)==>$NC Running shfmt check..."
+	@if command -v shfmt &>/dev/null; then \
+		unformatted=0; \
+		for f in $(SHELL_FILES); do \
+			if ! shfmt -l -d "$$f" >/dev/null 2>&1; then \
+				echo "$(RED)  DIFF$(NC) $$f (run make fmt-shell)"; \
+				unformatted=$$((unformatted + 1)); \
+			fi \
+		done \
+		&& echo "$(GREEN)==>$NC shfmt check passed" \
+		|| { echo "$(RED)==>$NC $$unformatted file(s) need formatting. Run: make fmt-shell"; exit 1; }; \
+	else \
+		echo "$(YELLOW)==>$NC shfmt not installed. Run: make test-install"; \
+	fi
+
+fmt-shell:
+	@echo "$(BLUE)==>$NC Formatting shell scripts with shfmt..."
+	@if command -v shfmt &>/dev/null; then \
+		shfmt -w -i 4 $(SHELL_FILES); \
+		echo "$(GREEN)==>$NC Shell scripts formatted"; \
+	else \
+		echo "$(RED)==>$NC shfmt not installed. Run: make test-install"; \
+		exit 1; \
+	fi
+
+# ============================================
+# Bats tests
+# ============================================
+
+test-bats: bats-mcp bats-helpers
+	@echo "$(GREEN)==>$NC Bats tests passed"
+
+bats-helpers:
+	@echo "$(BLUE)==>$NC Checking bats helpers..."
+	@if [ ! -f "$(BATS_HELPERS)" ]; then \
+		echo "$(RED)==>$NC Helpers not found at $(BATS_HELPERS)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)==>$NC Helpers OK"
+
+bats-mcp: bats-filesystem bats-git bats-governance
+	@echo "$(GREEN)==>$NC MCP tests passed"
+
+bats-filesystem:
+	@echo "$(BLUE)==>$NC Running filesystem-launcher tests..."
+	@$(call run_bats,$(BATS_DIR)/mcp/filesystem-launcher.bats)
+
+bats-git:
+	@echo "$(BLUE)==>$NC Running git-launcher tests..."
+	@$(call run_bats,$(BATS_DIR)/mcp/git-launcher.bats)
+
+bats-governance:
+	@echo "$(BLUE)==>$NC Running validate-governance tests..."
+	@$(call run_bats,$(BATS_DIR)/mcp/validate-governance.bats)
+
+# ============================================
+# Chezmoi smoke tests
+# ============================================
+
+test-chezmoi: chezmoi-templates chezmoi-scripts
+	@echo "$(GREEN)==>$NC Chezmoi smoke tests passed"
+
+chezmoi-templates:
+	@echo "$(BLUE)==>$NC Validating MCP template syntax..."
+	@$(call run_chezmoi_templates)
+
+chezmoi-scripts:
+	@echo "$(BLUE)==>$NC Running chezmoi scripts smoke tests..."
+	@$(call run_bats,$(BATS_DIR)/chezmoi/smoke.bats)
+
+# ============================================
+# Combined tests
+# ============================================
+
+test: test-lint test-bats test-chezmoi
+	@echo ""
+	@echo "$(GREEN)========================================"
+	@echo "All tests passed"
+	@echo "========================================$(NC)"
+
+test-fast: test-lint test-bats
+	@echo ""
+	@echo "$(GREEN)========================================"
+	@echo "Fast tests passed"
+	@echo "========================================$(NC)"
+
+# ============================================
+# Helper functions
+# ============================================
+
+define run_bats
+	@if command -v bats &>/dev/null; then \
+		bats --timing --formatter junit $(1) 2>&1 || { \
+			echo "$(RED)==>$NC Test failed"; \
+			exit 1; \
+		}; \
+	elif [ -x "$(HOME)/.local/bin/bats" ]; then \
+		$(HOME)/.local/bin/bats --timing $(1) 2>&1 || { \
+			echo "$(RED)==>$NC Test failed"; \
+			exit 1; \
+		}; \
+	else \
+		echo "$(RED)==>$NC bats not installed. Run: make test-install"; \
+		exit 1; \
+	fi
+endef
+
+define run_chezmoi_templates
+	@echo "$(BLUE)  Checking JSON templates...$(NC)"; \
+	if command -v python3 &>/dev/null; then \
+		python3 -c "import json" 2>/dev/null && { \
+			for tmpl in $(DOTFILES_DIR)/dot_cursor/mcp.json.tmpl $(DOTFILES_DIR)/dot_config/opencode/opencode.json.tmpl; do \
+				if [ -f "$$tmpl" ]; then \
+					base=$$(basename "$$tmpl"); \
+					echo "$(BLUE)  Checking $(NC)$$base"; \
+				fi \
+			done \
+			&& echo "$(GREEN)  Templates OK$(NC)"; \
+		} || echo "$(YELLOW)  Python json module not available$(NC)"; \
+	else \
+		echo "$(YELLOW)  Python3 not available for template validation$(NC)"; \
+	fi
+endef
