@@ -1,79 +1,123 @@
 # SOS Command
 
-General help command for AI assistants. Invoked when users need structured assistance with their current task.
+Command to prepare a high-signal handoff prompt for GPT-5.4 when the current implementation is blocked, unclear, or needs a fresh external reasoning pass.
 
 ## Purpose
 
-Provide clear, actionable guidance when users invoke `/sos`. This command helps:
+When the user invokes `/sos`, the AI should produce a prompt that captures the current implementation state so it can be given to GPT-5.4 for deeper help.
 
-- Clarify the problem or goal
-- Propose a structured approach
-- Identify risks and assumptions
-- Suggest the next useful step
+The prompt should help GPT-5.4 understand:
+
+- The architecture we want to reach
+- What has already been tried
+- Which files are involved
+- Which tools and versions matter
+- What specific problem still remains open
 
 ## Behavior
 
 When `/sos` is invoked, the AI should:
 
-1. **Acknowledge** the request briefly
-2. **Restate** the current task or context in one sentence
-3. **Propose** a clear plan (2-4 actionable steps)
-4. **Flag** any risks, assumptions, or missing information
-5. **Suggest** the most useful immediate next step
+1. Briefly infer and restate the current implementation problem
+2. Gather the most relevant technical context from the workspace
+3. Produce a ready-to-use prompt for GPT-5.4 in Spanish unless the surrounding conversation clearly requires another language
+4. Prefer concrete repo facts over generic summaries
+5. Use MCPs when useful to enrich the context with reliable implementation details
+
+## Required Prompt Contents
+
+The generated prompt must include, whenever the information is available:
+
+1. **Objetivo arquitectónico**
+   - Qué arquitectura o diseño se quiere implementar
+   - Qué separación de capas, responsabilidades o flujos se busca
+
+2. **Situación actual**
+   - Qué funciona ya
+   - Qué sigue fallando, siendo confuso o incompleto
+
+3. **Intentos realizados**
+   - Qué soluciones, refactors o enfoques se han probado
+   - Qué limitaciones, regresiones o resultados tuvieron
+
+4. **Ficheros editados o afectados**
+   - Incluir una instrucción con `treegen` centrada en los ficheros relevantes
+   - Si conviene, resumir también qué papel tiene cada fichero importante
+
+5. **Versiones y tooling**
+   - Versiones actuales de herramientas implicadas, frameworks, CLIs o runtimes relevantes
+   - Solo incluir las que aporten contexto real al problema
+
+6. **Uso de MCPs**
+   - Si hay MCPs útiles para entender mejor el problema, reflejar los hallazgos relevantes
+   - Ejemplos: estructura del repo, relaciones entre archivos, estado de servicios, docs o configuraciones
+
+7. **Pregunta final para GPT-5.4**
+   - Cerrar con una petición concreta y accionable
+   - Pedir propuesta de solución, diagnóstico o siguiente iteración de refactor
+
+## Output Requirements
+
+The response to `/sos` should primarily be the final prompt, not a long explanation around it.
+
+Use this structure:
+
+```markdown
+# Prompt para GPT-5.4
+
+Estoy trabajando en [problema o refactor].
+
+## Arquitectura objetivo
+- ...
+
+## Estado actual
+- ...
+
+## Intentos realizados
+- ...
+
+## Ficheros editados o afectados
+```bash
+treegen [rutas relevantes]
+```
+
+## Versiones y herramientas implicadas
+- ...
+
+## Contexto adicional obtenido
+- ...
+
+## Lo que necesito de ti
+[petición concreta para GPT-5.4]
+```
 
 ## Style Guidelines
 
-- Be concise but complete
-- Use numbered lists for plans
-- Flag uncertainties with "⚠️" or "Note:"
-- Prioritize the most impactful suggestion
-- Avoid generic advice; be specific to the context
+- Prioritize precision over breadth
+- Do not invent missing facts
+- Prefer repository facts, commands, and file paths over abstract wording
+- Keep the prompt compact but sufficiently complete to be useful
+- If some requested context could not be gathered, say so explicitly
+- Avoid filler introductions or motivational language
 
-## Expected Output Format
+## MCP Guidance
 
-```
-**SOS Response**
+Use available MCPs when they materially improve the prompt.
 
-📋 **Task**: [One-line restatement]
+Examples:
 
-📌 **Proposed Approach**:
-1. [First step]
-2. [Second step]
-3. ...
+- Repo/code understanding MCPs to identify affected files or flows
+- Docs MCPs to confirm current tool behavior
+- System or runtime MCPs to inspect versions, services, or environment details
 
-⚠️ **Assumptions / Risks**:
-- [Risk or assumption]
-
-➡️ **Next Step**: [Most impactful immediate action]
-```
-
-## Example
-
-When a user says `/sos` while struggling with a refactoring task:
-
-```
-**SOS Response**
-
-📋 **Task**: Refactor the authentication module to support OAuth2
-
-📌 **Proposed Approach**:
-1. Identify all current auth dependencies
-2. Extract interface for auth providers
-3. Implement OAuth2 provider following existing patterns
-4. Add tests before removing legacy code
-
-⚠️ **Assumptions / Risks**:
-- Assuming OAuth2 is the only new provider needed
-- Legacy token-based auth must remain functional during transition
-
-➡️ **Next Step**: Run `gitnexus_impact` on the auth module to see all callers
-```
+Do not mention MCP usage unless it contributed useful context to the prompt.
 
 ## When Not to Use
 
-Do not invoke SOS response when:
-- The user has explicitly asked a specific question (answer directly)
-- The conversation is already well-structured and productive
-- The task is trivial or routine (apply common sense)
+Do not use this command when:
 
-Use judgment: `/sos` is for moments when users need to step back and get oriented.
+- The user only wants a direct answer to a narrow question
+- No implementation/debug/refactor context exists yet
+- A simple next-step answer would be more helpful than preparing an external prompt
+
+Use `/sos` when the best help is to package the current state clearly for a stronger external reasoning pass.
