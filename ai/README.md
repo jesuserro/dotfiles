@@ -7,7 +7,7 @@ Hub neutral de infraestructura IA para dotfiles: runtime ejecutable, assets de c
 ```
 ai/
   runtime/     # Código ejecutable (MCP servers, runtimes)
-  assets/      # Conocimiento consumido por agentes (skills, prompts, rules)
+  assets/      # Conocimiento consumido por agentes (skills, prompts, rules, commands)
   adapters/    # Wiring específico de cada agente (cursor, codex, opencode)
 ```
 
@@ -16,26 +16,28 @@ ai/
 | Concepto   | Descripción                                              |
 | ---------- | -------------------------------------------------------- |
 | **runtime** | Código ejecutable usado por agentes (MCP servers)        |
-| **assets**  | Conocimiento consumido por agentes (skills, prompts, rules) |
+| **assets**  | Conocimiento consumido por agentes (skills, prompts, rules, commands) |
 | **adapters** | Configuración específica de cada IDE/agente             |
 | **hub XDG** | `~/.config/ai` como punto central (estándar XDG)         |
 
 ## Estructura en el sistema
 
-Tras `chezmoi apply` (script `run_after_11_link_ai_assets`):
+**Fuente canónica**: `ai/assets/skills/` — editar aquí.
+
+**Surfaces derivadas**: symlinked via `chezmoi apply`:
 
 ```
 ~/.config/ai/
-  runtime/     # venv y dependencias Python para MCP
   skills/      # symlink → dotfiles/ai/assets/skills
   prompts/     # symlink → dotfiles/ai/assets/prompts
   rules/       # symlink → dotfiles/ai/assets/rules
 
-# Cada skill en ai/assets/skills/* se symlinkea en:
-~/.cursor/skills-cursor/<skill>  → ~/.config/ai/skills/<skill>
-~/.codex/skills/<skill>          → ~/.config/ai/skills/<skill>
-~/.config/opencode/skills/<skill> → ~/.config/ai/skills/<skill>
+~/.config/opencode/skills/   # skills symlinked per-category
+~/.cursor/skills-cursor/     # skills symlinked per-category
+~/.codex/skills/            # skills symlinked per-category
 ```
+
+No editar en surfaces. Todos los cambios en `ai/assets/skills/`.
 
 > **Nota:** `.claude/skills/` es una convención de nombre compartida por Claude Code y OpenCode. No implica que el repo soporte a Claude — es solo el nombre del directorio que ambos herramientas usan para skills. Los skills de este repo viven en `ai/assets/skills/` y se symlinkean a las rutas que cada plataforma espera.
 
@@ -52,7 +54,21 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 
 ### Skills instalados
 
-- **excalidraw-diagram**: [coleam00/excalidraw-diagram-skill](https://github.com/coleam00/excalidraw-diagram-skill) — genera diagramas Excalidraw desde descripciones. Requiere Playwright para validación visual (ver README del skill).
+| Categoría | Skill | Descripción |
+|-----------|-------|-------------|
+| `diagrams/` | `excalidraw/` | Generador de diagramas Excalidraw |
+| `diagrams/` | `conventions/` | Convenciones de diagramación |
+| `docs/` | `adr-writer/` | Guía para escribir ADRs |
+| `etl/` | `data-contracts/` | Contratos de datos transversales |
+| `git/` | `pr-conventions/` | Convenciones de PR y commits |
+| `ops/` | `mcp-governance/` | Gobernanza de MCPs |
+| `ops/` | `system-workflow/` | Workflow de actualizaciones |
+| `postgres/` | `schema-review/` | Guía de revisión de esquemas |
+| `postgres/` | `sql-style/` | Estilo SQL general |
+| `python/` | `project-structure/` | Estructura de proyectos Python |
+| `tools/` | `code-intelligence/` | GitNexus (6 variantes) |
+
+Para más detalles, ver [SKILLS_ARCHITECTURE.md](SKILLS_ARCHITECTURE.md) y [ai/assets/skills/README.md](assets/skills/README.md).
 
 ## Separación transversal vs proyecto
 
@@ -62,6 +78,16 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 | Prompts de proyecto X    | repo del proyecto   |
 
 El hub `ai/` contiene solo assets reutilizables entre proyectos.
+
+## Commands
+
+Los commands son utilidades globales invocables con `/<command>`.
+
+| Command | Descripción | Plataforma |
+|---------|-------------|------------|
+| `sos` | Ayuda general para asistentes IA | opencode |
+
+Para más detalles, ver [docs/COMMANDS_ARCHITECTURE.md](../docs/COMMANDS_ARCHITECTURE.md) y [ai/assets/commands/README.md](assets/commands/README.md).
 
 ## Añadir un nuevo MCP servidor
 

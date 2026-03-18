@@ -12,7 +12,6 @@ OpenCode is configured globally via Chezmoi. All MCP servers are defined once in
 dot_config/opencode/
 ├── opencode.json.tmpl    # Main MCP configuration
 ├── AGENTS.md.tmpl       # Global agent instructions
-├── commands/.keep       # Future: custom commands
 ├── plugins/.keep        # Future: plugins directory
 └── skills/.keep         # Future: global skills
 ```
@@ -171,12 +170,14 @@ Or use the global config and set `enabled: true` directly.
 2. Follow the existing pattern for local or remote MCPs
 3. Run `chezmoi apply`
 
-### Future: Commands, Plugins, Skills
+### Future: Plugins, Skills, and Materialized Commands
 
 The directory structure supports future expansion:
-- `commands/` - Custom OpenCode commands
 - `plugins/` - Plugin configurations
 - `skills/` - Global skill definitions
+
+Global commands are no longer stored as stable files under `dot_config/opencode/commands/`.
+They are generated into `build/commands/opencode/` and materialized to `~/.config/opencode/commands/`.
 
 ## Troubleshooting
 

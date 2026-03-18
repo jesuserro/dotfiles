@@ -24,3 +24,6 @@ vim/pack/*
 
 *.log
 .gitnexus
+
+# Generated command artifacts (regenerated from ai/assets/commands/)
+build/commands/

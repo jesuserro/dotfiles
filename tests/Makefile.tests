@@ -20,6 +20,7 @@ SHELL_FILES := $(SHELL_SCRIPTS) $(SHELL_LAUNCHERS) $(SHELL_CHEZMOI) $(SHELL_TEST
 BATS_DIR := $(TESTS_DIR)/bats
 BATS_TESTS_MCP := $(wildcard $(BATS_DIR)/mcp/*.bats)
 BATS_TESTS_CHEZMOI := $(wildcard $(BATS_DIR)/chezmoi/*.bats)
+BATS_TESTS_COMMANDS := $(wildcard $(BATS_DIR)/commands/*.bats)
 
 # Color codes
 RED := \033[0;31m
@@ -29,7 +30,7 @@ BLUE := \033[0;34m
 NC := \033[0m
 
 .PHONY: test test-fast test-lint test-bats test-chezmoi test-install fmt-shell help
-.PHONY: test-ci test-bats-ci
+.PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands
 
 help:
 	@echo "Testing targets for dotfiles"
@@ -39,8 +40,13 @@ help:
 	@echo "  make test-lint    - Run shellcheck and shfmt checks"
 	@echo "  make test-bats    - Run bats tests only"
 	@echo "  make test-chezmoi - Run chezmoi smoke tests only"
+	@echo "  make test-commands- Run commands tests only"
 	@echo "  make test-install - Install test dependencies"
 	@echo "  make fmt-shell    - Format shell scripts with shfmt"
+	@echo ""
+	@echo "  make generate-commands  - Generate command artifacts"
+	@echo "  make validate-commands  - Validate command structure"
+	@echo "  make materialize-commands - Materialize commands into runtime paths"
 	@echo ""
 	@echo "  make test-ci      - Run all tests with CI output (JUnit/XML)"
 	@echo ""
@@ -147,7 +153,7 @@ fmt-shell:
 # Bats tests (human-readable output)
 # ============================================
 
-test-bats: bats-helpers bats-mcp bats-chezmoi
+test-bats: bats-helpers bats-mcp bats-chezmoi bats-commands
 	@echo ""
 	@echo "$(GREEN)==>$NC Bats tests passed"
 
@@ -177,6 +183,10 @@ bats-governance:
 bats-chezmoi:
 	@echo "$(BLUE)==>$NC Running chezmoi smoke tests..."
 	@$(call run_bats,$(BATS_DIR)/chezmoi/smoke.bats)
+
+bats-commands:
+	@echo "$(BLUE)==>$NC Running commands tests..."
+	@$(call run_bats,$(BATS_DIR)/commands/validate-commands.bats)
 
 # ============================================
 # CI targets (JUnit/XML output)
@@ -260,3 +270,37 @@ define run_chezmoi_templates
 		echo "$(YELLOW)  Python3 not available for template validation$(NC)"; \
 	fi
 endef
+
+# ============================================
+# Commands
+# ============================================
+
+generate-commands:
+	@echo "$(BLUE)==>$NC Generating commands..."
+	@if [ -x "$(DOTFILES_DIR)/scripts/generate-commands.sh" ]; then \
+		$(DOTFILES_DIR)/scripts/generate-commands.sh; \
+	else \
+		echo "$(RED)==>$NC generate-commands.sh not found or not executable"; \
+		exit 1; \
+	fi
+
+validate-commands:
+	@echo "$(BLUE)==>$NC Validating commands structure..."
+	@if [ -x "$(DOTFILES_DIR)/scripts/validate-commands-structure.sh" ]; then \
+		$(DOTFILES_DIR)/scripts/validate-commands-structure.sh; \
+	else \
+		echo "$(RED)==>$NC validate-commands-structure.sh not found or not executable"; \
+		exit 1; \
+	fi
+
+materialize-commands:
+	@echo "$(BLUE)==>$NC Materializing commands..."
+	@if [ -x "$(DOTFILES_DIR)/scripts/materialize-commands.sh" ]; then \
+		$(DOTFILES_DIR)/scripts/materialize-commands.sh; \
+	else \
+		echo "$(RED)==>$NC materialize-commands.sh not found or not executable"; \
+		exit 1; \
+	fi
+
+test-commands: bats-commands validate-commands
+	@echo "$(GREEN)==>$NC Commands tests passed"

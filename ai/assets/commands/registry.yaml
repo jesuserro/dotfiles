@@ -1,0 +1,23 @@
+# Commands Registry
+# Canonical source of truth for global AI commands.
+
+version: 1
+
+# Commands defined in this registry are the single source of truth.
+# Each command is published to target platforms via the generate-commands.sh script.
+#
+# Adding a new command:
+#   1. Create ai/assets/commands/<id>/COMMAND.md with the command content
+#   2. Add an entry to this registry with id, description, platforms, and source
+#   3. Run ./scripts/generate-commands.sh
+#   4. Validate with ./scripts/validate-commands-structure.sh
+
+commands:
+  - id: sos
+    description: General help command for AI assistants - provides structured guidance when users need assistance
+    platforms:
+      - opencode
+      - cursor
+      - codex
+    source: sos/COMMAND.md
+    enabled: true
