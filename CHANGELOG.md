@@ -2,31 +2,60 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.18_1355] - 2026-03-18
+## [v2026.03.18_2123] - 2026-03-18
 
 ## Changes
 ### Added
-- 2026-03-18 13:34 [651f336](https://github.com/jesuserro/dotfiles/commit/651f336) feat(tests): add comprehensive testing framework for dotfiles (Jesús Erro)
-  - Introduced a new Makefile to manage testing targets and dependencies for the dotfiles project.
-  - Created detailed documentation in `README.md` and `docs/TESTING.md` outlining testing procedures, installation requirements, and available commands.
-  - Implemented a suite of Bats tests for various scripts, including `mcp-filesystem-launcher`, `mcp-git-launcher`, and `validate-mcp-governance`, ensuring robust validation of functionality and structure.
+- 2026-03-18 20:48 [dbf823b](https://github.com/jesuserro/dotfiles/commit/dbf823b) feat(adapters): introduce platform-specific templates and documentation for command generation (Jesús Erro)
+  - Added new README.md and TEMPLATE.md files for the Codex, Cursor, and OpenCode adapters in the `ai/adapters/` directory.
+  - Documented the expected formats, rules for adaptation, and invocation syntax for each platform.
+  - Updated `COMMANDS_ARCHITECTURE.md` to include details about the new adapter structure and its purpose.
+- 2026-03-18 19:53 [979972f](https://github.com/jesuserro/dotfiles/commit/979972f) feat(commands): introduce global command system with SOS command and validation scripts (Jesús Erro)
+  - Added a new command structure under `ai/assets/commands/` with the SOS command for providing structured assistance.
+  - Created `generate-commands.sh` and `validate-commands-structure.sh` scripts for managing command artifacts and ensuring compliance.
+  - Developed comprehensive documentation for the command system, including `COMMANDS_ARCHITECTURE.md` and individual command READMEs.
+- 2026-03-18 19:53 [c940cff](https://github.com/jesuserro/dotfiles/commit/c940cff) feat(commands): refresh generated timestamp and expand file tree with new commands and scripts (Jesús Erro)
+  - Updated the generated timestamp in `STRUCTURE.md`.
+  - Added new directories for commands and scripts, including `generate-commands.sh` and `validate-commands-structure.sh`.
+  - Introduced new documentation files for commands and enhanced the overall file structure.
+- 2026-03-18 19:31 [ab32ddd](https://github.com/jesuserro/dotfiles/commit/ab32ddd) feat(skills): update skills documentation and add new Excalidraw diagram skill (Jesús Erro)
+  - Updated `STRUCTURE.md` with new files and refreshed generated timestamp.
+  - Introduced `SKILLS_ARCHITECTURE.md` to document the global skills system and its structure.
+  - Added comprehensive documentation for the Excalidraw diagram skill, including usage, customization, and evidence artifacts.
 
 ### Fixed
-- 2026-03-18 13:52 [ccf254e](https://github.com/jesuserro/dotfiles/commit/ccf254e) fix(tests): enhance Makefile for improved testing and linting (Jesús Erro)
-  - Updated the Makefile to include additional shell scripts for linting, specifically excluding third-party directories.
-  - Introduced new CI testing targets for comprehensive test execution with JUnit/XML output.
-  - Improved help documentation for clarity on testing commands and their purposes.
-- 2026-03-18 13:43 [06c1d3c](https://github.com/jesuserro/dotfiles/commit/06c1d3c) fix(tests): enhance mcp launchers with mock execution for testing (Jesús Erro)
-  - Added mock `npx` and `uvx` scripts to avoid blocking during tests in `mcp-filesystem-launcher.bats` and `mcp-git-launcher.bats`.
-  - Updated tests to utilize the mock scripts, improving reliability and execution flow.
-  - Removed redundant checks for launcher existence in tests, streamlining the test cases.
+- 2026-03-18 20:35 [3e16489](https://github.com/jesuserro/dotfiles/commit/3e16489) fix(commands): enhance SOS command support across multiple platforms (Jesús Erro)
+  - Updated the command structure to include the SOS command for both Cursor and Codex platforms.
+  - Added detailed documentation for the SOS command in `dot_config/cursor/commands/sos.md` and `dot_config/codex/prompts/sos.md`.
+  - Modified `generate-commands.sh` to support generating command artifacts for all three platforms: OpenCode, Cursor, and Codex.
 
 ### Documentation
-- 2026-03-18 13:55 [76d3d3c](https://github.com/jesuserro/dotfiles/commit/76d3d3c) docs(changelog): update STRUCTURE.md with new files and generated timestamp; add feature changelog for testing enhancements (Jesús Erro)
-- 2026-03-18 13:54 [cd2235f](https://github.com/jesuserro/dotfiles/commit/cd2235f) docs(tests): update testing documentation and procedures (Jesús Erro)
-  - Added a new step to the code modification verification process to include running `make test-fast` for test suite validation.
-  - Clarified the description of the `make test-fast` command in the documentation.
-  - Introduced a new section on lint policy and output modes to enhance understanding of testing outputs and their use cases.
+- 2026-03-18 21:23 [412489e](https://github.com/jesuserro/dotfiles/commit/412489e) docs(changelog): update STRUCTURE.md with new file additions and refresh generated timestamp; add changelog for feature branch 9, detailing enhancements to command generation and SOS command support. (Jesús Erro)
+- 2026-03-18 19:59 [938a864](https://github.com/jesuserro/dotfiles/commit/938a864) docs(commands): update COMMANDS_ARCHITECTURE.md with new bootstrap instructions and validation steps (Jesús Erro)
+  - Added detailed bootstrap instructions for setting up the command artifacts on a new machine.
+  - Included validation steps for ensuring the command structure is correct after generation.
+  - Updated the generated timestamp in `STRUCTURE.md` to reflect recent changes.
+
+### Refactored
+- 2026-03-18 21:21 [69ebaaf](https://github.com/jesuserro/dotfiles/commit/69ebaaf) refactor(commands): enhance SOS command for improved handoff to GPT-5.4 (Jesús Erro)
+  - Updated the SOS command documentation to clarify its purpose in generating a high-signal prompt for GPT-5.4 when users face implementation challenges.
+  - Revised the behavior of the command to include specific requirements for the generated prompt, such as architectural goals, current state, and attempts made.
+  - Added detailed output requirements to ensure the prompt is concise yet comprehensive, focusing on actionable insights for external reasoning.
+- 2026-03-18 21:15 [ba7ce24](https://github.com/jesuserro/dotfiles/commit/ba7ce24) refactor(commands): restructure command generation and materialization process (Jesús Erro)
+  - Updated the command generation process to output artifacts into `build/commands/` instead of `dot_config/`.
+  - Introduced a new script, `materialize-commands.sh`, to handle the materialization of generated commands into runtime directories.
+  - Enhanced `generate-commands.sh` to focus solely on generating build artifacts.
+- 2026-03-18 20:48 [9682d77](https://github.com/jesuserro/dotfiles/commit/9682d77) refactor(commands): refresh generated timestamp and expand file tree with new README and TEMPLATE files (Jesús Erro)
+  - Updated the generated timestamp in `STRUCTURE.md` to reflect recent changes.
+  - Added new `TEMPLATE.md` files in the `ai/adapters/codex` and `ai/adapters/cursor` directories to enhance documentation structure.
+  - Ensured consistency in the file tree representation by including README files for all relevant directories.
+- 2026-03-18 19:57 [0f2a3d2](https://github.com/jesuserro/dotfiles/commit/0f2a3d2) refactor(commands): update generated timestamp and remove obsolete SOS command documentation (Jesús Erro)
+  - Refreshed the generated timestamp in `STRUCTURE.md`.
+  - Deleted the `sos.md` file from the command structure as it is no longer needed.
+- 2026-03-18 19:34 [525155e](https://github.com/jesuserro/dotfiles/commit/525155e) refactor(gitnexus): enhance GitNexus skills documentation and structure (Jesús Erro)
+  - Updated `STRUCTURE.md` to reflect new GitNexus skill files and refreshed the generated timestamp.
+  - Revised `SKILLS_ARCHITECTURE.md` to include GitNexus as a key component of the skills system.
+  - Added detailed documentation for new GitNexus skills: CLI commands, debugging, exploring, impact analysis, and refactoring.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
