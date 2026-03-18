@@ -236,6 +236,33 @@ EOF
     _ups_info "npm no está instalado, omitiendo actualización de paquetes npm"
   fi
 
+  # 📦 Sección: Actualización de GitNexus CLI
+  _ups_section "📦 Actualización de GitNexus CLI"
+  if command -v npm >/dev/null 2>&1; then
+    local gitnexus_start=$(date +%s)
+    _ups_progress "Instalando/actualizando gitnexus@latest globalmente..."
+    
+    # Asegurar PATH local
+    export PATH="$HOME/.local/bin:$PATH"
+    
+    local_prefix="$HOME/.local"
+    mkdir -p "$local_prefix/bin" "$local_prefix/lib/node_modules"
+    
+    if ! npm install -g --prefix="$local_prefix" gitnexus@latest 2>&1 | tee /tmp/ups_gitnexus.log; then
+      _ups_warning "No se pudo actualizar GitNexus"
+    fi
+    local gitnexus_time=$(($(date +%s) - gitnexus_start))
+    if command -v gitnexus >/dev/null 2>&1; then
+      local gnx_version
+      gnx_version=$(gitnexus --version 2>/dev/null || echo "desconocida")
+      _ups_success "GitNexus actualizado a versión ${gnx_version} (${gitnexus_time}s)"
+    else
+      _ups_success "GitNexus instalado/actualizado (${gitnexus_time}s)"
+    fi
+  else
+    _ups_info "npm no está instalado, omitiendo actualización de GitNexus"
+  fi
+
   # 🤖 Sección: Actualización OpenCode
   _ups_section "🤖 Actualización de OpenCode"
   _ups_progress "Comprobando e instalando/actualizando OpenCode CLI..."
@@ -522,6 +549,106 @@ alias dcompose="docker-compose"                      # Atajo para docker-compose
 # Específicos de proyectos
 # ------------------------------------
 alias cx="codex"  # Codex
+
+# ------------------------------------
+# GitNexus - Inteligencia estructural de código
+# ------------------------------------
+alias gnx-serve='gitnexus serve'                       # Iniciar servidor GitNexus local
+
+# Función para analizar el repositorio actual
+gnx-analyze-here() {
+  if [ -d ".git" ]; then
+    echo "🔍 Analizando repositorio actual con GitNexus..."
+    gitnexus analyze
+  else
+    echo "❌ No estás en un repositorio Git"
+    return 1
+  fi
+}
+
+# Función para generar wiki en docs/wiki/
+gnx-wiki-here() {
+  # Detectar raíz del repo
+  local repo_root
+  repo_root=$(git rev-parse --show-toplevel 2>/dev/null)
+  
+  if [ -z "$repo_root" ]; then
+    echo "❌ No estás en un repositorio Git"
+    return 1
+  fi
+  
+  # Cambiar a la raíz del repo
+  cd "$repo_root"
+  
+  # Verificar que gitnexus está instalado
+  if ! command -v gitnexus >/dev/null 2>&1; then
+    echo "❌ GitNexus no está instalado"
+    echo "   Ejecuta: ~/dotfiles/scripts/install-gitnexus.sh"
+    return 1
+  fi
+  
+  # Verificar índice o crearlo
+  if ! gitnexus status >/dev/null 2>&1; then
+    echo "🔍 Indexando repositorio..."
+    gitnexus analyze
+  fi
+  
+  # Verificar API key
+  local api_key=""
+  if [ -n "$OPENAI_API_KEY" ]; then
+    api_key="$OPENAI_API_KEY"
+  elif [ -n "$GITNEXUS_API_KEY" ]; then
+    api_key="$GITNEXUS_API_KEY"
+  fi
+  
+  if [ -z "$api_key" ]; then
+    echo "⚠️  No se encontró API key de OpenAI"
+    echo "   Configura OPENAI_API_KEY o GITNEXUS_API_KEY"
+    echo "   O ejecuta: gitnexus wiki --api-key <tu-api-key>"
+    echo ""
+    echo "📖 Alternativa: usa 'gnx-serve' para acceder a la wiki desde el UI"
+    echo "   - gnx-serve"
+    echo "   - Abre http://localhost:3100"
+    return 1
+  fi
+  
+  local wiki_output="$repo_root/docs/wiki"
+  
+  if [ ! -d "$wiki_output" ]; then
+    echo "📁 Creando directorio $wiki_output..."
+    mkdir -p "$wiki_output"
+  fi
+  
+  echo "📚 Generando wiki en $wiki_output..."
+  echo "   (Esto usa el LLM para generar documentación)"
+  echo ""
+  
+  # Ejecutar gitnexus wiki - el argumento es el directorio de salida
+  # gitnexus detectará automáticamente el repo desde el directorio actual
+  if gitnexus wiki "$wiki_output" --api-key "$api_key" 2>&1; then
+    echo ""
+    echo "✅ Wiki generada en $wiki_output"
+  else
+    echo "❌ Error al generar wiki"
+    return 1
+  fi
+}
+
+# Función para analizar y servir en un solo comando
+gnx-map() {
+  if [ ! -d ".git" ]; then
+    echo "❌ No estás en un repositorio Git"
+    return 1
+  fi
+  
+  echo "🗺️  Analizando y preparando servidor..."
+  gnx-analyze-here
+  echo ""
+  echo "🚀 Iniciando servidor GitNexus..."
+  echo "   Presiona Ctrl+C para detener"
+  echo ""
+  gnx-serve
+}
 
 # Bases de datos
 alias create_goodreads_db='mysql -e "DROP DATABASE IF EXISTS goodreads; CREATE DATABASE goodreads; USE goodreads;" && mysql goodreads < ~/proyectos/goodreads/db/structure.sql'
