@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-18 12:30:46
+**Generated:** 2026-03-18 13:54:56
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -105,11 +105,13 @@
 │   ├── 📝 INSTALL.md
 │   ├── 📝 MCP_OBSIDIAN_PROPOSAL.md
 │   ├── 📝 MCP_QUICKREF.md
+│   ├── 📝 MCP_TAXONOMY.md
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   ├── 📝 MIGRATION_MCP_ITER3.md
 │   ├── 📝 OPENCODE.md
 │   ├── 📝 README.md
 │   ├── 📝 SECRETS_EXAMPLES.md
+│   ├── 📝 TESTING.md
 │   ├── 📝 TOKEN_GITHUB_GH.md
 │   ├── 📝 UPS.md
 │   └── 📝 VERIFICAR_MCP_STORE_ETL.md
@@ -143,6 +145,8 @@
 │   ├── 📝 branch_feature_4-adding-opencode.md
 │   ├── 📝 branch_feature_5-adding-mcps-globales-especializados.md
 │   ├── 📝 branch_feature_6-adding-gitnexus-mcp.md
+│   ├── 📝 branch_feature_7-adding-new-global-mcps.md
+│   ├── 📝 branch_feature_8-adding-tests.md
 │   ├── 📝 branch_feature_test-branch-changelog.md
 │   ├── 📝 v2025.12.07_1051.md
 │   └── 📝 v2025.12.08_1037.md
@@ -181,6 +185,17 @@
 ├── 📁 termux
 │   ├── 🔧 install.sh
 │   └── 🔧 install_plugins.sh
+├── 📁 tests
+│   ├── 📁 bats
+│   │   ├── 📁 chezmoi
+│   │   │   └── 📄 smoke.bats
+│   │   ├── 📁 helpers
+│   │   │   └── 🔧 common.bash
+│   │   └── 📁 mcp
+│   │       ├── 📄 filesystem-launcher.bats
+│   │       ├── 📄 git-launcher.bats
+│   │       └── 📄 validate-governance.bats
+│   └── 📄 Makefile.tests
 ├── 📁 tmux
 │   ├── 📁 common
 │   │   ├── 🔧 footer.sh
@@ -207,6 +222,7 @@
 ├── ⚙️ .sops.yaml
 ├── 📝 AGENTS.md
 ├── 📝 CHANGELOG.md
+├── 🔨 Makefile
 ├── 📝 README.md
 ├── 📝 STRUCTURE.md
 ├── 📄 aliases
