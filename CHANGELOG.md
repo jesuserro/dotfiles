@@ -2,35 +2,35 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.18_1118] - 2026-03-18
+## [v2026.03.18_1247] - 2026-03-18
 
 ## Changes
 ### Added
-- 2026-03-18 10:23 [414a5d7](https://github.com/jesuserro/dotfiles/commit/414a5d7) feat(gitnexus): integrate GitNexus CLI and documentation (Jesús Erro)
-  - Added GitNexus CLI installation script for global setup.
-  - Introduced new commands and aliases for GitNexus functionality in the aliases file.
-  - Created comprehensive documentation in AGENTS.md and CLAUDE.md for GitNexus usage, including impact analysis, debugging, and refactoring workflows.
+- 2026-03-18 12:30 [1523c27](https://github.com/jesuserro/dotfiles/commit/1523c27) feat(mcp): introduce Obsidian MCP and update related documentation (Jesús Erro)
+  - Added support for the Obsidian MCP (mcpvault) to enable semantic operations on vaults, including notes, frontmatter, and tags.
+  - Updated aliases and documentation to reflect changes in the MCP structure, including installation and runtime behavior for Obsidian and Git.
+  - Clarified the relationship between the Filesystem MCP and the new Obsidian MCP, emphasizing their complementary roles.
+- 2026-03-18 12:15 [3e90859](https://github.com/jesuserro/dotfiles/commit/3e90859) feat(vault): update filesystem launcher and documentation to include new allowed root (Jesús Erro)
+  - Updated `mcp-filesystem-launcher` to include `/mnt/c/Users/jesus/Documents/vault` in the allowed roots.
+  - Modified `validate-mcp-governance` to check for the new allowed root.
+  - Revised `MCP_QUICKREF.md` and `0001-mcp-governance.md` to reflect the updated whitelist policy.
+- 2026-03-18 12:07 [6684be4](https://github.com/jesuserro/dotfiles/commit/6684be4) feat(mcp): add filesystem and git launchers with documentation updates (Jesús Erro)
+  - Introduced two new MCP launchers: `mcp-filesystem-launcher` for controlled filesystem access and `mcp-git-launcher` for dynamic Git operations.
+  - Updated documentation in `MCP_QUICKREF.md`, `AGENTS.md`, and `OPENCODE.md` to include new MCPs and their usage.
+  - Enhanced `validate-mcp-governance` script to check for the existence and correctness of the new launchers.
 
 ### Documentation
-- 2026-03-18 11:18 [cf6afff](https://github.com/jesuserro/dotfiles/commit/cf6afff) docs(changelog): add feature changelog for GitNexus MCP integration (Jesús Erro)
-  - Created a new changelog file for the feature branch `feature/6-adding-gitnexus-mcp`.
-  - Summarized 5 commits related to GitNexus integration, including updates to documentation and the addition of GitNexus CLI.
-  - Documented changes in AGENTS.md, README.md, and introduced a new architectural decision record (ADR) for GitNexus.
-- 2026-03-18 11:18 [c42cc8d](https://github.com/jesuserro/dotfiles/commit/c42cc8d) docs(ai): update README.md with skills directory convention and adapters documentation (Jesús Erro)
-  - Added a note clarifying the shared naming convention for the `.claude/skills/` directory used by Claude Code and OpenCode.
-  - Documented the `ai/adapters/` directory, detailing the specific wiring for agents and including references to Codex and Cursor adapters.
-  - Enhanced the README to provide clearer guidance on the structure and usage of skills within the repository.
-- 2026-03-18 11:06 [f246c69](https://github.com/jesuserro/dotfiles/commit/f246c69) docs(gitnexus): update AGENTS.md and remove CLAUDE.md (Jesús Erro)
-  - Updated AGENTS.md to reflect changes in skill file paths and added a note about the GitNexus internal state.
-  - Removed CLAUDE.md as it is no longer needed.
-  - Added new skill files for GitNexus CLI commands, debugging, exploring, impact analysis, and refactoring.
-- 2026-03-18 10:31 [e0e0b1f](https://github.com/jesuserro/dotfiles/commit/e0e0b1f) docs(gitnexus): add GitNexus ADR and update documentation (Jesús Erro)
-  - Introduced a new architectural decision record (ADR) for GitNexus as a global Knowledge/Semantic MCP, detailing its classification, execution pattern, and multi-repo index architecture.
-  - Updated MCP Quick Reference and governance documentation to include GitNexus integration and its operational guidelines.
-  - Enhanced existing documentation with new commands and helpers for GitNexus functionality, ensuring clarity on installation and usage.
-
-### Other
-- 2026-03-18 09:17 [3d0a7a3](https://github.com/jesuserro/dotfiles/commit/3d0a7a3) Remove store-etl from tracking (Jesús Erro)
+- 2026-03-18 12:47 [71fb294](https://github.com/jesuserro/dotfiles/commit/71fb294) docs(changelog): add feature changelog for global MCPs integration (Jesús Erro)
+  - Created a new changelog file for the feature branch `feature/7-adding-new-global-mcps`, summarizing 5 commits related to the addition of new global MCPs.
+  - Documented changes including the introduction of the Obsidian MCP, updates to filesystem and git launchers, and enhancements to related documentation.
+  - Provided technical details on integration status and commit history for clarity.
+- 2026-03-18 12:40 [a0da100](https://github.com/jesuserro/dotfiles/commit/a0da100) docs(mcp): add MCP taxonomy document and update references (Jesús Erro)
+  - Introduced `MCP_TAXONOMY.md` as a canonical reference for MCP classification, detailing layers, operational policies, and criteria for MCP management.
+  - Updated `README.md`, `UPS.md`, and `MCP_QUICKREF.md` to include links to the new taxonomy document, enhancing documentation clarity and accessibility.
+  - Revised the timestamp in `STRUCTURE.md` to reflect the latest changes.
+- 2026-03-18 12:25 [7acd471](https://github.com/jesuserro/dotfiles/commit/7acd471) docs(mcp): add MCP Obsidian proposal and update file structure (Jesús Erro)
+  - Introduced `MCP_OBSIDIAN_PROPOSAL.md` detailing the proposed MCP for Obsidian, including context, additional capabilities, and implementation steps.
+  - Updated `STRUCTURE.md` to include the new proposal file and refreshed the generated timestamp.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
