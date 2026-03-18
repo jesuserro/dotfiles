@@ -6,7 +6,7 @@
 
 | Layer | Scope | `enabled` | Examples |
 |-------|-------|-----------|----------|
-| Core | All projects | true | docker, github, fetch, context7, excalidraw, playwright |
+| Core | All projects | true | docker, github, fetch, context7, excalidraw, playwright, filesystem, git, sequential-thinking |
 | Knowledge/Semantic | All projects | true | gitnexus |
 | Platform | All (opt-in) | false | dagster, loki, minio, prometheus, tempo |
 | Connection-Specific | Per-project | per-project | postgres, trino |
@@ -32,6 +32,52 @@ gnx-analyze-here # Analyze current repo
 gnx-map          # Analyze + serve
 gnx-wiki-here    # Generate wiki (requires OPENAI_API_KEY)
 ```
+
+## Filesystem MCP
+
+| Aspect | Value |
+|--------|-------|
+| **Type** | Core MCP (filesystem access) |
+| **Scope** | Global with whitelist policy |
+| **Config Pattern** | Launcher wrapper |
+| **Allowed Roots** | `/home/jesus/dotfiles`, `/home/jesus/proyectos`, `/home/jesus/.config` |
+| **Launcher** | `~/.local/share/chezmoi/bin/mcp-filesystem-launcher` |
+
+### Policy
+
+- Fixed whitelist: Only directories explicitly listed are accessible
+- No dynamic cwd-based access as primary policy
+- Additional paths can be passed but must be within allowed roots
+
+## Git MCP
+
+| Aspect | Value |
+|--------|-------|
+| **Type** | Core MCP (Git operations) |
+| **Scope** | Global (dynamic repo detection) |
+| **Config Pattern** | Launcher wrapper |
+| **Detection** | `git rev-parse --show-toplevel` from cwd |
+| **Override** | `MCP_GIT_REPO` environment variable |
+| **Launcher** | `~/.local/share/chezmoi/bin/mcp-git-launcher` |
+
+### Behavior
+
+- Detects repo from current working directory
+- Fails clearly if not inside a Git repository
+- Allows explicit override via `MCP_GIT_REPO`
+
+## Sequential Thinking MCP
+
+| Aspect | Value |
+|--------|-------|
+| **Type** | Core MCP (cognitive support) |
+| **Scope** | Global |
+| **Config Pattern** | `npx -y @modelcontextprotocol/server-sequential-thinking` |
+| **Purpose** | Structured reasoning tool for complex problem solving |
+
+### Note
+
+This MCP is from the official MCP repository. It provides cognitive support for reasoning but does not have direct system access.
 
 ## Anti-Patterns
 

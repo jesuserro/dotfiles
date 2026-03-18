@@ -28,9 +28,15 @@ Available in all projects, enabled by default:
 - `fetch` - HTTP requests
 - `context7` - Context7 documentation lookup
 - `playwright` - Browser automation and testing
+- `filesystem` - Filesystem access (whitelist policy)
+- `git` - Git operations (dynamic repo detection)
+- `sequential-thinking` - Structured reasoning tool
 
 ### Layer 2: Visual / Architecture
 - `excalidraw` - Diagram creation (enabled by default)
+
+### Layer 3: Knowledge / Semantic
+- `gitnexus` - Code understanding and documentation generation
 
 ### Layer 3: Platform / Data Stack
 
@@ -353,7 +359,10 @@ Do NOT add postgres/trino to `dot_config/opencode/opencode.json.tmpl` as "global
 
 ```
 # Global workstation (enabled: true)
-docker, github, fetch, context7, excalidraw, playwright
+docker, github, fetch, context7, excalidraw, playwright, filesystem, git, sequential-thinking
+
+# Knowledge/Semantic (enabled: true)
+gitnexus
 
 # Platform specialized (enabled: false)
 dagster, loki, minio, prometheus, tempo, store_etl_ops

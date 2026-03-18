@@ -22,7 +22,8 @@ MCP DESIGN CONVENTION (see docs/OPENCODE.md for full details):
   - Mixing runtime (shared) with connection profile (project-specific)
 
   QUICK REF:
-  - Core: docker, github, fetch, context7, excalidraw, playwright
+  - Core: docker, github, fetch, context7, excalidraw, playwright, filesystem, git, sequential-thinking
+  - Knowledge: gitnexus
   - Platform: dagster, loki, minio, prometheus, tempo, store_etl_ops
   - Connection-Specific: postgres, trino (runtime shared, connection project-specific)
 
@@ -43,9 +44,15 @@ OpenCode is configured with shared MCP servers defined globally in `~/.config/op
 - `fetch` - HTTP requests
 - `context7` - Dynamic documentation lookup
 - `playwright` - Browser automation and testing
+- `filesystem` - Filesystem access (whitelist policy)
+- `git` - Git operations (dynamic repo detection)
+- `sequential-thinking` - Structured reasoning tool
 
 **Visual / Architecture:**
 - `excalidraw` - Diagram creation and editing
+
+**Knowledge / Semantic:**
+- `gitnexus` - Code understanding and documentation generation
 
 **Platform / Data Stack (disabled by default):**
 - `dagster` - Dagster orchestrator

@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-18 11:05:14
+**Generated:** 2026-03-18 11:50:06
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -141,6 +141,7 @@
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
 │   ├── 📝 branch_feature_5-adding-mcps-globales-especializados.md
+│   ├── 📝 branch_feature_6-adding-gitnexus-mcp.md
 │   ├── 📝 branch_feature_test-branch-changelog.md
 │   ├── 📝 v2025.12.07_1051.md
 │   └── 📝 v2025.12.08_1037.md

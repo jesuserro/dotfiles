@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# MCP Git Launcher
+# Provides Git operations on dynamically detected repositories
+#
+# Usage: mcp-git-launcher
+#
+# The launcher detects the Git repository from the current working directory
+# using `git rev-parse --show-toplevel`. If no repository is found, it fails
+# with a clear error message.
+#
+# Override: Set MCP_GIT_REPO environment variable to explicitly specify a repo.
+#
+# This follows the "Runtime Global + Dynamic Repository Detection" pattern:
+# - Runtime: uvx mcp-server-git (shared tool)
+# - Repository: Dynamically detected from cwd or explicitly set
+
+set -euo pipefail
+
+# Handle --help or -h
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    echo "MCP Git Launcher"
+    echo ""
+    echo "Usage: $0"
+    echo ""
+    echo "This launcher runs the official Git MCP server on the repository"
+    echo "detected from the current working directory."
+    echo ""
+    echo "Repository detection:"
+    echo "  1. Uses MCP_GIT_REPO if set"
+    echo "  2. Otherwise uses git rev-parse --show-toplevel from cwd"
+    echo ""
+    echo "If no repository is found, the launcher fails with a clear error."
+    echo ""
+    echo "Environment variables:"
+    echo "  MCP_GIT_REPO  Explicit repository path (overrides auto-detection)"
+    exit 0
+fi
+
+# Check for explicit override
+if [[ -n "${MCP_GIT_REPO:-}" ]]; then
+    REPO_PATH=$(realpath -L "$MCP_GIT_REPO" 2>/dev/null) || REPO_PATH="$MCP_GIT_REPO"
+    
+    # Validate the override path exists and is a git repo
+    if [[ ! -d "$REPO_PATH/.git" ]]; then
+        echo "ERROR: MCP_GIT_REPO points to non-git directory: $REPO_PATH" >&2
+        echo "       Ensure the path is a valid Git repository." >&2
+        exit 1
+    fi
+    
+    echo "Using explicit repository from MCP_GIT_REPO: $REPO_PATH" >&2
+else
+    # Detect repository from current working directory
+    REPO_PATH=$(git rev-parse --show-toplevel 2>/dev/null) || true
+    
+    if [[ -z "$REPO_PATH" ]]; then
+        # No repo detected from cwd - try default locations
+        if [[ -d "$HOME/dotfiles/.git" ]]; then
+            REPO_PATH="$HOME/dotfiles"
+            echo "WARNING: Not in a Git repo, defaulting to ~/dotfiles" >&2
+        elif [[ -d "$HOME/proyectos/.git" ]]; then
+            REPO_PATH="$HOME/proyectos"
+            echo "WARNING: Not in a Git repo, defaulting to ~/proyectos" >&2
+        else
+            echo "ERROR: Not inside a Git repository." >&2
+            echo "       The current directory $(pwd) is not part of a Git repo." >&2
+            echo "" >&2
+            echo "Options:" >&2
+            echo "  1. Run from within a Git repository" >&2
+            echo "  2. Set MCP_GIT_REPO environment variable to a valid repo path" >&2
+            exit 1
+        fi
+    fi
+    
+    echo "Detected repository: $REPO_PATH" >&2
+fi
+
+# Execute MCP server with the detected/specified repository
+exec uvx mcp-server-git --repository "$REPO_PATH"

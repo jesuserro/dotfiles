@@ -144,3 +144,30 @@ command = "npx"
 args = ["-y", "gitnexus@latest", "mcp"]
 enabled = true
 
+# ─────────────────────────────────────────────
+# MCP: Filesystem (acceso controlado a filesystem local)
+# Política: whitelist de rutas permitidas
+# ─────────────────────────────────────────────
+[mcp_servers.filesystem]
+command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-filesystem-launcher"
+args = []
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: Git (operaciones Git locales)
+# Detecta el repo actual dinámicamente desde cwd
+# ─────────────────────────────────────────────
+[mcp_servers.git]
+command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-git-launcher"
+args = []
+enabled = true
+
+# ─────────────────────────────────────────────
+# MCP: Sequential Thinking (razonamiento estructurado)
+# Herramienta de apoyo cognitivo
+# ─────────────────────────────────────────────
+[mcp_servers.sequential-thinking]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+enabled = true
+
