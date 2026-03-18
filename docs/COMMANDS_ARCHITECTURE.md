@@ -193,6 +193,62 @@ What kind of response or action is expected.
 ┌──────────────────────────────────────────────────────────────┐
 │  GENERATE                                                   │
 │  ./scripts/generate-commands.sh                             │
+│  → dot_config/opencode/commands/<command>.md               │
+└──────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────────┐
+│  VALIDATE                                                   │
+│  ./scripts/validate-commands-structure.sh                   │
+└──────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────────┐
+│  REVIEW                                                     │
+│  Check generated files in dot_config/opencode/commands/     │
+└──────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────────┐
+│  APPLY                                                      │
+│  chezmoi apply                                             │
+│  → ~/.config/opencode/commands/<command>.md                │
+└──────────────────────────────────────────────────────────────┘
+```
+
+## Bootstrap (New Machine)
+
+On a fresh clone, generated artifacts do not exist yet. Run the generator before `chezmoi apply`:
+
+```bash
+# 1. Clone dotfiles
+git clone https://github.com/jesuserro/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+
+# 2. Generate command artifacts (REQUIRED - not versioned)
+./scripts/generate-commands.sh
+# Or via Make:
+make generate-commands
+
+# 3. Apply dotfiles (chezmoi materializes everything)
+chezmoi apply
+
+# 4. Verify
+ls ~/.config/opencode/commands/
+opencode mcp list  # or your verification command
+```
+
+**Important:** Step 2 is mandatory on new machines. Artifacts are not versioned (see Versioning Policy above).
+┌──────────────────────────────────────────────────────────────┐
+│  EDIT SOURCE                                                │
+│  ai/assets/commands/<command>/COMMAND.md                   │
+│  ai/assets/commands/registry.yaml                           │
+└──────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────────┐
+│  GENERATE                                                   │
+│  ./scripts/generate-commands.sh                             │
 │  → dot_config/opencode/commands/<command>.md                │
 └──────────────────────────────────────────────────────────────┘
                            │
