@@ -129,6 +129,17 @@ dotfiles/
 
 ---
 
+## Testing
+
+```bash
+make test           # All tests
+make test-install   # Install dependencies
+```
+
+See [docs/TESTING.md](docs/TESTING.md) for details.
+
+---
+
 ## Resources
 
 | Recurso | Enlace |

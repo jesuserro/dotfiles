@@ -68,6 +68,7 @@ Before completing any code modification task, verify:
 2. No HIGH/CRITICAL risk warnings were ignored
 3. `gitnexus_detect_changes()` confirms changes match expected scope
 4. All d=1 (WILL BREAK) dependents were updated
+5. Run `make test-fast` to verify the test suite still passes
 
 ## Keeping the Index Fresh
 

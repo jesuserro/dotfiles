@@ -10,12 +10,12 @@ WARNINGS=0
 
 log_error() {
     echo "❌ ERROR: $1" >&2
-    ((ERRORS++))
+    ERRORS=$((ERRORS + 1))
 }
 
 log_warning() {
     echo "⚠️  WARNING: $1" >&2
-    ((WARNINGS++))
+    WARNINGS=$((WARNINGS + 1))
 }
 
 log_success() {
@@ -78,11 +78,9 @@ PLATFORM_MCPS="dagster loki minio prometheus tempo store_etl_ops"
 if [[ -f "$GLOBAL_OPENCODE" ]]; then
     for mcp in $PLATFORM_MCPS; do
         if grep -q "\"$mcp\"" "$GLOBAL_OPENCODE" 2>/dev/null; then
-            if grep -q "\"enabled\": true" "$GLOBAL_OPENCODE" 2>/dev/null; then
-                # More precise check - is this specific MCP enabled?
-                if grep -A5 "\"$mcp\"" "$GLOBAL_OPENCODE" | grep -q '"enabled": true'; then
-                    log_error "Platform MCP '$mcp' should be disabled by default in global config"
-                fi
+            # Check if this specific MCP is enabled (look at 10 lines after MCP name)
+            if grep -A10 "\"$mcp\"" "$GLOBAL_OPENCODE" 2>/dev/null | grep -q '"enabled": true'; then
+                log_error "Platform MCP '$mcp' should be disabled by default in global config"
             fi
         fi
     done
@@ -190,7 +188,7 @@ for config_file in "$DOTFILES_DIR/dot_cursor/mcp.json.tmpl" \
 done
 
 # ============================================
-# Check 6: ADR exists
+# Check 7: ADR exists
 # ============================================
 echo "📋 Checking ADR documentation..."
 
