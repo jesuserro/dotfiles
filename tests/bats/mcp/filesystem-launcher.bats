@@ -9,25 +9,32 @@ setup() {
     DOTFILES_DIR="$(get_dotfiles_dir)"
     LAUNCHER="$DOTFILES_DIR/bin/mcp-filesystem-launcher"
     
-    # Create mock directories
+    # Create mock directories for testing
     MOCK_ROOT="$TEST_TEMP_DIR/mock_root"
     mkdir -p "$MOCK_ROOT/allowed_dir"
     mkdir -p "$MOCK_ROOT/allowed_subdir/deep/nested"
-    mkdir -p "$MOCK_ROOT/fake_prefix_issue"
-    mkdir -p "$MOCK_ROOT/real_allowed"
+    
+    # Create mock npx that exits immediately (avoids MCP server blocking)
+    MOCK_NPX="$TEST_TEMP_DIR/npx"
+    cat > "$MOCK_NPX" << 'MOCK_EOF'
+#!/usr/bin/env bash
+exit 0
+MOCK_EOF
+    chmod +x "$MOCK_NPX"
 }
 
 teardown() {
     teardown_temp_dir
 }
 
+# Helper: run launcher with mock npx in PATH
+run_with_mock_npx() {
+    PATH="$TEST_TEMP_DIR:$PATH" bash "$LAUNCHER" "$@" 2>&1
+}
+
 bats_require_minimum_version 1.5.0
 
 @test "launcher script exists and is executable" {
-    if [[ ! -x "$LAUNCHER" ]]; then
-        skip "Launcher not found or not executable at $LAUNCHER"
-    fi
-    
     [[ -f "$LAUNCHER" ]]
     [[ -x "$LAUNCHER" ]]
 }
@@ -50,14 +57,10 @@ bats_require_minimum_version 1.5.0
 }
 
 @test "script uses set -euo pipefail" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "set -euo pipefail" "$LAUNCHER"
 }
 
 @test "script defines allowed roots" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "ALLOWED_ROOTS" "$LAUNCHER"
     grep -q "/home/jesus/dotfiles" "$LAUNCHER"
     grep -q "/home/jesus/proyectos" "$LAUNCHER"
@@ -66,61 +69,47 @@ bats_require_minimum_version 1.5.0
 }
 
 @test "realpath is used for path resolution" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "realpath" "$LAUNCHER"
 }
 
 @test "script uses npx for execution" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "npx" "$LAUNCHER"
 }
 
 @test "script handles non-resolvable paths with warning" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
+    [[ -x "$LAUNCHER" ]] || skip "Launcher not executable"
     
-    run bash "$LAUNCHER" /nonexistent/path 2>&1
+    # Uses mock npx to avoid blocking
+    run run_with_mock_npx /nonexistent/path
     [[ "$output" == *"WARNING"* ]]
 }
 
 @test "whitelist check uses proper directory boundary" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
-    # The script should have proper prefix matching (require / after root)
     grep -qE '== "\$root" /' "$LAUNCHER" || \
     grep -qE '== "\$root"/' "$LAUNCHER" || \
     grep -qE '\$root"/' "$LAUNCHER"
 }
 
 @test "ALLOWED_ROOTS is an array" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "ALLOWED_ROOTS=" "$LAUNCHER"
     grep -q '()' "$LAUNCHER" || grep -q "=(" "$LAUNCHER"
 }
 
 @test "script iterates over allowed roots" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q 'for root in' "$LAUNCHER"
 }
 
 @test "script adds additional paths to allowed list" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "ALL_PATHS" "$LAUNCHER"
     grep -qE '\+\=' "$LAUNCHER" || grep -q "+=(" "$LAUNCHER"
 }
 
 @test "script checks for is_allowed flag" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "is_allowed" "$LAUNCHER"
 }
 
 @test "help message lists all allowed roots" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
+    [[ -x "$LAUNCHER" ]] || skip "Launcher not executable"
     
     run bash "$LAUNCHER" --help
     [[ "$output" == *"/home/jesus/dotfiles"* ]]
@@ -130,7 +119,9 @@ bats_require_minimum_version 1.5.0
 }
 
 @test "exec is used for final command" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "^exec " "$LAUNCHER"
+}
+
+@test "mock npx is found when prepended to PATH" {
+    PATH="$TEST_TEMP_DIR:$PATH" command -v npx
 }

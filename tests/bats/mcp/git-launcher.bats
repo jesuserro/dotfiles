@@ -18,19 +18,28 @@ setup() {
     
     NON_GIT_DIR="$TEST_TEMP_DIR/not_a_git_dir"
     create_non_git_dir "$NON_GIT_DIR"
+    
+    # Create mock uvx that exits immediately (avoids MCP server blocking)
+    MOCK_UVX="$TEST_TEMP_DIR/uvx"
+    cat > "$MOCK_UVX" << 'MOCK_EOF'
+#!/usr/bin/env bash
+exit 0
+MOCK_EOF
+    chmod +x "$MOCK_UVX"
 }
 
 teardown() {
     teardown_temp_dir
 }
 
+# Helper: run launcher with mock uvx in PATH
+run_with_mock_uvx() {
+    PATH="$TEST_TEMP_DIR:$PATH" bash "$LAUNCHER" "$@" 2>&1
+}
+
 bats_require_minimum_version 1.5.0
 
 @test "launcher script exists and is executable" {
-    if [[ ! -f "$LAUNCHER" ]]; then
-        skip "Launcher not found at $LAUNCHER"
-    fi
-    
     [[ -f "$LAUNCHER" ]]
     [[ -x "$LAUNCHER" ]]
 }
@@ -53,20 +62,14 @@ bats_require_minimum_version 1.5.0
 }
 
 @test "script uses set -euo pipefail" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "set -euo pipefail" "$LAUNCHER"
 }
 
 @test "script checks for MCP_GIT_REPO override" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "MCP_GIT_REPO" "$LAUNCHER"
 }
 
 @test "script uses git rev-parse for detection" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "git rev-parse" "$LAUNCHER"
 }
 
@@ -83,7 +86,6 @@ bats_require_minimum_version 1.5.0
 @test "fails clearly when not in git repository and no fallback exists" {
     [[ -x "$LAUNCHER" ]] || skip "Launcher not executable"
     
-    # Create a fake HOME that doesn't have dotfiles/proyectos
     NON_GIT_HOME="$TEST_TEMP_DIR/no_git_home"
     mkdir -p "$NON_GIT_HOME"
     
@@ -111,31 +113,27 @@ bats_require_minimum_version 1.5.0
 }
 
 @test "script validates override path exists" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q ".git" "$LAUNCHER"
 }
 
 @test "script has fallback to default locations" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -qE "dotfiles|proyectos" "$LAUNCHER"
 }
 
-@test "error message is informative" {
+@test "error message is informative when no fallback available" {
     [[ -x "$LAUNCHER" ]] || skip "Launcher not executable"
     
-    cd "$NON_GIT_DIR"
-    run bash "$LAUNCHER" 2>&1
+    ISOLATED_HOME="$TEST_TEMP_DIR/isolated_home"
+    mkdir -p "$ISOLATED_HOME"
     
-    echo "Output: $output"
+    cd "$NON_GIT_DIR"
+    HOME="$ISOLATED_HOME" run bash "$LAUNCHER" 2>&1
+    [[ "$status" -ne 0 ]]
     
     cd "$TEST_TEMP_DIR"
 }
 
 @test "script uses uvx for execution" {
-    [[ -f "$LAUNCHER" ]] || skip "Launcher not found"
-    
     grep -q "uvx" "$LAUNCHER"
     grep -q "mcp-server-git" "$LAUNCHER"
 }
@@ -155,4 +153,8 @@ bats_require_minimum_version 1.5.0
     
     run bash "$LAUNCHER" --help
     [[ "$output" == *"MCP_GIT_REPO"* ]]
+}
+
+@test "mock uvx is found when prepended to PATH" {
+    PATH="$TEST_TEMP_DIR:$PATH" command -v uvx
 }
