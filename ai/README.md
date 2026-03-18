@@ -8,7 +8,7 @@ Hub neutral de infraestructura IA para dotfiles: runtime ejecutable, assets de c
 ai/
   runtime/     # Código ejecutable (MCP servers, runtimes)
   assets/      # Conocimiento consumido por agentes (skills, prompts, rules)
-  adapters/    # Wiring específico de cada agente (cursor, codex, claude)
+  adapters/    # Wiring específico de cada agente (cursor, codex, opencode)
 ```
 
 ## Principios
@@ -34,8 +34,14 @@ Tras `chezmoi apply` (script `run_after_11_link_ai_assets`):
 # Cada skill en ai/assets/skills/* se symlinkea en:
 ~/.cursor/skills-cursor/<skill>  → ~/.config/ai/skills/<skill>
 ~/.codex/skills/<skill>          → ~/.config/ai/skills/<skill>
-~/.claude/skills/<skill>         → ~/.config/ai/skills/<skill>
+~/.config/opencode/skills/<skill> → ~/.config/ai/skills/<skill>
 ```
+
+> **Nota:** `.claude/skills/` es una convención de nombre compartida por Claude Code y OpenCode. No implica que el repo soporte a Claude — es solo el nombre del directorio que ambos herramientas usan para skills. Los skills de este repo viven en `ai/assets/skills/` y se symlinkean a las rutas que cada plataforma espera.
+
+## Adapters
+
+El directorio `ai/adapters/` documenta el wiring específico de cada agente. Contiene adapters simples para Codex y Cursor. OpenCode tiene documentación completa en `docs/OPENCODE.md` y no requiere adapter adicional aquí.
 
 ## Añadir skills
 

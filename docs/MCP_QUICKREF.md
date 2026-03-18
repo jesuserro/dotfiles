@@ -7,8 +7,31 @@
 | Layer | Scope | `enabled` | Examples |
 |-------|-------|-----------|----------|
 | Core | All projects | true | docker, github, fetch, context7, excalidraw, playwright |
+| Knowledge/Semantic | All projects | true | gitnexus |
 | Platform | All (opt-in) | false | dagster, loki, minio, prometheus, tempo |
 | Connection-Specific | Per-project | per-project | postgres, trino |
+
+## GitNexus
+
+| Aspect | Value |
+|--------|-------|
+| **Type** | Knowledge/Semantic MCP |
+| **Scope** | Global (multi-repo) |
+| **Config Pattern** | `npx -y gitnexus@latest mcp` |
+| **Index Location** | `~/.gitnexus/` |
+| **CLI** | Installed via npm in `~/.local` |
+| **Wiki Output** | `docs/wiki/` (per project) |
+| **LLM Required** | Yes (OpenAI API key for wiki) |
+
+### GitNexus Helpers
+
+```bash
+ups              # Updates GitNexus CLI
+gnx-serve        # Start local server
+gnx-analyze-here # Analyze current repo
+gnx-map          # Analyze + serve
+gnx-wiki-here    # Generate wiki (requires OPENAI_API_KEY)
+```
 
 ## Anti-Patterns
 

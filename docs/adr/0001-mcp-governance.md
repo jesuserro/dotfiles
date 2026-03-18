@@ -10,7 +10,7 @@
 
 This repo integrates multiple MCP (Model Context Protocol) servers across different AI clients (OpenCode, Cursor, Codex). The current implementation includes:
 
-- **Core Workstation MCPs**: `docker`, `github`, `fetch`, `context7`, `excalidraw`, `playwright`
+- **Core Workstation MCPs**: `docker`, `github`, `fetch`, `context7`, `excalidraw`, `playwright`, `gitnexus`
 - **Platform Specialized MCPs**: `dagster`, `loki`, `minio`, `prometheus`, `tempo`, `store_etl_ops`
 - **Database MCPs**: `postgres`, `trino`
 
@@ -29,6 +29,7 @@ A decision was needed on how to classify, scope, and configure these MCPs to avo
 | Layer | Scope | `enabled` default | Rationale |
 |-------|-------|-------------------|-----------|
 | **Core Workstation** | All projects | `true` | Transversal tools used everywhere |
+| **Knowledge/Semantic** | All projects | `true` | Code understanding and documentation generation |
 | **Platform Specialized** | All projects (opt-in) | `false` | Requires specific local services |
 | **Connection-Specific** | Per-project only | Per-project config | Credentials are project-dependent |
 
@@ -84,6 +85,7 @@ trino MCP:
 ### Neutral
 
 - **Project-specific configs**: MCPs like `postgres` and `trino` live in `dot_config/store-etl/` not in global config
+- **GitNexus**: MCP global de conocimiento estructural. Su índice vive en `~/.gitnexus/` y es multi-repo. La wiki generada se направляет a `docs/wiki/` por convención.
 
 ---
 
@@ -92,6 +94,7 @@ trino MCP:
 - Operational guide: `docs/OPENCODE.md`
 - Agent instructions: `dot_config/opencode/AGENTS.md.tmpl`
 - Implementation: `dot_config/store-etl/store-etl.mcp.json.tmpl`
+- GitNexus integration: ADR `0002-gitnexus-mcp.md`
 
 ---
 
