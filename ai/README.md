@@ -7,7 +7,7 @@ Hub neutral de infraestructura IA para dotfiles: runtime ejecutable, assets de c
 ```
 ai/
   runtime/     # Código ejecutable (MCP servers, runtimes)
-  assets/      # Conocimiento consumido por agentes (skills, prompts, rules)
+  assets/      # Conocimiento consumido por agentes (skills, prompts, rules, commands)
   adapters/    # Wiring específico de cada agente (cursor, codex, opencode)
 ```
 
@@ -16,7 +16,7 @@ ai/
 | Concepto   | Descripción                                              |
 | ---------- | -------------------------------------------------------- |
 | **runtime** | Código ejecutable usado por agentes (MCP servers)        |
-| **assets**  | Conocimiento consumido por agentes (skills, prompts, rules) |
+| **assets**  | Conocimiento consumido por agentes (skills, prompts, rules, commands) |
 | **adapters** | Configuración específica de cada IDE/agente             |
 | **hub XDG** | `~/.config/ai` como punto central (estándar XDG)         |
 
@@ -78,6 +78,16 @@ Para más detalles, ver [SKILLS_ARCHITECTURE.md](SKILLS_ARCHITECTURE.md) y [ai/a
 | Prompts de proyecto X    | repo del proyecto   |
 
 El hub `ai/` contiene solo assets reutilizables entre proyectos.
+
+## Commands
+
+Los commands son utilidades globales invocables con `/<command>`.
+
+| Command | Descripción | Plataforma |
+|---------|-------------|------------|
+| `sos` | Ayuda general para asistentes IA | opencode |
+
+Para más detalles, ver [docs/COMMANDS_ARCHITECTURE.md](../docs/COMMANDS_ARCHITECTURE.md) y [ai/assets/commands/README.md](assets/commands/README.md).
 
 ## Añadir un nuevo MCP servidor
 

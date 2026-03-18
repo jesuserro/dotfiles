@@ -7,6 +7,7 @@
 ## Comandos
 
 - **[UPS.md](UPS.md)** — Comando `ups`: actualización integral (APT, npm, Oh My Zsh, MCPs).
+- **[COMMANDS_ARCHITECTURE.md](COMMANDS_ARCHITECTURE.md)** — Sistema de commands globales para IA (sos, etc.).
 
 ## Chezmoi + SOPS + Age
 
