@@ -29,12 +29,40 @@ dotfiles/
 |------|------|------------|
 | `ai/assets/commands/` | Canonical source | **Yes** |
 | `dot_config/opencode/commands/` | OpenCode surface (generated) | No |
+| `dot_config/cursor/commands/` | Cursor surface (generated) | No |
+| `dot_config/codex/prompts/` | Codex surface (generated) | No |
 | `~/.config/opencode/commands/` | OpenCode runtime (symlinked via chezmoi) | No |
+| `~/.cursor/commands/` | Cursor runtime (symlinked via chezmoi) | No |
+| `~/.codex/prompts/` | Codex runtime (symlinked via chezmoi) | No |
 
 Do not edit files in surface directories. Changes belong in `ai/assets/commands/` and are published via `./scripts/generate-commands.sh`, then distributed via `chezmoi apply`.
 
 ## Architecture
 
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Canonical Source: ai/assets/commands/                      │
+│  ├── registry.yaml  (metadata)                             │
+│  └── <command>/                                           │
+│      └── COMMAND.md  (content)                            │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼ Generate
+┌─────────────────────────────────────────────────────────────┐
+│  OpenCode:  dot_config/opencode/commands/<command>.md       │
+│  (Frontmatter YAML + content)                             │
+├─────────────────────────────────────────────────────────────┤
+│  Cursor:    dot_config/cursor/commands/<command>.md        │
+│  (Markdown plain + header)                                │
+├─────────────────────────────────────────────────────────────┤
+│  Codex:     dot_config/codex/prompts/<command>.md          │
+│  (Frontmatter YAML + content)                             │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼ chezmoi apply
+~/.config/opencode/commands/<command>.md
+~/.cursor/commands/<command>.md
+~/.codex/prompts/<command>.md
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Canonical Source: ai/assets/commands/                      │
@@ -92,9 +120,13 @@ commands:
 
 ### Valid Platforms
 
-- `opencode` - OpenCode CLI (fully implemented)
-- `codex` - Codex (future implementation)
-- `cursor` - Cursor IDE (future implementation)
+| Platform | Format | Invocation | Location |
+|----------|--------|------------|----------|
+| `opencode` | Frontmatter YAML + Markdown | `/<command>` | `~/.config/opencode/commands/` |
+| `cursor` | Markdown (no frontmatter) | `/<command>` | `~/.cursor/commands/` |
+| `codex` | Frontmatter YAML + Markdown | `/prompts:<command>` | `~/.codex/prompts/` |
+
+> **Note:** Codex uses a different invocation pattern (`/prompts:<command>`). This is platform behavior, not configurable.
 
 ## Command Structure
 
@@ -277,27 +309,48 @@ opencode mcp list  # or your verification command
 After `chezmoi apply`, commands are available at:
 
 ```
-~/.config/opencode/commands/sos.md
+~/.config/opencode/commands/<command>.md   → Invoked as /<command>
+~/.cursor/commands/<command>.md            → Invoked as /<command>
+~/.codex/prompts/<command>.md              → Invoked as /prompts:<command>
 ```
 
-OpenCode users can invoke with `/sos`.
+### Invocation by Platform
 
-## Generated File Headers
+| Platform | Command | Example |
+|----------|---------|---------|
+| OpenCode | `/<command>` | `/sos` |
+| Cursor | `/<command>` | `/sos` |
+| Codex | `/prompts:<command>` | `/prompts:sos` |
 
-Generated artifacts include a header marking them as derived:
+> **Codex limitation:** Codex does not support `/<command>` directly. You must use `/prompts:<command>` syntax. This is documented platform behavior.
 
-```html
-<!--
-  DO NOT EDIT MANUALLY
-  This file is generated from ai/assets/commands/
-  Run ./scripts/generate-commands.sh to regenerate
--->
+## Generated File Format
+
+Generated artifacts use platform-specific formats:
+
+### OpenCode / Codex (Frontmatter YAML)
+
+```yaml
+---
+description: Brief description of the command
+---
+
+# Command Title
+
+Command content...
 ```
 
-**This header is intentional.** It:
-- Makes the derived nature visible at a glance
-- Discourages direct editing of artifacts
-- Documents the regeneration workflow
+### Cursor (Plain Markdown)
+
+```markdown
+# Cursor Commands
+
+# Command Title
+
+Command content...
+```
+
+> The `Generated file` header was removed to ensure compatibility with platform parsers.
 
 ## Versioning Policy
 
@@ -375,44 +428,54 @@ Generate command artifacts:
 ./scripts/generate-commands.sh --list
 ```
 
-## Future Platforms
+## Supported Platforms
 
-The architecture is designed to support additional platforms:
+All three platforms are currently implemented:
 
-### Codex
+### OpenCode
+
+- **Format:** Markdown with YAML frontmatter
+- **Invocation:** `/<command>`
+- **Example:** `/sos`
 
 ```yaml
-# In registry.yaml
-platforms:
-  - opencode
-  - codex  # future
-```
+---
+description: General help command for AI assistants
+---
 
-```bash
-# In generate-commands.sh
-codex)
-    generate_codex_command "${cmd_id}" "${source_file}"
-    ;;
+# SOS Command
+...
 ```
-
-Implementation would:
-1. Create `~/.codex/commands/` structure
-2. Copy command files to that location
-3. Document in `ai/adapters/codex/README.md`
 
 ### Cursor
 
-```yaml
-# In registry.yaml
-platforms:
-  - opencode
-  - cursor  # future
+- **Format:** Plain Markdown (no frontmatter)
+- **Invocation:** `/<command>`
+- **Example:** `/sos`
+
+```markdown
+# Cursor Commands
+
+# SOS Command
+...
 ```
 
-Implementation would:
-1. Create `~/.cursor/commands/` structure
-2. Copy command files to that location
-3. Document in `ai/adapters/cursor/README.md`
+### Codex
+
+- **Format:** Markdown with YAML frontmatter
+- **Invocation:** `/prompts:<command>`
+- **Example:** `/prompts:sos`
+
+> Codex requires the `prompts:` prefix for custom commands. This is documented platform behavior.
+
+```yaml
+---
+description: General help command for AI assistants
+---
+
+# SOS Command
+...
+```
 
 ## Global vs Local: Quick Reference
 
@@ -433,13 +496,21 @@ Implementation would:
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/generate-commands.sh` | Generate command artifacts |
-| `scripts/validate-commands-structure.sh` | Validate command structure |
+| `scripts/generate-commands.sh` | Generate command artifacts for all platforms |
+| `scripts/validate-commands-structure.sh` | Validate command structure and artifacts |
 
-## Pending for Future Iterations
+## Testing
 
-- [ ] Implement Codex command generation
-- [ ] Implement Cursor command generation
-- [ ] Add command versioning strategy
-- [ ] Consider automatic generation on `chezmoi apply` hook
-- [ ] Add command templates/derivatives support
+Run tests to verify the commands system:
+
+```bash
+bats tests/bats/commands/validate-commands.bats
+```
+
+Tests verify:
+- Registry structure and format
+- Command content and structure
+- Generation for all platforms (opencode, cursor, codex)
+- Frontmatter format for OpenCode and Codex
+- Plain Markdown format for Cursor
+- Artifact file existence

@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Generates command artifacts from canonical source to platform surfaces.
 # Source of truth: ai/assets/commands/
-# Target surfaces: dot_config/opencode/commands/
+# Target surfaces:
+#   - OpenCode:  dot_config/opencode/commands/<id>.md
+#   - Cursor:    dot_config/cursor/commands/<id>.md
+#   - Codex:     dot_config/codex/prompts/<id>.md
 
 set -euo pipefail
 
@@ -11,14 +14,10 @@ COMMANDS_DIR="${DOTFILES_DIR}/ai/assets/commands"
 REGISTRY_FILE="${COMMANDS_DIR}/registry.yaml"
 
 OPENCODE_COMMANDS="${DOTFILES_DIR}/dot_config/opencode/commands"
+CURSOR_COMMANDS="${DOTFILES_DIR}/dot_config/cursor/commands"
+CODEX_PROMPTS="${DOTFILES_DIR}/dot_config/codex/prompts"
 
-VALID_PLATFORMS=("opencode" "codex" "cursor")
-
-GENERATED_HEADER='<!--
-  DO NOT EDIT MANUALLY
-  This file is generated from ai/assets/commands/
-  Run ./scripts/generate-commands.sh to regenerate
--->'
+VALID_PLATFORMS=("opencode" "cursor" "codex")
 
 log_info() {
     echo "[INFO] $*"
@@ -42,7 +41,7 @@ check_dependencies() {
 list_commands() {
     log_info "Available commands in registry:"
     echo ""
-    
+
     python3 - "${REGISTRY_FILE}" 2>/dev/null << 'PYEOF'
 import sys
 import yaml
@@ -57,87 +56,10 @@ with open(registry, 'r') as f:
 for cmd in data.get('commands', []):
     cmd_id = cmd.get('id', '')
     platforms = ', '.join(cmd.get('platforms', []))
-    enabled = '✓ enabled' if cmd.get('enabled') else '✗ disabled'
-    print(f"  - {cmd_id} [{platforms}] {enabled}")
+    enabled = 'enabled' if cmd.get('enabled') else 'disabled'
+    print(f"  - {cmd_id} [{platforms}] ({enabled})")
 PYEOF
     echo ""
-}
-
-generate_with_header() {
-    local source_file="$1"
-    local dest_file="$2"
-    
-    {
-        echo "${GENERATED_HEADER}"
-        echo ""
-        cat "${source_file}"
-    } > "${dest_file}"
-}
-
-generate_command() {
-    local cmd_id="$1"
-    
-    python3 - "${REGISTRY_FILE}" "${cmd_id}" "${COMMANDS_DIR}" "${DOTFILES_DIR}" 2>/dev/null << 'PYEOF'
-import sys
-import yaml
-import os
-
-registry = sys.argv[1] if len(sys.argv) > 1 else ''
-cmd_id = sys.argv[2] if len(sys.argv) > 2 else ''
-commands_dir = sys.argv[3] if len(sys.argv) > 3 else ''
-dotfiles_dir = sys.argv[4] if len(sys.argv) > 4 else ''
-
-if not registry or not cmd_id:
-    sys.exit(1)
-
-opencode_dir = os.path.join(dotfiles_dir, 'dot_config', 'opencode', 'commands')
-
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
-
-for cmd in data.get('commands', []):
-    if cmd.get('id') == cmd_id:
-        if not cmd.get('enabled', False):
-            print(f"[INFO] Skipping disabled command: {cmd_id}")
-            sys.exit(0)
-        
-        source = cmd.get('source', '')
-        if not source:
-            print(f"[ERROR] No source defined for command: {cmd_id}", file=sys.stderr)
-            sys.exit(1)
-        
-        source_file = os.path.join(commands_dir, source)
-        if not os.path.exists(source_file):
-            print(f"[ERROR] Source file not found: {source_file}", file=sys.stderr)
-            sys.exit(1)
-        
-        platforms = cmd.get('platforms', [])
-        for platform in platforms:
-            if platform == 'opencode':
-                dest_file = os.path.join(opencode_dir, f"{cmd_id}.md")
-                os.makedirs(opencode_dir, exist_ok=True)
-                with open(source_file, 'r') as src:
-                    content = src.read()
-                header = '''<!--
-  DO NOT EDIT MANUALLY
-  This file is generated from ai/assets/commands/
-  Run ./scripts/generate-commands.sh to regenerate
--->
-'''
-                with open(dest_file, 'w') as dst:
-                    dst.write(header)
-                    dst.write(content)
-                print(f"[INFO] Generated: {dest_file}")
-            elif platform in ('codex', 'cursor'):
-                print(f"[INFO] Platform {platform} not yet implemented for command: {cmd_id}")
-            else:
-                print(f"[WARN] Unknown platform '{platform}' for command: {cmd_id}")
-        
-        sys.exit(0)
-
-print(f"[ERROR] Command not found: {cmd_id}", file=sys.stderr)
-sys.exit(1)
-PYEOF
 }
 
 show_help() {
@@ -152,6 +74,11 @@ OPTIONS:
     -l, --list       List all commands in registry
     -v, --validate    Validate registry before generating
 
+PLATFORMS:
+    opencode  -> ~/.config/opencode/commands/<id>.md
+    cursor    -> ~/.cursor/commands/<id>.md
+    codex     -> ~/.codex/prompts/<id>.md
+
 EXAMPLES:
     $(basename "$0")                  # Generate all commands
     $(basename "$0") --list           # List available commands
@@ -159,15 +86,184 @@ EXAMPLES:
     $(basename "$0") --validate       # Validate and generate
 
 SOURCE: ${COMMANDS_DIR}
-TARGET: ${OPENCODE_COMMANDS}
 
 EOF
+}
+
+generate_single() {
+    local cmd_id="$1"
+
+    python3 - "${REGISTRY_FILE}" "${cmd_id}" "${COMMANDS_DIR}" "${DOTFILES_DIR}" << 'PYEOF'
+import sys
+import yaml
+import os
+
+registry = sys.argv[1]
+cmd_id = sys.argv[2]
+commands_dir = sys.argv[3]
+dotfiles_dir = sys.argv[4]
+
+with open(registry, 'r') as f:
+    data = yaml.safe_load(f)
+
+for cmd in data.get('commands', []):
+    if cmd.get('id') == cmd_id:
+        if not cmd.get('enabled', False):
+            print(f"[INFO] Skipping disabled command: {cmd_id}")
+            sys.exit(0)
+
+        source = cmd.get('source', '')
+        if not source:
+            print(f"[ERROR] No source defined for command: {cmd_id}", file=sys.stderr)
+            sys.exit(1)
+
+        source_file = os.path.join(commands_dir, source)
+        if not os.path.exists(source_file):
+            print(f"[ERROR] Source file not found: {source_file}", file=sys.stderr)
+            sys.exit(1)
+
+        with open(source_file, 'r') as f:
+            content = f.read()
+
+        description = cmd.get('description', '')
+        platforms = cmd.get('platforms', [])
+
+        for platform in platforms:
+            if platform == 'opencode':
+                dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'opencode', 'commands')
+                os.makedirs(dest_dir, exist_ok=True)
+                dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
+                frontmatter = f"""---
+description: {description}
+---
+
+"""
+                with open(dest_file, 'w') as dst:
+                    dst.write(frontmatter)
+                    dst.write(content)
+                print(f"[INFO] Generated OpenCode: {dest_file}")
+
+            elif platform == 'cursor':
+                dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'cursor', 'commands')
+                os.makedirs(dest_dir, exist_ok=True)
+                dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
+                header = "# Cursor Commands\n\n"
+                with open(dest_file, 'w') as dst:
+                    dst.write(header)
+                    dst.write(content)
+                print(f"[INFO] Generated Cursor: {dest_file}")
+
+            elif platform == 'codex':
+                dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'codex', 'prompts')
+                os.makedirs(dest_dir, exist_ok=True)
+                dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
+                frontmatter = f"""---
+description: {description}
+---
+
+"""
+                with open(dest_file, 'w') as dst:
+                    dst.write(frontmatter)
+                    dst.write(content)
+                print(f"[INFO] Generated Codex: {dest_file}")
+
+            else:
+                print(f"[WARN] Unknown platform '{platform}' for command: {cmd_id}")
+
+        sys.exit(0)
+
+print(f"[ERROR] Command not found: {cmd_id}", file=sys.stderr)
+sys.exit(1)
+PYEOF
+}
+
+generate_all() {
+    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" "${DOTFILES_DIR}" << 'PYEOF'
+import sys
+import yaml
+import os
+
+registry = sys.argv[1]
+commands_dir = sys.argv[2]
+dotfiles_dir = sys.argv[3]
+
+if not registry:
+    sys.exit(1)
+
+with open(registry, 'r') as f:
+    data = yaml.safe_load(f)
+
+for cmd in data.get('commands', []):
+    cmd_id = cmd.get('id', '')
+
+    if not cmd.get('enabled', False):
+        print(f"[INFO] Skipping disabled command: {cmd_id}")
+        continue
+
+    source = cmd.get('source', '')
+    if not source:
+        print(f"[ERROR] No source defined for command: {cmd_id}", file=sys.stderr)
+        continue
+
+    source_file = os.path.join(commands_dir, source)
+    if not os.path.exists(source_file):
+        print(f"[ERROR] Source file not found: {source_file}", file=sys.stderr)
+        continue
+
+    with open(source_file, 'r') as f:
+        content = f.read()
+
+    description = cmd.get('description', '')
+    platforms = cmd.get('platforms', [])
+
+    for platform in platforms:
+        if platform == 'opencode':
+            dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'opencode', 'commands')
+            os.makedirs(dest_dir, exist_ok=True)
+            dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
+            frontmatter = f"""---
+description: {description}
+---
+
+"""
+            with open(dest_file, 'w') as dst:
+                dst.write(frontmatter)
+                dst.write(content)
+            print(f"[INFO] Generated OpenCode: {dest_file}")
+
+        elif platform == 'cursor':
+            dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'cursor', 'commands')
+            os.makedirs(dest_dir, exist_ok=True)
+            dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
+            header = "# Cursor Commands\n\n"
+            with open(dest_file, 'w') as dst:
+                dst.write(header)
+                dst.write(content)
+            print(f"[INFO] Generated Cursor: {dest_file}")
+
+        elif platform == 'codex':
+            dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'codex', 'prompts')
+            os.makedirs(dest_dir, exist_ok=True)
+            dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
+            frontmatter = f"""---
+description: {description}
+---
+
+"""
+            with open(dest_file, 'w') as dst:
+                dst.write(frontmatter)
+                dst.write(content)
+            print(f"[INFO] Generated Codex: {dest_file}")
+
+        else:
+            print(f"[WARN] Unknown platform '{platform}' for command: {cmd_id}")
+PYEOF
 }
 
 main() {
     local target_command=""
     local do_validate=false
-    
+
     while [[ $# -gt 0 ]]; do
         case "$1" in
             -h|--help)
@@ -194,14 +290,14 @@ main() {
                 ;;
         esac
     done
-    
+
     check_dependencies
-    
+
     if [[ ! -f "${REGISTRY_FILE}" ]]; then
         log_error "Registry not found: ${REGISTRY_FILE}"
         exit 1
     fi
-    
+
     if [[ "${do_validate}" == "true" ]]; then
         log_info "Running validation..."
         if ! "${SCRIPT_DIR}/validate-commands-structure.sh" &>/dev/null; then
@@ -210,74 +306,20 @@ main() {
         fi
         log_info "Validation passed."
     fi
-    
+
     log_info "Generating commands..."
     echo ""
-    
+
     if [[ -n "${target_command}" ]]; then
-        generate_command "${target_command}"
+        generate_single "${target_command}"
     else
-        python3 - "${REGISTRY_FILE}" "${DOTFILES_DIR}" 2>/dev/null << 'PYEOF'
-import sys
-import yaml
-import os
-
-registry = sys.argv[1] if len(sys.argv) > 1 else ''
-dotfiles_dir = sys.argv[2] if len(sys.argv) > 2 else ''
-
-if not registry or not dotfiles_dir:
-    sys.exit(1)
-
-commands_dir = os.path.dirname(registry)
-opencode_dir = os.path.join(dotfiles_dir, 'dot_config', 'opencode', 'commands')
-
-header = '''<!--
-  DO NOT EDIT MANUALLY
-  This file is generated from ai/assets/commands/
-  Run ./scripts/generate-commands.sh to regenerate
--->
-'''
-
-with open(registry, 'r') as f:
-    data = yaml.safe_load(f)
-
-for cmd in data.get('commands', []):
-    cmd_id = cmd.get('id', '')
-    
-    if not cmd.get('enabled', False):
-        print(f"[INFO] Skipping disabled command: {cmd_id}")
-        continue
-    
-    source = cmd.get('source', '')
-    if not source:
-        print(f"[ERROR] No source defined for command: {cmd_id}", file=sys.stderr)
-        continue
-    
-    source_file = os.path.join(commands_dir, source)
-    if not os.path.exists(source_file):
-        print(f"[ERROR] Source file not found: {source_file}", file=sys.stderr)
-        continue
-    
-    platforms = cmd.get('platforms', [])
-    for platform in platforms:
-        if platform == 'opencode':
-            dest_file = os.path.join(opencode_dir, f"{cmd_id}.md")
-            os.makedirs(opencode_dir, exist_ok=True)
-            with open(source_file, 'r') as src:
-                content = src.read()
-            with open(dest_file, 'w') as dst:
-                dst.write(header)
-                dst.write(content)
-            print(f"[INFO] Generated: {dest_file}")
-        elif platform in ('codex', 'cursor'):
-            print(f"[INFO] Platform {platform} not yet implemented for command: {cmd_id}")
-        else:
-            print(f"[WARN] Unknown platform '{platform}' for command: {cmd_id}")
-PYEOF
+        generate_all
     fi
-    
+
     echo ""
     log_info "Generation complete."
+    echo ""
+    log_info "To apply to your home directory, run: chezmoi apply"
 }
 
 main "$@"

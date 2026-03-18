@@ -17,5 +17,7 @@ commands:
     description: General help command for AI assistants - provides structured guidance when users need assistance
     platforms:
       - opencode
+      - cursor
+      - codex
     source: sos/COMMAND.md
     enabled: true

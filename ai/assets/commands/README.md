@@ -57,7 +57,7 @@ What kind of response or action is expected.
 
 | Command | Description | Platforms |
 |---------|-------------|-----------|
-| `sos` | General help command for AI assistants | opencode |
+| `sos` | General help command for AI assistants | opencode, cursor, codex |
 
 ## Adding a Command
 
@@ -74,8 +74,8 @@ What kind of response or action is expected.
        description: Brief description
        platforms:
          - opencode
-         # - codex  # future
-         # - cursor  # future
+         - cursor
+         - codex
        source: <command-id>/COMMAND.md
        enabled: true
    ```
@@ -88,10 +88,12 @@ What kind of response or action is expected.
 After `./scripts/generate-commands.sh`, commands are copied to surface directories:
 
 ```
-~/.config/opencode/commands/<command-id>.md
-~/.codex/commands/<command-id>.md        # future
-~/.cursor/commands/<command-id>.md       # future
+~/.config/opencode/commands/<command-id>.md     → Invoked as /<command>
+~/.cursor/commands/<command-id>.md              → Invoked as /<command>
+~/.codex/prompts/<command-id>.md                → Invoked as /prompts:<command>
 ```
+
+> **Note:** Codex requires the `/prompts:<command>` invocation syntax.
 
 ## Commands vs Skills
 
