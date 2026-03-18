@@ -24,6 +24,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 | 📦 **APT** | `apt-get update`, `apt-get upgrade`, `apt-get autoremove` |
 | 🧹 **Limpieza** | Elimina paquetes no utilizados |
 | 📚 **NPM** | `npm update -g codex` + `corepack prepare pnpm@latest --activate` |
+| 📦 **GitNexus** | `npm install -g gitnexus@latest` (en `~/.local`) |
 | 🤖 **OpenCode** | `curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path` |
 | ⚡ **Oh My Zsh** | `omz update`, `upgrade_oh_my_zsh_custom` |
 | 📄 **RenderCV (jesuserro)** | `~/proyectos/jesuserro` — `git pull --rebase --autostash` + `uv pip install --python .venv/bin/python -U "rendercv[full]==2.7"` |
@@ -36,11 +37,12 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 
 | MCP / Origen | Acción |
 |--------------|--------|
+| **gitnexus** | `npm install -g --prefix=~/.local gitnexus@latest` |
 | **excalidraw** | `~/mcp-servers/excalidraw-mcp` — si el repo fija un `packageManager` antiguo, `ups` lo sincroniza con el `pnpm` activo; después ejecuta `git pull --rebase --autostash` + `pnpm install` + `pnpm run build` |
 | **docker, postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` |
 | **fetch** | `uv tool install mcp-server-fetch` |
 | **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
-| **context7, github** | Usan `npx` — obtienen la última versión al ejecutarse |
+| **context7, github, gitnexus (MCP)** | Usan `npx` — obtienen la última versión al ejecutarse (`npx -y gitnexus@latest mcp`) |
 
 ---
 
