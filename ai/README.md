@@ -37,6 +37,12 @@ Tras `chezmoi apply` (script `run_after_11_link_ai_assets`):
 ~/.config/opencode/skills/<skill> → ~/.config/ai/skills/<skill>
 ```
 
+> **Nota:** `.claude/skills/` es una convención de nombre compartida por Claude Code y OpenCode. No implica que el repo soporte a Claude — es solo el nombre del directorio que ambos herramientas usan para skills. Los skills de este repo viven en `ai/assets/skills/` y se symlinkean a las rutas que cada plataforma espera.
+
+## Adapters
+
+El directorio `ai/adapters/` documenta el wiring específico de cada agente. Contiene adapters simples para Codex y Cursor. OpenCode tiene documentación completa en `docs/OPENCODE.md` y no requiere adapter adicional aquí.
+
 ## Añadir skills
 
 1. Clonar o copiar el skill en `ai/assets/skills/<nombre-skill>/`
