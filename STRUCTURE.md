@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-18 12:07:45
+**Generated:** 2026-03-18 12:24:59
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -103,6 +103,7 @@
 │   ├── 📝 GIT_WORKFLOW.md
 │   ├── 📝 GUIA_MCP_AI.md
 │   ├── 📝 INSTALL.md
+│   ├── 📝 MCP_OBSIDIAN_PROPOSAL.md
 │   ├── 📝 MCP_QUICKREF.md
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   ├── 📝 MIGRATION_MCP_ITER3.md
