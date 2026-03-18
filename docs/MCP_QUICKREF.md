@@ -40,7 +40,7 @@ gnx-wiki-here    # Generate wiki (requires OPENAI_API_KEY)
 | **Type** | Core MCP (filesystem access) |
 | **Scope** | Global with whitelist policy |
 | **Config Pattern** | Launcher wrapper |
-| **Allowed Roots** | `/home/jesus/dotfiles`, `/home/jesus/proyectos`, `/home/jesus/.config` |
+| **Allowed Roots** | `/home/jesus/dotfiles`, `/home/jesus/proyectos`, `/home/jesus/.config`, `/mnt/c/Users/jesus/Documents/vault` |
 | **Launcher** | `~/.local/share/chezmoi/bin/mcp-filesystem-launcher` |
 
 ### Policy

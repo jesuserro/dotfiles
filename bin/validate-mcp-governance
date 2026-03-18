@@ -149,7 +149,8 @@ if [[ -f "$FILESYSTEM_LAUNCHER" ]]; then
     # Check it contains allowed roots
     if grep -q "/home/jesus/dotfiles" "$FILESYSTEM_LAUNCHER" && \
        grep -q "/home/jesus/proyectos" "$FILESYSTEM_LAUNCHER" && \
-       grep -q "/home/jesus/.config" "$FILESYSTEM_LAUNCHER"; then
+       grep -q "/home/jesus/.config" "$FILESYSTEM_LAUNCHER" && \
+       grep -q "/mnt/c/Users/jesus/Documents/vault" "$FILESYSTEM_LAUNCHER"; then
         log_success "Filesystem launcher has correct whitelist policy"
     else
         log_warning "Filesystem launcher may be missing required allowed roots"

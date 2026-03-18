@@ -49,7 +49,7 @@ postgres MCP:
 
 filesystem MCP:
   - Runtime: ~/.local/share/chezmoi/bin/mcp-filesystem-launcher (shared)
-  - Policy: Fixed whitelist of allowed roots (/home/jesus/dotfiles, /home/jesus/proyectos, /home/jesus/.config)
+  - Policy: Fixed whitelist of allowed roots (/home/jesus/dotfiles, /home/jesus/proyectos, /home/jesus/.config, /mnt/c/Users/jesus/Documents/vault)
 
 git MCP:
   - Runtime: ~/.local/share/chezmoi/bin/mcp-git-launcher        (shared)

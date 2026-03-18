@@ -12,6 +12,7 @@
 #   - /home/jesus/dotfiles
 #   - /home/jesus/proyectos
 #   - /home/jesus/.config
+#   - /mnt/c/Users/jesus/Documents/vault (Obsidian vault)
 #
 # This follows the "Runtime Global + Policy Explicit" pattern:
 # - Runtime: npx @modelcontextprotocol/server-filesystem (shared tool)
@@ -24,6 +25,7 @@ ALLOWED_ROOTS=(
     "/home/jesus/dotfiles"
     "/home/jesus/proyectos"
     "/home/jesus/.config"
+    "/mnt/c/Users/jesus/Documents/vault"
 )
 
 # Handle --help or -h
