@@ -37,49 +37,54 @@ dotfiles/
 
 Do not edit files in surface directories. Changes belong in `ai/assets/commands/` and are published via `./scripts/generate-commands.sh`, then distributed via `chezmoi apply`.
 
-## Architecture
+## Architecture (3 Layers)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Canonical Source: ai/assets/commands/                      │
-│  ├── registry.yaml  (metadata)                             │
-│  └── <command>/                                           │
-│      └── COMMAND.md  (content)                            │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼ Generate
-┌─────────────────────────────────────────────────────────────┐
-│  OpenCode:  dot_config/opencode/commands/<command>.md       │
-│  (Frontmatter YAML + content)                             │
-├─────────────────────────────────────────────────────────────┤
-│  Cursor:    dot_config/cursor/commands/<command>.md        │
-│  (Markdown plain + header)                                │
-├─────────────────────────────────────────────────────────────┤
-│  Codex:     dot_config/codex/prompts/<command>.md          │
-│  (Frontmatter YAML + content)                             │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼ chezmoi apply
-~/.config/opencode/commands/<command>.md
-~/.cursor/commands/<command>.md
-~/.codex/prompts/<command>.md
+┌─────────────────────────────────────────────────────────────────┐
+│  LAYER 1: CANONICAL SOURCE                                       │
+│  ai/assets/commands/                                              │
+│  ├── registry.yaml           (metadata: id, platforms, source)  │
+│  └── <command>/                                               │
+│      └── COMMAND.md           (content: purpose, behavior...)   │
+│                                                                  │
+│  → Single source of truth. Edit HERE.                           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ generate-commands.sh
+┌─────────────────────────────────────────────────────────────────┐
+│  LAYER 2: PLATFORM ADAPTERS                                      │
+│  ai/adapters/                                                    │
+│  ├── opencode/TEMPLATE.md     (frontmatter YAML format)         │
+│  ├── cursor/TEMPLATE.md       (Markdown plain format)           │
+│  └── codex/TEMPLATE.md        (frontmatter YAML format)         │
+│                                                                  │
+│  → Format rules per platform. Documentation, not code.          │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  LAYER 3: GENERATED ARTIFACTS                                    │
+│  dot_config/                                                     │
+│  ├── opencode/commands/<id>.md                                   │
+│  ├── cursor/commands/<id>.md                                   │
+│  └── codex/prompts/<id>.md                                      │
+│                                                                  │
+│  → Derived files. Regenerate via generate-commands.sh.          │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ chezmoi apply
+~/.config/opencode/commands/<id>.md
+~/.cursor/commands/<id>.md
+~/.codex/prompts/<id>.md
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Canonical Source: ai/assets/commands/                      │
-│  ├── registry.yaml  (metadata)                            │
-│  └── <command>/                                           │
-│      └── COMMAND.md  (content)                            │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼ Generate
-┌─────────────────────────────────────────────────────────────┐
-│  OpenCode Surface: dot_config/opencode/commands/          │
-│  └── <command>.md  (generated artifact)                   │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼ chezmoi apply
-~/.config/opencode/commands/<command>.md
-```
+
+## Why This Architecture?
+
+| Layer | Purpose | Why Separate |
+|-------|---------|--------------|
+| **Canonical** | Pure content, platform-agnostic | Avoids format leakage into source |
+| **Adapter** | Platform format documentation | Single place to understand each platform |
+| **Artifact** | Platform-specific output | Machine-generated from layers 1+2 |
 
 ## Principles
 
@@ -127,6 +132,25 @@ commands:
 | `codex` | Frontmatter YAML + Markdown | `/prompts:<command>` | `~/.codex/prompts/` |
 
 > **Note:** Codex uses a different invocation pattern (`/prompts:<command>`). This is platform behavior, not configurable.
+
+## Platform Adapters
+
+Each platform has an adapter that defines its format:
+
+```
+ai/adapters/
+├── opencode/TEMPLATE.md    # Frontmatter YAML format
+├── cursor/TEMPLATE.md     # Markdown plain format
+└── codex/TEMPLATE.md     # Frontmatter YAML format
+```
+
+Adapters document:
+- Expected format for the platform
+- Required fields (e.g., frontmatter)
+- Invocation syntax
+- Any platform-specific quirks
+
+**Do not edit adapters unless adding a new platform.**
 
 ## Command Structure
 
@@ -199,7 +223,10 @@ What kind of response or action is expected.
    ./scripts/validate-commands-structure.sh
    ```
 
-5. Review the generated artifacts in `dot_config/opencode/commands/`
+5. Review the generated artifacts:
+   - `dot_config/opencode/commands/<command-id>.md`
+   - `dot_config/cursor/commands/<command-id>.md`
+   - `dot_config/codex/prompts/<command-id>.md`
 
 6. Apply with chezmoi:
    ```bash
@@ -216,35 +243,41 @@ What kind of response or action is expected.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  EDIT SOURCE                                                │
-│  ai/assets/commands/<command>/COMMAND.md                   │
-│  ai/assets/commands/registry.yaml                           │
+│  LAYER 1: EDIT CANONICAL                                      │
+│  ai/assets/commands/<command>/COMMAND.md                      │
+│  ai/assets/commands/registry.yaml                            │
 └──────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
+                            │
+                            ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  GENERATE                                                   │
+│  LAYER 2: GENERATE (applies adapters)                       │
 │  ./scripts/generate-commands.sh                             │
-│  → dot_config/opencode/commands/<command>.md               │
+│  → dot_config/<platform>/.../<command>.md                   │
 └──────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
+                            │
+                            ▼
 ┌──────────────────────────────────────────────────────────────┐
 │  VALIDATE                                                   │
 │  ./scripts/validate-commands-structure.sh                   │
+│  (checks: source, adapters, artifacts)                      │
 └──────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
+                            │
+                            ▼
 ┌──────────────────────────────────────────────────────────────┐
 │  REVIEW                                                     │
-│  Check generated files in dot_config/opencode/commands/     │
+│  Check generated files:                                     │
+│  - dot_config/opencode/commands/<command>.md                │
+│  - dot_config/cursor/commands/<command>.md                  │
+│  - dot_config/codex/prompts/<command>.md                    │
 └──────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
+                            │
+                            ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  APPLY                                                      │
-│  chezmoi apply                                             │
+│  LAYER 3: APPLY                                             │
+│  chezmoi apply                                              │
 │  → ~/.config/opencode/commands/<command>.md                │
+│  → ~/.cursor/commands/<command>.md                         │
+│  → ~/.codex/prompts/<command>.md                          │
 └──────────────────────────────────────────────────────────────┘
 ```
 

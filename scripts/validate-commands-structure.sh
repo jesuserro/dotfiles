@@ -8,6 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(dirname "${SCRIPT_DIR}")"
 COMMANDS_DIR="${DOTFILES_DIR}/ai/assets/commands"
 REGISTRY_FILE="${COMMANDS_DIR}/registry.yaml"
+ADAPTERS_DIR="${DOTFILES_DIR}/ai/adapters"
 
 OPENCODE_COMMANDS="${DOTFILES_DIR}/dot_config/opencode/commands"
 CURSOR_COMMANDS="${DOTFILES_DIR}/dot_config/cursor/commands"
@@ -376,6 +377,23 @@ sys.exit(errors)
 PYEOF
 }
 
+check_adapters_exist() {
+    echo "Checking platform adapters..."
+
+    local missing=0
+    for platform in opencode cursor codex; do
+        local template="${ADAPTERS_DIR}/${platform}/TEMPLATE.md"
+        if [[ -f "${template}" ]]; then
+            log_ok "Adapter '${platform}' has TEMPLATE.md"
+        else
+            log_error "Adapter '${platform}' missing TEMPLATE.md: ${template}"
+            missing=1
+        fi
+    done
+
+    return ${missing}
+}
+
 main() {
     echo "========================================"
     echo "COMMAND STRUCTURE VALIDATION"
@@ -388,6 +406,14 @@ main() {
     check_command_ids_unique || true
     check_command_structure || true
     check_command_content || true
+
+    echo ""
+    echo "========================================"
+    echo "PLATFORM ADAPTERS CHECK"
+    echo "========================================"
+    echo ""
+
+    check_adapters_exist || true
 
     echo ""
     echo "========================================"

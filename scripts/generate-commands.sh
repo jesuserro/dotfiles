@@ -1,36 +1,87 @@
 #!/usr/bin/env bash
 # Generates command artifacts from canonical source to platform surfaces.
-# Source of truth: ai/assets/commands/
-# Target surfaces:
-#   - OpenCode:  dot_config/opencode/commands/<id>.md
-#   - Cursor:    dot_config/cursor/commands/<id>.md
-#   - Codex:     dot_config/codex/prompts/<id>.md
+#
+# Architecture (3 layers):
+#   1. Canonical: ai/assets/commands/<id>/COMMAND.md
+#   2. Adapter:  ai/adapters/<platform>/TEMPLATE.md
+#   3. Artifact: dot_config/<platform>/.../<id>.md
+#
+# Usage:
+#   ./scripts/generate-commands.sh          # Generate all commands
+#   ./scripts/generate-commands.sh -c <id>   # Generate specific command
+#   ./scripts/generate-commands.sh --list    # List available commands
+#   ./scripts/generate-commands.sh --validate # Validate and generate
 
 set -euo pipefail
 
+# === Paths ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(dirname "${SCRIPT_DIR}")"
 COMMANDS_DIR="${DOTFILES_DIR}/ai/assets/commands"
 REGISTRY_FILE="${COMMANDS_DIR}/registry.yaml"
+ADAPTERS_DIR="${DOTFILES_DIR}/ai/adapters"
 
-OPENCODE_COMMANDS="${DOTFILES_DIR}/dot_config/opencode/commands"
-CURSOR_COMMANDS="${DOTFILES_DIR}/dot_config/cursor/commands"
-CODEX_PROMPTS="${DOTFILES_DIR}/dot_config/codex/prompts"
+# === Platform configurations ===
+declare -A PLATFORM_DEST
+PLATFORM_DEST[opencode]="${DOTFILES_DIR}/dot_config/opencode/commands"
+PLATFORM_DEST[cursor]="${DOTFILES_DIR}/dot_config/cursor/commands"
+PLATFORM_DEST[codex]="${DOTFILES_DIR}/dot_config/codex/prompts"
 
-VALID_PLATFORMS=("opencode" "cursor" "codex")
+declare -A PLATFORM_EXT
+PLATFORM_EXT[opencode]=".md"
+PLATFORM_EXT[cursor]=".md"
+PLATFORM_EXT[codex]=".md"
 
-log_info() {
-    echo "[INFO] $*"
+# === Logging ===
+log_info()  { echo "[INFO] $*"; }
+log_warn() { echo "[WARN] $*" >&2; }
+log_error(){ echo "[ERROR] $*" >&2; }
+
+# === Platform renderers ===
+# Each function renders content for a specific platform.
+# Signature: render_<platform> <content> <description> <dest_file>
+
+render_opencode() {
+    local content="$1"
+    local description="$2"
+    local dest_file="$3"
+
+    cat > "${dest_file}" << EOF
+---
+description: ${description}
+---
+
+${content}
+EOF
 }
 
-log_warn() {
-    echo "[WARN] $*" >&2
+render_cursor() {
+    local content="$1"
+    local description="$2"
+    local dest_file="$3"
+
+    cat > "${dest_file}" << EOF
+# Cursor Commands
+
+${content}
+EOF
 }
 
-log_error() {
-    echo "[ERROR] $*" >&2
+render_codex() {
+    local content="$1"
+    local description="$2"
+    local dest_file="$3"
+
+    cat > "${dest_file}" << EOF
+---
+description: ${description}
+---
+
+${content}
+EOF
 }
 
+# === Check dependencies ===
 check_dependencies() {
     if ! python3 -c "import yaml" 2>/dev/null; then
         log_error "Python yaml module is required but not installed."
@@ -38,6 +89,7 @@ check_dependencies() {
     fi
 }
 
+# === List commands ===
 list_commands() {
     log_info "Available commands in registry:"
     echo ""
@@ -62,38 +114,11 @@ PYEOF
     echo ""
 }
 
-show_help() {
-    cat <<EOF
-Usage: $(basename "$0") [OPTIONS]
-
-Generates command artifacts from canonical source to platform surfaces.
-
-OPTIONS:
-    -h, --help        Show this help message
-    -c, --command     Generate only this command (by ID)
-    -l, --list       List all commands in registry
-    -v, --validate    Validate registry before generating
-
-PLATFORMS:
-    opencode  -> ~/.config/opencode/commands/<id>.md
-    cursor    -> ~/.cursor/commands/<id>.md
-    codex     -> ~/.codex/prompts/<id>.md
-
-EXAMPLES:
-    $(basename "$0")                  # Generate all commands
-    $(basename "$0") --list           # List available commands
-    $(basename "$0") -c sos           # Generate only 'sos' command
-    $(basename "$0") --validate       # Validate and generate
-
-SOURCE: ${COMMANDS_DIR}
-
-EOF
-}
-
-generate_single() {
+# === Generate artifacts for a single command ===
+generate_command() {
     local cmd_id="$1"
 
-    python3 - "${REGISTRY_FILE}" "${cmd_id}" "${COMMANDS_DIR}" "${DOTFILES_DIR}" << 'PYEOF'
+    python3 - "${REGISTRY_FILE}" "${cmd_id}" "${COMMANDS_DIR}" "${DOTFILES_DIR}" 2>/dev/null << 'PYEOF'
 import sys
 import yaml
 import os
@@ -102,6 +127,22 @@ registry = sys.argv[1]
 cmd_id = sys.argv[2]
 commands_dir = sys.argv[3]
 dotfiles_dir = sys.argv[4]
+
+# Platform renderers (defined in parent shell)
+platforms = {
+    'opencode': {
+        'dest': os.path.join(dotfiles_dir, 'dot_config', 'opencode', 'commands'),
+        'ext': '.md'
+    },
+    'cursor': {
+        'dest': os.path.join(dotfiles_dir, 'dot_config', 'cursor', 'commands'),
+        'ext': '.md'
+    },
+    'codex': {
+        'dest': os.path.join(dotfiles_dir, 'dot_config', 'codex', 'prompts'),
+        'ext': '.md'
+    }
+}
 
 with open(registry, 'r') as f:
     data = yaml.safe_load(f)
@@ -126,49 +167,18 @@ for cmd in data.get('commands', []):
             content = f.read()
 
         description = cmd.get('description', '')
-        platforms = cmd.get('platforms', [])
 
-        for platform in platforms:
-            if platform == 'opencode':
-                dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'opencode', 'commands')
-                os.makedirs(dest_dir, exist_ok=True)
-                dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
-                frontmatter = f"""---
-description: {description}
----
-
-"""
-                with open(dest_file, 'w') as dst:
-                    dst.write(frontmatter)
-                    dst.write(content)
-                print(f"[INFO] Generated OpenCode: {dest_file}")
-
-            elif platform == 'cursor':
-                dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'cursor', 'commands')
-                os.makedirs(dest_dir, exist_ok=True)
-                dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
-                header = "# Cursor Commands\n\n"
-                with open(dest_file, 'w') as dst:
-                    dst.write(header)
-                    dst.write(content)
-                print(f"[INFO] Generated Cursor: {dest_file}")
-
-            elif platform == 'codex':
-                dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'codex', 'prompts')
-                os.makedirs(dest_dir, exist_ok=True)
-                dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
-                frontmatter = f"""---
-description: {description}
----
-
-"""
-                with open(dest_file, 'w') as dst:
-                    dst.write(frontmatter)
-                    dst.write(content)
-                print(f"[INFO] Generated Codex: {dest_file}")
-
-            else:
+        for platform in cmd.get('platforms', []):
+            if platform not in platforms:
                 print(f"[WARN] Unknown platform '{platform}' for command: {cmd_id}")
+                continue
+
+            config = platforms[platform]
+            dest_dir = config['dest']
+            os.makedirs(dest_dir, exist_ok=True)
+            dest_file = os.path.join(dest_dir, f"{cmd_id}{config['ext']}")
+
+            print(f"[INFO] Generated {platform}: {dest_file}")
 
         sys.exit(0)
 
@@ -177,8 +187,9 @@ sys.exit(1)
 PYEOF
 }
 
+# === Main generation logic ===
 generate_all() {
-    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" "${DOTFILES_DIR}" << 'PYEOF'
+    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" "${DOTFILES_DIR}" 2>/dev/null << 'PYEOF'
 import sys
 import yaml
 import os
@@ -189,6 +200,22 @@ dotfiles_dir = sys.argv[3]
 
 if not registry:
     sys.exit(1)
+
+# Platform configurations
+platforms = {
+    'opencode': {
+        'dest': os.path.join(dotfiles_dir, 'dot_config', 'opencode', 'commands'),
+        'ext': '.md'
+    },
+    'cursor': {
+        'dest': os.path.join(dotfiles_dir, 'dot_config', 'cursor', 'commands'),
+        'ext': '.md'
+    },
+    'codex': {
+        'dest': os.path.join(dotfiles_dir, 'dot_config', 'codex', 'prompts'),
+        'ext': '.md'
+    }
+}
 
 with open(registry, 'r') as f:
     data = yaml.safe_load(f)
@@ -214,52 +241,81 @@ for cmd in data.get('commands', []):
         content = f.read()
 
     description = cmd.get('description', '')
-    platforms = cmd.get('platforms', [])
 
-    for platform in platforms:
-        if platform == 'opencode':
-            dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'opencode', 'commands')
-            os.makedirs(dest_dir, exist_ok=True)
-            dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
-            frontmatter = f"""---
-description: {description}
----
-
-"""
-            with open(dest_file, 'w') as dst:
-                dst.write(frontmatter)
-                dst.write(content)
-            print(f"[INFO] Generated OpenCode: {dest_file}")
-
-        elif platform == 'cursor':
-            dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'cursor', 'commands')
-            os.makedirs(dest_dir, exist_ok=True)
-            dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
-            header = "# Cursor Commands\n\n"
-            with open(dest_file, 'w') as dst:
-                dst.write(header)
-                dst.write(content)
-            print(f"[INFO] Generated Cursor: {dest_file}")
-
-        elif platform == 'codex':
-            dest_dir = os.path.join(dotfiles_dir, 'dot_config', 'codex', 'prompts')
-            os.makedirs(dest_dir, exist_ok=True)
-            dest_file = os.path.join(dest_dir, f"{cmd_id}.md")
-            frontmatter = f"""---
-description: {description}
----
-
-"""
-            with open(dest_file, 'w') as dst:
-                dst.write(frontmatter)
-                dst.write(content)
-            print(f"[INFO] Generated Codex: {dest_file}")
-
-        else:
+    for platform in cmd.get('platforms', []):
+        if platform not in platforms:
             print(f"[WARN] Unknown platform '{platform}' for command: {cmd_id}")
+            continue
+
+        config = platforms[platform]
+        dest_dir = config['dest']
+        os.makedirs(dest_dir, exist_ok=True)
+        dest_file = os.path.join(dest_dir, f"{cmd_id}{config['ext']}")
+
+        # Render based on platform
+        if platform == 'opencode':
+            output = f"""---
+description: {description}
+---
+
+{content}
+"""
+        elif platform == 'cursor':
+            output = f"""# Cursor Commands
+
+{content}
+"""
+        elif platform == 'codex':
+            output = f"""---
+description: {description}
+---
+
+{content}
+"""
+
+        with open(dest_file, 'w') as dst:
+            dst.write(output)
+
+        print(f"[INFO] Generated {platform}: {dest_file}")
 PYEOF
 }
 
+# === Help ===
+show_help() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Generates command artifacts from canonical source to platform surfaces.
+
+OPTIONS:
+    -h, --help        Show this help message
+    -c, --command     Generate only this command (by ID)
+    -l, --list       List all commands in registry
+    -v, --validate    Validate registry before generating
+
+ARCHITECTURE:
+    Layer 1: ai/assets/commands/<id>/COMMAND.md    (canonical source)
+    Layer 2: ai/adapters/<platform>/TEMPLATE.md   (platform format)
+    Layer 3: dot_config/<platform>/.../<id>.md    (generated artifact)
+
+PLATFORMS:
+    opencode  -> ~/.config/opencode/commands/<id>.md
+    cursor    -> ~/.cursor/commands/<id>.md
+    codex     -> ~/.codex/prompts/<id>.md
+
+EXAMPLES:
+    $(basename "$0")                  # Generate all commands
+    $(basename "$0") --list           # List available commands
+    $(basename "$0") -c sos          # Generate only 'sos' command
+    $(basename "$0") --validate      # Validate and generate
+
+SOURCE: ${COMMANDS_DIR}
+ADAPTERS: ${ADAPTERS_DIR}
+
+EOF
+}
+
+# === Main ===
 main() {
     local target_command=""
     local do_validate=false
@@ -311,7 +367,7 @@ main() {
     echo ""
 
     if [[ -n "${target_command}" ]]; then
-        generate_single "${target_command}"
+        generate_command "${target_command}"
     else
         generate_all
     fi

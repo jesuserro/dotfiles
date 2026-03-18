@@ -81,3 +81,4 @@ Do not invoke SOS response when:
 - The task is trivial or routine (apply common sense)
 
 Use judgment: `/sos` is for moments when users need to step back and get oriented.
+
