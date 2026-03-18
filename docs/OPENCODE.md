@@ -28,11 +28,23 @@ Available in all projects, enabled by default:
 - `fetch` - HTTP requests
 - `context7` - Context7 documentation lookup
 - `playwright` - Browser automation and testing
+- `filesystem` - Filesystem access (whitelist policy)
+- `git` - Git operations (dynamic repo detection)
+- `sequential-thinking` - Structured reasoning tool
 
 ### Layer 2: Visual / Architecture
 - `excalidraw` - Diagram creation (enabled by default)
 
-### Layer 3: Platform / Data Stack
+### Layer 3: Knowledge / Semantic
+- `gitnexus` - Code understanding and documentation generation
+
+### Layer 4: Domain-Specific (Optional)
+- `obsidian` - Obsidian vault operations (notes, frontmatter, tags, search)
+  - **Note:** Requires Obsidian vault at `/mnt/c/Users/jesus/Documents/vault`
+  - **Enabled:** false (opt-in, see docs/MCP_OBSIDIAN_PROPOSAL.md)
+  - **Complementary to:** Filesystem MCP (raw file access)
+
+### Layer 4: Platform / Data Stack
 
 **Defined globally but disabled by default.** Enable per-project when needed:
 - `dagster` - Dagster orchestrator (requires `localhost:3000`)
@@ -353,7 +365,10 @@ Do NOT add postgres/trino to `dot_config/opencode/opencode.json.tmpl` as "global
 
 ```
 # Global workstation (enabled: true)
-docker, github, fetch, context7, excalidraw, playwright
+docker, github, fetch, context7, excalidraw, playwright, filesystem, git, sequential-thinking
+
+# Knowledge/Semantic (enabled: true)
+gitnexus
 
 # Platform specialized (enabled: false)
 dagster, loki, minio, prometheus, tempo, store_etl_ops

@@ -427,7 +427,11 @@ EOF
     fi
   fi
   
-  _ups_info "context7 y github usan npx: se obtiene la última versión al ejecutarse"
+  _ups_info "context7, github, sequential-thinking usan npx: se obtiene la última versión al ejecutarse"
+  _ups_info "filesystem usa launcher: no requiere actualización"
+  _ups_info "git usa launcher: se actualiza con uvx al ejecutarse"
+  _ups_info "obsidian (mcpvault) usa npx: se obtiene la última versión al ejecutarse"
+  _ups_info "gitnexus CLI se actualiza por separado (npm install -g)"
   
   # 🔄 Sección: Reinicio de servicios
   _ups_section "🔄 Reinicio de servicios"

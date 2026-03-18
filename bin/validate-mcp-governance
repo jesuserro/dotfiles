@@ -138,6 +138,58 @@ else
 fi
 
 # ============================================
+# Check 6: New Core MCPs (filesystem, git, sequential-thinking)
+# ============================================
+echo "📋 Checking new core MCPs..."
+
+# Check filesystem launcher
+FILESYSTEM_LAUNCHER="$DOTFILES_DIR/bin/mcp-filesystem-launcher"
+if [[ -f "$FILESYSTEM_LAUNCHER" ]]; then
+    log_success "Filesystem launcher wrapper exists"
+    # Check it contains allowed roots
+    if grep -q "/home/jesus/dotfiles" "$FILESYSTEM_LAUNCHER" && \
+       grep -q "/home/jesus/proyectos" "$FILESYSTEM_LAUNCHER" && \
+       grep -q "/home/jesus/.config" "$FILESYSTEM_LAUNCHER" && \
+       grep -q "/mnt/c/Users/jesus/Documents/vault" "$FILESYSTEM_LAUNCHER"; then
+        log_success "Filesystem launcher has correct whitelist policy"
+    else
+        log_warning "Filesystem launcher may be missing required allowed roots"
+    fi
+else
+    log_error "Filesystem launcher wrapper not found at $FILESYSTEM_LAUNCHER"
+fi
+
+# Check git launcher
+GIT_LAUNCHER="$DOTFILES_DIR/bin/mcp-git-launcher"
+if [[ -f "$GIT_LAUNCHER" ]]; then
+    log_success "Git launcher wrapper exists"
+    # Check it has proper detection logic
+    if grep -q "git rev-parse --show-toplevel" "$GIT_LAUNCHER" && \
+       grep -q "MCP_GIT_REPO" "$GIT_LAUNCHER"; then
+        log_success "Git launcher has proper repo detection and override support"
+    else
+        log_warning "Git launcher may be missing proper detection logic"
+    fi
+else
+    log_error "Git launcher wrapper not found at $GIT_LAUNCHER"
+fi
+
+# Check sequential-thinking is configured in all clients
+echo "📋 Checking sequential-thinking MCP configuration..."
+
+for config_file in "$DOTFILES_DIR/dot_cursor/mcp.json.tmpl" \
+                   "$DOTFILES_DIR/dot_config/opencode/opencode.json.tmpl" \
+                   "$DOTFILES_DIR/dot_codex/config.toml.tmpl"; do
+    if [[ -f "$config_file" ]]; then
+        if grep -q "sequential-thinking" "$config_file" 2>/dev/null; then
+            log_success "sequential-thinking found in $(basename "$config_file")"
+        else
+            log_warning "sequential-thinking not found in $(basename "$config_file")"
+        fi
+    fi
+done
+
+# ============================================
 # Check 6: ADR exists
 # ============================================
 echo "📋 Checking ADR documentation..."

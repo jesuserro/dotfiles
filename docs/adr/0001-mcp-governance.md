@@ -10,7 +10,8 @@
 
 This repo integrates multiple MCP (Model Context Protocol) servers across different AI clients (OpenCode, Cursor, Codex). The current implementation includes:
 
-- **Core Workstation MCPs**: `docker`, `github`, `fetch`, `context7`, `excalidraw`, `playwright`, `gitnexus`
+- **Core Workstation MCPs**: `docker`, `github`, `fetch`, `context7`, `excalidraw`, `playwright`, `filesystem`, `git`, `sequential-thinking`
+- **Knowledge/Semantic MCPs**: `gitnexus`
 - **Platform Specialized MCPs**: `dagster`, `loki`, `minio`, `prometheus`, `tempo`, `store_etl_ops`
 - **Database MCPs**: `postgres`, `trino`
 
@@ -29,7 +30,7 @@ A decision was needed on how to classify, scope, and configure these MCPs to avo
 | Layer | Scope | `enabled` default | Rationale |
 |-------|-------|-------------------|-----------|
 | **Core Workstation** | All projects | `true` | Transversal tools used everywhere |
-| **Knowledge/Semantic** | All projects | `true` | Code understanding and documentation generation |
+| **Knowledge/Semantic** | All projects | `true` | Code understanding and documentation |
 | **Platform Specialized** | All projects (opt-in) | `false` | Requires specific local services |
 | **Connection-Specific** | Per-project only | Per-project config | Credentials are project-dependent |
 
@@ -41,6 +42,18 @@ For database and platform MCPs, distinguish between:
 - **Connection Profile**: The specific endpoint, credentials, DSN, catalog, schema. Must remain project-specific.
 
 Example:
+```
+postgres MCP:
+  - Runtime: ~/.local/share/chezmoi/bin/mcp-postgres-launcher  (shared)
+  - Connection: ~/.config/mcp-secrets.env (POSTGRES_DSN)         (project-specific)
+
+filesystem MCP:
+  - Runtime: ~/.local/share/chezmoi/bin/mcp-filesystem-launcher (shared)
+  - Policy: Fixed whitelist of allowed roots (/home/jesus/dotfiles, /home/jesus/proyectos, /home/jesus/.config, /mnt/c/Users/jesus/Documents/vault)
+
+git MCP:
+  - Runtime: ~/.local/share/chezmoi/bin/mcp-git-launcher        (shared)
+  - Repository: Dynamically detected from cwd (git rev-parse --show-toplevel) or MCP_GIT_REPO env var
 ```
 postgres MCP:
   - Runtime: ~/.local/share/chezmoi/bin/mcp-postgres-launcher  (shared)
@@ -91,6 +104,7 @@ trino MCP:
 
 ## References
 
+- Taxonomía: `docs/MCP_TAXONOMY.md`
 - Operational guide: `docs/OPENCODE.md`
 - Agent instructions: `dot_config/opencode/AGENTS.md.tmpl`
 - Implementation: `dot_config/store-etl/store-etl.mcp.json.tmpl`

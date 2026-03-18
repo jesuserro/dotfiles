@@ -29,6 +29,26 @@
       "command": "npx",
       "args": ["-y", "gitnexus@latest", "mcp"],
       "env": {}
+    },
+    "filesystem": {
+      "command": "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-filesystem-launcher",
+      "args": [],
+      "env": {}
+    },
+    "git": {
+      "command": "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-git-launcher",
+      "args": [],
+      "env": {}
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "env": {}
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": ["-y", "@bitbonsai/mcpvault", "/mnt/c/Users/jesus/Documents/vault"],
+      "env": {}
     }
   }
 }

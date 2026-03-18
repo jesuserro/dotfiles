@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# MCP Filesystem Launcher
+# Provides controlled filesystem access via whitelist policy
+#
+# Usage: mcp-filesystem-launcher [additional_paths...]
+#
+# The launcher runs @modelcontextprotocol/server-filesystem with a fixed
+# whitelist of allowed directories. Additional paths can be passed as arguments
+# but must be within the allowed roots.
+#
+# Allowed roots (fixed policy):
+#   - /home/jesus/dotfiles
+#   - /home/jesus/proyectos
+#   - /home/jesus/.config
+#   - /mnt/c/Users/jesus/Documents/vault (Obsidian vault)
+#
+# This follows the "Runtime Global + Policy Explicit" pattern:
+# - Runtime: npx @modelcontextprotocol/server-filesystem (shared tool)
+# - Policy: Fixed whitelist of allowed directories
+
+set -euo pipefail
+
+# Fixed whitelist of allowed filesystem roots
+ALLOWED_ROOTS=(
+    "/home/jesus/dotfiles"
+    "/home/jesus/proyectos"
+    "/home/jesus/.config"
+    "/mnt/c/Users/jesus/Documents/vault"
+)
+
+# Handle --help or -h
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    echo "MCP Filesystem Launcher"
+    echo ""
+    echo "Usage: $0 [additional_paths...]"
+    echo ""
+    echo "This launcher runs the official Filesystem MCP server with a"
+    echo "whitelist-based access policy."
+    echo ""
+    echo "Allowed roots (always included):"
+    for root in "${ALLOWED_ROOTS[@]}"; do
+        echo "  - $root"
+    done
+    echo ""
+    echo "Additional paths can be passed as arguments but must be"
+    echo "within one of the allowed roots."
+    exit 0
+fi
+
+# Build the list of allowed paths
+ALL_PATHS=("${ALLOWED_ROOTS[@]}")
+
+# Validate and add any additional paths provided
+for arg in "$@"; do
+    # Try to resolve to absolute path
+    abs_path=$(realpath -L "$arg" 2>/dev/null) || true
+    
+    # If realpath failed, we cannot safely validate - reject with clear warning
+    if [[ -z "$abs_path" ]]; then
+        echo "WARNING: Cannot resolve path '$arg' - not adding to allowed paths" >&2
+        continue
+    fi
+    
+    # Check if the path is within an allowed root (using proper directory boundary)
+    is_allowed=false
+    for root in "${ALLOWED_ROOTS[@]}"; do
+        # Exact match or subdirectory: require / after root to avoid /home/jesus/dotfiles-otro matching /home/jesus/dotfiles
+        if [[ "$abs_path" == "$root" || "$abs_path" == "$root"/* ]]; then
+            is_allowed=true
+            break
+        fi
+    done
+    
+    if [[ "$is_allowed" == true ]]; then
+        # Add if not already in list
+        if [[ ! " ${ALL_PATHS[*]} " =~ " ${abs_path} " ]]; then
+            ALL_PATHS+=("$abs_path")
+        fi
+    else
+        echo "WARNING: Path '$abs_path' (from '$arg') is not within allowed roots, ignoring" >&2
+    fi
+done
+
+# Execute MCP server with allowed paths
+exec npx -y "@modelcontextprotocol/server-filesystem" "${ALL_PATHS[@]}"

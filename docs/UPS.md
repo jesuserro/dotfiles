@@ -37,12 +37,29 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 
 | MCP / Origen | Acción |
 |--------------|--------|
-| **gitnexus** | `npm install -g --prefix=~/.local gitnexus@latest` |
+| **gitnexus** | `npm install -g --prefix=~/.local gitnexus@latest` (CLI, separado del MCP) |
 | **excalidraw** | `~/mcp-servers/excalidraw-mcp` — si el repo fija un `packageManager` antiguo, `ups` lo sincroniza con el `pnpm` activo; después ejecuta `git pull --rebase --autostash` + `pnpm install` + `pnpm run build` |
 | **docker, postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` |
 | **fetch** | `uv tool install mcp-server-fetch` |
 | **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
-| **context7, github, gitnexus (MCP)** | Usan `npx` — obtienen la última versión al ejecutarse (`npx -y gitnexus@latest mcp`) |
+
+### MCPs que se resuelven en runtime (no requieren actualización explícita)
+
+Estos MCPs usan `npx -y` o `uvx` y obtienen la última versión automáticamente al ejecutarse:
+
+| MCP | Patrón |
+|-----|--------|
+| **context7** | `npx -y @upstash/context7-mcp` |
+| **github** | `npx -y @modelcontextprotocol/server-github` |
+| **sequential-thinking** | `npx -y @modelcontextprotocol/server-sequential-thinking` |
+| **filesystem** | Launcher local (no requiere actualización) |
+| **git** | `uvx mcp-server-git` (se actualiza al ejecutarse) |
+| **obsidian** | `npx -y @bitbonsai/mcpvault` |
+
+### gitnexus: CLI vs MCP
+
+- **CLI** (`gitnexus`): Se actualiza con `npm install -g --prefix=~/.local gitnexus@latest`
+- **MCP** (`npx -y gitnexus@latest mcp`): Se resuelve en runtime, no necesita actualización
 
 ---
 
@@ -64,6 +81,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 
 | Doc | Contenido |
 |-----|-----------|
+| [MCP_TAXONOMY.md](MCP_TAXONOMY.md) | Taxonomía de MCPs (capas y políticas) |
 | [GUIA_MCP_AI.md](GUIA_MCP_AI.md#7-actualización-de-mcps-con-ups) | Actualización MCP con ups |
 | [INSTALL.md](INSTALL.md) | Instalación inicial |
 | [README.md](README.md) | Índice de documentación |

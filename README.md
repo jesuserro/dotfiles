@@ -99,6 +99,7 @@ source ~/.zshrc
 | Doc | Contenido |
 |-----|-----------|
 | [docs/README.md](docs/README.md) | Índice completo |
+| [docs/MCP_TAXONOMY.md](docs/MCP_TAXONOMY.md) | Taxonomía de MCPs (clasificación y políticas) |
 | [docs/UPS.md](docs/UPS.md) | Comando `ups` — actualización del sistema |
 | [docs/INSTALL.md](docs/INSTALL.md) | Instalación paso a paso |
 | [docs/GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md) | MCPs, skills, comandos |
