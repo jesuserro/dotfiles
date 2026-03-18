@@ -11,56 +11,73 @@ This directory contains **global, project-agnostic skills** that apply across mu
 ## Canonical Source
 
 ```
-ai/assets/skills/           ← Source of truth (here)
-~/.config/ai/skills/        ← Symlinked via chezmoi
-~/.config/opencode/skills/  ← Surface for OpenCode
-~/.cursor/skills-cursor/    ← Surface for Cursor
-~/.codex/skills/           ← Surface for Codex
+ai/assets/skills/           <- Source of truth (here)
+~/.config/ai/skills/        <- Symlinked via chezmoi
+~/.config/opencode/skills/  <- Surface for OpenCode
+~/.cursor/skills-cursor/    <- Surface for Cursor
+~/.codex/skills/           <- Surface for Codex
 ```
 
 Do not edit files in surface directories (`dot_config/opencode/skills/`, etc.) directly. Changes belong here.
 
 ## Categories
 
-| Category | Purpose | Skills |
-|----------|---------|--------|
-| `diagrams/` | Visual communication | Excalidraw generator, conventions |
-| `docs/` | Technical writing | ADR writer |
-| `etl/` | Data engineering | Data contracts |
-| `git/` | Version control | PR conventions |
-| `ops/` | Infrastructure | MCP governance, system workflow |
-| `postgres/` | Database | SQL style, schema review |
-| `python/` | Python development | Project structure |
-| `tools/` | Developer tools | Code intelligence (GitNexus) |
+| Category | Purpose |
+|----------|---------|
+| `diagrams/` | Visual communication |
+| `docs/` | Technical writing |
+| `etl/` | Data engineering |
+| `git/` | Version control |
+| `gitnexus/` | Code intelligence |
+| `ops/` | Infrastructure |
+| `postgres/` | Database |
+| `python/` | Python development |
 
 ## Skills Index
 
 ### Diagrams
-- `diagrams/excalidraw/` — Excalidraw diagram generator
-- `diagrams/conventions/` — Excalidraw architecture conventions
+
+- `diagrams/excalidraw/` - Excalidraw diagram generator (programmatic)
+- `diagrams/conventions/excalidraw-architecture/` - Conventions for manual diagrams
+
+**When to use which:**
+- `excalidraw/` (generator): When creating diagrams programmatically or via AI
+- `conventions/`: When creating diagrams manually and needing style guidance
 
 ### Docs
-- `docs/adr-writer/` — Guide for writing Architecture Decision Records
+
+- `docs/adr-writer/` - Guide for writing Architecture Decision Records
 
 ### ETL
-- `etl/data-contracts/` — Data contract patterns
+
+- `etl/data-contracts/` - Data contract patterns
 
 ### Git
-- `git/pr-conventions/` — PR and commit conventions
+
+- `git/pr-conventions/` - PR and commit conventions
+
+### GitNexus (Code Intelligence)
+
+- `gitnexus/cli/` - CLI commands
+- `gitnexus/debugging/` - Debugging workflows
+- `gitnexus/exploring/` - Code exploration
+- `gitnexus/guide/` - General guide
+- `gitnexus/impact-analysis/` - Impact analysis
+- `gitnexus/refactoring/` - Refactoring workflows
 
 ### Ops
-- `ops/mcp-governance/` — MCP server classification guide
-- `ops/system-workflow/` — System update workflow
+
+- `ops/mcp-governance/` - MCP server classification guide
+- `ops/system-updates/` - System update workflow (dotfiles ups alias)
 
 ### Postgres
-- `postgres/schema-review/` — Database schema review guide
-- `postgres/sql-style/` — SQL formatting standards
+
+- `postgres/schema-review/` - Database schema review guide
+- `postgres/sql-style/` - SQL formatting standards
 
 ### Python
-- `python/project-structure/` — Python project layout conventions
 
-### Tools
-- `tools/code-intelligence/` — GitNexus code analysis skills (6 variants)
+- `python/project-structure/` - Python project layout conventions
 
 ## Global vs Local
 
