@@ -32,6 +32,14 @@ MCP DESIGN CONVENTION (see docs/OPENCODE.md for full details):
 
 This file provides global instructions for OpenCode across all projects.
 
+## Plans y archivos en `.cursor/plans/`
+
+Al crear un **plan** (u otro documento de trabajo en `.cursor/plans/`), el nombre del fichero **debe** seguir la convención cronológica:
+
+- Formato: `YYYY-MM-DD-HHmm_nombre_descriptivo.plan.md` (hora local 24 h; parte descriptiva en `snake_case`).
+- No usar el nombre genérico que sugiera la UI; renombrar al crear el archivo.
+- Detalle y ejemplos: skill `docs/plans-and-notepads-naming` (fuente en `~/dotfiles/ai/assets/skills/docs/plans-and-notepads-naming/`).
+
 ## MCP Servers
 
 OpenCode is configured with shared MCP servers defined globally in `~/.config/opencode/opencode.json`, generated from dotfiles via Chezmoi.
