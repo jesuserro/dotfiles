@@ -2,21 +2,14 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.23_1044] - 2026-03-23
+## [v2026.03.23_1210] - 2026-03-23
 
 ## Changes
-### Added
-- 2026-03-23 10:41 [7ded1ce](https://github.com/jesuserro/dotfiles/commit/7ded1ce) feat(linux commands for agents): update .gitignore and AGENTS.md for improved project structure (Jesús Erro)
-  - Added /.venv-tools/ to .gitignore to prevent tracking of virtual environment tools.
-  - Updated AGENTS.md to clarify the use of the project environment for Python tooling, specifically recommending the use of `uv` over the dotfiles venv in certain cases.
-- 2026-03-22 15:02 [a7fba49](https://github.com/jesuserro/dotfiles/commit/a7fba49) feat(skills): add naming convention for plans and notepads in README and introduce SKILL.md for detailed guidelines (Jesús Erro)
-  - Updated README.md to include a new section on naming conventions for `.cursor/plans/*.plan.md` files, emphasizing the use of a chronological prefix.
-  - Added SKILL.md in the new `docs/plans-and-notepads-naming/` directory, outlining detailed guidelines for naming plans and notepads, including examples and best practices.
-
 ### Documentation
-- 2026-03-23 10:14 [a311e0e](https://github.com/jesuserro/dotfiles/commit/a311e0e) docs(AGENTS): add local tools section for WSL2 with usage examples (Jesús Erro)
-  - Introduced a new section in AGENTS.md detailing local tools available in the WSL2 Ubuntu environment, including `rg`, `fdfind`, `tree`, `jq`, and `nc`.
-  - Provided quick usage examples for each tool to enhance user understanding and accessibility.
+- 2026-03-23 12:09 [0a362db](https://github.com/jesuserro/dotfiles/commit/0a362db) docs(AGENTS and SKILL): refine local tools documentation and introduce SKILL.md for WSL2 (Jesús Erro)
+  - Updated AGENTS.md to reference the new SKILL.md as the canonical source for local tools commands and criteria.
+  - Removed outdated examples from AGENTS.md and streamlined the content for clarity.
+  - Added SKILL.md, detailing usage guidelines, best practices, and examples for local tools in WSL2, including `rg`, `fdfind`, `tree`, `jq`, and `nc`.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
