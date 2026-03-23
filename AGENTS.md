@@ -108,11 +108,6 @@ Estas herramientas están disponibles en el `PATH` del entorno Ubuntu WSL2 y se 
 - `jq`: procesar JSON (ideal con `docker inspect ... | jq ...`)
 - `nc` (netcat): comprobar puertos / conectividad básica
 
-Nota: para tooling Python (por ejemplo `ruff`) usa el entorno del proyecto (preferentemente con `uv`), no el venv de `dotfiles` salvo casos puntuales.
-
-Comprobación rápida (ejemplos):
-- `tree -L 2 /home/jesus/proyectos/store-etl`
-- `docker inspect postgres | jq -r '.[0].State.Health.Status'`
-- `docker inspect postgres | jq -r '.[0].NetworkSettings.Networks | to_entries[] | "\(.key): \(.value.IPAddress)"'`
+SSOT (fuente canónica de comandos y criterios): `ai/assets/skills/ops/wsl2-local-tools/SKILL.md`
 
 <!-- gitnexus:end -->
