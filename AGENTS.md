@@ -99,4 +99,20 @@ To check whether embeddings exist, inspect `.gitnexus/meta.json` — the `stats.
 | Tools, resources, schema reference | `ai/assets/skills/gitnexus/gitnexus-guide/SKILL.md` |
 | Index, status, clean, wiki CLI commands | `ai/assets/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
+## Herramientas locales en WSL2 (alto rendimiento)
+Estas herramientas están disponibles en el `PATH` del entorno Ubuntu WSL2 y se pueden usar en cualquier tarea:
+
+- `rg` (ripgrep): búsqueda de texto ultra rápida
+- `fdfind` (alias `fd`): localización de archivos
+- `tree`: visualizar estructura del proyecto
+- `jq`: procesar JSON (ideal con `docker inspect ... | jq ...`)
+- `nc` (netcat): comprobar puertos / conectividad básica
+
+Nota: para tooling Python (por ejemplo `ruff`) usa el entorno del proyecto (preferentemente con `uv`), no el venv de `dotfiles` salvo casos puntuales.
+
+Comprobación rápida (ejemplos):
+- `tree -L 2 /home/jesus/proyectos/store-etl`
+- `docker inspect postgres | jq -r '.[0].State.Health.Status'`
+- `docker inspect postgres | jq -r '.[0].NetworkSettings.Networks | to_entries[] | "\(.key): \(.value.IPAddress)"'`
+
 <!-- gitnexus:end -->

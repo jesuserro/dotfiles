@@ -47,6 +47,7 @@ Do not edit files in surface directories (`dot_config/opencode/skills/`, etc.) d
 ### Docs
 
 - `docs/adr-writer/` - Guide for writing Architecture Decision Records
+- `docs/plans-and-notepads-naming/` - Naming convention for `.cursor/plans/*.plan.md` (chronological prefix)
 
 ### ETL
 
