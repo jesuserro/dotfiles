@@ -2,14 +2,16 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.23_1210] - 2026-03-23
+## [v2026.03.24_0929] - 2026-03-24
 
 ## Changes
-### Documentation
-- 2026-03-23 12:09 [0a362db](https://github.com/jesuserro/dotfiles/commit/0a362db) docs(AGENTS and SKILL): refine local tools documentation and introduce SKILL.md for WSL2 (Jesús Erro)
-  - Updated AGENTS.md to reference the new SKILL.md as the canonical source for local tools commands and criteria.
-  - Removed outdated examples from AGENTS.md and streamlined the content for clarity.
-  - Added SKILL.md, detailing usage guidelines, best practices, and examples for local tools in WSL2, including `rg`, `fdfind`, `tree`, `jq`, and `nc`.
+### Added
+- 2026-03-24 09:07 [1f6718f](https://github.com/jesuserro/dotfiles/commit/1f6718f) feat(mcp): add OpenTelemetry server configuration to templates (Jesús Erro)
+  - Introduced OpenTelemetry server configuration in `config.toml.tmpl`, `opencode.json.tmpl`, and `mcp.json.tmpl`.
+  - Configured command, arguments, and environment variables for OpenTelemetry, enabling local deployment with specified backend settings.
+- 2026-03-24 08:54 [d6c686f](https://github.com/jesuserro/dotfiles/commit/d6c686f) feat(mcp): add Grafana server configuration to templates (Jesús Erro)
+  - Introduced Grafana server configuration in `config.toml.tmpl`, `opencode.json.tmpl`, and `mcp.json.tmpl`.
+  - Configured command, arguments, and environment variables for Grafana, enabling local deployment with specified credentials and URL.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
