@@ -70,6 +70,18 @@ GRAFANA_USERNAME = "admin"
 GRAFANA_PASSWORD = "admin"
 
 # ─────────────────────────────────────────────
+# MCP: OpenTelemetry (popular: traceloop/opentelemetry-mcp-server)
+# ─────────────────────────────────────────────
+[mcp_servers.opentelemetry]
+command = "uvx"
+args = ["--with", "opentelemetry-semantic-conventions-ai==0.4.13", "opentelemetry-mcp"]
+enabled = true
+
+[mcp_servers.opentelemetry.env]
+BACKEND_TYPE = "tempo"
+BACKEND_URL = "http://localhost:3200"
+
+# ─────────────────────────────────────────────
 # MCP: GitHub (usa GITHUB_TOKEN desde ~/.secrets/codex.env)
 # ─────────────────────────────────────────────
 [mcp_servers.github]

@@ -24,6 +24,14 @@
         "GRAFANA_PASSWORD": "admin"
       }
     },
+    "opentelemetry": {
+      "command": "uvx",
+      "args": ["--with", "opentelemetry-semantic-conventions-ai==0.4.13", "opentelemetry-mcp"],
+      "env": {
+        "BACKEND_TYPE": "tempo",
+        "BACKEND_URL": "http://localhost:3200"
+      }
+    },
     "github": {
       "command": "/usr/bin/bash",
       "args": ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec {{ .chezmoi.homeDir }}/.local/bin/codex-mcp-github"],
