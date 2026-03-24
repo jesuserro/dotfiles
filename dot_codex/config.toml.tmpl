@@ -57,6 +57,19 @@ args = ["{{ .chezmoi.homeDir }}/.codex/mcp/docker/node_modules/@0xshariq/docker-
 enabled = true
 
 # ─────────────────────────────────────────────
+# MCP: Grafana (oficial: grafana/mcp-grafana)
+# ─────────────────────────────────────────────
+[mcp_servers.grafana]
+command = "uvx"
+args = ["mcp-grafana"]
+enabled = true
+
+[mcp_servers.grafana.env]
+GRAFANA_URL = "http://localhost:3002"
+GRAFANA_USERNAME = "admin"
+GRAFANA_PASSWORD = "admin"
+
+# ─────────────────────────────────────────────
 # MCP: GitHub (usa GITHUB_TOKEN desde ~/.secrets/codex.env)
 # ─────────────────────────────────────────────
 [mcp_servers.github]
