@@ -2,13 +2,13 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.26_1317] - 2026-03-26
+## [v2026.03.26_1331] - 2026-03-26
 
 ## Changes
 ### Chores
-- 2026-03-26 13:15 [9aedcd3](https://github.com/jesuserro/dotfiles/commit/9aedcd3) chore(config): update dotfiles root path in configuration templates (Jesús Erro)
-  - Added a `dotfilesRoot` variable to `.chezmoi.toml` for dynamic path resolution.
-  - Updated server script paths in `config.toml.tmpl` and `opencode.json.tmpl` to utilize the new `dotfilesRoot` variable, ensuring consistent path handling across services.
+- 2026-03-26 13:31 [9213ec1](https://github.com/jesuserro/dotfiles/commit/9213ec1) chore(config): update server script paths to use chezmoi home directory (Jesús Erro)
+  - Removed the `dotfilesRoot` variable from `.chezmoi.toml`.
+  - Updated server script paths in `config.toml.tmpl` and `opencode.json.tmpl` to directly reference the `chezmoi.homeDir`, ensuring consistent path resolution for all services.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
