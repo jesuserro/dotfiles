@@ -70,6 +70,7 @@ Do not edit files in surface directories (`dot_config/opencode/skills/`, etc.) d
 
 - `ops/mcp-governance/` - MCP server classification guide
 - `ops/system-updates/` - System update workflow (dotfiles ups alias)
+- `ops/playwright-ui-validation/` - Validate rendered dashboards/apps with Playwright and capture acceptance evidence
 
 ### Postgres
 

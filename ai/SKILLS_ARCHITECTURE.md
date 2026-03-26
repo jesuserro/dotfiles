@@ -57,7 +57,7 @@ Do not edit files in surface directories. Changes belong in `ai/assets/skills/` 
 | `etl/` | Data engineering | Data contracts |
 | `git/` | Version control | PR conventions |
 | `gitnexus/` | Code intelligence | GitNexus skills (6 variants) |
-| `ops/` | Infrastructure/ops | MCP governance, system updates |
+| `ops/` | Infrastructure/ops | MCP governance, system updates, Playwright UI validation |
 | `postgres/` | Database | SQL style, schema review |
 | `python/` | Python development | Project structure |
 
