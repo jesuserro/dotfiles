@@ -2,22 +2,13 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.26_1234] - 2026-03-26
+## [v2026.03.26_1317] - 2026-03-26
 
 ## Changes
-### Added
-- 2026-03-26 12:29 [42bc73b](https://github.com/jesuserro/dotfiles/commit/42bc73b) feat(mcp): add Playwright server configuration to templates (Jesús Erro)
-  - Introduced Playwright server configuration in `config.toml.tmpl` and `mcp.json.tmpl`.
-  - Configured command and arguments for Playwright, enabling local deployment for browser automation and testing.
-- 2026-03-26 12:17 [5ce5681](https://github.com/jesuserro/dotfiles/commit/5ce5681) feat(ops): add Playwright UI validation skill and update documentation (Jesús Erro)
-  - Introduced a new skill for validating rendered operational and data-product surfaces using Playwright, detailing the validation workflow and common failure patterns.
-  - Updated SKILLS_ARCHITECTURE.md to include Playwright UI validation in the ops section.
-  - Enhanced README.md to reference the new Playwright UI validation skill and its purpose.
-
-### Refactored
-- 2026-03-25 13:50 [6662576](https://github.com/jesuserro/dotfiles/commit/6662576) refactor(opencode): enable local servers and update command paths in configuration (Jesús Erro)
-  - Enabled local deployment for multiple services including Obsidian, Dagster, Loki, Minio, Prometheus, Tempo, and Store ETL Ops.
-  - Updated command paths to point to the correct server scripts in the user's dotfiles directory.
+### Chores
+- 2026-03-26 13:15 [9aedcd3](https://github.com/jesuserro/dotfiles/commit/9aedcd3) chore(config): update dotfiles root path in configuration templates (Jesús Erro)
+  - Added a `dotfilesRoot` variable to `.chezmoi.toml` for dynamic path resolution.
+  - Updated server script paths in `config.toml.tmpl` and `opencode.json.tmpl` to utilize the new `dotfilesRoot` variable, ensuring consistent path handling across services.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
