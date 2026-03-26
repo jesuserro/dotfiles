@@ -1,4 +1,6 @@
-model = "gpt-5.3-codex"
+{{- $dotfilesRoot := printf "%s/dotfiles" .chezmoi.homeDir -}}
+
+model = "gpt-5.4"
 model_reasoning_effort = "medium"
 
 # Codex internal logs (keep separate from your ETL logs/)
@@ -94,7 +96,7 @@ enabled = true
 # ─────────────────────────────────────────────
 [mcp_servers.dagster]
 command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
-args = ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/dagster/server.py"]
+args = ["{{ $dotfilesRoot }}/ai/runtime/mcp/servers/dagster/server.py"]
 enabled = true
 
 [mcp_servers.dagster.env]
@@ -106,7 +108,7 @@ DAGSTER_TIMEOUT_SECONDS = "30"
 # ─────────────────────────────────────────────
 [mcp_servers.minio]
 command = "/usr/bin/bash"
-args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec {{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python {{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/minio/server.py"]
+args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec {{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python {{ $dotfilesRoot }}/ai/runtime/mcp/servers/minio/server.py"]
 enabled = true
 
 # ─────────────────────────────────────────────
@@ -114,7 +116,7 @@ enabled = true
 # ─────────────────────────────────────────────
 [mcp_servers.tempo]
 command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
-args = ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/tempo/server.py"]
+args = ["{{ $dotfilesRoot }}/ai/runtime/mcp/servers/tempo/server.py"]
 enabled = true
 
 [mcp_servers.tempo.env]
@@ -126,7 +128,7 @@ TEMPO_TIMEOUT_SECONDS = "30"
 # ─────────────────────────────────────────────
 [mcp_servers.loki]
 command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
-args = ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/loki/server.py"]
+args = ["{{ $dotfilesRoot }}/ai/runtime/mcp/servers/loki/server.py"]
 enabled = true
 
 [mcp_servers.loki.env]
@@ -138,7 +140,7 @@ LOKI_TIMEOUT_SECONDS = "30"
 # ─────────────────────────────────────────────
 [mcp_servers.prometheus]
 command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
-args = ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/prometheus/server.py"]
+args = ["{{ $dotfilesRoot }}/ai/runtime/mcp/servers/prometheus/server.py"]
 enabled = true
 
 [mcp_servers.prometheus.env]
@@ -150,7 +152,7 @@ PROMETHEUS_TIMEOUT_SECONDS = "15"
 # ─────────────────────────────────────────────
 [mcp_servers.store_etl_ops]
 command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
-args = ["{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/store_etl_ops/server.py"]
+args = ["{{ $dotfilesRoot }}/ai/runtime/mcp/servers/store_etl_ops/server.py"]
 enabled = true
 
 # ─────────────────────────────────────────────
