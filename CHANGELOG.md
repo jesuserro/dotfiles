@@ -2,13 +2,19 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.26_1331] - 2026-03-26
+## [v2026.03.27_1057] - 2026-03-27
 
 ## Changes
-### Chores
-- 2026-03-26 13:31 [9213ec1](https://github.com/jesuserro/dotfiles/commit/9213ec1) chore(config): update server script paths to use chezmoi home directory (Jesús Erro)
-  - Removed the `dotfilesRoot` variable from `.chezmoi.toml`.
-  - Updated server script paths in `config.toml.tmpl` and `opencode.json.tmpl` to directly reference the `chezmoi.homeDir`, ensuring consistent path resolution for all services.
+### Fixed
+- 2026-03-27 10:45 [2663804](https://github.com/jesuserro/dotfiles/commit/2663804) fix(mcp): introduce mcp-gitnexus-launcher for local GitNexus startup (Jesús Erro)
+  - Added a new script `mcp-gitnexus-launcher` to provide a stable, non-network startup path for the GitNexus MCP server.
+  - Updated configuration templates (`config.toml.tmpl`, `opencode.json.tmpl`, `mcp.json.tmpl`) to use the new launcher instead of `npx`, ensuring consistent execution across environments.
+  - Enhanced user information in the `aliases` file regarding the use of local GitNexus with chezmoi templates.
+
+### Refactored
+- 2026-03-27 10:57 [90421b2](https://github.com/jesuserro/dotfiles/commit/90421b2) refactor(mcp): update CHEZMOI documentation and enhance config propagation details (Jesús Erro)
+  - Added a new command to the CHEZMOI documentation for propagating specific MCP configurations, improving clarity on usage after template changes.
+  - Updated `config.toml.tmpl` to enable the GitHub plugin for OpenAI curated resources, enhancing plugin management capabilities.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
