@@ -256,6 +256,7 @@ EOF
       local gnx_version
       gnx_version=$(gitnexus --version 2>/dev/null || echo "desconocida")
       _ups_success "GitNexus actualizado a versión ${gnx_version} (${gitnexus_time}s)"
+      _ups_info "Los MCPs gestionados por chezmoi usan el launcher local de GitNexus; si cambias plantillas MCP, aplica chezmoi."
     else
       _ups_success "GitNexus instalado/actualizado (${gitnexus_time}s)"
     fi

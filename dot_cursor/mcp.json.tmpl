@@ -43,8 +43,8 @@
       "env": {}
     },
     "gitnexus": {
-      "command": "npx",
-      "args": ["-y", "gitnexus@latest", "mcp"],
+      "command": "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-gitnexus-launcher",
+      "args": [],
       "env": {}
     },
     "filesystem": {
