@@ -37,7 +37,7 @@
     },
     "gitnexus": {
       "type": "local",
-      "command": ["npx", "-y", "gitnexus@latest", "mcp"],
+      "command": ["{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-gitnexus-launcher"],
       "enabled": true
     },
     "filesystem": {

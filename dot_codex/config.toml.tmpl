@@ -165,8 +165,8 @@ enabled = true
 # MCP: GitNexus (inteligencia estructural de código)
 # ─────────────────────────────────────────────
 [mcp_servers.gitnexus]
-command = "npx"
-args = ["-y", "gitnexus@latest", "mcp"]
+command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-gitnexus-launcher"
+args = []
 enabled = true
 
 # ─────────────────────────────────────────────
