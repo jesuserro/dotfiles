@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-30 11:20:38
+**Generated:** 2026-03-30 12:01:53
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -710,6 +710,8 @@
 │   ├── 📝 CAMBIAR_TOKEN_GITHUB.md
 │   ├── 📝 CHEZMOI.md
 │   ├── 📝 COMMANDS_ARCHITECTURE.md
+│   ├── 📝 GIT_AI_AUTHOR.md
+│   ├── 📝 GIT_AI_CURSOR_SETTINGS.md
 │   ├── 📝 GIT_WORKFLOW.md
 │   ├── 📝 GUIA_MCP_AI.md
 │   ├── 📝 INSTALL.md
@@ -765,6 +767,9 @@
 │   ├── 📝 v2025.12.07_1051.md
 │   └── 📝 v2025.12.08_1037.md
 ├── 📁 scripts
+│   ├── 📁 lib
+│   │   ├── 🔧 git-ai-common.sh
+│   │   └── 🔧 git-ai-cursor-path.sh
 │   ├── 🔧 generate-commands.sh
 │   ├── 🔧 git-set-ai-author.sh
 │   ├── 🔧 git-set-ai-disable.sh
