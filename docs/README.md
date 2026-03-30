@@ -21,6 +21,8 @@
 ## Git
 
 - **[GIT_WORKFLOW.md](GIT_WORKFLOW.md)** — Flujo de trabajo con git (feat, rel, changelog, etc.).
+- **[GIT_AI_AUTHOR.md](GIT_AI_AUTHOR.md)** — Autor IA vs committer humano: `git-set-ai-author`, `git-ai-wrapper`, Chezmoi, activación en Cursor, validación.
+- **[GIT_AI_CURSOR_SETTINGS.md](GIT_AI_CURSOR_SETTINGS.md)** — Solo rutas de `User/settings.json` y `git.path` (Linux / WSL + Cursor Windows / override).
 
 ## Otros
 
