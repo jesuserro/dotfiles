@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-30 08:53:23
+**Generated:** 2026-03-30 10:36:18
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -10,7 +10,8 @@
 │   ├── 📄 run_after_10_link_store_etl_mcp.sh.tmpl
 │   ├── 📄 run_after_10_setup_ai_runtime.sh.tmpl
 │   ├── 📄 run_after_11_link_ai_assets.sh.tmpl
-│   └── 📄 run_after_12_materialize_ai_commands.sh.tmpl
+│   ├── 📄 run_after_12_materialize_ai_commands.sh.tmpl
+│   └── 📄 run_after_13_link_git_ai_wrapper.sh.tmpl
 ├── 📁 .cursor
 │   ├── 📁 plans
 │   └── 📁 rules
@@ -765,6 +766,9 @@
 │   └── 📝 v2025.12.08_1037.md
 ├── 📁 scripts
 │   ├── 🔧 generate-commands.sh
+│   ├── 🔧 git-set-ai-author.sh
+│   ├── 🔧 git-set-ai-disable.sh
+│   ├── 🔧 git-set-ai-enable.sh
 │   ├── 📝 git_branch_changelog.md
 │   ├── 🔧 git_branch_changelog.sh
 │   ├── 🔧 git_cc.sh
@@ -790,6 +794,7 @@
 │   ├── 📝 git_start_feature.md
 │   ├── 🔧 git_start_feature.sh
 │   ├── 🔧 git_workflow.sh
+│   ├── 🔧 install-git-ai-wrapper.sh
 │   ├── 🔧 install-gitnexus.sh
 │   ├── 🔧 materialize-commands.sh
 │   ├── 🔧 show_branches_with_dates.sh
@@ -810,10 +815,11 @@
 │   │   │   └── 📄 validate-commands.bats
 │   │   ├── 📁 helpers
 │   │   │   └── 🔧 common.bash
-│   │   └── 📁 mcp
-│   │       ├── 📄 filesystem-launcher.bats
-│   │       ├── 📄 git-launcher.bats
-│   │       └── 📄 validate-governance.bats
+│   │   ├── 📁 mcp
+│   │   │   ├── 📄 filesystem-launcher.bats
+│   │   │   ├── 📄 git-launcher.bats
+│   │   │   └── 📄 validate-governance.bats
+│   │   └── 📄 git-ai-author.bats
 │   └── 📄 Makefile.tests
 ├── 📁 tmux
 │   ├── 📁 common
