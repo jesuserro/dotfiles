@@ -2,19 +2,43 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.27_1057] - 2026-03-27
+## [v2026.03.30_1203] - 2026-03-30
 
 ## Changes
+### Added
+- 2026-03-30 11:38 [d1efcd4](https://github.com/jesuserro/dotfiles/commit/d1efcd4) feat(git-ai): introduce git-ai-wrapper and related scripts for AI author management (Cursor Agent)
+  - Added `git-ai-wrapper` to manage commit authorship based on AI agents.
+  - Implemented scripts: `git-set-ai-author.sh`, `git-set-ai-enable.sh`, `git-set-ai-disable.sh`, and `install-git-ai-wrapper.sh` for enabling/disabling the wrapper and setting AI authors.
+  - Created `run_after_13_link_git_ai_wrapper.sh.tmpl` for symlink creation post-apply.
+
 ### Fixed
-- 2026-03-27 10:45 [2663804](https://github.com/jesuserro/dotfiles/commit/2663804) fix(mcp): introduce mcp-gitnexus-launcher for local GitNexus startup (Jesús Erro)
-  - Added a new script `mcp-gitnexus-launcher` to provide a stable, non-network startup path for the GitNexus MCP server.
-  - Updated configuration templates (`config.toml.tmpl`, `opencode.json.tmpl`, `mcp.json.tmpl`) to use the new launcher instead of `npx`, ensuring consistent execution across environments.
-  - Enhanced user information in the `aliases` file regarding the use of local GitNexus with chezmoi templates.
+- 2026-03-30 11:59 [3b629cc](https://github.com/jesuserro/dotfiles/commit/3b629cc) fix(git-ai): enhance script symlink resolution and update documentation (Cursor Agent)
+  - Updated `git-set-ai-author.sh`, `git-set-ai-enable.sh`, and `git-set-ai-disable.sh` to resolve symlinks correctly using Python or a fallback method, ensuring accurate script directory resolution.
+  - Enhanced `GIT_AI_AUTHOR.md` to document the new symlink resolution behavior for better clarity on script usage.
+  - Minor adjustments in `git-ai-common.sh` to reflect the requirement for setting `SCRIPT_DIR` before sourcing.
+
+### Documentation
+- 2026-03-30 12:02 [365a892](https://github.com/jesuserro/dotfiles/commit/365a892) docs(releases): added changelog. (Cursor Agent)
+- 2026-03-30 12:02 [843d3ca](https://github.com/jesuserro/dotfiles/commit/843d3ca) docs(structure): update generated timestamp and enhance file tree in STRUCTURE.md (Cursor Agent)
+  - Updated the generated timestamp in `STRUCTURE.md`.
+  - Added new documentation files: `GIT_AI_AUTHOR.md` and `GIT_AI_CURSOR_SETTINGS.md`.
+  - Included new script directory structure under `scripts/lib` for better organization of AI-related scripts.
+- 2026-03-30 11:21 [809c0aa](https://github.com/jesuserro/dotfiles/commit/809c0aa) docs(structure): update generated timestamp in STRUCTURE.md (Cursor Agent)
+- 2026-03-30 11:05 [4a67359](https://github.com/jesuserro/dotfiles/commit/4a67359) docs(structure): update generated timestamp in STRUCTURE.md (Jesús Erro)
+- 2026-03-30 10:53 [4ef9612](https://github.com/jesuserro/dotfiles/commit/4ef9612) docs(structure): update generated timestamp in STRUCTURE.md (Jesús Erro)
+- 2026-03-30 10:37 [b8e5f55](https://github.com/jesuserro/dotfiles/commit/b8e5f55) docs(structure): update file tree and add new scripts (Jesús Erro)
+  - Updated the generated timestamp in `STRUCTURE.md`.
+  - Added new scripts: `git-set-ai-author.sh`, `git-set-ai-disable.sh`, `git-set-ai-enable.sh`, and `install-git-ai-wrapper.sh` to the scripts directory.
+  - Adjusted the file tree structure to include the new script files and reorganized the MCP directory for clarity.
 
 ### Refactored
-- 2026-03-27 10:57 [90421b2](https://github.com/jesuserro/dotfiles/commit/90421b2) refactor(mcp): update CHEZMOI documentation and enhance config propagation details (Jesús Erro)
-  - Added a new command to the CHEZMOI documentation for propagating specific MCP configurations, improving clarity on usage after template changes.
-  - Updated `config.toml.tmpl` to enable the GitHub plugin for OpenAI curated resources, enhancing plugin management capabilities.
+- 2026-03-30 11:55 [6964063](https://github.com/jesuserro/dotfiles/commit/6964063) refactor(git-ai): streamline AI author management scripts and enhance documentation (Cursor Agent)
+  - Refactored `run_after_13_link_git_ai_wrapper.sh.tmpl` to utilize a shared helper for linking binaries, improving maintainability.
+  - Introduced `git-ai-common.sh` for shared functions related to AI author management.
+  - Updated `git-set-ai-author.sh` and `git-ai-wrapper` to leverage new helper functions for better code organization.
+
+### Tests
+- 2026-03-30 10:23 [90d66c5](https://github.com/jesuserro/dotfiles/commit/90d66c5) test (Jesús Erro)
 
 
 ## [v2025.12.07_1051] - 2025-12-07
