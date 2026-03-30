@@ -21,6 +21,7 @@
 ## Git
 
 - **[GIT_WORKFLOW.md](GIT_WORKFLOW.md)** — Flujo de trabajo con git (feat, rel, changelog, etc.).
+- **[GIT_AI_CURSOR_SETTINGS.md](GIT_AI_CURSOR_SETTINGS.md)** — Dónde escribe `git.path` el wrapper (`git-ai-wrapper`) según Linux / Windows / WSL.
 
 ## Otros
 

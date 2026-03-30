@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Crea symlinks para git-ai-wrapper y git-set-ai-author después de apply.
+
+set -euo pipefail
+
+SCRIPT_DIR="{{ .chezmoi.sourceDir }}"
+LOCAL_BIN="${HOME}/.local/bin"
+
+mkdir -p "${LOCAL_BIN}"
+
+echo "[chezmoi] Linking git-ai-wrapper and git-set-ai-author"
+
+ln -sf "${SCRIPT_DIR}/local/bin/git-ai-wrapper" "${LOCAL_BIN}/git-ai-wrapper"
+echo "[chezmoi] Linked: ${LOCAL_BIN}/git-ai-wrapper"
+
+ln -sf "${SCRIPT_DIR}/scripts/git-set-ai-author.sh" "${LOCAL_BIN}/git-set-ai-author"
+echo "[chezmoi] Linked: ${LOCAL_BIN}/git-set-ai-author"
+
+exit 0

@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GIT_REAL="${GIT_REAL:-/usr/bin/git}"
+HUMAN_NAME="Jesús Erro"
+HUMAN_EMAIL="olagato@gmail.com"
+
+# Set to 1 to log argv and decisions to stderr (e.g. confirm Cursor invokes this wrapper).
+: "${GIT_AI_WRAPPER_DEBUG:=0}"
+
+dbg() {
+    if [[ "$GIT_AI_WRAPPER_DEBUG" == "1" ]]; then
+        printf '[git-ai-wrapper] %s\n' "$*" >&2
+    fi
+}
+
+is_commit_command() {
+    local cmd="$1"
+    shift
+
+    for arg in "$@"; do
+        case "$arg" in
+            commit)
+                return 0
+                ;;
+        esac
+    done
+
+    if [[ "$cmd" == "commit" ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+identity_is_human() {
+    local id
+    id=$(echo "$1" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    local expected="${HUMAN_NAME} <${HUMAN_EMAIL}>"
+    [[ "$id" == "$expected" ]]
+}
+
+# Cursor Source Control may pass --author with the logged-in human identity; git would
+# ignore GIT_AUTHOR_* when that flag is present. Strip only that duplicate so .git/ai-author/current applies.
+FILTERED_COMMIT_ARGS=()
+
+filter_args_strip_human_author() {
+    FILTERED_COMMIT_ARGS=()
+    local -a args=("$@")
+    local i=0
+    local n=${#args[@]}
+    while (( i < n )); do
+        local a="${args[i]}"
+        if [[ "$a" == "--author" ]]; then
+            if (( i + 1 < n )); then
+                local v="${args[i + 1]}"
+                if identity_is_human "$v"; then
+                    dbg "stripping duplicate human --author (two-arg form)"
+                    ((i += 2))
+                    continue
+                fi
+            fi
+        elif [[ "$a" == --author=* ]]; then
+            local v="${a#--author=}"
+                if identity_is_human "$v"; then
+                    dbg "stripping duplicate human --author (equals form)"
+                    i=$((i + 1))
+                    continue
+                fi
+        fi
+        FILTERED_COMMIT_ARGS+=("$a")
+        i=$((i + 1))
+    done
+}
+
+has_author_flag() {
+    local arg
+    for arg in "$@"; do
+        if [[ "$arg" == --author=* ]]; then
+            return 0
+        fi
+    done
+
+    local prev=""
+    for arg in "$@"; do
+        if [[ "$prev" == "--author" ]]; then
+            if [[ -n "$arg" && "$arg" != -* ]]; then
+                return 0
+            fi
+        fi
+        prev="$arg"
+    done
+
+    return 1
+}
+
+get_author_from_repo() {
+    local repo_root="$1"
+    local author_file="${repo_root}/.git/ai-author/current"
+
+    if [[ -f "$author_file" ]]; then
+        local author
+        author=$(tr -d '\n' <"$author_file")
+
+        if [[ "$author" =~ ^.+[[:space:]].+\@.+ ]] &&
+            [[ "$author" == *"<"* ]] &&
+            [[ "$author" == *">"* ]]; then
+            echo "$author"
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
+get_repo_root() {
+    "$GIT_REAL" rev-parse --show-toplevel 2>/dev/null || echo ""
+}
+
+main() {
+    local command="$1"
+    shift
+    local -a rest=("$@")
+
+    dbg "argv0=${0:-} command=${command:-} rest=${rest[*]:-}"
+
+    if ! is_commit_command "$command" "${rest[@]}"; then
+        exec "$GIT_REAL" "$command" "${rest[@]}"
+    fi
+
+    filter_args_strip_human_author "${rest[@]}"
+    local -a filtered=("${FILTERED_COMMIT_ARGS[@]}")
+    dbg "after human-author strip: ${filtered[*]:-}"
+
+    local has_explicit_author
+    has_explicit_author=$(has_author_flag "$command" "${filtered[@]}" && echo "yes" || echo "no")
+    dbg "has_explicit_author(after strip)=${has_explicit_author}"
+
+    local repo_root
+    repo_root=$(get_repo_root)
+    local author_identity=""
+
+    if [[ "$has_explicit_author" == "no" ]]; then
+        if [[ -n "$repo_root" ]]; then
+            author_identity=$(get_author_from_repo "$repo_root") || true
+        fi
+    fi
+
+    local author_name="$HUMAN_NAME"
+    local author_email="$HUMAN_EMAIL"
+
+    if [[ -n "$author_identity" ]]; then
+        if [[ "$author_identity" == *"<"* ]] && [[ "$author_identity" == *">"* ]]; then
+            local name_part
+            local email_part
+            name_part=$(echo "$author_identity" | sed 's/ <.*//')
+            email_part=$(echo "$author_identity" | sed 's/.*<//;s/>//')
+            if [[ -n "$name_part" && -n "$email_part" ]]; then
+                author_name="$name_part"
+                author_email="$email_part"
+            fi
+        fi
+    fi
+
+    export GIT_AUTHOR_NAME="$author_name"
+    export GIT_AUTHOR_EMAIL="$author_email"
+    export GIT_COMMITTER_NAME="$HUMAN_NAME"
+    export GIT_COMMITTER_EMAIL="$HUMAN_EMAIL"
+
+    exec "$GIT_REAL" "$command" "${filtered[@]}"
+}
+
+main "$@"
