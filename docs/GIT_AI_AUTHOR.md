@@ -99,6 +99,8 @@ Comportamiento que **no** se pretende cambiar sin una nueva ronda explícita de 
 
 ## Archivos relevantes
 
+Los scripts que cargan `lib/git-ai-common.sh` resuelven **`SCRIPT_DIR`** con la ruta **real** del script (`os.path.realpath` vía Python si está disponible, o bucle `readlink` sobre symlinks), para que la invocación desde **`~/.local/bin`** (symlink a `scripts/git-set-ai-author.sh`) siga encontrando la librería en el repo.
+
 | Pieza | Ubicación |
 |-------|-----------|
 | Wrapper | [`local/bin/git-ai-wrapper`](../local/bin/git-ai-wrapper) |

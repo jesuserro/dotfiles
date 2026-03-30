@@ -130,6 +130,16 @@ get_author_file() {
     [[ "$output" == "Space Author|space@example.com" ]]
 }
 
+@test "git-set-ai-author works when invoked via symlink (materialized path)" {
+    ln -sf "$CLI_SCRIPT" "$TEST_DIR/bin-git-set-ai-author"
+    run "$TEST_DIR/bin-git-set-ai-author" cursor
+    [ "$status" -eq 0 ]
+    local author_file
+    author_file=$(get_author_file)
+    run cat "$author_file"
+    [[ "$output" == "Cursor Agent <cursor-agent@dotfiles.local>" ]]
+}
+
 @test "git-set-ai-author cursor sets correct identity" {
     run "$CLI_SCRIPT" cursor
     [ "$status" -eq 0 ]

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Shared helpers: ~/.local/bin materialization + repo / .git/ai-author paths.
 # Cursor User/settings resolution stays in git-ai-cursor-path.sh.
+#
+# Callers must set SCRIPT_DIR to the real scripts/ directory (symlink-safe) before sourcing.
 
 # Default install location for symlinked binaries (official path with Chezmoi apply).
 git_ai_local_bin_dir() {

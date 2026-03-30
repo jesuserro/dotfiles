@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# SCRIPT_DIR debe resolver symlinks (~/.local/bin/git-set-ai-author -> .../scripts/).
+if command -v python3 >/dev/null 2>&1; then
+    SCRIPT_DIR="$(python3 -c "import os,sys; print(os.path.dirname(os.path.realpath(sys.argv[1])))" "${BASH_SOURCE[0]}")"
+else
+    _s="${BASH_SOURCE[0]}"
+    while [[ -h "$_s" ]]; do
+        _d="$(cd "$(dirname "$_s")" && pwd)"
+        _l="$(readlink "$_s")"
+        [[ "$_l" == /* ]] && _s="$_l" || _s="$_d/$_l"
+    done
+    SCRIPT_DIR="$(cd "$(dirname "$_s")" && pwd)"
+    unset _s _d _l
+fi
 # shellcheck source=lib/git-ai-common.sh
 source "$SCRIPT_DIR/lib/git-ai-common.sh"
 
