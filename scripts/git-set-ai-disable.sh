@@ -4,11 +4,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/git-ai-cursor-path.sh
 source "$SCRIPT_DIR/lib/git-ai-cursor-path.sh"
+# shellcheck source=lib/git-ai-common.sh
+source "$SCRIPT_DIR/lib/git-ai-common.sh"
 
 LEGACY_CURSOR_SETTINGS="${HOME}/.cursor/settings.json"
 CURSOR_SETTINGS="$(cursor_editor_user_settings_path)"
 CURSOR_SETTINGS_BACKUP="${CURSOR_SETTINGS}.backup"
-WRAPPER_PATH="${HOME}/.local/bin/git-ai-wrapper"
+WRAPPER_PATH="$(git_ai_wrapper_target_path)"
 
 restore_backup() {
     if [[ -f "$CURSOR_SETTINGS_BACKUP" ]]; then
@@ -26,7 +28,7 @@ remove_git_path_key() {
         return 0
     fi
 
-    if ! python3 -c "import json; json.load(open('$file'))" 2>/dev/null; then
+    if ! python3 -c "import json; json.load(open('$file', encoding='utf-8'))" 2>/dev/null; then
         echo "Error: $file is not valid JSON" >&2
         return 1
     fi
@@ -43,7 +45,7 @@ import sys
 settings_file = "$file"
 
 try:
-    with open(settings_file, 'r') as f:
+    with open(settings_file, 'r', encoding='utf-8') as f:
         settings = json.load(f)
 except json.JSONDecodeError as e:
     print(f"Error: Invalid JSON in settings.json: {e}", file=sys.stderr)
@@ -55,7 +57,7 @@ if 'git.path' in settings:
 else:
     print(f"No git.path key found in {settings_file}")
 
-with open("$tmp_file", 'w') as f:
+with open("$tmp_file", 'w', encoding='utf-8') as f:
     json.dump(settings, f, indent=2)
     f.write('\n')
 

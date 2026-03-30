@@ -1,6 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Load shared repo/state helpers when running from the dotfiles tree; tests copy this file
+# without the repo layout — fallback defines the same small API inline.
+_GAI_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)/scripts/lib/git-ai-common.sh"
+if [[ -f "${_GAI_LIB}" ]]; then
+    # shellcheck source=../../scripts/lib/git-ai-common.sh
+    source "${_GAI_LIB}"
+else
+    git_ai_repo_root_or_empty() {
+        local git_bin="${GIT_REAL:-/usr/bin/git}"
+        "$git_bin" rev-parse --show-toplevel 2>/dev/null || true
+    }
+    git_ai_author_state_path() {
+        local repo_root="$1"
+        echo "${repo_root}/.git/ai-author/current"
+    }
+fi
+unset _GAI_LIB
+
 GIT_REAL="${GIT_REAL:-/usr/bin/git}"
 HUMAN_NAME="Jesús Erro"
 HUMAN_EMAIL="olagato@gmail.com"
@@ -96,7 +114,8 @@ has_author_flag() {
 
 get_author_from_repo() {
     local repo_root="$1"
-    local author_file="${repo_root}/.git/ai-author/current"
+    local author_file
+    author_file=$(git_ai_author_state_path "$repo_root")
 
     if [[ -f "$author_file" ]]; then
         local author
@@ -111,10 +130,6 @@ get_author_from_repo() {
     fi
 
     return 1
-}
-
-get_repo_root() {
-    "$GIT_REAL" rev-parse --show-toplevel 2>/dev/null || echo ""
 }
 
 main() {
@@ -137,7 +152,7 @@ main() {
     dbg "has_explicit_author(after strip)=${has_explicit_author}"
 
     local repo_root
-    repo_root=$(get_repo_root)
+    repo_root=$(git_ai_repo_root_or_empty)
     local author_identity=""
 
     if [[ "$has_explicit_author" == "no" ]]; then

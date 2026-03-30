@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/git-ai-common.sh
+source "$SCRIPT_DIR/lib/git-ai-common.sh"
+
 AGENT_NAME="${1:-}"
 GIT_REAL="${GIT_REAL:-/usr/bin/git}"
-DOTFILES_ROOT="${HOME}/.dotfiles"
 
 declare -A AGENT_EMAILS=(
     [cursor]="cursor-agent@dotfiles.local"
@@ -57,20 +60,6 @@ validate_identity_format() {
     return 1
 }
 
-get_repo_root() {
-    local repo_root
-    repo_root=$("$GIT_REAL" rev-parse --show-toplevel 2>/dev/null) || {
-        echo "Error: Not in a git repository" >&2
-        exit 1
-    }
-    echo "$repo_root"
-}
-
-get_ai_author_file() {
-    local repo_root="$1"
-    echo "${repo_root}/.git/ai-author/current"
-}
-
 read_current_author() {
     local author_file="$1"
     if [[ -f "$author_file" ]]; then
@@ -81,8 +70,6 @@ read_current_author() {
 write_author() {
     local author_file="$1"
     local identity="$2"
-    local repo_root
-    repo_root=$(dirname "$author_file")
     mkdir -p "$(dirname "$author_file")"
     echo "$identity" > "$author_file"
 }
@@ -110,7 +97,7 @@ list_agents() {
 show_status() {
     local repo_root="$1"
     local author_file
-    author_file=$(get_ai_author_file "$repo_root")
+    author_file=$(git_ai_author_state_path "$repo_root")
     local current
     current=$(read_current_author "$author_file")
 
@@ -126,9 +113,9 @@ main() {
     case "${AGENT_NAME}" in
         cursor|codex|opencode)
             local repo_root
-            repo_root=$(get_repo_root)
+            repo_root=$(git_ai_repo_root_or_exit)
             local author_file
-            author_file=$(get_ai_author_file "$repo_root")
+            author_file=$(git_ai_author_state_path "$repo_root")
             local display="${AGENT_DISPLAY_NAMES[$AGENT_NAME]}"
             local email="${AGENT_EMAILS[$AGENT_NAME]}"
             local identity="${display} <${email}>"
@@ -143,15 +130,15 @@ main() {
             ;;
         human)
             local repo_root
-            repo_root=$(get_repo_root)
+            repo_root=$(git_ai_repo_root_or_exit)
             local author_file
-            author_file=$(get_ai_author_file "$repo_root")
+            author_file=$(git_ai_author_state_path "$repo_root")
             clear_author "$author_file"
             echo "Cleared AI author. Using default git identity."
             ;;
         status)
             local repo_root
-            repo_root=$(get_repo_root)
+            repo_root=$(git_ai_repo_root_or_exit)
             show_status "$repo_root"
             ;;
         list)

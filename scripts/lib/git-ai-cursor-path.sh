@@ -3,6 +3,10 @@
 # Sourced by git-set-ai-enable.sh and git-set-ai-disable.sh.
 # Docs: docs/GIT_AI_CURSOR_SETTINGS.md
 #
+# Contract: if CURSOR_USER_SETTINGS_PATH is set, use it; else resolve by OS.
+# On WSL Linux, prefer the Windows host path (Cursor UI) when /mnt/c and cmd.exe exist;
+# otherwise fall back to ~/.config/Cursor/User/settings.json.
+#
 # Override: export CURSOR_USER_SETTINGS_PATH=/path/to/User/settings.json
 
 # True when this shell runs as Linux inside WSL (kernel reports Microsoft/WSL).

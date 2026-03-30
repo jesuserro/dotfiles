@@ -37,6 +37,19 @@ teardown() {
     [[ -f "$DOTFILES_DIR/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl" ]]
 }
 
+@test "run_after_13 git-ai: template and lib use ln -sf and ~/.local/bin" {
+    local tmpl="$DOTFILES_DIR/.chezmoiscripts/run_after_13_link_git_ai_wrapper.sh.tmpl"
+    local lib="$DOTFILES_DIR/scripts/lib/git-ai-common.sh"
+    [[ -f "$tmpl" ]]
+    grep -q "git-ai-wrapper" "$tmpl"
+    grep -q "git_ai_link_dotfiles_bins\|git-ai-common" "$tmpl"
+    [[ -f "$lib" ]]
+    grep -q "ln -sf" "$lib"
+    grep -q "git-ai-wrapper" "$lib"
+    grep -q "git-set-ai-author" "$lib"
+    grep -q ".local/bin" "$lib"
+}
+
 @test "run_after scripts are valid bash" {
     skip_if_command_missing "bash"
     

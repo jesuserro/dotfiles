@@ -4,16 +4,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="{{ .chezmoi.sourceDir }}"
-LOCAL_BIN="${HOME}/.local/bin"
+# shellcheck source=scripts/lib/git-ai-common.sh
+source "${SCRIPT_DIR}/scripts/lib/git-ai-common.sh"
 
-mkdir -p "${LOCAL_BIN}"
-
-echo "[chezmoi] Linking git-ai-wrapper and git-set-ai-author"
-
-ln -sf "${SCRIPT_DIR}/local/bin/git-ai-wrapper" "${LOCAL_BIN}/git-ai-wrapper"
-echo "[chezmoi] Linked: ${LOCAL_BIN}/git-ai-wrapper"
-
-ln -sf "${SCRIPT_DIR}/scripts/git-set-ai-author.sh" "${LOCAL_BIN}/git-set-ai-author"
-echo "[chezmoi] Linked: ${LOCAL_BIN}/git-set-ai-author"
+git_ai_link_dotfiles_bins "$SCRIPT_DIR" "chezmoi"
 
 exit 0

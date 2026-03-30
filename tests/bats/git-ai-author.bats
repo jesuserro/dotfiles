@@ -53,6 +53,7 @@ get_author_file() {
     
     run "$GIT_REAL" log --format="%an|%ae|%cn|%ce" -1
     [ "$status" -eq 0 ]
+    [[ "$output" == "${HUMAN_NAME}|${HUMAN_EMAIL}|${HUMAN_NAME}|${HUMAN_EMAIL}" ]]
 }
 
 @test "commit with valid ai-author file sets author" {
@@ -130,10 +131,7 @@ get_author_file() {
 }
 
 @test "git-set-ai-author cursor sets correct identity" {
-    cp "$CLI_SCRIPT" "$TEST_DIR/git-set-ai-author"
-    chmod +x "$TEST_DIR/git-set-ai-author"
-    
-    run "$TEST_DIR/git-set-ai-author" cursor
+    run "$CLI_SCRIPT" cursor
     [ "$status" -eq 0 ]
     
     local author_file
@@ -143,12 +141,9 @@ get_author_file() {
 }
 
 @test "git-set-ai-author human clears identity" {
-    cp "$CLI_SCRIPT" "$TEST_DIR/git-set-ai-author"
-    chmod +x "$TEST_DIR/git-set-ai-author"
+    "$CLI_SCRIPT" cursor
     
-    "$TEST_DIR/git-set-ai-author" cursor
-    
-    run "$TEST_DIR/git-set-ai-author" human
+    run "$CLI_SCRIPT" human
     [ "$status" -eq 0 ]
     
     local author_file
@@ -157,25 +152,25 @@ get_author_file() {
 }
 
 @test "git-set-ai-author status shows current state" {
-    cp "$CLI_SCRIPT" "$TEST_DIR/git-set-ai-author"
-    chmod +x "$TEST_DIR/git-set-ai-author"
-    
-    run "$TEST_DIR/git-set-ai-author" status
+    run "$CLI_SCRIPT" status
     [ "$status" -eq 0 ]
     [[ "$output" == *"No AI author set"* ]]
     
-    "$TEST_DIR/git-set-ai-author" cursor
+    "$CLI_SCRIPT" cursor
     
-    run "$TEST_DIR/git-set-ai-author" status
+    run "$CLI_SCRIPT" status
     [ "$status" -eq 0 ]
     [[ "$output" == *"Cursor Agent"* ]]
 }
 
+@test "git-set-ai-author unknown agent fails" {
+    run "$CLI_SCRIPT" not-an-agent
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Unknown agent"* ]]
+}
+
 @test "git-set-ai-author list shows all agents" {
-    cp "$CLI_SCRIPT" "$TEST_DIR/git-set-ai-author"
-    chmod +x "$TEST_DIR/git-set-ai-author"
-    
-    run "$TEST_DIR/git-set-ai-author" list
+    run "$CLI_SCRIPT" list
     [ "$status" -eq 0 ]
     [[ "$output" == *"cursor"* ]]
     [[ "$output" == *"codex"* ]]

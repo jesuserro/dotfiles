@@ -1,28 +1,24 @@
 #!/usr/bin/env bash
+# Secundario / compatibilidad: misma materialización que Chezmoi (ln -sf).
+# Camino oficial: chezmoi apply → run_after_13_link_git_ai_wrapper.sh.tmpl
+
 set -euo pipefail
 
-WRAPPER_SOURCE="${DOTFILES_ROOT:-$HOME/dotfiles}/local/bin/git-ai-wrapper"
-WRAPPER_TARGET="${HOME}/.local/bin/git-ai-wrapper"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/git-ai-common.sh
+source "$SCRIPT_DIR/lib/git-ai-common.sh"
+
+DOTFILES_ROOT="${DOTFILES_ROOT:-$HOME/dotfiles}"
 
 main() {
-    if [[ ! -f "$WRAPPER_SOURCE" ]]; then
-        echo "Error: Source wrapper not found at $WRAPPER_SOURCE" >&2
+    if [[ ! -f "${DOTFILES_ROOT}/local/bin/git-ai-wrapper" ]]; then
+        echo "Error: Source wrapper not found under ${DOTFILES_ROOT}/local/bin/git-ai-wrapper" >&2
         exit 1
     fi
 
-    mkdir -p "$(dirname "$WRAPPER_TARGET")"
+    git_ai_link_dotfiles_bins "$DOTFILES_ROOT" "install-git-ai"
 
-    if [[ -f "$WRAPPER_TARGET" ]]; then
-        echo "Removing existing wrapper at $WRAPPER_TARGET"
-        rm -f "$WRAPPER_TARGET"
-    fi
-
-    cp "$WRAPPER_SOURCE" "$WRAPPER_TARGET"
-    chmod +x "$WRAPPER_TARGET"
-
-    echo "Installed git-ai-wrapper to $WRAPPER_TARGET"
-
-    if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+    if [[ ":$PATH:" != *":${HOME}/.local/bin:"* ]]; then
         echo ""
         echo "Warning: ~/.local/bin is not in your PATH."
         echo "Add this to your shell config:"

@@ -2,6 +2,8 @@
 
 Los scripts `scripts/git-set-ai-enable.sh` y `scripts/git-set-ai-disable.sh` escriben la clave **`git.path`** del **editor Cursor** para que Source Control use `git-ai-wrapper`.
 
+**Flujo completo de la feature** (uso, Chezmoi, validación, contrato): [GIT_AI_AUTHOR.md](GIT_AI_AUTHOR.md). Este documento se limita a **rutas de `User/settings.json` y overrides**.
+
 ## Tres configuraciones distintas (no las mezcles)
 
 | Qué es | Ruta típica (ejemplos) | Uso |
@@ -50,7 +52,7 @@ export CURSOR_USER_SETTINGS_PATH="/ruta/absoluta/a/User/settings.json"
 ./scripts/git-set-ai-enable.sh
 ```
 
-Misma variable para entender qué fichero tocarán los scripts antes de ejecutarlos:
+Misma variable para inspeccionar qué fichero tocarán los scripts:
 
 ```bash
 source scripts/lib/git-ai-cursor-path.sh
@@ -61,18 +63,14 @@ cursor_editor_user_settings_path
 
 Debe ser la ruta **en el sistema donde se ejecuta Git** (en WSL suele ser algo como `/home/.../.local/bin/git-ai-wrapper`), no una ruta `C:\...` de Windows, porque el wrapper se invoca desde el entorno Linux del repo.
 
-## Validación E2E (terminal vs Source Control)
-
-Source Control usa el mismo binario que `git.path`. Para reproducir sin pulsar la UI:
+## Validación rápida (terminal)
 
 ```bash
 ~/.local/bin/git-ai-wrapper commit -m "mensaje"
 ```
 
-Con `GIT_AI_WRAPPER_DEBUG=1` el wrapper imprime en stderr argv, rama de filtrado de `--author` y detección de `commit`.
+Con `GIT_AI_WRAPPER_DEBUG=1` el wrapper imprime en stderr argv y decisiones de filtrado.
 
-`treegen` (o `scripts/treegen.sh`) solo cambia la línea **Generated:** en `STRUCTURE.md`. Antes solo tenía precisión de segundos: dos ejecuciones en el mismo segundo **no generaban diff** y `git commit` podía fallar. Ahora se usa **milisegundos** cuando GNU `date` lo permite; si no, `sleep 1` entre ejecuciones también sirve.
+## Chezmoi y materialización de binarios
 
-## Chezmoi
-
-Los scripts viven en el repo de dotfiles; al aplicar Chezmoi, ejecuta `git-set-ai-enable.sh` en la máquina donde quieras activar el wrapper. La ruta del `settings.json` se resuelve en tiempo de ejecución según el SO y WSL.
+El **`git.path`** apunta al wrapper bajo `~/.local/bin/`; esos enlaces los crea **`chezmoi apply`** mediante `run_after_13` (ver [GIT_AI_AUTHOR.md](GIT_AI_AUTHOR.md)). Los scripts enable/disable **no** sustituyen a Chezmoi: solo editan el `settings.json` del editor.
