@@ -73,6 +73,9 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 | `git/` | `pr-conventions/` | Convenciones de PR y commits |
 | `gitnexus/` | `gitnexus-*` | Skills de `GitNexus` con marca original |
 | `ops/` | `ai-prompt-consumer/` | `Vault AI Prompt Consumer` |
+| `ops/` | `vault-review-diff/` | `Vault Review Diff` |
+| `ops/` | `vault-detect-errors/` | `Vault Detect Errors` |
+| `ops/` | `vault-write-commit-message/` | `Vault Write Commit Message` |
 | `ops/` | `mcp-governance/` | `Dotfiles MCP Governance` |
 | `ops/` | `playwright-ui-validation/` | `Dotfiles Playwright UI Validation` |
 | `ops/` | `system-updates/` | `Dotfiles UPS Workflow` |
@@ -111,6 +114,7 @@ Referencias:
 - sistema y contrato humano: [docs/AI_PROMPTS_SYSTEM.md](../docs/AI_PROMPTS_SYSTEM.md)
 - referencia operativa corta: [docs/PROMPT_LAUNCHERS.md](../docs/PROMPT_LAUNCHERS.md)
 - guía reutilizable para agentes: `Vault AI Prompt Consumer` → [ai/assets/skills/ops/ai-prompt-consumer/SKILL.md](assets/skills/ops/ai-prompt-consumer/SKILL.md)
+- wrappers operativos derivados del vault: `Vault Review Diff`, `Vault Detect Errors`, `Vault Write Commit Message`
 
 ## Añadir un nuevo MCP servidor
 

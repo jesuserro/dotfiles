@@ -14,6 +14,9 @@ AI_PROMPT_CATALOG=(
     "review-diff"
     "write-commit-message"
     "design-test-cases"
+    "update-documentation"
+    "suggest-improvements"
+    "development-acceleration"
 )
 
 ai_prompt_log_error() {

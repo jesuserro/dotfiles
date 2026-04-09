@@ -56,6 +56,8 @@ Visible skill names are classified by semantic origin:
 - Third-party skills keep their original brand, such as `GitNexus ...`
 - Project-specific families such as `Store ETL ...` belong in the corresponding project repository
 
+Some `Vault ...` skills are lightweight operational wrappers around canonical prompts. They document usage and invocation, not the canonical prompt text itself.
+
 ## Categories
 
 | Category | Purpose | Skills |
@@ -65,7 +67,7 @@ Visible skill names are classified by semantic origin:
 | `etl/` | Data engineering | Data contracts |
 | `git/` | Version control | PR conventions |
 | `gitnexus/` | Code intelligence | GitNexus skills (6 variants) |
-| `ops/` | Infrastructure/ops | Vault AI Prompt Consumer, Dotfiles MCP Governance, Dotfiles UPS Workflow, Dotfiles Playwright UI Validation, Dotfiles WSL2 Local Tools |
+| `ops/` | Infrastructure/ops | Vault AI Prompt Consumer, Vault Review Diff, Vault Detect Errors, Vault Write Commit Message, Dotfiles MCP Governance, Dotfiles UPS Workflow, Dotfiles Playwright UI Validation, Dotfiles WSL2 Local Tools |
 | `postgres/` | Database | SQL style, schema review |
 | `python/` | Python development | Project structure |
 

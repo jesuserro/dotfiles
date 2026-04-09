@@ -107,6 +107,9 @@ La convención interna actual queda encapsulada y no debe asumirse fuera del hel
 - `review-diff`
 - `write-commit-message`
 - `design-test-cases`
+- `update-documentation`
+- `suggest-improvements`
+- `development-acceleration`
 
 ### Tasks
 
