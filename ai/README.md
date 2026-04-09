@@ -73,8 +73,10 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 | `git/` | `pr-conventions/` | Convenciones de PR y commits |
 | `gitnexus/` | `gitnexus-*` | Skills de `GitNexus` con marca original |
 | `ops/` | `ai-prompt-consumer/` | `Vault AI Prompt Consumer` |
+| `ops/` | `vault-development-acceleration/` | `Vault Development Acceleration` |
 | `ops/` | `vault-review-diff/` | `Vault Review Diff` |
 | `ops/` | `vault-detect-errors/` | `Vault Detect Errors` |
+| `ops/` | `vault-suggest-improvements/` | `Vault Suggest Improvements` |
 | `ops/` | `vault-update-documentation/` | `Vault Update Documentation` |
 | `ops/` | `vault-write-commit-message/` | `Vault Write Commit Message` |
 | `ops/` | `mcp-governance/` | `Dotfiles MCP Governance` |
@@ -115,7 +117,7 @@ Referencias:
 - sistema y contrato humano: [docs/AI_PROMPTS_SYSTEM.md](../docs/AI_PROMPTS_SYSTEM.md)
 - referencia operativa corta: [docs/PROMPT_LAUNCHERS.md](../docs/PROMPT_LAUNCHERS.md)
 - guía reutilizable para agentes: `Vault AI Prompt Consumer` → [ai/assets/skills/ops/ai-prompt-consumer/SKILL.md](assets/skills/ops/ai-prompt-consumer/SKILL.md)
-- wrappers operativos derivados del vault: `Vault Review Diff`, `Vault Detect Errors`, `Vault Update Documentation`, `Vault Write Commit Message`
+- wrappers operativos derivados del vault: `Vault Development Acceleration`, `Vault Review Diff`, `Vault Detect Errors`, `Vault Suggest Improvements`, `Vault Update Documentation`, `Vault Write Commit Message`
 
 ## Añadir un nuevo MCP servidor
 
