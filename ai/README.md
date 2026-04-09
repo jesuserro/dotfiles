@@ -73,6 +73,7 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 | `git/` | `pr-conventions/` | Convenciones de PR y commits |
 | `gitnexus/` | `gitnexus-*` | Skills de `GitNexus` con marca original |
 | `ops/` | `ai-prompt-consumer/` | `Vault AI Prompt Consumer` |
+| `ops/` | `dotfiles-skill-registration/` | `Dotfiles Skill Registration` |
 | `ops/` | `vault-development-acceleration/` | `Vault Development Acceleration` |
 | `ops/` | `vault-review-diff/` | `Vault Review Diff` |
 | `ops/` | `vault-detect-errors/` | `Vault Detect Errors` |
