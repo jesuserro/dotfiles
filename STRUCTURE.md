@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-03-30 12:01:53
+**Generated:** 2026-04-09 13:03:39
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -11,7 +11,8 @@
 │   ├── 📄 run_after_10_setup_ai_runtime.sh.tmpl
 │   ├── 📄 run_after_11_link_ai_assets.sh.tmpl
 │   ├── 📄 run_after_12_materialize_ai_commands.sh.tmpl
-│   └── 📄 run_after_13_link_git_ai_wrapper.sh.tmpl
+│   ├── 📄 run_after_13_link_git_ai_wrapper.sh.tmpl
+│   └── 📄 run_after_14_link_prompt_launchers.sh.tmpl
 ├── 📁 .cursor
 │   ├── 📁 plans
 │   └── 📁 rules
@@ -648,11 +649,27 @@
 │   │       │   └── 📁 gitnexus-refactoring
 │   │       │       └── 📝 SKILL.md
 │   │       ├── 📁 ops
+│   │       │   ├── 📁 ai-prompt-consumer
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 dotfiles-skill-registration
+│   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 mcp-governance
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 playwright-ui-validation
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 system-updates
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 vault-detect-errors
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 vault-development-acceleration
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 vault-review-diff
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 vault-suggest-improvements
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 vault-update-documentation
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 vault-write-commit-message
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   └── 📁 wsl2-local-tools
 │   │       │       └── 📝 SKILL.md
@@ -707,6 +724,7 @@
 │   │   ├── 📝 PLAN_000009.md
 │   │   └── 📄 PLAN_000009.md:Zone.Identifier
 │   ├── 📁 wiki
+│   ├── 📝 AI_PROMPTS_SYSTEM.md
 │   ├── 📝 CAMBIAR_TOKEN_GITHUB.md
 │   ├── 📝 CHEZMOI.md
 │   ├── 📝 COMMANDS_ARCHITECTURE.md
@@ -721,6 +739,7 @@
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   ├── 📝 MIGRATION_MCP_ITER3.md
 │   ├── 📝 OPENCODE.md
+│   ├── 📝 PROMPT_LAUNCHERS.md
 │   ├── 📝 README.md
 │   ├── 📝 SECRETS_EXAMPLES.md
 │   ├── 📝 TESTING.md
@@ -755,6 +774,7 @@
 │   └── 🔧 p10k.zsh
 ├── 📁 releases
 │   ├── 📝 branch_feature_1-migration-to-chezmoi-sops-age.md
+│   ├── 📝 branch_feature_10-adding-agent-authory.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
@@ -769,7 +789,8 @@
 ├── 📁 scripts
 │   ├── 📁 lib
 │   │   ├── 🔧 git-ai-common.sh
-│   │   └── 🔧 git-ai-cursor-path.sh
+│   │   ├── 🔧 git-ai-cursor-path.sh
+│   │   └── 🔧 prompt-vault-common.sh
 │   ├── 🔧 generate-commands.sh
 │   ├── 🔧 git-set-ai-author.sh
 │   ├── 🔧 git-set-ai-disable.sh
@@ -824,6 +845,8 @@
 │   │   │   ├── 📄 filesystem-launcher.bats
 │   │   │   ├── 📄 git-launcher.bats
 │   │   │   └── 📄 validate-governance.bats
+│   │   ├── 📁 prompts
+│   │   │   └── 📄 prompt-launchers.bats
 │   │   └── 📄 git-ai-author.bats
 │   └── 📄 Makefile.tests
 ├── 📁 tmux

@@ -14,7 +14,7 @@ This directory is automatically populated. Changes made here will be overwritten
 
 ## How It Works
 
-The script `run_after_11_link_ai_assets.sh.tmpl` symlinks each skill from `~/.config/ai/skills/<category>/<skill>/` to `~/.config/opencode/skills/<category>-<skill>/`.
+The script `run_after_11_link_ai_assets.sh.tmpl` exposes the canonical skills hub from `~/.config/ai/skills/` in this OpenCode surface.
 
 ## Canonical Source
 

@@ -3,7 +3,7 @@ name: mcp-governance
 description: Guides classification, integration and maintenance of MCP servers following the layered architecture. Use when adding, modifying or auditing MCP configuration in the dotfiles.
 ---
 
-# MCP Governance
+# Dotfiles MCP Governance
 
 Guía para mantener la arquitectura de MCPs según la convención de capas.
 

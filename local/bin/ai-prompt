@@ -1,0 +1,584 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -x /usr/bin/python3 ]]; then
+    SCRIPT_DIR="$(/usr/bin/python3 -c "import os,sys; print(os.path.dirname(os.path.realpath(sys.argv[1])))" "${BASH_SOURCE[0]}")"
+elif command -v python3 >/dev/null 2>&1; then
+    SCRIPT_DIR="$(python3 -c "import os,sys; print(os.path.dirname(os.path.realpath(sys.argv[1])))" "${BASH_SOURCE[0]}")"
+else
+    _s="${BASH_SOURCE[0]}"
+    while [[ -h "$_s" ]]; do
+        _d="$(cd "$(dirname "$_s")" && pwd)"
+        _l="$(readlink "$_s")"
+        [[ "$_l" == /* ]] && _s="$_l" || _s="$_d/$_l"
+    done
+    SCRIPT_DIR="$(cd "$(dirname "$_s")" && pwd)"
+    unset _s _d _l
+fi
+
+# shellcheck source=../../scripts/lib/prompt-vault-common.sh
+source "$SCRIPT_DIR/../../scripts/lib/prompt-vault-common.sh"
+
+show_help() {
+    cat <<EOF
+Usage: ai-prompt <command> [prompt-id]
+
+Unified access to canonical prompts stored in the external vault.
+
+Commands:
+    list                List supported prompt ids
+    show <prompt-id>    Print the canonical markdown prompt to stdout
+    render <prompt-id>  Print the canonical prompt plus optional extra context
+    task <task-name>    Run a small preset built on top of render
+    path <prompt-id>    Print the resolved markdown path
+    check               Check catalog entries against files in the vault
+    help                Show this help
+
+Environment:
+    AI_PROMPTS_VAULT_ROOT   Override the vault root used to resolve prompts
+Optional clipboard:
+    Use --copy with show, render, or task to copy the generated content.
+    Backends are detected in this order: pbcopy, wl-copy, xclip, xsel, clip.exe
+EOF
+}
+
+task_usage() {
+    cat <<EOF
+Usage: ai-prompt task <task-name> [OPTIONS]
+
+Tasks:
+    review-diff           Render review-diff with --git-diff --git-status
+    write-commit-message  Render write-commit-message with --git-diff --git-status
+    summarize-repo        Render summarize-repo and append README.md if present
+
+Task options:
+    --output-file <path>  Write the rendered prompt to a specific file
+    --output-temp         Write the rendered prompt to a temporary file
+    --print-output-path   Print the final output path when writing to a file
+    --copy                Copy the final rendered prompt to the system clipboard
+    --explain             Explain the preset without running it
+    help                  Show this help
+EOF
+}
+
+task_explain() {
+    local task_name="$1"
+
+    case "$task_name" in
+        review-diff)
+            cat <<EOF
+Task: review-diff
+Prompt: review-diff
+Context: --git-diff --git-status
+EOF
+            ;;
+        write-commit-message)
+            cat <<EOF
+Task: write-commit-message
+Prompt: write-commit-message
+Context: --git-diff --git-status
+EOF
+            ;;
+        summarize-repo)
+            cat <<EOF
+Task: summarize-repo
+Prompt: summarize-repo
+Context: README.md from the current directory when present and readable; otherwise prompt base only
+EOF
+            ;;
+        *)
+            ai_prompt_log_error "Unknown task: $task_name"
+            ai_prompt_log_error "Run 'ai-prompt task help' to see supported tasks."
+            return 1
+            ;;
+    esac
+}
+
+render_usage() {
+    cat <<EOF
+Usage: ai-prompt render <prompt-id> [OPTIONS]
+
+Options:
+    --context-file <path>    Append a readable file as extra context
+    --stdin                  Append content read from stdin
+    --git-diff               Append "git diff" output from the current repo
+    --git-status             Append "git status --short" output from the current repo
+    --output-file <path>     Write the rendered prompt to a specific file
+    --output-temp            Write the rendered prompt to a temporary file
+    --print-output-path      Print the final output path when writing to a file
+    --copy                   Copy the final rendered prompt to the system clipboard
+EOF
+}
+
+copy_to_clipboard() {
+    local content="$1"
+    local clip_stderr_file=""
+    local clip_stderr_line=""
+
+    if command -v pbcopy >/dev/null 2>&1; then
+        printf '%s' "$content" | pbcopy
+        return 0
+    fi
+
+    if command -v wl-copy >/dev/null 2>&1; then
+        printf '%s' "$content" | wl-copy
+        return 0
+    fi
+
+    if command -v xclip >/dev/null 2>&1; then
+        printf '%s' "$content" | xclip -selection clipboard
+        return 0
+    fi
+
+    if command -v xsel >/dev/null 2>&1; then
+        printf '%s' "$content" | xsel --clipboard --input
+        return 0
+    fi
+
+    if command -v clip.exe >/dev/null 2>&1; then
+        clip_stderr_file="$(mktemp "${TMPDIR:-/tmp}/ai-prompt.clipboard.XXXXXX.log")" || {
+            ai_prompt_log_error "Failed to create temporary file for clipboard error handling."
+            return 1
+        }
+        if ! printf '%s' "$content" | clip.exe 2>"$clip_stderr_file"; then
+            ai_prompt_log_error "Clipboard backend clip.exe failed."
+            while IFS= read -r clip_stderr_line; do
+                [[ -n "$clip_stderr_line" ]] && ai_prompt_log_error "$clip_stderr_line"
+            done < "$clip_stderr_file"
+            rm -f "$clip_stderr_file"
+            return 1
+        fi
+        if [[ -s "$clip_stderr_file" ]]; then
+            ai_prompt_log_error "Clipboard backend clip.exe reported an error."
+            while IFS= read -r clip_stderr_line; do
+                [[ -n "$clip_stderr_line" ]] && ai_prompt_log_error "$clip_stderr_line"
+            done < "$clip_stderr_file"
+            rm -f "$clip_stderr_file"
+            return 1
+        fi
+        rm -f "$clip_stderr_file"
+        return 0
+    fi
+
+    ai_prompt_log_error "No clipboard backend was found."
+    ai_prompt_log_error "Supported backends: pbcopy, wl-copy, xclip, xsel, clip.exe"
+    return 1
+}
+
+require_git_repo() {
+    if git rev-parse --show-toplevel >/dev/null 2>&1; then
+        return 0
+    fi
+
+    ai_prompt_log_error "Git context requested outside a git repository."
+    ai_prompt_log_error "Current directory: $(pwd)"
+    return 1
+}
+
+render_section() {
+    local label="$1"
+    local content="$2"
+
+    printf '\n### %s\n\n%s\n' "$label" "$content"
+}
+
+build_rendered_prompt() {
+    local prompt_id="$1"
+    shift
+
+    local -a context_files=()
+    local use_stdin=false
+    local use_git_diff=false
+    local use_git_status=false
+    local output_file=""
+    local use_output_temp=false
+    local print_output_path=false
+    local stdin_content=""
+    local git_diff_content=""
+    local git_status_content=""
+    local context_count=0
+    local content=""
+    local file_path=""
+    local rendered_prompt=""
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --context-file)
+                if [[ $# -lt 2 ]]; then
+                    ai_prompt_log_error "Missing path after --context-file."
+                    render_usage >&2
+                    return 1
+                fi
+                context_files+=("$2")
+                shift 2
+                ;;
+            --stdin)
+                use_stdin=true
+                shift
+                ;;
+            --git-diff)
+                use_git_diff=true
+                shift
+                ;;
+            --git-status)
+                use_git_status=true
+                shift
+                ;;
+            --output-file)
+                if [[ $# -lt 2 ]]; then
+                    ai_prompt_log_error "Missing path after --output-file."
+                    render_usage >&2
+                    return 1
+                fi
+                output_file="$2"
+                shift 2
+                ;;
+            --output-temp)
+                use_output_temp=true
+                shift
+                ;;
+            --print-output-path)
+                print_output_path=true
+                shift
+                ;;
+            --copy)
+                shift
+                ;;
+            *)
+                ai_prompt_log_error "Unknown render option: $1"
+                render_usage >&2
+                return 1
+                ;;
+        esac
+    done
+
+    if [[ -n "$output_file" && "$use_output_temp" == "true" ]]; then
+        ai_prompt_log_error "Choose only one output mode: --output-file or --output-temp."
+        return 1
+    fi
+
+    if [[ "$print_output_path" == "true" && -z "$output_file" && "$use_output_temp" != "true" ]]; then
+        ai_prompt_log_error "--print-output-path requires --output-file or --output-temp."
+        return 1
+    fi
+
+    for file_path in "${context_files[@]}"; do
+        if [[ ! -f "$file_path" || ! -r "$file_path" ]]; then
+            ai_prompt_log_error "Context file not found or not readable: $file_path"
+            return 1
+        fi
+        context_count=$((context_count + 1))
+    done
+
+    if [[ "$use_stdin" == "true" ]]; then
+        if [[ -t 0 ]]; then
+            ai_prompt_log_error "STDIN requested but no stdin pipe or redirection was provided."
+            ai_prompt_log_error "Use a pipe or redirection, for example: printf 'text\n' | ai-prompt render ${prompt_id} --stdin"
+            return 1
+        fi
+        stdin_content="$(cat)"
+        if [[ -z "$stdin_content" ]]; then
+            ai_prompt_log_error "STDIN requested but no input was received."
+            ai_prompt_log_error "Use a pipe or redirection, for example: printf 'text\n' | ai-prompt render ${prompt_id} --stdin"
+            return 1
+        fi
+        context_count=$((context_count + 1))
+    fi
+
+    if [[ "$use_git_diff" == "true" ]]; then
+        require_git_repo || return 1
+        git_diff_content="$(git diff)"
+        context_count=$((context_count + 1))
+    fi
+
+    if [[ "$use_git_status" == "true" ]]; then
+        require_git_repo || return 1
+        git_status_content="$(git status --short)"
+        context_count=$((context_count + 1))
+    fi
+
+    rendered_prompt="$(ai_prompt_print "$prompt_id")"
+
+    if [[ "$context_count" -eq 0 ]]; then
+        printf '%s' "$rendered_prompt"
+        return 0
+    fi
+
+    rendered_prompt+=$'\n\n## Additional Context\n'
+
+    for file_path in "${context_files[@]}"; do
+        content="$(cat "$file_path")"
+        rendered_prompt+="$(render_section "Context file: ${file_path}" "$content")"
+    done
+
+    if [[ "$use_stdin" == "true" ]]; then
+        rendered_prompt+="$(render_section "STDIN" "$stdin_content")"
+    fi
+
+    if [[ "$use_git_diff" == "true" ]]; then
+        rendered_prompt+="$(render_section "Git diff" "$git_diff_content")"
+    fi
+
+    if [[ "$use_git_status" == "true" ]]; then
+        rendered_prompt+="$(render_section "Git status" "$git_status_content")"
+    fi
+
+    printf '%s' "$rendered_prompt"
+}
+
+write_rendered_output() {
+    local rendered_prompt="$1"
+    local output_mode="$2"
+    local output_path="$3"
+    local print_output_path="$4"
+    local final_output_path=""
+
+    case "$output_mode" in
+        stdout)
+            printf '%s' "$rendered_prompt"
+            ;;
+        file)
+            mkdir -p "$(dirname "$output_path")" || {
+                ai_prompt_log_error "Failed to create output directory for: $output_path"
+                return 1
+            }
+            printf '%s' "$rendered_prompt" > "$output_path" || {
+                ai_prompt_log_error "Failed to write output file: $output_path"
+                return 1
+            }
+            final_output_path="$output_path"
+            ;;
+        temp)
+            final_output_path="$(mktemp "${TMPDIR:-/tmp}/ai-prompt.XXXXXX.md")" || {
+                ai_prompt_log_error "Failed to create temporary output file."
+                return 1
+            }
+            printf '%s' "$rendered_prompt" > "$final_output_path" || {
+                ai_prompt_log_error "Failed to write temporary output file: $final_output_path"
+                return 1
+            }
+            ;;
+        *)
+            ai_prompt_log_error "Unknown output mode: $output_mode"
+            return 1
+            ;;
+    esac
+
+    if [[ "$print_output_path" == "true" && -n "$final_output_path" ]]; then
+        printf '%s\n' "$final_output_path"
+    fi
+}
+
+show_prompt() {
+    local prompt_id="$1"
+    shift
+
+    local use_copy=false
+    local rendered_prompt=""
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --copy)
+                use_copy=true
+                shift
+                ;;
+            *)
+                ai_prompt_log_error "Unknown show option: $1"
+                ai_prompt_log_error "Usage: ai-prompt show <prompt-id> [--copy]"
+                return 1
+                ;;
+        esac
+    done
+
+    rendered_prompt="$(ai_prompt_print "$prompt_id")" || return 1
+
+    if [[ "$use_copy" == "true" ]]; then
+        copy_to_clipboard "$rendered_prompt" || return 1
+    fi
+
+    printf '%s' "$rendered_prompt"
+}
+
+render_prompt() {
+    local prompt_id="$1"
+    shift
+
+    local output_mode="stdout"
+    local output_path=""
+    local print_output_path="false"
+    local use_copy="false"
+    local rendered_prompt=""
+    local arg=""
+
+    local -a forward_args=()
+    while [[ $# -gt 0 ]]; do
+        arg="$1"
+        case "$arg" in
+            --output-file)
+                if [[ $# -lt 2 ]]; then
+                    ai_prompt_log_error "Missing path after --output-file."
+                    render_usage >&2
+                    return 1
+                fi
+                output_mode="file"
+                output_path="$2"
+                forward_args+=("$1" "$output_path")
+                shift 2
+                ;;
+            --output-temp)
+                output_mode="temp"
+                forward_args+=("$1")
+                shift
+                ;;
+            --print-output-path)
+                print_output_path="true"
+                forward_args+=("$1")
+                shift
+                ;;
+            --copy)
+                use_copy="true"
+                forward_args+=("$1")
+                shift
+                ;;
+            *)
+                forward_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    rendered_prompt="$(build_rendered_prompt "$prompt_id" "${forward_args[@]}")" || return 1
+    if [[ "$use_copy" == "true" ]]; then
+        copy_to_clipboard "$rendered_prompt" || return 1
+    fi
+    write_rendered_output "$rendered_prompt" "$output_mode" "$output_path" "$print_output_path"
+}
+
+task_prompt() {
+    local task_name="$1"
+    shift
+
+    local explain=false
+    local -a output_args=()
+    local cwd_readme="README.md"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --output-file)
+                if [[ $# -lt 2 ]]; then
+                    ai_prompt_log_error "Missing path after --output-file."
+                    task_usage >&2
+                    return 1
+                fi
+                output_args+=("$1" "$2")
+                shift 2
+                ;;
+            --output-temp|--print-output-path)
+                output_args+=("$1")
+                shift
+                ;;
+            --copy)
+                output_args+=("$1")
+                shift
+                ;;
+            --explain)
+                explain=true
+                shift
+                ;;
+            help)
+                task_usage
+                return 0
+                ;;
+            *)
+                ai_prompt_log_error "Unknown task option: $1"
+                task_usage >&2
+                return 1
+                ;;
+        esac
+    done
+
+    if [[ "$explain" == "true" ]]; then
+        task_explain "$task_name"
+        return $?
+    fi
+
+    case "$task_name" in
+        review-diff)
+            render_prompt "review-diff" --git-diff --git-status "${output_args[@]}"
+            ;;
+        write-commit-message)
+            render_prompt "write-commit-message" --git-diff --git-status "${output_args[@]}"
+            ;;
+        summarize-repo)
+            if [[ -f "$cwd_readme" && -r "$cwd_readme" ]]; then
+                render_prompt "summarize-repo" --context-file "$cwd_readme" "${output_args[@]}"
+            else
+                render_prompt "summarize-repo" "${output_args[@]}"
+            fi
+            ;;
+        *)
+            ai_prompt_log_error "Unknown task: $task_name"
+            ai_prompt_log_error "Run 'ai-prompt task help' to see supported tasks."
+            return 1
+            ;;
+    esac
+}
+
+main() {
+    local command="${1:-help}"
+    local prompt_id="${2:-}"
+
+    case "$command" in
+        list)
+            ai_prompt_list_supported
+            ;;
+        show)
+            if [[ -z "$prompt_id" ]]; then
+                ai_prompt_log_error "Missing prompt id for 'show'."
+                ai_prompt_log_error "Usage: ai-prompt show <prompt-id> [--copy]"
+                exit 1
+            fi
+            shift 2
+            show_prompt "$prompt_id" "$@"
+            ;;
+        render)
+            if [[ -z "$prompt_id" ]]; then
+                ai_prompt_log_error "Missing prompt id for 'render'."
+                render_usage >&2
+                exit 1
+            fi
+            shift 2
+            render_prompt "$prompt_id" "$@"
+            ;;
+        task)
+            if [[ -z "$prompt_id" || "$prompt_id" == "help" ]]; then
+                task_usage
+                exit 0
+            fi
+            shift 2
+            task_prompt "$prompt_id" "$@"
+            ;;
+        path)
+            if [[ -z "$prompt_id" ]]; then
+                ai_prompt_log_error "Missing prompt id for 'path'."
+                ai_prompt_log_error "Usage: ai-prompt path <prompt-id>"
+                exit 1
+            fi
+            ai_prompt_require_supported "$prompt_id"
+            ai_prompt_markdown_path "$prompt_id"
+            ;;
+        check)
+            ai_prompt_check_catalog
+            ;;
+        help|-h|--help)
+            show_help
+            ;;
+        *)
+            ai_prompt_log_error "Unknown command: $command"
+            ai_prompt_log_error "Run 'ai-prompt help' for usage."
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

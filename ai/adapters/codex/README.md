@@ -16,6 +16,6 @@ Wiring específico para integrar el hub AI con Codex.
 
 ## Skills
 
-El script `run_after_11_link_ai_assets` crea el symlink `~/.codex/skills` → `~/.config/ai/skills` automáticamente.
+El script `run_after_11_link_ai_assets` expone en `~/.codex/skills` el mismo canon publicado en `~/.config/ai/skills`.
 
 Codex usa `$CODEX_HOME/skills` (por defecto `~/.codex/skills`).

@@ -10,17 +10,19 @@ BATS_HELPERS := $(BATS_DIR)/helpers/common.bash
 # Shell scripts to lint (dotfiles-owned only, excludes third-party/vendor)
 SHELL_SCRIPTS := $(shell find $(DOTFILES_DIR) -name '*.sh' -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/')
 SHELL_LAUNCHERS := $(shell find $(DOTFILES_DIR)/bin -name 'mcp-*-launcher' -type f 2>/dev/null || true)
+PROMPT_LAUNCHERS := $(shell find $(DOTFILES_DIR)/local/bin -name 'prompt-*' -type f 2>/dev/null || true)
 SHELL_CHEZMOI := $(shell find $(DOTFILES_DIR)/.chezmoiscripts -name '*.tmpl' -type f 2>/dev/null || true)
 SHELL_TESTS := $(shell find $(TESTS_DIR) -name '*.bats' -type f | grep -v '/\.git/')
 
 # All shell files to lint
-SHELL_FILES := $(SHELL_SCRIPTS) $(SHELL_LAUNCHERS) $(SHELL_CHEZMOI) $(SHELL_TESTS)
+SHELL_FILES := $(SHELL_SCRIPTS) $(SHELL_LAUNCHERS) $(PROMPT_LAUNCHERS) $(SHELL_CHEZMOI) $(SHELL_TESTS)
 
 # bats tests
 BATS_DIR := $(TESTS_DIR)/bats
 BATS_TESTS_MCP := $(wildcard $(BATS_DIR)/mcp/*.bats)
 BATS_TESTS_CHEZMOI := $(wildcard $(BATS_DIR)/chezmoi/*.bats)
 BATS_TESTS_COMMANDS := $(wildcard $(BATS_DIR)/commands/*.bats)
+BATS_TESTS_PROMPTS := $(wildcard $(BATS_DIR)/prompts/*.bats)
 
 # Color codes
 RED := \033[0;31m
@@ -29,7 +31,7 @@ YELLOW := \033[1;33m
 BLUE := \033[0;34m
 NC := \033[0m
 
-.PHONY: test test-fast test-lint test-bats test-chezmoi test-install fmt-shell help bats-git-ai
+.PHONY: test test-fast test-lint test-bats test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts
 .PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands
 
 help:
@@ -153,7 +155,7 @@ fmt-shell:
 # Bats tests (human-readable output)
 # ============================================
 
-test-bats: bats-helpers bats-mcp bats-chezmoi bats-commands bats-git-ai
+test-bats: bats-helpers bats-mcp bats-chezmoi bats-commands bats-git-ai bats-prompts
 	@echo ""
 	@echo "$(GREEN)==>$NC Bats tests passed"
 
@@ -191,6 +193,10 @@ bats-commands:
 bats-git-ai:
 	@echo "$(BLUE)==>$NC Running git-ai-author tests..."
 	@$(call run_bats,$(BATS_DIR)/git-ai-author.bats)
+
+bats-prompts:
+	@echo "$(BLUE)==>$NC Running prompt launcher tests..."
+	@$(call run_bats,$(BATS_DIR)/prompts/prompt-launchers.bats)
 
 # ============================================
 # CI targets (JUnit/XML output)

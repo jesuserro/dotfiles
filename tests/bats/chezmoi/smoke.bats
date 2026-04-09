@@ -37,6 +37,10 @@ teardown() {
     [[ -f "$DOTFILES_DIR/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl" ]]
 }
 
+@test "run_after_14_link_prompt_launchers exists" {
+    [[ -f "$DOTFILES_DIR/.chezmoiscripts/run_after_14_link_prompt_launchers.sh.tmpl" ]]
+}
+
 @test "run_after_13 git-ai: template and lib use ln -sf and ~/.local/bin" {
     local tmpl="$DOTFILES_DIR/.chezmoiscripts/run_after_13_link_git_ai_wrapper.sh.tmpl"
     local lib="$DOTFILES_DIR/scripts/lib/git-ai-common.sh"
