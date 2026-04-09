@@ -285,4 +285,4 @@ Reglas prácticas para extenderlo:
 ## Referencias
 
 - Referencia operativa corta de CLI: [PROMPT_LAUNCHERS.md](PROMPT_LAUNCHERS.md)
-- Guía para agentes: [ai-prompt-consumer skill](../ai/assets/skills/ops/ai-prompt-consumer/SKILL.md)
+- Guía para agentes: skill `vault-ai-prompt-consumer` en [../ai/assets/skills/ops/ai-prompt-consumer/SKILL.md](../ai/assets/skills/ops/ai-prompt-consumer/SKILL.md)

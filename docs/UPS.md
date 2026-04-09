@@ -85,4 +85,4 @@ Estos MCPs usan `npx -y` o `uvx` y obtienen la última versión automáticamente
 | [GUIA_MCP_AI.md](GUIA_MCP_AI.md#7-actualización-de-mcps-con-ups) | Actualización MCP con ups |
 | [INSTALL.md](INSTALL.md) | Instalación inicial |
 | [README.md](README.md) | Índice de documentación |
-| Skill `ups-workflow` | Guía para extender ups (ai/assets/skills/ups-workflow/) |
+| Skill `dotfiles-ups-workflow` | Guía para extender ups (`ai/assets/skills/ops/system-updates/`) |

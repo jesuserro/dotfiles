@@ -1,5 +1,5 @@
 ---
-name: ai-prompt-consumer
+name: vault-ai-prompt-consumer
 description: Use when an agent should consume canonical external prompts through ai-prompt instead of inventing or duplicating transversal instructions.
 ---
 
