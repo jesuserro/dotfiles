@@ -80,6 +80,7 @@ Visible skill names follow semantic origin, not just repository location:
 - `ops/ai-prompt-consumer/` - `Vault AI Prompt Consumer`
 - `ops/vault-review-diff/` - `Vault Review Diff`
 - `ops/vault-detect-errors/` - `Vault Detect Errors`
+- `ops/vault-update-documentation/` - `Vault Update Documentation`
 - `ops/vault-write-commit-message/` - `Vault Write Commit Message`
 - `ops/mcp-governance/` - `Dotfiles MCP Governance`
 - `ops/system-updates/` - `Dotfiles UPS Workflow`
