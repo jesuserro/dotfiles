@@ -89,6 +89,12 @@ Los commands son utilidades globales invocables con `/<command>`.
 
 Para más detalles, ver [docs/COMMANDS_ARCHITECTURE.md](../docs/COMMANDS_ARCHITECTURE.md) y [ai/assets/commands/README.md](assets/commands/README.md).
 
+## Prompt launchers
+
+Los prompt launchers son wrappers mínimos para leer prompts canónicos externos desde el vault de trabajo, sin duplicarlos dentro de `dotfiles`.
+
+Para uso, contrato público y depuración, ver [docs/PROMPT_LAUNCHERS.md](../docs/PROMPT_LAUNCHERS.md).
+
 ## Añadir un nuevo MCP servidor
 
 Ver [docs/GUIA_MCP_AI.md](../docs/GUIA_MCP_AI.md) — sección "Añadir un nuevo MCP servidor Python".

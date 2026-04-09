@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Publica los prompt launchers en ~/.local/bin tras chezmoi apply.
+
+set -euo pipefail
+
+SOURCE_DIR="{{ .chezmoi.sourceDir }}"
+LOCAL_BIN="{{ .chezmoi.homeDir }}/.local/bin"
+
+mkdir -p "${LOCAL_BIN}"
+
+for launcher in \
+    prompt-understand-context \
+    prompt-plan-safe-change \
+    prompt-detect-errors; do
+    ln -sf "${SOURCE_DIR}/local/bin/${launcher}" "${LOCAL_BIN}/${launcher}"
+done
+
+exit 0
