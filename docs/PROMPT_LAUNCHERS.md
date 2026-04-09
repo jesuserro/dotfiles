@@ -1,5 +1,7 @@
 # Prompt Launchers
 
+Referencia operativa corta de la CLI. Para la explicación canónica del sistema y su uso desde agentes, ver [AI_PROMPTS_SYSTEM.md](AI_PROMPTS_SYSTEM.md) y el skill [ai-prompt-consumer](../ai/assets/skills/ops/ai-prompt-consumer/SKILL.md).
+
 CLI mínima para imprimir por `stdout` prompts canónicos guardados fuera del repo, en tu vault de trabajo.
 
 ## Contrato público
