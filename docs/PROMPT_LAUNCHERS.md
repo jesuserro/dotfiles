@@ -21,12 +21,19 @@ Subcomandos disponibles:
 list
 show <prompt-id>
 render <prompt-id>
+task <task-name>
 path <prompt-id>
 check
 help
 ```
 
 `render` escribe a `stdout` por defecto. Si usas `--output-file` o `--output-temp`, guarda el resultado en archivo; con `--print-output-path` imprime por `stdout` sólo la ruta final generada.
+
+`task` es una capa fina de presets sobre `render`. Los tasks iniciales son:
+
+- `review-diff` -> `review-diff` + `--git-diff --git-status`
+- `write-commit-message` -> `write-commit-message` + `--git-diff --git-status`
+- `summarize-repo` -> `summarize-repo` + `README.md` del cwd si existe
 
 ## Resolución del vault
 
@@ -72,6 +79,17 @@ printf 'Small diff summary\n' | AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documen
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render summarize-repo --context-file README.md --output-file /tmp/repo-summary-prompt.md
 ```
 
+Usar presets de tarea:
+
+```bash
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt task review-diff | head -60
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt task write-commit-message --output-temp --print-output-path
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt task summarize-repo | head -60
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt task summarize-repo --output-file /tmp/repo-summary.md
+./local/bin/ai-prompt task help
+./local/bin/ai-prompt task review-diff --explain
+```
+
 Si los publicas en `PATH` con `chezmoi apply`:
 
 ```bash
@@ -101,4 +119,5 @@ AI_PROMPTS_VAULT_ROOT=/tmp/vault-sin-prompt ./local/bin/ai-prompt show detect-er
 ./local/bin/ai-prompt render summarize-repo --context-file /tmp/no-existe
 ./local/bin/ai-prompt render summarize-repo --output-file /proc/forbidden.md
 ./local/bin/ai-prompt render summarize-repo --output-file /tmp/a.md --output-temp
+./local/bin/ai-prompt task no-such-task
 ```

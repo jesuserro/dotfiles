@@ -268,6 +268,107 @@ EOF
     [[ "${output}" == *"--print-output-path requires --output-file or --output-temp."* ]]
 }
 
+@test "ai-prompt task review-diff works inside a git repo" {
+    local repo_path="${TEST_TEMP_DIR}/git_repo"
+    create_git_repo "${repo_path}"
+    echo "changed" >> "${repo_path}/file.txt"
+
+    run bash -lc "cd '${repo_path}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' task review-diff"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Review Diff"* ]]
+    [[ "${output}" == *"### Git diff"* ]]
+    [[ "${output}" == *"### Git status"* ]]
+}
+
+@test "ai-prompt task write-commit-message works inside a git repo" {
+    local repo_path="${TEST_TEMP_DIR}/git_repo"
+    create_git_repo "${repo_path}"
+    echo "changed" >> "${repo_path}/file.txt"
+
+    run bash -lc "cd '${repo_path}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' task write-commit-message"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Write Commit Message"* ]]
+    [[ "${output}" == *"### Git diff"* ]]
+    [[ "${output}" == *"### Git status"* ]]
+}
+
+@test "ai-prompt task summarize-repo uses README when present" {
+    local repo_path="${TEST_TEMP_DIR}/repo_with_readme"
+    mkdir -p "${repo_path}"
+    cat > "${repo_path}/README.md" <<'EOF'
+Test README content.
+EOF
+
+    run bash -lc "cd '${repo_path}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' task summarize-repo"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Summarize Repo"* ]]
+    [[ "${output}" == *"### Context file: README.md"* ]]
+    [[ "${output}" == *"Test README content."* ]]
+}
+
+@test "ai-prompt task summarize-repo works without README" {
+    local repo_path="${TEST_TEMP_DIR}/repo_without_readme"
+    mkdir -p "${repo_path}"
+
+    run bash -lc "cd '${repo_path}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' task summarize-repo"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Summarize Repo"* ]]
+    [[ "${output}" != *"### Context file: README.md"* ]]
+}
+
+@test "ai-prompt task errors clearly for unknown task" {
+    run bash "${AI_PROMPT_LAUNCHER}" task no-such-task
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"Unknown task: no-such-task"* ]]
+    [[ "${output}" == *"ai-prompt task help"* ]]
+}
+
+@test "ai-prompt task review-diff fails clearly outside a git repo" {
+    local outside_dir="${TEST_TEMP_DIR}/outside"
+    mkdir -p "${outside_dir}"
+
+    run bash -lc "cd '${outside_dir}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' task review-diff"
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"Git context requested outside a git repository."* ]]
+}
+
+@test "ai-prompt task write-commit-message fails clearly outside a git repo" {
+    local outside_dir="${TEST_TEMP_DIR}/outside"
+    mkdir -p "${outside_dir}"
+
+    run bash -lc "cd '${outside_dir}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' task write-commit-message"
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"Git context requested outside a git repository."* ]]
+}
+
+@test "ai-prompt task supports output flags" {
+    local repo_path="${TEST_TEMP_DIR}/git_repo"
+    create_git_repo "${repo_path}"
+    echo "changed" >> "${repo_path}/file.txt"
+
+    run bash -lc "cd '${repo_path}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' task write-commit-message --output-temp --print-output-path"
+    [[ "${status}" -eq 0 ]]
+    [[ -f "${output}" ]]
+
+    run grep -q "# Write Commit Message" "${output}"
+    [[ "${status}" -eq 0 ]]
+}
+
+@test "ai-prompt task help shows available presets" {
+    run bash "${AI_PROMPT_LAUNCHER}" task help
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"review-diff"* ]]
+    [[ "${output}" == *"write-commit-message"* ]]
+    [[ "${output}" == *"summarize-repo"* ]]
+}
+
+@test "ai-prompt task explain shows preset behavior" {
+    run bash "${AI_PROMPT_LAUNCHER}" task review-diff --explain
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"Task: review-diff"* ]]
+    [[ "${output}" == *"--git-diff --git-status"* ]]
+}
+
 @test "ai-prompt show summarize-repo prints canonical prompt from env override" {
     run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" show summarize-repo
     [[ "${status}" -eq 0 ]]
@@ -375,4 +476,5 @@ EOF
     [[ "${output}" == *"list"* ]]
     [[ "${output}" == *"show <prompt-id>"* ]]
     [[ "${output}" == *"render <prompt-id>"* ]]
+    [[ "${output}" == *"task <task-name>"* ]]
 }

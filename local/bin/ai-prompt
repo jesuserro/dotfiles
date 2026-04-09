@@ -27,6 +27,7 @@ Commands:
     list                List supported prompt ids
     show <prompt-id>    Print the canonical markdown prompt to stdout
     render <prompt-id>  Print the canonical prompt plus optional extra context
+    task <task-name>    Run a small preset built on top of render
     path <prompt-id>    Print the resolved markdown path
     check               Check catalog entries against files in the vault
     help                Show this help
@@ -34,6 +35,57 @@ Commands:
 Environment:
     AI_PROMPTS_VAULT_ROOT   Override the vault root used to resolve prompts
 EOF
+}
+
+task_usage() {
+    cat <<EOF
+Usage: ai-prompt task <task-name> [OPTIONS]
+
+Tasks:
+    review-diff           Render review-diff with --git-diff --git-status
+    write-commit-message  Render write-commit-message with --git-diff --git-status
+    summarize-repo        Render summarize-repo and append README.md if present
+
+Task options:
+    --output-file <path>  Write the rendered prompt to a specific file
+    --output-temp         Write the rendered prompt to a temporary file
+    --print-output-path   Print the final output path when writing to a file
+    --explain             Explain the preset without running it
+    help                  Show this help
+EOF
+}
+
+task_explain() {
+    local task_name="$1"
+
+    case "$task_name" in
+        review-diff)
+            cat <<EOF
+Task: review-diff
+Prompt: review-diff
+Context: --git-diff --git-status
+EOF
+            ;;
+        write-commit-message)
+            cat <<EOF
+Task: write-commit-message
+Prompt: write-commit-message
+Context: --git-diff --git-status
+EOF
+            ;;
+        summarize-repo)
+            cat <<EOF
+Task: summarize-repo
+Prompt: summarize-repo
+Context: README.md from the current directory when present and readable; otherwise prompt base only
+EOF
+            ;;
+        *)
+            ai_prompt_log_error "Unknown task: $task_name"
+            ai_prompt_log_error "Run 'ai-prompt task help' to see supported tasks."
+            return 1
+            ;;
+    esac
 }
 
 render_usage() {
@@ -298,6 +350,72 @@ render_prompt() {
     write_rendered_output "$rendered_prompt" "$output_mode" "$output_path" "$print_output_path"
 }
 
+task_prompt() {
+    local task_name="$1"
+    shift
+
+    local explain=false
+    local -a output_args=()
+    local cwd_readme="README.md"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --output-file)
+                if [[ $# -lt 2 ]]; then
+                    ai_prompt_log_error "Missing path after --output-file."
+                    task_usage >&2
+                    return 1
+                fi
+                output_args+=("$1" "$2")
+                shift 2
+                ;;
+            --output-temp|--print-output-path)
+                output_args+=("$1")
+                shift
+                ;;
+            --explain)
+                explain=true
+                shift
+                ;;
+            help)
+                task_usage
+                return 0
+                ;;
+            *)
+                ai_prompt_log_error "Unknown task option: $1"
+                task_usage >&2
+                return 1
+                ;;
+        esac
+    done
+
+    if [[ "$explain" == "true" ]]; then
+        task_explain "$task_name"
+        return $?
+    fi
+
+    case "$task_name" in
+        review-diff)
+            render_prompt "review-diff" --git-diff --git-status "${output_args[@]}"
+            ;;
+        write-commit-message)
+            render_prompt "write-commit-message" --git-diff --git-status "${output_args[@]}"
+            ;;
+        summarize-repo)
+            if [[ -f "$cwd_readme" && -r "$cwd_readme" ]]; then
+                render_prompt "summarize-repo" --context-file "$cwd_readme" "${output_args[@]}"
+            else
+                render_prompt "summarize-repo" "${output_args[@]}"
+            fi
+            ;;
+        *)
+            ai_prompt_log_error "Unknown task: $task_name"
+            ai_prompt_log_error "Run 'ai-prompt task help' to see supported tasks."
+            return 1
+            ;;
+    esac
+}
+
 main() {
     local command="${1:-help}"
     local prompt_id="${2:-}"
@@ -322,6 +440,14 @@ main() {
             fi
             shift 2
             render_prompt "$prompt_id" "$@"
+            ;;
+        task)
+            if [[ -z "$prompt_id" || "$prompt_id" == "help" ]]; then
+                task_usage
+                exit 0
+            fi
+            shift 2
+            task_prompt "$prompt_id" "$@"
             ;;
         path)
             if [[ -z "$prompt_id" ]]; then
