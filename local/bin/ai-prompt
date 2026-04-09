@@ -27,6 +27,7 @@ Commands:
     list                List supported prompt ids
     show <prompt-id>    Print the canonical markdown prompt to stdout
     path <prompt-id>    Print the resolved markdown path
+    check               Check catalog entries against files in the vault
     help                Show this help
 
 Environment:
@@ -58,6 +59,9 @@ main() {
             fi
             ai_prompt_require_supported "$prompt_id"
             ai_prompt_markdown_path "$prompt_id"
+            ;;
+        check)
+            ai_prompt_check_catalog
             ;;
         help|-h|--help)
             show_help

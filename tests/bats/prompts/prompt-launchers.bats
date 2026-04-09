@@ -33,6 +33,26 @@ EOF
 # Detect Errors
 Prompt body for detect errors.
 EOF
+
+    cat > "${PROMPTS_DIR}/summarize-repo.md" <<'EOF'
+# Summarize Repo
+Prompt body for summarize repo.
+EOF
+
+    cat > "${PROMPTS_DIR}/review-diff.md" <<'EOF'
+# Review Diff
+Prompt body for review diff.
+EOF
+
+    cat > "${PROMPTS_DIR}/write-commit-message.md" <<'EOF'
+# Write Commit Message
+Prompt body for write commit message.
+EOF
+
+    cat > "${PROMPTS_DIR}/design-test-cases.md" <<'EOF'
+# Design Test Cases
+Prompt body for design test cases.
+EOF
 }
 
 teardown() {
@@ -59,7 +79,7 @@ teardown() {
 @test "ai-prompt list shows the supported catalog" {
     run bash "${AI_PROMPT_LAUNCHER}" list
     [[ "${status}" -eq 0 ]]
-    [[ "${output}" == $'understand-context\nplan-safe-change\ndetect-errors' ]]
+    [[ "${output}" == $'understand-context\nplan-safe-change\ndetect-errors\nsummarize-repo\nreview-diff\nwrite-commit-message\ndesign-test-cases' ]]
 }
 
 @test "ai-prompt show understand-context prints canonical prompt from env override" {
@@ -91,6 +111,46 @@ teardown() {
     [[ "${status}" -ne 0 ]]
     [[ "${output}" == *"Unsupported prompt id: no-such-prompt"* ]]
     [[ "${output}" == *"Supported prompt ids:"* ]]
+}
+
+@test "ai-prompt show summarize-repo prints canonical prompt from env override" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" show summarize-repo
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Summarize Repo"* ]]
+}
+
+@test "ai-prompt show review-diff prints canonical prompt from env override" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" show review-diff
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Review Diff"* ]]
+}
+
+@test "ai-prompt show write-commit-message prints canonical prompt from env override" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" show write-commit-message
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Write Commit Message"* ]]
+}
+
+@test "ai-prompt show design-test-cases prints canonical prompt from env override" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" show design-test-cases
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Design Test Cases"* ]]
+}
+
+@test "ai-prompt check reports catalog state against the vault" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" check
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *$'ok\tunderstand-context\t'* ]]
+    [[ "${output}" == *$'ok\tsummarize-repo\t'* ]]
+    [[ "${output}" == *$'ok\tdesign-test-cases\t'* ]]
+}
+
+@test "ai-prompt check fails when a catalog prompt is missing from the vault" {
+    rm -f "${PROMPTS_DIR}/review-diff.md"
+
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" check
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *$'missing\treview-diff\t'* ]]
 }
 
 @test "understand-context launcher prints canonical prompt from env override" {

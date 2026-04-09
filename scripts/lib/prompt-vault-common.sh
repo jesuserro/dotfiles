@@ -10,6 +10,10 @@ AI_PROMPT_CATALOG=(
     "understand-context"
     "plan-safe-change"
     "detect-errors"
+    "summarize-repo"
+    "review-diff"
+    "write-commit-message"
+    "design-test-cases"
 )
 
 ai_prompt_log_error() {
@@ -55,6 +59,31 @@ ai_prompt_markdown_path() {
     local vault_root
     vault_root="$(ai_prompt_resolved_vault_root)"
     printf '%s/%s/%s.md\n' "$vault_root" "$AI_PROMPTS_RELATIVE_DIR" "$prompt_name"
+}
+
+ai_prompt_exists_in_vault() {
+    local prompt_name="$1"
+    local prompt_path
+    prompt_path="$(ai_prompt_markdown_path "$prompt_name")"
+    [[ -f "$prompt_path" ]]
+}
+
+ai_prompt_check_catalog() {
+    local missing=0
+    local prompt_id
+    local prompt_path
+
+    for prompt_id in "${AI_PROMPT_CATALOG[@]}"; do
+        prompt_path="$(ai_prompt_markdown_path "$prompt_id")"
+        if [[ -f "$prompt_path" ]]; then
+            printf 'ok\t%s\t%s\n' "$prompt_id" "$prompt_path"
+        else
+            printf 'missing\t%s\t%s\n' "$prompt_id" "$prompt_path"
+            missing=1
+        fi
+    done
+
+    return "$missing"
 }
 
 ai_prompt_print() {

@@ -15,6 +15,16 @@ CLI mínima para imprimir por `stdout` prompts canónicos guardados fuera del re
 
 `ai-prompt show <prompt-id>` imprime el contenido del prompt en `stdout`. Si falla, devuelve `exit != 0` y muestra un error útil en `stderr`.
 
+Subcomandos disponibles:
+
+```text
+list
+show <prompt-id>
+path <prompt-id>
+check
+help
+```
+
 ## Resolución del vault
 
 La ruta del vault se resuelve en un único helper shell:
@@ -42,6 +52,10 @@ Mostrar un prompt:
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show understand-context | head
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show plan-safe-change | head
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show detect-errors | head
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show summarize-repo | head
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show review-diff | head
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show write-commit-message | head
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show design-test-cases | head
 ```
 
 Si los publicas en `PATH` con `chezmoi apply`:
@@ -49,6 +63,7 @@ Si los publicas en `PATH` con `chezmoi apply`:
 ```bash
 ai-prompt list
 ai-prompt show understand-context | head
+ai-prompt check
 prompt-understand-context | head
 prompt-plan-safe-change | head
 prompt-detect-errors | head
