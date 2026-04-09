@@ -45,6 +45,9 @@ Options:
     --stdin                  Append content read from stdin
     --git-diff               Append "git diff" output from the current repo
     --git-status             Append "git status --short" output from the current repo
+    --output-file <path>     Write the rendered prompt to a specific file
+    --output-temp            Write the rendered prompt to a temporary file
+    --print-output-path      Print the final output path when writing to a file
 EOF
 }
 
@@ -65,7 +68,7 @@ render_section() {
     printf '\n### %s\n\n%s\n' "$label" "$content"
 }
 
-render_prompt() {
+build_rendered_prompt() {
     local prompt_id="$1"
     shift
 
@@ -73,12 +76,16 @@ render_prompt() {
     local use_stdin=false
     local use_git_diff=false
     local use_git_status=false
+    local output_file=""
+    local use_output_temp=false
+    local print_output_path=false
     local stdin_content=""
     local git_diff_content=""
     local git_status_content=""
     local context_count=0
     local content=""
     local file_path=""
+    local rendered_prompt=""
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -103,6 +110,23 @@ render_prompt() {
                 use_git_status=true
                 shift
                 ;;
+            --output-file)
+                if [[ $# -lt 2 ]]; then
+                    ai_prompt_log_error "Missing path after --output-file."
+                    render_usage >&2
+                    return 1
+                fi
+                output_file="$2"
+                shift 2
+                ;;
+            --output-temp)
+                use_output_temp=true
+                shift
+                ;;
+            --print-output-path)
+                print_output_path=true
+                shift
+                ;;
             *)
                 ai_prompt_log_error "Unknown render option: $1"
                 render_usage >&2
@@ -110,6 +134,16 @@ render_prompt() {
                 ;;
         esac
     done
+
+    if [[ -n "$output_file" && "$use_output_temp" == "true" ]]; then
+        ai_prompt_log_error "Choose only one output mode: --output-file or --output-temp."
+        return 1
+    fi
+
+    if [[ "$print_output_path" == "true" && -z "$output_file" && "$use_output_temp" != "true" ]]; then
+        ai_prompt_log_error "--print-output-path requires --output-file or --output-temp."
+        return 1
+    fi
 
     for file_path in "${context_files[@]}"; do
         if [[ ! -f "$file_path" || ! -r "$file_path" ]]; then
@@ -122,11 +156,13 @@ render_prompt() {
     if [[ "$use_stdin" == "true" ]]; then
         if [[ -t 0 ]]; then
             ai_prompt_log_error "STDIN requested but no stdin pipe or redirection was provided."
+            ai_prompt_log_error "Use a pipe or redirection, for example: printf 'text\n' | ai-prompt render ${prompt_id} --stdin"
             return 1
         fi
         stdin_content="$(cat)"
         if [[ -z "$stdin_content" ]]; then
             ai_prompt_log_error "STDIN requested but no input was received."
+            ai_prompt_log_error "Use a pipe or redirection, for example: printf 'text\n' | ai-prompt render ${prompt_id} --stdin"
             return 1
         fi
         context_count=$((context_count + 1))
@@ -144,30 +180,122 @@ render_prompt() {
         context_count=$((context_count + 1))
     fi
 
-    ai_prompt_print "$prompt_id"
+    rendered_prompt="$(ai_prompt_print "$prompt_id")"
 
     if [[ "$context_count" -eq 0 ]]; then
+        printf '%s' "$rendered_prompt"
         return 0
     fi
 
-    printf '\n\n## Additional Context\n'
+    rendered_prompt+=$'\n\n## Additional Context\n'
 
     for file_path in "${context_files[@]}"; do
         content="$(cat "$file_path")"
-        render_section "Context file: ${file_path}" "$content"
+        rendered_prompt+="$(render_section "Context file: ${file_path}" "$content")"
     done
 
     if [[ "$use_stdin" == "true" ]]; then
-        render_section "STDIN" "$stdin_content"
+        rendered_prompt+="$(render_section "STDIN" "$stdin_content")"
     fi
 
     if [[ "$use_git_diff" == "true" ]]; then
-        render_section "Git diff" "$git_diff_content"
+        rendered_prompt+="$(render_section "Git diff" "$git_diff_content")"
     fi
 
     if [[ "$use_git_status" == "true" ]]; then
-        render_section "Git status" "$git_status_content"
+        rendered_prompt+="$(render_section "Git status" "$git_status_content")"
     fi
+
+    printf '%s' "$rendered_prompt"
+}
+
+write_rendered_output() {
+    local rendered_prompt="$1"
+    local output_mode="$2"
+    local output_path="$3"
+    local print_output_path="$4"
+    local final_output_path=""
+
+    case "$output_mode" in
+        stdout)
+            printf '%s' "$rendered_prompt"
+            ;;
+        file)
+            mkdir -p "$(dirname "$output_path")" || {
+                ai_prompt_log_error "Failed to create output directory for: $output_path"
+                return 1
+            }
+            printf '%s' "$rendered_prompt" > "$output_path" || {
+                ai_prompt_log_error "Failed to write output file: $output_path"
+                return 1
+            }
+            final_output_path="$output_path"
+            ;;
+        temp)
+            final_output_path="$(mktemp "${TMPDIR:-/tmp}/ai-prompt.XXXXXX.md")" || {
+                ai_prompt_log_error "Failed to create temporary output file."
+                return 1
+            }
+            printf '%s' "$rendered_prompt" > "$final_output_path" || {
+                ai_prompt_log_error "Failed to write temporary output file: $final_output_path"
+                return 1
+            }
+            ;;
+        *)
+            ai_prompt_log_error "Unknown output mode: $output_mode"
+            return 1
+            ;;
+    esac
+
+    if [[ "$print_output_path" == "true" && -n "$final_output_path" ]]; then
+        printf '%s\n' "$final_output_path"
+    fi
+}
+
+render_prompt() {
+    local prompt_id="$1"
+    shift
+
+    local output_mode="stdout"
+    local output_path=""
+    local print_output_path="false"
+    local rendered_prompt=""
+    local arg=""
+
+    local -a forward_args=()
+    while [[ $# -gt 0 ]]; do
+        arg="$1"
+        case "$arg" in
+            --output-file)
+                if [[ $# -lt 2 ]]; then
+                    ai_prompt_log_error "Missing path after --output-file."
+                    render_usage >&2
+                    return 1
+                fi
+                output_mode="file"
+                output_path="$2"
+                forward_args+=("$1" "$output_path")
+                shift 2
+                ;;
+            --output-temp)
+                output_mode="temp"
+                forward_args+=("$1")
+                shift
+                ;;
+            --print-output-path)
+                print_output_path="true"
+                forward_args+=("$1")
+                shift
+                ;;
+            *)
+                forward_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    rendered_prompt="$(build_rendered_prompt "$prompt_id" "${forward_args[@]}")" || return 1
+    write_rendered_output "$rendered_prompt" "$output_mode" "$output_path" "$print_output_path"
 }
 
 main() {

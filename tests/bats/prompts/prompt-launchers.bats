@@ -142,6 +142,13 @@ EOF
     [[ "${output}" == *"Diff summary here"* ]]
 }
 
+@test "ai-prompt render with stdin errors clearly when no input is provided" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" render review-diff --stdin
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"STDIN requested but no stdin pipe or redirection was provided."* || "${output}" == *"STDIN requested but no input was received."* ]]
+    [[ "${output}" == *"printf 'text"* ]]
+}
+
 @test "ai-prompt render with git diff works inside a git repo" {
     local repo_path="${TEST_TEMP_DIR}/git_repo"
     create_git_repo "${repo_path}"
@@ -190,6 +197,75 @@ EOF
     [[ "${status}" -ne 0 ]]
     [[ "${output}" == *"Git context requested outside a git repository."* ]]
     [[ "${output}" == *"Current directory: ${outside_dir}"* ]]
+}
+
+@test "ai-prompt render still writes to stdout by default" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" render review-diff --stdin <<'EOF'
+Small diff summary
+EOF
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Review Diff"* ]]
+    [[ "${output}" == *"Small diff summary"* ]]
+}
+
+@test "ai-prompt render output-file writes the rendered prompt to disk" {
+    local output_file="${TEST_TEMP_DIR}/nested/output/prompt.md"
+
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" render summarize-repo --context-file "${DOTFILES_DIR}/README.md" --output-file "${output_file}"
+    [[ "${status}" -eq 0 ]]
+    [[ -f "${output_file}" ]]
+    [[ -z "${output}" ]]
+
+    run grep -q "# Summarize Repo" "${output_file}"
+    [[ "${status}" -eq 0 ]]
+}
+
+@test "ai-prompt render output-temp creates a temporary file" {
+    run bash -lc "printf 'Small diff summary\n' | AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' render review-diff --stdin --output-temp --print-output-path"
+    [[ "${status}" -eq 0 ]]
+    [[ -f "${output}" ]]
+
+    run grep -q "Small diff summary" "${output}"
+    [[ "${status}" -eq 0 ]]
+}
+
+@test "ai-prompt render print-output-path returns the explicit output file path" {
+    local output_file="${TEST_TEMP_DIR}/prompt.md"
+
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" render summarize-repo --output-file "${output_file}" --print-output-path
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == "${output_file}" ]]
+    [[ -f "${output_file}" ]]
+}
+
+@test "ai-prompt render output file content matches the rendered prompt" {
+    local output_file="${TEST_TEMP_DIR}/rendered.md"
+
+    run bash -lc "printf 'Small diff summary\n' | AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' render review-diff --stdin --output-file '${output_file}'"
+    [[ "${status}" -eq 0 ]]
+
+    run grep -q "# Review Diff" "${output_file}"
+    [[ "${status}" -eq 0 ]]
+    run grep -q "Small diff summary" "${output_file}"
+    [[ "${status}" -eq 0 ]]
+}
+
+@test "ai-prompt render errors clearly when output file cannot be written" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" render summarize-repo --output-file /proc/forbidden.md
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"Failed to write output file: /proc/forbidden.md"* || "${output}" == *"Failed to create output directory for: /proc/forbidden.md"* ]]
+}
+
+@test "ai-prompt render rejects conflicting output modes" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" render summarize-repo --output-file /tmp/a.md --output-temp
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"Choose only one output mode: --output-file or --output-temp."* ]]
+}
+
+@test "ai-prompt render rejects print-output-path without a file output mode" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" render summarize-repo --print-output-path
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"--print-output-path requires --output-file or --output-temp."* ]]
 }
 
 @test "ai-prompt show summarize-repo prints canonical prompt from env override" {

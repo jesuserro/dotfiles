@@ -26,6 +26,8 @@ check
 help
 ```
 
+`render` escribe a `stdout` por defecto. Si usas `--output-file` o `--output-temp`, guarda el resultado en archivo; con `--print-output-path` imprime por `stdout` sólo la ruta final generada.
+
 ## Resolución del vault
 
 La ruta del vault se resuelve en un único helper shell:
@@ -66,6 +68,8 @@ AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-
 printf 'Diff summary here\n' | AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render review-diff --stdin | head -40
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render write-commit-message --git-status | head -40
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render write-commit-message --git-diff --git-status | head -60
+printf 'Small diff summary\n' | AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render review-diff --stdin --output-temp --print-output-path
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render summarize-repo --context-file README.md --output-file /tmp/repo-summary-prompt.md
 ```
 
 Si los publicas en `PATH` con `chezmoi apply`:
@@ -95,4 +99,6 @@ AI_PROMPTS_VAULT_ROOT=/tmp/no-existe ./local/bin/ai-prompt show detect-errors
 AI_PROMPTS_VAULT_ROOT=/tmp/vault-sin-prompt ./local/bin/ai-prompt show detect-errors
 ./local/bin/ai-prompt show no-such-prompt
 ./local/bin/ai-prompt render summarize-repo --context-file /tmp/no-existe
+./local/bin/ai-prompt render summarize-repo --output-file /proc/forbidden.md
+./local/bin/ai-prompt render summarize-repo --output-file /tmp/a.md --output-temp
 ```
