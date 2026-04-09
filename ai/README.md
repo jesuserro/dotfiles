@@ -91,7 +91,7 @@ Para más detalles, ver [docs/COMMANDS_ARCHITECTURE.md](../docs/COMMANDS_ARCHITE
 
 ## Prompt launchers
 
-Los prompt launchers son wrappers mínimos para leer prompts canónicos externos desde el vault de trabajo, sin duplicarlos dentro de `dotfiles`.
+Los prompt launchers exponen una CLI mínima para leer prompts canónicos externos desde el vault de trabajo, sin duplicarlos dentro de `dotfiles`.
 
 Para uso, contrato público y depuración, ver [docs/PROMPT_LAUNCHERS.md](../docs/PROMPT_LAUNCHERS.md).
 

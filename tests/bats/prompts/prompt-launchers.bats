@@ -9,6 +9,7 @@ setup() {
 
     DOTFILES_DIR="$(get_dotfiles_dir)"
     LAUNCHER_DIR="${DOTFILES_DIR}/local/bin"
+    AI_PROMPT_LAUNCHER="${LAUNCHER_DIR}/ai-prompt"
     UNDERSTAND_LAUNCHER="${LAUNCHER_DIR}/prompt-understand-context"
     PLAN_LAUNCHER="${LAUNCHER_DIR}/prompt-plan-safe-change"
     DETECT_LAUNCHER="${LAUNCHER_DIR}/prompt-detect-errors"
@@ -43,14 +44,53 @@ teardown() {
 }
 
 @test "launchers exist and are executable" {
+    [[ -x "${AI_PROMPT_LAUNCHER}" ]]
     [[ -x "${UNDERSTAND_LAUNCHER}" ]]
     [[ -x "${PLAN_LAUNCHER}" ]]
     [[ -x "${DETECT_LAUNCHER}" ]]
 }
 
-@test "helper defines local provisional default constant" {
+@test "helper defines local provisional default constant and central catalog" {
     grep -q "DEFAULT_AI_PROMPTS_VAULT_ROOT" "${HELPER}"
     grep -q "not a semantic contract" "${HELPER}"
+    grep -q "AI_PROMPT_CATALOG" "${HELPER}"
+}
+
+@test "ai-prompt list shows the supported catalog" {
+    run bash "${AI_PROMPT_LAUNCHER}" list
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == $'understand-context\nplan-safe-change\ndetect-errors' ]]
+}
+
+@test "ai-prompt show understand-context prints canonical prompt from env override" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" show understand-context
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Understand Context"* ]]
+}
+
+@test "ai-prompt show plan-safe-change prints canonical prompt from env override" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" show plan-safe-change
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Plan Safe Change"* ]]
+}
+
+@test "ai-prompt show detect-errors prints canonical prompt from env override" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" show detect-errors
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Detect Errors"* ]]
+}
+
+@test "ai-prompt path prints the resolved markdown path" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" path detect-errors
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == "${VAULT_ROOT}/agents/prompts/detect-errors.md" ]]
+}
+
+@test "ai-prompt show rejects unsupported prompt ids clearly" {
+    run bash "${AI_PROMPT_LAUNCHER}" show no-such-prompt
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"Unsupported prompt id: no-such-prompt"* ]]
+    [[ "${output}" == *"Supported prompt ids:"* ]]
 }
 
 @test "understand-context launcher prints canonical prompt from env override" {
@@ -111,4 +151,12 @@ teardown() {
     run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${symlink_path}"
     [[ "${status}" -eq 0 ]]
     [[ "${output}" == *"# Detect Errors"* ]]
+}
+
+@test "ai-prompt help shows the unified interface" {
+    run bash "${AI_PROMPT_LAUNCHER}" help
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"Usage: ai-prompt <command> [prompt-id]"* ]]
+    [[ "${output}" == *"list"* ]]
+    [[ "${output}" == *"show <prompt-id>"* ]]
 }

@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v python3 >/dev/null 2>&1; then
+    SCRIPT_DIR="$(python3 -c "import os,sys; print(os.path.dirname(os.path.realpath(sys.argv[1])))" "${BASH_SOURCE[0]}")"
+else
+    _s="${BASH_SOURCE[0]}"
+    while [[ -h "$_s" ]]; do
+        _d="$(cd "$(dirname "$_s")" && pwd)"
+        _l="$(readlink "$_s")"
+        [[ "$_l" == /* ]] && _s="$_l" || _s="$_d/$_l"
+    done
+    SCRIPT_DIR="$(cd "$(dirname "$_s")" && pwd)"
+    unset _s _d _l
+fi
+
+# shellcheck source=../../scripts/lib/prompt-vault-common.sh
+source "$SCRIPT_DIR/../../scripts/lib/prompt-vault-common.sh"
+
+show_help() {
+    cat <<EOF
+Usage: ai-prompt <command> [prompt-id]
+
+Unified access to canonical prompts stored in the external vault.
+
+Commands:
+    list                List supported prompt ids
+    show <prompt-id>    Print the canonical markdown prompt to stdout
+    path <prompt-id>    Print the resolved markdown path
+    help                Show this help
+
+Environment:
+    AI_PROMPTS_VAULT_ROOT   Override the vault root used to resolve prompts
+EOF
+}
+
+main() {
+    local command="${1:-help}"
+    local prompt_id="${2:-}"
+
+    case "$command" in
+        list)
+            ai_prompt_list_supported
+            ;;
+        show)
+            if [[ -z "$prompt_id" ]]; then
+                ai_prompt_log_error "Missing prompt id for 'show'."
+                ai_prompt_log_error "Usage: ai-prompt show <prompt-id>"
+                exit 1
+            fi
+            ai_prompt_print "$prompt_id"
+            ;;
+        path)
+            if [[ -z "$prompt_id" ]]; then
+                ai_prompt_log_error "Missing prompt id for 'path'."
+                ai_prompt_log_error "Usage: ai-prompt path <prompt-id>"
+                exit 1
+            fi
+            ai_prompt_require_supported "$prompt_id"
+            ai_prompt_markdown_path "$prompt_id"
+            ;;
+        help|-h|--help)
+            show_help
+            ;;
+        *)
+            ai_prompt_log_error "Unknown command: $command"
+            ai_prompt_log_error "Run 'ai-prompt help' for usage."
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

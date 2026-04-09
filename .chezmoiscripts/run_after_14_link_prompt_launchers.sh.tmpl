@@ -9,6 +9,7 @@ LOCAL_BIN="{{ .chezmoi.homeDir }}/.local/bin"
 mkdir -p "${LOCAL_BIN}"
 
 for launcher in \
+    ai-prompt \
     prompt-understand-context \
     prompt-plan-safe-change \
     prompt-detect-errors; do
