@@ -113,6 +113,85 @@ teardown() {
     [[ "${output}" == *"Supported prompt ids:"* ]]
 }
 
+@test "ai-prompt render without extras returns the canonical prompt" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" render summarize-repo
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Summarize Repo"* ]]
+    [[ "${output}" != *"## Additional Context"* ]]
+}
+
+@test "ai-prompt render with context file appends file content" {
+    local context_file="${TEST_TEMP_DIR}/context.md"
+    cat > "${context_file}" <<'EOF'
+Repository notes for render.
+EOF
+
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" render summarize-repo --context-file "${context_file}"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Summarize Repo"* ]]
+    [[ "${output}" == *"## Additional Context"* ]]
+    [[ "${output}" == *"### Context file: ${context_file}"* ]]
+    [[ "${output}" == *"Repository notes for render."* ]]
+}
+
+@test "ai-prompt render with stdin appends piped content" {
+    run bash -lc "printf 'Diff summary here\n' | AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' render review-diff --stdin"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Review Diff"* ]]
+    [[ "${output}" == *"### STDIN"* ]]
+    [[ "${output}" == *"Diff summary here"* ]]
+}
+
+@test "ai-prompt render with git diff works inside a git repo" {
+    local repo_path="${TEST_TEMP_DIR}/git_repo"
+    create_git_repo "${repo_path}"
+    echo "changed" >> "${repo_path}/file.txt"
+
+    run bash -lc "cd '${repo_path}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' render write-commit-message --git-diff"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Write Commit Message"* ]]
+    [[ "${output}" == *"### Git diff"* ]]
+    [[ "${output}" == *"file.txt"* ]]
+}
+
+@test "ai-prompt render with git status works inside a git repo" {
+    local repo_path="${TEST_TEMP_DIR}/git_repo"
+    create_git_repo "${repo_path}"
+    echo "changed" >> "${repo_path}/file.txt"
+
+    run bash -lc "cd '${repo_path}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' render write-commit-message --git-status"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Write Commit Message"* ]]
+    [[ "${output}" == *"### Git status"* ]]
+    [[ "${output}" == *"M file.txt"* || "${output}" == *" M file.txt"* ]]
+}
+
+@test "ai-prompt render errors clearly for missing context file" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" render summarize-repo --context-file /tmp/no-existe
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"Context file not found or not readable: /tmp/no-existe"* ]]
+}
+
+@test "ai-prompt render errors clearly for git diff outside a repo" {
+    local outside_dir="${TEST_TEMP_DIR}/outside"
+    mkdir -p "${outside_dir}"
+
+    run bash -lc "cd '${outside_dir}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' render review-diff --git-diff"
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"Git context requested outside a git repository."* ]]
+    [[ "${output}" == *"Current directory: ${outside_dir}"* ]]
+}
+
+@test "ai-prompt render errors clearly for git status outside a repo" {
+    local outside_dir="${TEST_TEMP_DIR}/outside"
+    mkdir -p "${outside_dir}"
+
+    run bash -lc "cd '${outside_dir}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' render review-diff --git-status"
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"Git context requested outside a git repository."* ]]
+    [[ "${output}" == *"Current directory: ${outside_dir}"* ]]
+}
+
 @test "ai-prompt show summarize-repo prints canonical prompt from env override" {
     run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" show summarize-repo
     [[ "${status}" -eq 0 ]]
@@ -219,4 +298,5 @@ teardown() {
     [[ "${output}" == *"Usage: ai-prompt <command> [prompt-id]"* ]]
     [[ "${output}" == *"list"* ]]
     [[ "${output}" == *"show <prompt-id>"* ]]
+    [[ "${output}" == *"render <prompt-id>"* ]]
 }

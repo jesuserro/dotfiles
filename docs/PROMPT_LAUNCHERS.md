@@ -20,6 +20,7 @@ Subcomandos disponibles:
 ```text
 list
 show <prompt-id>
+render <prompt-id>
 path <prompt-id>
 check
 help
@@ -58,11 +59,21 @@ AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show design-test-cases | head
 ```
 
+Renderizar un prompt compuesto:
+
+```bash
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render summarize-repo --context-file README.md | head -40
+printf 'Diff summary here\n' | AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render review-diff --stdin | head -40
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render write-commit-message --git-status | head -40
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render write-commit-message --git-diff --git-status | head -60
+```
+
 Si los publicas en `PATH` con `chezmoi apply`:
 
 ```bash
 ai-prompt list
 ai-prompt show understand-context | head
+ai-prompt render summarize-repo --context-file README.md | head -40
 ai-prompt check
 prompt-understand-context | head
 prompt-plan-safe-change | head
@@ -83,4 +94,5 @@ Ejemplos:
 AI_PROMPTS_VAULT_ROOT=/tmp/no-existe ./local/bin/ai-prompt show detect-errors
 AI_PROMPTS_VAULT_ROOT=/tmp/vault-sin-prompt ./local/bin/ai-prompt show detect-errors
 ./local/bin/ai-prompt show no-such-prompt
+./local/bin/ai-prompt render summarize-repo --context-file /tmp/no-existe
 ```

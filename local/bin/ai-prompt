@@ -26,6 +26,7 @@ Unified access to canonical prompts stored in the external vault.
 Commands:
     list                List supported prompt ids
     show <prompt-id>    Print the canonical markdown prompt to stdout
+    render <prompt-id>  Print the canonical prompt plus optional extra context
     path <prompt-id>    Print the resolved markdown path
     check               Check catalog entries against files in the vault
     help                Show this help
@@ -33,6 +34,140 @@ Commands:
 Environment:
     AI_PROMPTS_VAULT_ROOT   Override the vault root used to resolve prompts
 EOF
+}
+
+render_usage() {
+    cat <<EOF
+Usage: ai-prompt render <prompt-id> [OPTIONS]
+
+Options:
+    --context-file <path>    Append a readable file as extra context
+    --stdin                  Append content read from stdin
+    --git-diff               Append "git diff" output from the current repo
+    --git-status             Append "git status --short" output from the current repo
+EOF
+}
+
+require_git_repo() {
+    if git rev-parse --show-toplevel >/dev/null 2>&1; then
+        return 0
+    fi
+
+    ai_prompt_log_error "Git context requested outside a git repository."
+    ai_prompt_log_error "Current directory: $(pwd)"
+    return 1
+}
+
+render_section() {
+    local label="$1"
+    local content="$2"
+
+    printf '\n### %s\n\n%s\n' "$label" "$content"
+}
+
+render_prompt() {
+    local prompt_id="$1"
+    shift
+
+    local -a context_files=()
+    local use_stdin=false
+    local use_git_diff=false
+    local use_git_status=false
+    local stdin_content=""
+    local git_diff_content=""
+    local git_status_content=""
+    local context_count=0
+    local content=""
+    local file_path=""
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --context-file)
+                if [[ $# -lt 2 ]]; then
+                    ai_prompt_log_error "Missing path after --context-file."
+                    render_usage >&2
+                    return 1
+                fi
+                context_files+=("$2")
+                shift 2
+                ;;
+            --stdin)
+                use_stdin=true
+                shift
+                ;;
+            --git-diff)
+                use_git_diff=true
+                shift
+                ;;
+            --git-status)
+                use_git_status=true
+                shift
+                ;;
+            *)
+                ai_prompt_log_error "Unknown render option: $1"
+                render_usage >&2
+                return 1
+                ;;
+        esac
+    done
+
+    for file_path in "${context_files[@]}"; do
+        if [[ ! -f "$file_path" || ! -r "$file_path" ]]; then
+            ai_prompt_log_error "Context file not found or not readable: $file_path"
+            return 1
+        fi
+        context_count=$((context_count + 1))
+    done
+
+    if [[ "$use_stdin" == "true" ]]; then
+        if [[ -t 0 ]]; then
+            ai_prompt_log_error "STDIN requested but no stdin pipe or redirection was provided."
+            return 1
+        fi
+        stdin_content="$(cat)"
+        if [[ -z "$stdin_content" ]]; then
+            ai_prompt_log_error "STDIN requested but no input was received."
+            return 1
+        fi
+        context_count=$((context_count + 1))
+    fi
+
+    if [[ "$use_git_diff" == "true" ]]; then
+        require_git_repo || return 1
+        git_diff_content="$(git diff)"
+        context_count=$((context_count + 1))
+    fi
+
+    if [[ "$use_git_status" == "true" ]]; then
+        require_git_repo || return 1
+        git_status_content="$(git status --short)"
+        context_count=$((context_count + 1))
+    fi
+
+    ai_prompt_print "$prompt_id"
+
+    if [[ "$context_count" -eq 0 ]]; then
+        return 0
+    fi
+
+    printf '\n\n## Additional Context\n'
+
+    for file_path in "${context_files[@]}"; do
+        content="$(cat "$file_path")"
+        render_section "Context file: ${file_path}" "$content"
+    done
+
+    if [[ "$use_stdin" == "true" ]]; then
+        render_section "STDIN" "$stdin_content"
+    fi
+
+    if [[ "$use_git_diff" == "true" ]]; then
+        render_section "Git diff" "$git_diff_content"
+    fi
+
+    if [[ "$use_git_status" == "true" ]]; then
+        render_section "Git status" "$git_status_content"
+    fi
 }
 
 main() {
@@ -50,6 +185,15 @@ main() {
                 exit 1
             fi
             ai_prompt_print "$prompt_id"
+            ;;
+        render)
+            if [[ -z "$prompt_id" ]]; then
+                ai_prompt_log_error "Missing prompt id for 'render'."
+                render_usage >&2
+                exit 1
+            fi
+            shift 2
+            render_prompt "$prompt_id" "$@"
             ;;
         path)
             if [[ -z "$prompt_id" ]]; then
