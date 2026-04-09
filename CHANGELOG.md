@@ -2,43 +2,77 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.03.30_1203] - 2026-03-30
+## [v2026.04.09_1304] - 2026-04-09
 
 ## Changes
 ### Added
-- 2026-03-30 11:38 [d1efcd4](https://github.com/jesuserro/dotfiles/commit/d1efcd4) feat(git-ai): introduce git-ai-wrapper and related scripts for AI author management (Cursor Agent)
-  - Added `git-ai-wrapper` to manage commit authorship based on AI agents.
-  - Implemented scripts: `git-set-ai-author.sh`, `git-set-ai-enable.sh`, `git-set-ai-disable.sh`, and `install-git-ai-wrapper.sh` for enabling/disabling the wrapper and setting AI authors.
-  - Created `run_after_13_link_git_ai_wrapper.sh.tmpl` for symlink creation post-apply.
+- 2026-04-09 12:47 [974a19b](https://github.com/jesuserro/dotfiles/commit/974a19b) feat(skills): add new Vault operational skills and update documentation (Cursor Agent)
+  - Introduced `Vault Development Acceleration` and `Vault Suggest Improvements` skills to enhance operational capabilities.
+  - Updated `README.md`, `SKILLS_ARCHITECTURE.md`, and `assets/skills/README.md` to include the new skills and clarify their usage.
+  - Adjusted existing documentation to reflect the addition of the new skills in relevant sections.
+- 2026-04-09 12:43 [be3c5f2](https://github.com/jesuserro/dotfiles/commit/be3c5f2) feat(skills): add new Vault Update Documentation skill and update references (Cursor Agent)
+  - Introduced the `Vault Update Documentation` skill to facilitate documentation updates following code or architecture changes.
+  - Updated `README.md`, `SKILLS_ARCHITECTURE.md`, and `assets/skills/README.md` to include the new skill and clarify its usage.
+  - Adjusted existing documentation to reflect the addition of the new skill in relevant sections.
+- 2026-04-09 10:07 [e850310](https://github.com/jesuserro/dotfiles/commit/e850310) feat(prompt launcher): add clipboard support for show, render, and task commands (Cursor Agent)
+  - Introduced a `--copy` option for the `show`, `render`, and `task` commands in `ai-prompt`, allowing users to copy generated content to the clipboard while still printing to stdout.
+  - Enhanced the documentation in `PROMPT_LAUNCHERS.md` to include details about the new clipboard functionality and supported backends.
+  - Implemented error handling for scenarios where no clipboard backend is available, ensuring clear feedback to users.
+- 2026-04-09 09:51 [233e0bf](https://github.com/jesuserro/dotfiles/commit/233e0bf) feat(prompt launcher): introduce task command for preset prompt execution (Cursor Agent)
+  - Added a new `task` command in `ai-prompt` to execute predefined prompt presets, including `review-diff`, `write-commit-message`, and `summarize-repo`.
+  - Enhanced documentation in `PROMPT_LAUNCHERS.md` to detail the new command and its usage, including available tasks and options.
+  - Expanded test coverage to validate the functionality of the `task` command, ensuring correct behavior in various scenarios, including error handling for unknown tasks and context checks within git repositories.
+- 2026-04-09 09:43 [0c267ac](https://github.com/jesuserro/dotfiles/commit/0c267ac) feat(prompt launcher): enhance render command with output options and error handling (Cursor Agent)
+  - Added support for `--output-file`, `--output-temp`, and `--print-output-path` options in the `render` command of `ai-prompt` to allow users to specify output destinations.
+  - Implemented error handling for conflicting output modes and missing input scenarios when using stdin.
+  - Updated documentation in `PROMPT_LAUNCHERS.md` to reflect new output options and their usage.
+- 2026-04-09 09:37 [46164f7](https://github.com/jesuserro/dotfiles/commit/46164f7) feat(prompt launcher): add render command for enhanced prompt context (Cursor Agent)
+  - Introduced a new `render` command in `ai-prompt` to allow users to print prompts with additional context from files, stdin, or git status/diff.
+  - Updated documentation in `PROMPT_LAUNCHERS.md` to include usage examples for the new `render` command.
+  - Expanded test coverage to validate the functionality of the `render` command with various context options.
+- 2026-04-09 09:34 [6988245](https://github.com/jesuserro/dotfiles/commit/6988245) feat(prompt launcher): enhance ai-prompt with new commands and catalog checks (Cursor Agent)
+  - Added new prompt entries to the catalog, including `summarize-repo`, `review-diff`, `write-commit-message`, and `design-test-cases`.
+  - Introduced a `check` command in `ai-prompt` to verify the existence of catalog entries in the vault.
+  - Updated documentation in `README.md` and `PROMPT_LAUNCHERS.md` to reflect the new commands and their usage.
+- 2026-04-09 09:27 [fd84152](https://github.com/jesuserro/dotfiles/commit/fd84152) feat(prompt launcher): introduce ai-prompt for unified prompt management (Cursor Agent)
+  - Added a new `ai-prompt` launcher to provide a unified CLI for managing prompts, including listing and displaying prompts from the vault.
+  - Updated existing prompt launchers to utilize the new `ai-prompt` command for improved consistency and maintainability.
+  - Enhanced documentation in `README.md` and `PROMPT_LAUNCHERS.md` to reflect the new command structure and usage.
+- 2026-04-09 09:16 [eeebd99](https://github.com/jesuserro/dotfiles/commit/eeebd99) feat(prompt launcher): add prompt launchers section and update tests Makefile (Cursor Agent)
+  - Introduced a new section in `README.md` to explain prompt launchers and their usage.
+  - Updated `Makefile.tests` to include prompt launchers in the shell files to lint and added a new target for running prompt launcher tests.
+  - Added a test case in `smoke.bats` to verify the existence of the prompt launchers script.
 
 ### Fixed
-- 2026-03-30 11:59 [3b629cc](https://github.com/jesuserro/dotfiles/commit/3b629cc) fix(git-ai): enhance script symlink resolution and update documentation (Cursor Agent)
-  - Updated `git-set-ai-author.sh`, `git-set-ai-enable.sh`, and `git-set-ai-disable.sh` to resolve symlinks correctly using Python or a fallback method, ensuring accurate script directory resolution.
-  - Enhanced `GIT_AI_AUTHOR.md` to document the new symlink resolution behavior for better clarity on script usage.
-  - Minor adjustments in `git-ai-common.sh` to reflect the requirement for setting `SCRIPT_DIR` before sourcing.
+- 2026-04-09 11:56 [bd86e6c](https://github.com/jesuserro/dotfiles/commit/bd86e6c) fix(skills): rename skills for clarity and update documentation (Cursor Agent)
+  - Renamed `ai-prompt-consumer` to `vault-ai-prompt-consumer` for better clarity in its purpose.
+  - Updated `ups-workflow` to `dotfiles-ups-workflow` to reflect its specific context.
+  - Adjusted references in documentation to align with the new skill names, ensuring consistency across `AI_PROMPTS_SYSTEM.md`, `PROMPT_LAUNCHERS.md`, and `UPS.md`.
 
 ### Documentation
-- 2026-03-30 12:02 [365a892](https://github.com/jesuserro/dotfiles/commit/365a892) docs(releases): added changelog. (Cursor Agent)
-- 2026-03-30 12:02 [843d3ca](https://github.com/jesuserro/dotfiles/commit/843d3ca) docs(structure): update generated timestamp and enhance file tree in STRUCTURE.md (Cursor Agent)
+- 2026-04-09 13:04 [251c33d](https://github.com/jesuserro/dotfiles/commit/251c33d) docs(releases): refine file structure documentation and add new Vault skills (Cursor Agent)
+  - Updated `STRUCTURE.md` to reflect recent changes in the file tree.
+  - Added new directories for `Vault Detect Errors`, `Vault Development Acceleration`, `Vault Review Diff`, `Vault Suggest Improvements`, `Vault Update Documentation`, and `Vault Write Commit Message` to enhance the skills documentation.
+- 2026-04-09 13:03 [de9e8e6](https://github.com/jesuserro/dotfiles/commit/de9e8e6) docs(structure): update file tree and add new Vault skills (Cursor Agent)
   - Updated the generated timestamp in `STRUCTURE.md`.
-  - Added new documentation files: `GIT_AI_AUTHOR.md` and `GIT_AI_CURSOR_SETTINGS.md`.
-  - Included new script directory structure under `scripts/lib` for better organization of AI-related scripts.
-- 2026-03-30 11:21 [809c0aa](https://github.com/jesuserro/dotfiles/commit/809c0aa) docs(structure): update generated timestamp in STRUCTURE.md (Cursor Agent)
-- 2026-03-30 11:05 [4a67359](https://github.com/jesuserro/dotfiles/commit/4a67359) docs(structure): update generated timestamp in STRUCTURE.md (Jesús Erro)
-- 2026-03-30 10:53 [4ef9612](https://github.com/jesuserro/dotfiles/commit/4ef9612) docs(structure): update generated timestamp in STRUCTURE.md (Jesús Erro)
-- 2026-03-30 10:37 [b8e5f55](https://github.com/jesuserro/dotfiles/commit/b8e5f55) docs(structure): update file tree and add new scripts (Jesús Erro)
-  - Updated the generated timestamp in `STRUCTURE.md`.
-  - Added new scripts: `git-set-ai-author.sh`, `git-set-ai-disable.sh`, `git-set-ai-enable.sh`, and `install-git-ai-wrapper.sh` to the scripts directory.
-  - Adjusted the file tree structure to include the new script files and reorganized the MCP directory for clarity.
+  - Added new directories for various Vault skills, including `Vault Detect Errors`, `Vault Development Acceleration`, `Vault Review Diff`, `Vault Suggest Improvements`, `Vault Update Documentation`, and `Vault Write Commit Message` to the file structure documentation.
+- 2026-04-09 13:03 [28e307e](https://github.com/jesuserro/dotfiles/commit/28e307e) docs(skills): update documentation to include Dotfiles Skill Registration (Cursor Agent)
+  - Added `Dotfiles Skill Registration` to the skills documentation in `README.md`, `SKILLS_ARCHITECTURE.md`, and `assets/skills/README.md`.
+  - Adjusted existing entries to ensure clarity and consistency in the skills overview.
+- 2026-04-09 11:29 [89d58c3](https://github.com/jesuserro/dotfiles/commit/89d58c3) docs(skills architecture): update README and skill documentation for clarity and taxonomy (Cursor Agent)
+  - Enhanced `README.md` to clarify the structure of skills and their symlinked locations.
+  - Introduced a visible naming taxonomy for skills, categorizing them by semantic origin in both `README.md` and `SKILLS_ARCHITECTURE.md`.
+  - Updated skill descriptions in `assets/skills/` to reflect the new naming conventions, including `Dotfiles` and `Vault` prefixes.
+- 2026-04-09 10:28 [9951897](https://github.com/jesuserro/dotfiles/commit/9951897) docs(prompt launcher): update README and documentation for prompt launchers and AI prompts system (Cursor Agent)
+  - Enhanced the `README.md` to include references to the AI prompts system and a reusable guide for agents.
+  - Updated `PROMPT_LAUNCHERS.md` with a brief operational reference for the CLI and links to related documentation.
+  - Added a description of the `ai-prompt-consumer` skill in the `assets/skills/README.md` for better clarity on its usage.
 
 ### Refactored
-- 2026-03-30 11:55 [6964063](https://github.com/jesuserro/dotfiles/commit/6964063) refactor(git-ai): streamline AI author management scripts and enhance documentation (Cursor Agent)
-  - Refactored `run_after_13_link_git_ai_wrapper.sh.tmpl` to utilize a shared helper for linking binaries, improving maintainability.
-  - Introduced `git-ai-common.sh` for shared functions related to AI author management.
-  - Updated `git-set-ai-author.sh` and `git-ai-wrapper` to leverage new helper functions for better code organization.
-
-### Tests
-- 2026-03-30 10:23 [90d66c5](https://github.com/jesuserro/dotfiles/commit/90d66c5) test (Jesús Erro)
+- 2026-04-09 12:26 [946d729](https://github.com/jesuserro/dotfiles/commit/946d729) refactor(skills): add new Vault operational skills and update documentation (Cursor Agent)
+  - Introduced three new operational skills: `Vault Review Diff`, `Vault Detect Errors`, and `Vault Write Commit Message`, providing lightweight wrappers for invoking canonical prompts.
+  - Updated `README.md`, `SKILLS_ARCHITECTURE.md`, and `assets/skills/README.md` to include the new skills and clarify their usage.
+  - Enhanced documentation for each new skill to outline their purpose, preferred invocation, and required context.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
