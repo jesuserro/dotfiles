@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if command -v python3 >/dev/null 2>&1; then
+if [[ -x /usr/bin/python3 ]]; then
+    SCRIPT_DIR="$(/usr/bin/python3 -c "import os,sys; print(os.path.dirname(os.path.realpath(sys.argv[1])))" "${BASH_SOURCE[0]}")"
+elif command -v python3 >/dev/null 2>&1; then
     SCRIPT_DIR="$(python3 -c "import os,sys; print(os.path.dirname(os.path.realpath(sys.argv[1])))" "${BASH_SOURCE[0]}")"
 else
     _s="${BASH_SOURCE[0]}"
@@ -34,6 +36,9 @@ Commands:
 
 Environment:
     AI_PROMPTS_VAULT_ROOT   Override the vault root used to resolve prompts
+Optional clipboard:
+    Use --copy with show, render, or task to copy the generated content.
+    Backends are detected in this order: pbcopy, wl-copy, xclip, xsel, clip.exe
 EOF
 }
 
@@ -50,6 +55,7 @@ Task options:
     --output-file <path>  Write the rendered prompt to a specific file
     --output-temp         Write the rendered prompt to a temporary file
     --print-output-path   Print the final output path when writing to a file
+    --copy                Copy the final rendered prompt to the system clipboard
     --explain             Explain the preset without running it
     help                  Show this help
 EOF
@@ -100,7 +106,63 @@ Options:
     --output-file <path>     Write the rendered prompt to a specific file
     --output-temp            Write the rendered prompt to a temporary file
     --print-output-path      Print the final output path when writing to a file
+    --copy                   Copy the final rendered prompt to the system clipboard
 EOF
+}
+
+copy_to_clipboard() {
+    local content="$1"
+    local clip_stderr_file=""
+    local clip_stderr_line=""
+
+    if command -v pbcopy >/dev/null 2>&1; then
+        printf '%s' "$content" | pbcopy
+        return 0
+    fi
+
+    if command -v wl-copy >/dev/null 2>&1; then
+        printf '%s' "$content" | wl-copy
+        return 0
+    fi
+
+    if command -v xclip >/dev/null 2>&1; then
+        printf '%s' "$content" | xclip -selection clipboard
+        return 0
+    fi
+
+    if command -v xsel >/dev/null 2>&1; then
+        printf '%s' "$content" | xsel --clipboard --input
+        return 0
+    fi
+
+    if command -v clip.exe >/dev/null 2>&1; then
+        clip_stderr_file="$(mktemp "${TMPDIR:-/tmp}/ai-prompt.clipboard.XXXXXX.log")" || {
+            ai_prompt_log_error "Failed to create temporary file for clipboard error handling."
+            return 1
+        }
+        if ! printf '%s' "$content" | clip.exe 2>"$clip_stderr_file"; then
+            ai_prompt_log_error "Clipboard backend clip.exe failed."
+            while IFS= read -r clip_stderr_line; do
+                [[ -n "$clip_stderr_line" ]] && ai_prompt_log_error "$clip_stderr_line"
+            done < "$clip_stderr_file"
+            rm -f "$clip_stderr_file"
+            return 1
+        fi
+        if [[ -s "$clip_stderr_file" ]]; then
+            ai_prompt_log_error "Clipboard backend clip.exe reported an error."
+            while IFS= read -r clip_stderr_line; do
+                [[ -n "$clip_stderr_line" ]] && ai_prompt_log_error "$clip_stderr_line"
+            done < "$clip_stderr_file"
+            rm -f "$clip_stderr_file"
+            return 1
+        fi
+        rm -f "$clip_stderr_file"
+        return 0
+    fi
+
+    ai_prompt_log_error "No clipboard backend was found."
+    ai_prompt_log_error "Supported backends: pbcopy, wl-copy, xclip, xsel, clip.exe"
+    return 1
 }
 
 require_git_repo() {
@@ -177,6 +239,9 @@ build_rendered_prompt() {
                 ;;
             --print-output-path)
                 print_output_path=true
+                shift
+                ;;
+            --copy)
                 shift
                 ;;
             *)
@@ -304,6 +369,36 @@ write_rendered_output() {
     fi
 }
 
+show_prompt() {
+    local prompt_id="$1"
+    shift
+
+    local use_copy=false
+    local rendered_prompt=""
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --copy)
+                use_copy=true
+                shift
+                ;;
+            *)
+                ai_prompt_log_error "Unknown show option: $1"
+                ai_prompt_log_error "Usage: ai-prompt show <prompt-id> [--copy]"
+                return 1
+                ;;
+        esac
+    done
+
+    rendered_prompt="$(ai_prompt_print "$prompt_id")" || return 1
+
+    if [[ "$use_copy" == "true" ]]; then
+        copy_to_clipboard "$rendered_prompt" || return 1
+    fi
+
+    printf '%s' "$rendered_prompt"
+}
+
 render_prompt() {
     local prompt_id="$1"
     shift
@@ -311,6 +406,7 @@ render_prompt() {
     local output_mode="stdout"
     local output_path=""
     local print_output_path="false"
+    local use_copy="false"
     local rendered_prompt=""
     local arg=""
 
@@ -339,6 +435,11 @@ render_prompt() {
                 forward_args+=("$1")
                 shift
                 ;;
+            --copy)
+                use_copy="true"
+                forward_args+=("$1")
+                shift
+                ;;
             *)
                 forward_args+=("$1")
                 shift
@@ -347,6 +448,9 @@ render_prompt() {
     done
 
     rendered_prompt="$(build_rendered_prompt "$prompt_id" "${forward_args[@]}")" || return 1
+    if [[ "$use_copy" == "true" ]]; then
+        copy_to_clipboard "$rendered_prompt" || return 1
+    fi
     write_rendered_output "$rendered_prompt" "$output_mode" "$output_path" "$print_output_path"
 }
 
@@ -370,6 +474,10 @@ task_prompt() {
                 shift 2
                 ;;
             --output-temp|--print-output-path)
+                output_args+=("$1")
+                shift
+                ;;
+            --copy)
                 output_args+=("$1")
                 shift
                 ;;
@@ -427,10 +535,11 @@ main() {
         show)
             if [[ -z "$prompt_id" ]]; then
                 ai_prompt_log_error "Missing prompt id for 'show'."
-                ai_prompt_log_error "Usage: ai-prompt show <prompt-id>"
+                ai_prompt_log_error "Usage: ai-prompt show <prompt-id> [--copy]"
                 exit 1
             fi
-            ai_prompt_print "$prompt_id"
+            shift 2
+            show_prompt "$prompt_id" "$@"
             ;;
         render)
             if [[ -z "$prompt_id" ]]; then

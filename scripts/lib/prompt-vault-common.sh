@@ -90,6 +90,7 @@ ai_prompt_print() {
     local prompt_name="$1"
     local vault_root
     local prompt_path
+    local prompt_line
 
     ai_prompt_require_supported "$prompt_name" || return 1
 
@@ -112,5 +113,7 @@ ai_prompt_print() {
         return 1
     fi
 
-    cat "$prompt_path"
+    while IFS= read -r prompt_line || [[ -n "$prompt_line" ]]; do
+        printf '%s\n' "$prompt_line"
+    done < "$prompt_path"
 }

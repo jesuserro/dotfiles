@@ -17,7 +17,10 @@ setup() {
 
     VAULT_ROOT="${TEST_TEMP_DIR}/vault"
     PROMPTS_DIR="${VAULT_ROOT}/agents/prompts"
-    mkdir -p "${PROMPTS_DIR}"
+    CLIPBOARD_STUB_DIR="${TEST_TEMP_DIR}/clipboard-bin"
+    NO_CLIPBOARD_STUB_DIR="${TEST_TEMP_DIR}/no-clipboard-bin"
+    MOCK_CLIPBOARD_FILE="${TEST_TEMP_DIR}/mock-clipboard.txt"
+    mkdir -p "${PROMPTS_DIR}" "${CLIPBOARD_STUB_DIR}" "${NO_CLIPBOARD_STUB_DIR}"
 
     cat > "${PROMPTS_DIR}/understand-context.md" <<'EOF'
 # Understand Context
@@ -53,6 +56,18 @@ EOF
 # Design Test Cases
 Prompt body for design test cases.
 EOF
+
+    cat > "${CLIPBOARD_STUB_DIR}/pbcopy" <<'EOF'
+#!/usr/bin/env bash
+cat > "${MOCK_CLIPBOARD_FILE}"
+EOF
+    chmod +x "${CLIPBOARD_STUB_DIR}/pbcopy"
+
+    ln -s /usr/bin/cat "${NO_CLIPBOARD_STUB_DIR}/cat"
+    ln -s /usr/bin/dirname "${NO_CLIPBOARD_STUB_DIR}/dirname"
+    ln -s /usr/bin/mktemp "${NO_CLIPBOARD_STUB_DIR}/mktemp"
+    ln -s /usr/bin/python3 "${NO_CLIPBOARD_STUB_DIR}/python3"
+    ln -s /usr/bin/rm "${NO_CLIPBOARD_STUB_DIR}/rm"
 }
 
 teardown() {
@@ -98,6 +113,15 @@ teardown() {
     run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" show detect-errors
     [[ "${status}" -eq 0 ]]
     [[ "${output}" == *"# Detect Errors"* ]]
+}
+
+@test "ai-prompt show --copy uses the detected clipboard backend and still prints stdout" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" MOCK_CLIPBOARD_FILE="${MOCK_CLIPBOARD_FILE}" PATH="${CLIPBOARD_STUB_DIR}:$PATH" bash "${AI_PROMPT_LAUNCHER}" show review-diff --copy
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Review Diff"* ]]
+
+    run grep -q "# Review Diff" "${MOCK_CLIPBOARD_FILE}"
+    [[ "${status}" -eq 0 ]]
 }
 
 @test "ai-prompt path prints the resolved markdown path" {
@@ -147,6 +171,16 @@ EOF
     [[ "${status}" -ne 0 ]]
     [[ "${output}" == *"STDIN requested but no stdin pipe or redirection was provided."* || "${output}" == *"STDIN requested but no input was received."* ]]
     [[ "${output}" == *"printf 'text"* ]]
+}
+
+@test "ai-prompt render --copy uses the detected clipboard backend and still prints stdout" {
+    run bash -lc "printf 'Diff summary here\n' | AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' MOCK_CLIPBOARD_FILE='${MOCK_CLIPBOARD_FILE}' PATH='${CLIPBOARD_STUB_DIR}:$PATH' '${AI_PROMPT_LAUNCHER}' render review-diff --stdin --copy"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Review Diff"* ]]
+    [[ "${output}" == *"Diff summary here"* ]]
+
+    run grep -q "Diff summary here" "${MOCK_CLIPBOARD_FILE}"
+    [[ "${status}" -eq 0 ]]
 }
 
 @test "ai-prompt render with git diff works inside a git repo" {
@@ -354,6 +388,22 @@ EOF
     [[ "${status}" -eq 0 ]]
 }
 
+@test "ai-prompt task --copy uses the detected clipboard backend and still prints stdout" {
+    local repo_path="${TEST_TEMP_DIR}/repo_with_readme"
+    mkdir -p "${repo_path}"
+    cat > "${repo_path}/README.md" <<'EOF'
+Task README content.
+EOF
+
+    run bash -lc "cd '${repo_path}' && AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' MOCK_CLIPBOARD_FILE='${MOCK_CLIPBOARD_FILE}' PATH='${CLIPBOARD_STUB_DIR}:$PATH' '${AI_PROMPT_LAUNCHER}' task summarize-repo --copy"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"# Summarize Repo"* ]]
+    [[ "${output}" == *"Task README content."* ]]
+
+    run grep -q "Task README content." "${MOCK_CLIPBOARD_FILE}"
+    [[ "${status}" -eq 0 ]]
+}
+
 @test "ai-prompt task help shows available presets" {
     run bash "${AI_PROMPT_LAUNCHER}" task help
     [[ "${status}" -eq 0 ]]
@@ -469,6 +519,30 @@ EOF
     [[ "${output}" == *"# Detect Errors"* ]]
 }
 
+@test "ai-prompt copy fails clearly when no clipboard backend is available" {
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" PATH="${NO_CLIPBOARD_STUB_DIR}" /usr/bin/bash "${AI_PROMPT_LAUNCHER}" show review-diff --copy
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"No clipboard backend was found."* ]]
+    [[ "${output}" == *"Supported backends: pbcopy, wl-copy, xclip, xsel, clip.exe"* ]]
+}
+
+@test "ai-prompt copy fails clearly when clip.exe reports an error" {
+    local error_stub_dir="${TEST_TEMP_DIR}/error-clipboard-bin"
+    mkdir -p "${error_stub_dir}"
+    cat > "${error_stub_dir}/clip.exe" <<'EOF'
+#!/usr/bin/bash
+cat >/dev/null
+printf 'ERROR: clipboard unavailable\n' >&2
+exit 0
+EOF
+    chmod +x "${error_stub_dir}/clip.exe"
+
+    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" PATH="${error_stub_dir}:${NO_CLIPBOARD_STUB_DIR}" /usr/bin/bash "${AI_PROMPT_LAUNCHER}" show review-diff --copy
+    [[ "${status}" -ne 0 ]]
+    [[ "${output}" == *"Clipboard backend clip.exe reported an error."* ]]
+    [[ "${output}" == *"ERROR: clipboard unavailable"* ]]
+}
+
 @test "ai-prompt help shows the unified interface" {
     run bash "${AI_PROMPT_LAUNCHER}" help
     [[ "${status}" -eq 0 ]]
@@ -477,4 +551,5 @@ EOF
     [[ "${output}" == *"show <prompt-id>"* ]]
     [[ "${output}" == *"render <prompt-id>"* ]]
     [[ "${output}" == *"task <task-name>"* ]]
+    [[ "${output}" == *"--copy"* ]]
 }

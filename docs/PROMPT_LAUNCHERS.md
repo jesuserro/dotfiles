@@ -29,6 +29,8 @@ help
 
 `render` escribe a `stdout` por defecto. Si usas `--output-file` o `--output-temp`, guarda el resultado en archivo; con `--print-output-path` imprime por `stdout` sólo la ruta final generada.
 
+`--copy` es opcional y reutilizable en `show`, `render` y `task`. Cuando lo usas, el contenido también se copia al portapapeles y el comando mantiene su salida normal por `stdout`. Los backends soportados se detectan por mejor esfuerzo en este orden: `pbcopy`, `wl-copy`, `xclip`, `xsel`, `clip.exe`.
+
 `task` es una capa fina de presets sobre `render`. Los tasks iniciales son:
 
 - `review-diff` -> `review-diff` + `--git-diff --git-status`
@@ -66,6 +68,7 @@ AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show review-diff | head
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show write-commit-message | head
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show design-test-cases | head
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt show review-diff --copy | head -20
 ```
 
 Renderizar un prompt compuesto:
@@ -77,6 +80,7 @@ AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render write-commit-message --git-diff --git-status | head -60
 printf 'Small diff summary\n' | AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render review-diff --stdin --output-temp --print-output-path
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render summarize-repo --context-file README.md --output-file /tmp/repo-summary-prompt.md
+printf 'Small diff summary\n' | AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt render review-diff --stdin --copy | head -30
 ```
 
 Usar presets de tarea:
@@ -86,6 +90,7 @@ AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt task write-commit-message --output-temp --print-output-path
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt task summarize-repo | head -60
 AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt task summarize-repo --output-file /tmp/repo-summary.md
+AI_PROMPTS_VAULT_ROOT=/mnt/c/Users/jesus/Documents/vault_trabajo ./local/bin/ai-prompt task summarize-repo --copy | head -40
 ./local/bin/ai-prompt task help
 ./local/bin/ai-prompt task review-diff --explain
 ```
@@ -119,5 +124,6 @@ AI_PROMPTS_VAULT_ROOT=/tmp/vault-sin-prompt ./local/bin/ai-prompt show detect-er
 ./local/bin/ai-prompt render summarize-repo --context-file /tmp/no-existe
 ./local/bin/ai-prompt render summarize-repo --output-file /proc/forbidden.md
 ./local/bin/ai-prompt render summarize-repo --output-file /tmp/a.md --output-temp
+env PATH=/nonexistent /usr/bin/bash ./local/bin/ai-prompt show review-diff --copy
 ./local/bin/ai-prompt task no-such-task
 ```
