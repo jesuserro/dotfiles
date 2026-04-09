@@ -1,4 +1,4 @@
-# WSL2 Local Tools (rg, fdfind, tree, jq, nc)
+# Dotfiles WSL2 Local Tools
 
 ## When to Use
 - Cuando necesites inspeccionar rápidamente la estructura de un proyecto (por ejemplo con `tree`) o encontrar archivos/fragmentos de texto (por ejemplo con `fdfind` y `rg`).

@@ -1,4 +1,4 @@
-# Plans y notepads: nombres con prefijo cronológico
+# Dotfiles Plans and Notepads Naming
 
 Convención de nombres para archivos de plan y documentos de trabajo bajo `.cursor/plans/` (y equivalentes), para ordenarlos por tiempo y evitar nombres genéricos.
 

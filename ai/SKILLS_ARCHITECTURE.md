@@ -22,7 +22,6 @@ dotfiles/
         ops/
         postgres/
         python/
-        tools/
 ```
 
 **All changes to skills belong here.** Surface directories (symlinked or generated) are derived, not sources.
@@ -48,6 +47,15 @@ Do not edit files in surface directories. Changes belong in `ai/assets/skills/` 
 | **Portable** | Skills work without platform-specific tooling |
 | **Distribution via symlinks** | No content duplication across agents |
 
+## Visible Naming Taxonomy
+
+Visible skill names are classified by semantic origin:
+
+- `Vault ...` for skills whose conceptual source is the personal canonical vault
+- `Dotfiles ...` for transversal skills maintained in this repo that are not clearly vault-derived
+- Third-party skills keep their original brand, such as `GitNexus ...`
+- Project-specific families such as `Store ETL ...` belong in the corresponding project repository
+
 ## Categories
 
 | Category | Purpose | Skills |
@@ -57,7 +65,7 @@ Do not edit files in surface directories. Changes belong in `ai/assets/skills/` 
 | `etl/` | Data engineering | Data contracts |
 | `git/` | Version control | PR conventions |
 | `gitnexus/` | Code intelligence | GitNexus skills (6 variants) |
-| `ops/` | Infrastructure/ops | MCP governance, system updates, Playwright UI validation |
+| `ops/` | Infrastructure/ops | Vault AI Prompt Consumer, Dotfiles MCP Governance, Dotfiles UPS Workflow, Dotfiles Playwright UI Validation, Dotfiles WSL2 Local Tools |
 | `postgres/` | Database | SQL style, schema review |
 | `python/` | Python development | Project structure |
 
@@ -132,13 +140,13 @@ Optional: concrete examples.
 
 ## Distribution
 
-After `chezmoi apply`, skills are symlinked to surface directories:
+After `chezmoi apply`, the shared hub is exposed to agent-specific surface directories:
 
 ```
-~/.config/ai/skills/<category>/<skill>/SKILL.md
-~/.cursor/skills-cursor/<category>-<skill>/SKILL.md
-~/.codex/skills/<category>-<skill>/SKILL.md
-~/.config/opencode/skills/<category>-<skill>/SKILL.md
+~/.config/ai/skills/              # canonical hub symlink
+~/.cursor/skills-cursor/          # agent surface linked to the hub
+~/.codex/skills/                  # agent surface linked to the hub
+~/.config/opencode/skills/        # agent surface linked to the hub
 ```
 
 **Platform compatibility**: Actual compatibility with specific platforms (Cursor, Codex, OpenCode) should be verified per platform. If a platform requires specific formatting, create an adapter in `ai/adapters/`.

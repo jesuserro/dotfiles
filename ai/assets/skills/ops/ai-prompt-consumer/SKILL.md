@@ -3,7 +3,7 @@ name: ai-prompt-consumer
 description: Use when an agent should consume canonical external prompts through ai-prompt instead of inventing or duplicating transversal instructions.
 ---
 
-# AI Prompt Consumer
+# Vault AI Prompt Consumer
 
 Guía operativa para agentes que necesitan reutilizar prompts canónicos desde `dotfiles`.
 

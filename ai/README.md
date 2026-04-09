@@ -32,12 +32,21 @@ ai/
   prompts/     # symlink → dotfiles/ai/assets/prompts
   rules/       # symlink → dotfiles/ai/assets/rules
 
-~/.config/opencode/skills/   # skills symlinked per-category
-~/.cursor/skills-cursor/     # skills symlinked per-category
-~/.codex/skills/            # skills symlinked per-category
+~/.config/opencode/skills/   # surface linked to the shared skills hub
+~/.cursor/skills-cursor/     # surface linked to the shared skills hub
+~/.codex/skills/            # surface linked to the shared skills hub
 ```
 
 No editar en surfaces. Todos los cambios en `ai/assets/skills/`.
+
+## Taxonomía visible de skills
+
+Los títulos visibles siguen procedencia semántica:
+
+- `Vault ...` para skills propios cuyo origen conceptual está en `vault_trabajo`
+- `Dotfiles ...` para skills propios transversales mantenidos en este repo y no claramente derivados del vault
+- marca original para terceros, como `GitNexus ...`
+- familias de proyecto como `Store ETL ...` reservadas para repos concretos
 
 > **Nota:** `.claude/skills/` es una convención de nombre compartida por Claude Code y OpenCode. No implica que el repo soporte a Claude — es solo el nombre del directorio que ambos herramientas usan para skills. Los skills de este repo viven en `ai/assets/skills/` y se symlinkean a las rutas que cada plataforma espera.
 
@@ -58,15 +67,19 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 |-----------|-------|-------------|
 | `diagrams/` | `excalidraw/` | Generador de diagramas Excalidraw |
 | `diagrams/` | `conventions/` | Convenciones de diagramación |
-| `docs/` | `adr-writer/` | Guía para escribir ADRs |
+| `docs/` | `adr-writer/` | `Dotfiles ADR Writer` |
+| `docs/` | `plans-and-notepads-naming/` | `Dotfiles Plans and Notepads Naming` |
 | `etl/` | `data-contracts/` | Contratos de datos transversales |
 | `git/` | `pr-conventions/` | Convenciones de PR y commits |
-| `ops/` | `mcp-governance/` | Gobernanza de MCPs |
-| `ops/` | `system-workflow/` | Workflow de actualizaciones |
+| `gitnexus/` | `gitnexus-*` | Skills de `GitNexus` con marca original |
+| `ops/` | `ai-prompt-consumer/` | `Vault AI Prompt Consumer` |
+| `ops/` | `mcp-governance/` | `Dotfiles MCP Governance` |
+| `ops/` | `playwright-ui-validation/` | `Dotfiles Playwright UI Validation` |
+| `ops/` | `system-updates/` | `Dotfiles UPS Workflow` |
+| `ops/` | `wsl2-local-tools/` | `Dotfiles WSL2 Local Tools` |
 | `postgres/` | `schema-review/` | Guía de revisión de esquemas |
 | `postgres/` | `sql-style/` | Estilo SQL general |
 | `python/` | `project-structure/` | Estructura de proyectos Python |
-| `tools/` | `code-intelligence/` | GitNexus (6 variantes) |
 
 Para más detalles, ver [SKILLS_ARCHITECTURE.md](SKILLS_ARCHITECTURE.md) y [ai/assets/skills/README.md](assets/skills/README.md).
 
@@ -97,7 +110,7 @@ Referencias:
 
 - sistema y contrato humano: [docs/AI_PROMPTS_SYSTEM.md](../docs/AI_PROMPTS_SYSTEM.md)
 - referencia operativa corta: [docs/PROMPT_LAUNCHERS.md](../docs/PROMPT_LAUNCHERS.md)
-- guía reutilizable para agentes: [ai/assets/skills/ops/ai-prompt-consumer/SKILL.md](assets/skills/ops/ai-prompt-consumer/SKILL.md)
+- guía reutilizable para agentes: `Vault AI Prompt Consumer` → [ai/assets/skills/ops/ai-prompt-consumer/SKILL.md](assets/skills/ops/ai-prompt-consumer/SKILL.md)
 
 ## Añadir un nuevo MCP servidor
 

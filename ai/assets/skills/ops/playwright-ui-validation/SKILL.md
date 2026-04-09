@@ -1,4 +1,4 @@
-# Playwright UI Validation
+# Dotfiles Playwright UI Validation
 
 Reusable workflow for validating rendered operational and data-product surfaces with Playwright after backend changes.
 

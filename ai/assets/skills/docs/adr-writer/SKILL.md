@@ -1,4 +1,4 @@
-# ADR Writer
+# Dotfiles ADR Writer
 
 Guide for writing clear, actionable Architecture Decision Records.
 

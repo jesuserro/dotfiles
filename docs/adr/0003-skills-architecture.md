@@ -56,15 +56,15 @@ This location is:
 The existing `run_after_11_link_ai_assets.sh.tmpl` script publishes skills to:
 
 ```
-~/.config/ai/skills/           # XDG hub (single source)
-~/.cursor/skills-cursor/*/     # Per-skill symlinks
-~/.codex/skills/*/            # Per-skill symlinks
-~/.config/opencode/skills/*/  # Per-skill symlinks
+~/.config/ai/skills/          # XDG hub (single source)
+~/.cursor/skills-cursor/      # Agent surface linked to the hub
+~/.codex/skills/              # Agent surface linked to the hub
+~/.config/opencode/skills/    # Agent surface linked to the hub
 ```
 
 This approach:
 - Maintains single source of truth (no duplication)
-- Allows per-agent overrides in agent-specific directories
+- Keeps agent surfaces aligned with the same canonical content
 - Is idempotent and chezmoi-safe
 
 ### 4. Skill Format

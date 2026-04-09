@@ -33,6 +33,15 @@ Do not edit files in surface directories (`dot_config/opencode/skills/`, etc.) d
 | `postgres/` | Database |
 | `python/` | Python development |
 
+## Naming Taxonomy
+
+Visible skill names follow semantic origin, not just repository location:
+
+- `Vault ...` for skills whose conceptual source is the personal canonical vault (`vault_trabajo`)
+- `Dotfiles ...` for transversal skills maintained in this repo that are not clearly vault-derived and are not third-party
+- Third-party skills keep their original brand, such as `GitNexus ...`
+- Project-specific families such as `Store ETL ...` belong in the corresponding project repo, not here
+
 ## Skills Index
 
 ### Diagrams
@@ -46,8 +55,8 @@ Do not edit files in surface directories (`dot_config/opencode/skills/`, etc.) d
 
 ### Docs
 
-- `docs/adr-writer/` - Guide for writing Architecture Decision Records
-- `docs/plans-and-notepads-naming/` - Naming convention for `.cursor/plans/*.plan.md` (chronological prefix)
+- `docs/adr-writer/` - `Dotfiles ADR Writer`
+- `docs/plans-and-notepads-naming/` - `Dotfiles Plans and Notepads Naming`
 
 ### ETL
 
@@ -59,19 +68,20 @@ Do not edit files in surface directories (`dot_config/opencode/skills/`, etc.) d
 
 ### GitNexus (Code Intelligence)
 
-- `gitnexus/cli/` - CLI commands
-- `gitnexus/debugging/` - Debugging workflows
-- `gitnexus/exploring/` - Code exploration
-- `gitnexus/guide/` - General guide
-- `gitnexus/impact-analysis/` - Impact analysis
-- `gitnexus/refactoring/` - Refactoring workflows
+- `gitnexus/gitnexus-cli/` - `GitNexus CLI Commands`
+- `gitnexus/gitnexus-debugging/` - `GitNexus Debugging`
+- `gitnexus/gitnexus-exploring/` - `GitNexus Exploring Codebases`
+- `gitnexus/gitnexus-guide/` - `GitNexus Guide`
+- `gitnexus/gitnexus-impact-analysis/` - `GitNexus Impact Analysis`
+- `gitnexus/gitnexus-refactoring/` - `GitNexus Refactoring`
 
 ### Ops
 
-- `ops/ai-prompt-consumer/` - Uso seguro de `ai-prompt` desde agentes y otros proyectos
-- `ops/mcp-governance/` - MCP server classification guide
-- `ops/system-updates/` - System update workflow (dotfiles ups alias)
-- `ops/playwright-ui-validation/` - Validate rendered dashboards/apps with Playwright and capture acceptance evidence
+- `ops/ai-prompt-consumer/` - `Vault AI Prompt Consumer`
+- `ops/mcp-governance/` - `Dotfiles MCP Governance`
+- `ops/system-updates/` - `Dotfiles UPS Workflow`
+- `ops/playwright-ui-validation/` - `Dotfiles Playwright UI Validation`
+- `ops/wsl2-local-tools/` - `Dotfiles WSL2 Local Tools`
 
 ### Postgres
 

@@ -16,6 +16,4 @@ Wiring específico para integrar el hub AI con Cursor IDE.
 
 ## Skills
 
-El script `run_after_11_link_ai_assets` crea el symlink `~/.cursor/skills` → `~/.config/ai/skills` automáticamente.
-
-Si Cursor usa `~/.cursor/skills-cursor` en lugar de `~/.cursor/skills`, ajustar el script en `.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl`.
+El script `run_after_11_link_ai_assets` expone en `~/.cursor/skills-cursor` el mismo canon publicado en `~/.config/ai/skills`.

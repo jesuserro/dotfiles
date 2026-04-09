@@ -3,7 +3,7 @@ name: ups-workflow
 description: Guides development and extension of the ups system update alias. Use when working with the ups command, editing aliases for system updates, adding new MCP servers to the update flow, or extending the dotfiles update workflow.
 ---
 
-# UPS Workflow
+# Dotfiles UPS Workflow
 
 Guía para desarrollar y extender el alias `ups` de actualización integral del sistema.
 
