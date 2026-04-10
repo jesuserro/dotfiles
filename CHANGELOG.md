@@ -2,12 +2,12 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.04.10_1841] - 2026-04-10
+## [v2026.04.10_1918] - 2026-04-10
 
 ## Changes
 ### Fixed
-- 2026-04-10 18:40 [e1235f8](https://github.com/jesuserro/dotfiles/commit/e1235f8) fix(git_rel): improve conflict detection logic in check_potential_conflicts function (Cursor Agent)
-  - Updated the conflict detection logic to use `grep -Fxq --` for exact matching of modified files, enhancing accuracy in identifying potential conflicts between branches.
+- 2026-04-10 19:17 [6668c4d](https://github.com/jesuserro/dotfiles/commit/6668c4d) fix(git_rel): enhance conflict detection in check_potential_conflicts function (Cursor Agent)
+  - Improved the logic for detecting potential conflicts by storing modified files from both source and target branches in separate variables, ensuring accurate identification of conflicts during merges.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
