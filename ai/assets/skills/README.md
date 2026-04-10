@@ -65,6 +65,7 @@ Visible skill names follow semantic origin, not just repository location:
 ### Git
 
 - `git/pr-conventions/` - PR and commit conventions
+- `git/git-rel-troubleshooting/` - `Dotfiles Git Rel Troubleshooting`
 
 ### GitNexus (Code Intelligence)
 

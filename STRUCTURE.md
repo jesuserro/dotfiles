@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-04-09 13:03:39
+**Generated:** 2026-04-10 19:59:05
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -633,6 +633,8 @@
 │   │       │   └── 📁 data-contracts
 │   │       │       └── 📝 SKILL.md
 │   │       ├── 📁 git
+│   │       │   ├── 📁 git-rel-troubleshooting
+│   │       │   │   └── 📝 SKILL.md
 │   │       │   └── 📁 pr-conventions
 │   │       │       └── 📝 SKILL.md
 │   │       ├── 📁 gitnexus
@@ -730,6 +732,7 @@
 │   ├── 📝 COMMANDS_ARCHITECTURE.md
 │   ├── 📝 GIT_AI_AUTHOR.md
 │   ├── 📝 GIT_AI_CURSOR_SETTINGS.md
+│   ├── 📝 GIT_REL_INCIDENT.md
 │   ├── 📝 GIT_WORKFLOW.md
 │   ├── 📝 GUIA_MCP_AI.md
 │   ├── 📝 INSTALL.md
@@ -775,6 +778,7 @@
 ├── 📁 releases
 │   ├── 📝 branch_feature_1-migration-to-chezmoi-sops-age.md
 │   ├── 📝 branch_feature_10-adding-agent-authory.md
+│   ├── 📝 branch_feature_11-adding-prompt-launcher.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
@@ -871,6 +875,7 @@
 │   └── 🔧 90-local.zsh
 ├── ⚙️ .chezmoi.toml
 ├── 📄 .chezmoiignore
+├── 📄 .codex
 ├── 📄 .gitignore
 ├── ⚙️ .sops.yaml
 ├── 📝 AGENTS.md
