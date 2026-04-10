@@ -2,12 +2,14 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.04.10_1918] - 2026-04-10
+## [v2026.04.10_2003] - 2026-04-10
 
 ## Changes
-### Fixed
-- 2026-04-10 19:17 [6668c4d](https://github.com/jesuserro/dotfiles/commit/6668c4d) fix(git_rel): enhance conflict detection in check_potential_conflicts function (Cursor Agent)
-  - Improved the logic for detecting potential conflicts by storing modified files from both source and target branches in separate variables, ensuring accurate identification of conflicts during merges.
+### Documentation
+- 2026-04-10 20:02 [3bb8913](https://github.com/jesuserro/dotfiles/commit/3bb8913) docs(structure): update file tree and add new Git Rel troubleshooting documentation (Cursor Agent)
+  - Updated the generated timestamp in `STRUCTURE.md`.
+  - Added new directory for `git/git-rel-troubleshooting` and included `SKILL.md` for troubleshooting `git rel` incidents.
+  - Introduced `GIT_REL_INCIDENT.md` for operational maintenance and debugging guidance related to `git rel`.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
