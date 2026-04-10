@@ -86,7 +86,8 @@ check_potential_conflicts() {
   git fetch origin "$source_branch" "$target_branch" >/dev/null 2>&1
   
   # Obtener la lista de archivos modificados en la rama source desde el último merge
-  local modified_files=$(git diff --name-only $target_branch...$source_branch 2>/dev/null || echo "")
+  local modified_files=$(git diff --name-only "$target_branch...$source_branch" 2>/dev/null || echo "")
+  local target_modified_files=$(git diff --name-only "$source_branch...$target_branch" 2>/dev/null || echo "")
   
   # Si no hay archivos modificados, no hay conflictos potenciales
   if [ -z "$modified_files" ]; then
@@ -99,7 +100,7 @@ check_potential_conflicts() {
   local potential_conflicts=()
   for file in $modified_files; do
     # Verificar si el archivo también ha sido modificado en target desde el último merge
-    if git diff --name-only "$source_branch...$target_branch" 2>/dev/null | grep -Fxq -- "$file"; then
+    if printf '%s\n' "$target_modified_files" | grep -Fxq -- "$file"; then
       potential_conflicts+=("$file")
     fi
   done
