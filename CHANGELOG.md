@@ -2,13 +2,12 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.04.09_1401] - 2026-04-09
+## [v2026.04.10_1841] - 2026-04-10
 
 ## Changes
 ### Fixed
-- 2026-04-09 14:00 [847bbea](https://github.com/jesuserro/dotfiles/commit/847bbea) fix(aliases): enhance winget tab focus in Windows Terminal (Cursor Agent)
-  - Updated the command to open a new tab in Windows Terminal for winget updates, adding a focus request to return to the original tab after opening.
-  - Adjusted success message to reflect the new functionality of requesting focus on tab 0.
+- 2026-04-10 18:40 [e1235f8](https://github.com/jesuserro/dotfiles/commit/e1235f8) fix(git_rel): improve conflict detection logic in check_potential_conflicts function (Cursor Agent)
+  - Updated the conflict detection logic to use `grep -Fxq --` for exact matching of modified files, enhancing accuracy in identifying potential conflicts between branches.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
