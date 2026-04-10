@@ -99,7 +99,7 @@ check_potential_conflicts() {
   local potential_conflicts=()
   for file in $modified_files; do
     # Verificar si el archivo también ha sido modificado en target desde el último merge
-    if git diff --name-only $source_branch...$target_branch 2>/dev/null | grep -q "^$file$"; then
+    if git diff --name-only "$source_branch...$target_branch" 2>/dev/null | grep -Fxq -- "$file"; then
       potential_conflicts+=("$file")
     fi
   done
