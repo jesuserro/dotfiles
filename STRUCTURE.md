@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-04-10 19:59:05
+**Generated:** 2026-04-13 11:03:42
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -875,7 +875,6 @@
 │   └── 🔧 90-local.zsh
 ├── ⚙️ .chezmoi.toml
 ├── 📄 .chezmoiignore
-├── 📄 .codex
 ├── 📄 .gitignore
 ├── ⚙️ .sops.yaml
 ├── 📝 AGENTS.md

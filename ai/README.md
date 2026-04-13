@@ -78,6 +78,7 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 | `ops/` | `vault-review-diff/` | `Vault Review Diff` |
 | `ops/` | `vault-detect-errors/` | `Vault Detect Errors` |
 | `ops/` | `vault-suggest-improvements/` | `Vault Suggest Improvements` |
+| `ops/` | `vault-project-wiki/` | `Vault Project Wiki` |
 | `ops/` | `vault-update-documentation/` | `Vault Update Documentation` |
 | `ops/` | `vault-write-commit-message/` | `Vault Write Commit Message` |
 | `ops/` | `mcp-governance/` | `Dotfiles MCP Governance` |
@@ -118,7 +119,16 @@ Referencias:
 - sistema y contrato humano: [docs/AI_PROMPTS_SYSTEM.md](../docs/AI_PROMPTS_SYSTEM.md)
 - referencia operativa corta: [docs/PROMPT_LAUNCHERS.md](../docs/PROMPT_LAUNCHERS.md)
 - guía reutilizable para agentes: `Vault AI Prompt Consumer` → [ai/assets/skills/ops/ai-prompt-consumer/SKILL.md](assets/skills/ops/ai-prompt-consumer/SKILL.md)
-- wrappers operativos derivados del vault: `Vault Development Acceleration`, `Vault Review Diff`, `Vault Detect Errors`, `Vault Suggest Improvements`, `Vault Update Documentation`, `Vault Write Commit Message`
+- wrappers operativos derivados del vault: `Vault Development Acceleration`, `Vault Review Diff`, `Vault Detect Errors`, `Vault Suggest Improvements`, `Vault Update Documentation`, `Vault Write Commit Message`, `Vault Project Wiki`
+
+## Vault project wiki
+
+Cuando una implementación relevante deja conocimiento reutilizable, el repo no debe absorber toda esa memoria operativa. La fuente de verdad de implementación sigue en el proyecto; la wiki destilada vive en `vault_trabajo/projects/<project>/knowledge/...`; y `dotfiles` aporta la guía transversal para que los agentes sepan cuándo capturarla y cómo hacerlo sin duplicar el repo.
+
+Referencias:
+
+- flujo humano corto: [docs/VAULT_PROJECT_WIKI_FLOW.md](../docs/VAULT_PROJECT_WIKI_FLOW.md)
+- skill operativa: `Vault Project Wiki` → [ai/assets/skills/ops/vault-project-wiki/SKILL.md](assets/skills/ops/vault-project-wiki/SKILL.md)
 
 ## Añadir un nuevo MCP servidor
 
