@@ -57,6 +57,21 @@ EOF
 Prompt body for design test cases.
 EOF
 
+    cat > "${PROMPTS_DIR}/update-documentation.md" <<'EOF'
+# Update Documentation
+Prompt body for update documentation.
+EOF
+
+    cat > "${PROMPTS_DIR}/suggest-improvements.md" <<'EOF'
+# Suggest Improvements
+Prompt body for suggest improvements.
+EOF
+
+    cat > "${PROMPTS_DIR}/development-acceleration.md" <<'EOF'
+# Development Acceleration
+Prompt body for development acceleration.
+EOF
+
     cat > "${CLIPBOARD_STUB_DIR}/pbcopy" <<'EOF'
 #!/usr/bin/env bash
 cat > "${MOCK_CLIPBOARD_FILE}"
@@ -94,7 +109,7 @@ teardown() {
 @test "ai-prompt list shows the supported catalog" {
     run bash "${AI_PROMPT_LAUNCHER}" list
     [[ "${status}" -eq 0 ]]
-    [[ "${output}" == $'understand-context\nplan-safe-change\ndetect-errors\nsummarize-repo\nreview-diff\nwrite-commit-message\ndesign-test-cases' ]]
+    [[ "${output}" == $'understand-context\nplan-safe-change\ndetect-errors\nsummarize-repo\nreview-diff\nwrite-commit-message\ndesign-test-cases\nupdate-documentation\nsuggest-improvements\ndevelopment-acceleration' ]]
 }
 
 @test "ai-prompt show understand-context prints canonical prompt from env override" {
