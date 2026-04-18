@@ -23,8 +23,8 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 | 🔐 **Autenticación sudo** | Verifica credenciales |
 | 📦 **APT** | `apt-get update`, `apt-get upgrade`, `apt-get autoremove` |
 | 🧹 **Limpieza** | Elimina paquetes no utilizados |
-| 📚 **NPM** | `npm update -g codex` + `corepack prepare pnpm@latest --activate` |
-| 📦 **GitNexus** | `npm install -g gitnexus@latest` (en `~/.local`) |
+| 📚 **NPM** | `npm install -g --prefix=~/.npm-global @openai/codex@latest` + `corepack prepare pnpm@latest --activate` |
+| 📦 **GitNexus** | `npm install -g --prefix=~/.npm-global gitnexus@latest` |
 | 🤖 **OpenCode** | `curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path` |
 | ⚡ **Oh My Zsh** | `omz update`, `upgrade_oh_my_zsh_custom` |
 | 📄 **RenderCV (jesuserro)** | `~/proyectos/jesuserro` — `git pull --rebase --autostash` + `uv pip install --python .venv/bin/python -U "rendercv[full]==2.7"` |
@@ -37,7 +37,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 
 | MCP / Origen | Acción |
 |--------------|--------|
-| **gitnexus** | `npm install -g --prefix=~/.local gitnexus@latest` (CLI, separado del MCP) |
+| **gitnexus** | `npm install -g --prefix=~/.npm-global gitnexus@latest` (CLI, separado del MCP) |
 | **excalidraw** | `~/mcp-servers/excalidraw-mcp` — si el repo fija un `packageManager` antiguo, `ups` lo sincroniza con el `pnpm` activo; después ejecuta `git pull --rebase --autostash` + `pnpm install` + `pnpm run build` |
 | **docker, postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` |
 | **fetch** | `uv tool install mcp-server-fetch` |
@@ -58,7 +58,7 @@ Estos MCPs usan `npx -y` o `uvx` y obtienen la última versión automáticamente
 
 ### gitnexus: CLI vs MCP
 
-- **CLI** (`gitnexus`): Se actualiza con `npm install -g --prefix=~/.local gitnexus@latest`
+- **CLI** (`gitnexus`): Se actualiza con `npm install -g --prefix=~/.npm-global gitnexus@latest`
 - **MCP** (`npx -y gitnexus@latest mcp`): Se resuelve en runtime, no necesita actualización
 
 ---
@@ -67,7 +67,9 @@ Estos MCPs usan `npx -y` o `uvx` y obtienen la última versión automáticamente
 
 - **WSL:** Detecta Ubuntu WSL y lo indica al inicio.
 - **winget en WSL:** Si `wt.exe` y `powershell.exe` están disponibles, `ups` abre una nueva pestaña de Windows Terminal y lanza la actualización de paquetes de Windows en paralelo.
-- **Errores:** Si una sección falla, el proceso continúa. El resumen final muestra el total de errores. Las tuberías con `tee` respetan el código de salida real del comando.
+- **Errores e incidencias:** Si una sección falla, el proceso continúa. El resumen final ya distingue entre errores y warnings/incidencias, para no vender un éxito limpio cuando hubo fallos parciales.
+- **npm global canónico:** Los CLIs npm globales del repo usan `~/.npm-global` mediante `NPM_CONFIG_PREFIX` publicado desde `zsh/00-env.zsh`; `ups` respeta ese prefijo sin usar `sudo`.
+- **Codex CLI:** `ups` actualiza Codex con `npm install -g --prefix=~/.npm-global @openai/codex@latest`, retira de forma explícita el paquete legacy `codex` solo si detecta ese conflicto en el mismo prefijo, y deja evidencia con `codex --version` cuando la actualización termina bien.
 - **opencode.ai:** `ups` ejecuta el instalador oficial por `curl` con `--no-modify-path`, para cubrir instalación inicial y actualización sin depender de permisos de `npm -g` en `/usr`.
 - **pnpm:** Si `corepack` está disponible, `ups` intenta activar la última versión estable de `pnpm`. En proyectos que fijan `packageManager` con `pnpm`, `ups` sincroniza ese pin antes de construirlos para evitar quedarse en una versión antigua.
 - **jesuserro:** Si existe `~/proyectos/jesuserro`, `ups` actualiza el repo y refresca la instalación de `rendercv[full]==2.7` dentro de `./.venv`, manteniendo deliberadamente ese pin para no desalinearlo del schema `v2.7` usado en la plantilla. No regenera el CV.

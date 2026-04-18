@@ -45,7 +45,7 @@ These MCPs require explicit installation or update via `ups`:
 
 | MCP | Update Method |
 |-----|--------------|
-| gitnexus CLI | `npm install -g --prefix=~/.local gitnexus@latest` |
+| gitnexus CLI | `npm install -g --prefix=~/.npm-global gitnexus@latest` |
 | excalidraw | `git pull` + `pnpm install` + `pnpm run build` |
 | fetch | `uv tool install mcp-server-fetch` |
 | docker, postgres | `npm update` in `~/.config/mcp/servers/*/` |

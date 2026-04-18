@@ -72,6 +72,12 @@ _ups_info() {
 }
 
 _ups_warning() {
+  if (( ${+warnings} )); then
+    ((warnings++))
+  fi
+  if (( ${+warning_messages} )); then
+    warning_messages+=("$1")
+  fi
   echo -e "${_ups_yellow}⚠️  $1${_ups_nc}"
 }
 
@@ -98,6 +104,8 @@ ups() {
   local start_time=$(date +%s)
   local errors=0
   local error_messages=()
+  local warnings=0
+  local warning_messages=()
   local is_wsl=0
   local current_pnpm_version=""
   
@@ -201,13 +209,58 @@ EOF
   # 📚 Sección: Actualización npm
   _ups_section "📚 Actualización de paquetes NPM"
   if command -v npm >/dev/null 2>&1; then
-    _ups_progress "Actualizando paquete global: codex..."
+    local npm_prefix="${NPM_CONFIG_PREFIX:-$HOME/.npm-global}"
+    local codex_bin="$npm_prefix/bin/codex"
+    local codex_legacy_target="$npm_prefix/lib/node_modules/codex/bin/codex"
+    local codex_openai_dir="$npm_prefix/lib/node_modules/@openai/codex"
+    local codex_resolved=""
+    local codex_before=""
+    local codex_after=""
+    local codex_reason=""
+    local codex_ready_for_install=1
+    export PATH="$npm_prefix/bin:$PATH"
+    mkdir -p "$npm_prefix/bin" "$npm_prefix/lib/node_modules"
+    codex_before=$(codex --version 2>/dev/null || true)
+
+    if [ -e "$codex_bin" ]; then
+      codex_resolved=$(readlink -f "$codex_bin" 2>/dev/null || true)
+      if [ "$codex_resolved" = "$codex_legacy_target" ]; then
+        _ups_info "Se detectó un CLI legacy 'codex' en ${npm_prefix}; se reemplazará por @openai/codex."
+        if ! npm uninstall -g --prefix="$npm_prefix" codex 2>&1 | tee /tmp/ups_codex_remove.log; then
+          codex_ready_for_install=0
+          codex_reason="no se pudo retirar el paquete legacy 'codex' en ${npm_prefix}"
+        fi
+      elif [ -n "$codex_resolved" ] && [[ "$codex_resolved" != ${codex_openai_dir}/* ]]; then
+        codex_ready_for_install=0
+        codex_reason="${codex_bin} ya existe y apunta a ${codex_resolved}"
+      fi
+    fi
+
+    _ups_progress "Actualizando Codex CLI en el prefijo npm global de usuario..."
     local npm_start=$(date +%s)
-    if npm update -g codex 2>&1 | tee /tmp/ups_npm.log; then
-      local npm_time=$(($(date +%s) - npm_start))
-      _ups_success "Paquete npm 'codex' actualizado (${npm_time}s)"
+
+    if [ $codex_ready_for_install -eq 0 ]; then
+      _ups_warning "No se pudo actualizar Codex CLI: ${codex_reason}"
     else
-      _ups_warning "No se pudo actualizar el paquete npm 'codex' (puede no estar instalado)"
+      if npm install -g --prefix="$npm_prefix" @openai/codex@latest 2>&1 | tee /tmp/ups_npm.log; then
+        local npm_time=$(($(date +%s) - npm_start))
+        rehash 2>/dev/null || hash -r 2>/dev/null || true
+        codex_after=$(codex --version 2>/dev/null || true)
+
+        if [ -n "$codex_after" ]; then
+          if [ -n "$codex_before" ] && [ "$codex_before" = "$codex_after" ]; then
+            _ups_success "Codex CLI ya estaba en versión ${codex_after} (${npm_time}s)"
+          else
+            _ups_success "Codex CLI actualizado a versión ${codex_after} (${npm_time}s)"
+          fi
+        else
+          _ups_warning "Codex CLI se instaló en ${npm_prefix}, pero 'codex --version' no devolvió una versión"
+        fi
+      else
+        codex_reason=$(grep -E '^npm error ' /tmp/ups_npm.log 2>/dev/null | tail -1 | sed 's/^npm error //')
+        [ -z "$codex_reason" ] && codex_reason="consulta /tmp/ups_npm.log"
+        _ups_warning "No se pudo actualizar Codex CLI: ${codex_reason}"
+      fi
     fi
 
     if command -v corepack >/dev/null 2>&1; then
@@ -241,15 +294,13 @@ EOF
   _ups_section "📦 Actualización de GitNexus CLI"
   if command -v npm >/dev/null 2>&1; then
     local gitnexus_start=$(date +%s)
+    local npm_prefix="${NPM_CONFIG_PREFIX:-$HOME/.npm-global}"
     _ups_progress "Instalando/actualizando gitnexus@latest globalmente..."
     
-    # Asegurar PATH local
-    export PATH="$HOME/.local/bin:$PATH"
+    export PATH="$npm_prefix/bin:$PATH"
+    mkdir -p "$npm_prefix/bin" "$npm_prefix/lib/node_modules"
     
-    local_prefix="$HOME/.local"
-    mkdir -p "$local_prefix/bin" "$local_prefix/lib/node_modules"
-    
-    if ! npm install -g --prefix="$local_prefix" gitnexus@latest 2>&1 | tee /tmp/ups_gitnexus.log; then
+    if ! npm install -g --prefix="$npm_prefix" gitnexus@latest 2>&1 | tee /tmp/ups_gitnexus.log; then
       _ups_warning "No se pudo actualizar GitNexus"
     fi
     local gitnexus_time=$(($(date +%s) - gitnexus_start))
@@ -257,6 +308,7 @@ EOF
       local gnx_version
       gnx_version=$(gitnexus --version 2>/dev/null || echo "desconocida")
       _ups_success "GitNexus actualizado a versión ${gnx_version} (${gitnexus_time}s)"
+      _ups_info "GitNexus CLI usa el prefijo npm global de usuario en ${npm_prefix}."
       _ups_info "Los MCPs gestionados por chezmoi usan el launcher local de GitNexus; si cambias plantillas MCP, aplica chezmoi."
     else
       _ups_success "GitNexus instalado/actualizado (${gitnexus_time}s)"
@@ -462,13 +514,24 @@ EOF
   
   echo -e "${_ups_blue}⏱️  Tiempo total de ejecución: ${_ups_bold}${minutes}m ${seconds}s${_ups_nc}"
   
-  if [ $errors -eq 0 ]; then
+  if [ $errors -eq 0 ] && [ $warnings -eq 0 ]; then
     echo -e "${_ups_green}${_ups_bold}✅ Proceso completado sin errores${_ups_nc}\n"
+  elif [ $errors -eq 0 ]; then
+    echo -e "${_ups_yellow}${_ups_bold}⚠️  Proceso completado con ${warnings} incidencia(s)/warning(s)${_ups_nc}"
+    for msg in "${warning_messages[@]}"; do
+      echo -e "${_ups_yellow}   • $msg${_ups_nc}"
+    done
+    echo ""
   else
-    echo -e "${_ups_red}${_ups_bold}⚠️  Se encontraron ${errors} error(es) durante el proceso${_ups_nc}"
+    echo -e "${_ups_red}${_ups_bold}⚠️  Se encontraron ${errors} error(es) y ${warnings} warning(s) durante el proceso${_ups_nc}"
     for msg in "${error_messages[@]}"; do
       echo -e "${_ups_red}   • $msg${_ups_nc}"
     done
+    if [ $warnings -gt 0 ]; then
+      for msg in "${warning_messages[@]}"; do
+        echo -e "${_ups_yellow}   • $msg${_ups_nc}"
+      done
+    fi
     echo ""
   fi
   

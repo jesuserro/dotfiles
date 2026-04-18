@@ -137,6 +137,6 @@ El alias `ups` incluye una sección que actualiza los servidores MCP:
 | **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
 | **context7, github, gitnexus (MCP)** | Usan `npx` — obtienen la última versión al ejecutarse |
 
-**gitnexus CLI** se actualiza por separado: `npm install -g --prefix=~/.local gitnexus@latest`
+**gitnexus CLI** se actualiza por separado: `npm install -g --prefix=~/.npm-global gitnexus@latest`
 
 Tras ejecutar `ups`, aplica los cambios del shell con: `source ~/.zshrc`

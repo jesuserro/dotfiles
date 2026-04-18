@@ -31,17 +31,17 @@ fi
 
 echo -e "${GREEN}✓${NC} npm encontrado: $(npm --version)"
 
-# Asegurar que el PATH local esté disponible
-export PATH="$HOME/.local/bin:$PATH"
+# Prefijo npm global canónico en espacio de usuario
+export NPM_CONFIG_PREFIX="${NPM_CONFIG_PREFIX:-$HOME/.npm-global}"
+export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
 
-# Instalar gitnexus globalmente en directorio local (para evitar problemas de permisos)
+# Instalar gitnexus globalmente en el prefijo npm de usuario
 echo ""
 echo -e "${YELLOW}⏳${NC} Instalando gitnexus@latest globalmente..."
 
-local_prefix="$HOME/.local"
-mkdir -p "$local_prefix/bin" "$local_prefix/lib/node_modules"
+mkdir -p "$NPM_CONFIG_PREFIX/bin" "$NPM_CONFIG_PREFIX/lib/node_modules"
 
-if npm install -g --prefix="$local_prefix" gitnexus@latest 2>&1; then
+if npm install -g --prefix="$NPM_CONFIG_PREFIX" gitnexus@latest 2>&1; then
     echo -e "${GREEN}✓${NC} GitNexus CLI instalado correctamente"
     if command -v gitnexus &> /dev/null; then
         echo -e "${GREEN}✓${NC} gitnexus disponible en PATH: $(which gitnexus)"
@@ -54,6 +54,8 @@ else
     echo -e "${RED}❌ Error al instalar gitnexus${NC}"
     exit 1
 fi
+
+echo -e "${GREEN}✓${NC} Prefijo npm global canónico: ${NPM_CONFIG_PREFIX}"
 
 echo ""
 echo -e "${GREEN}✅ Instalación completada${NC}"

@@ -12,7 +12,7 @@ path_append "$HOME/.local/bin"
 path_prepend "$HOME/.opencode/bin"
 
 # NPM Global packages
-path_prepend "$HOME/.npm-global/bin"
+path_prepend "$NPM_CONFIG_PREFIX/bin"
 
 # NVM
 export NVM_DIR="$HOME/.nvm"

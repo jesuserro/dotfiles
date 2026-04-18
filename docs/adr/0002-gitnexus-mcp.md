@@ -53,9 +53,9 @@ This pattern is used in:
 
 The CLI is installed globally but separately from the MCP:
 
-- **Installation**: `npm install -g --prefix=~/.local gitnexus@latest`
+- **Installation**: `npm install -g --prefix=~/.npm-global gitnexus@latest`
 - **Update**: Via `ups` command
-- **Location**: `~/.local/bin/gitnexus`
+- **Location**: `~/.npm-global/bin/gitnexus`
 
 This avoids sudo permission issues and keeps the CLI independent from MCP clients.
 

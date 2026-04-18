@@ -48,6 +48,8 @@ En este proyecto conviven tres formas de aplicar cambios. Usa cada una en su mom
 | **`source ~/.zshrc`** | Después de `rcup` o de `ups`: recarga en la sesión actual los aliases, funciones y el PATH. No modifica archivos en disco. |
 | **`chezmoi --source=$HOME/dotfiles apply`** | Cuando cambias en el repo lo que Chezmoi gestiona (MCPs, plantillas en `dot_cursor/`, `dot_codex/`, secretos, runtime AI). Lleva esos cambios a `~/.cursor/`, `~/.codex/`, etc. |
 
+La política de npm global de usuario vive en la capa shell/RCM del repo (`zsh` + `aliases`), así que se publica con `rcup -v` y se activa en la sesión con `source ~/.zshrc`.
+
 **Ejemplo:** Si solo ejecutas `ups` (actualizar sistema y MCPs), no hace falta chezmoi; basta `source ~/.zshrc` para que la shell use la configuración actual. Chezmoi solo es necesario cuando **tú** editas plantillas o archivos del repo (por ejemplo añades un MCP en `dot_cursor/mcp.json.tmpl`).
 
 **Detalle:** [docs/CHEZMOI.md#cuándo-usar-rcup-source-y-chezmoi](docs/CHEZMOI.md#cuándo-usar-rcup-source-y-chezmoi).
