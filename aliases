@@ -295,23 +295,52 @@ EOF
   if command -v npm >/dev/null 2>&1; then
     local gitnexus_start=$(date +%s)
     local npm_prefix="${NPM_CONFIG_PREFIX:-$HOME/.npm-global}"
+    local gitnexus_dir="$npm_prefix/lib/node_modules/gitnexus"
+    local gitnexus_before=""
+    local gitnexus_after=""
+    local gitnexus_reason=""
+    local gitnexus_install_ok=0
+    local gitnexus_reconciled=0
     _ups_progress "Instalando/actualizando gitnexus@latest globalmente..."
     
     export PATH="$npm_prefix/bin:$PATH"
     mkdir -p "$npm_prefix/bin" "$npm_prefix/lib/node_modules"
+    gitnexus_before=$(gitnexus --version 2>/dev/null || true)
     
-    if ! npm install -g --prefix="$npm_prefix" gitnexus@latest 2>&1 | tee /tmp/ups_gitnexus.log; then
-      _ups_warning "No se pudo actualizar GitNexus"
+    if npm install -g --prefix="$npm_prefix" gitnexus@latest 2>&1 | tee /tmp/ups_gitnexus.log; then
+      gitnexus_install_ok=1
+    elif [ -d "$gitnexus_dir" ]; then
+      _ups_info "La actualización directa de GitNexus falló; se intentará una reinstalación limpia del paquete existente."
+      if npm uninstall -g --prefix="$npm_prefix" gitnexus 2>&1 | tee /tmp/ups_gitnexus_remove.log &&
+        npm install -g --prefix="$npm_prefix" gitnexus@latest 2>&1 | tee /tmp/ups_gitnexus_retry.log; then
+        gitnexus_install_ok=1
+        gitnexus_reconciled=1
+      else
+        gitnexus_reason=$(grep -E '^npm error ' /tmp/ups_gitnexus_retry.log /tmp/ups_gitnexus_remove.log /tmp/ups_gitnexus.log 2>/dev/null | tail -1 | sed 's/.*npm error //')
+      fi
+    else
+      gitnexus_reason=$(grep -E '^npm error ' /tmp/ups_gitnexus.log 2>/dev/null | tail -1 | sed 's/^npm error //')
     fi
     local gitnexus_time=$(($(date +%s) - gitnexus_start))
-    if command -v gitnexus >/dev/null 2>&1; then
-      local gnx_version
-      gnx_version=$(gitnexus --version 2>/dev/null || echo "desconocida")
-      _ups_success "GitNexus actualizado a versión ${gnx_version} (${gitnexus_time}s)"
+    rehash 2>/dev/null || hash -r 2>/dev/null || true
+    gitnexus_after=$(gitnexus --version 2>/dev/null || true)
+
+    if [ $gitnexus_install_ok -eq 1 ] && [ -n "$gitnexus_after" ]; then
+      if [ $gitnexus_reconciled -eq 1 ]; then
+        _ups_success "GitNexus reconciliado/reinstalado correctamente; versión final ${gitnexus_after} (${gitnexus_time}s)"
+      elif [ -n "$gitnexus_before" ] && [ "$gitnexus_before" = "$gitnexus_after" ]; then
+        _ups_success "GitNexus ya estaba en versión ${gitnexus_after} (${gitnexus_time}s)"
+      else
+        _ups_success "GitNexus actualizado a versión ${gitnexus_after} (${gitnexus_time}s)"
+      fi
       _ups_info "GitNexus CLI usa el prefijo npm global de usuario en ${npm_prefix}."
       _ups_info "Los MCPs gestionados por chezmoi usan el launcher local de GitNexus; si cambias plantillas MCP, aplica chezmoi."
+    elif [ -n "$gitnexus_after" ]; then
+      [ -z "$gitnexus_reason" ] && gitnexus_reason="consulta /tmp/ups_gitnexus.log"
+      _ups_warning "No se pudo actualizar GitNexus; sigue disponible la versión previa ${gitnexus_after} (${gitnexus_reason})"
     else
-      _ups_success "GitNexus instalado/actualizado (${gitnexus_time}s)"
+      [ -z "$gitnexus_reason" ] && gitnexus_reason="consulta /tmp/ups_gitnexus.log"
+      _ups_warning "No se pudo actualizar GitNexus y no hay binario usable (${gitnexus_reason})"
     fi
   else
     _ups_info "npm no está instalado, omitiendo actualización de GitNexus"

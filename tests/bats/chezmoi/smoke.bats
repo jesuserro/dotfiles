@@ -204,3 +204,11 @@ tomllib.loads(content)
     grep -q "codex --version" "$DOTFILES_DIR/aliases"
     grep -q 'Proceso completado con \${warnings} incidencia(s)/warning(s)' "$DOTFILES_DIR/aliases"
 }
+
+@test "ups GitNexus flow does not report update success after failed install with previous version still available" {
+    grep -q 'npm uninstall -g --prefix="\$npm_prefix" gitnexus' "$DOTFILES_DIR/aliases"
+    grep -q 'No se pudo actualizar GitNexus; sigue disponible la versión previa' "$DOTFILES_DIR/aliases"
+    grep -q 'No se pudo actualizar GitNexus y no hay binario usable' "$DOTFILES_DIR/aliases"
+    grep -q 'GitNexus ya estaba en versión' "$DOTFILES_DIR/aliases"
+    grep -q 'GitNexus reconciliado/reinstalado correctamente; versión final' "$DOTFILES_DIR/aliases"
+}
