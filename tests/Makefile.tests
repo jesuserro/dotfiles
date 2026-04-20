@@ -23,6 +23,7 @@ BATS_TESTS_MCP := $(wildcard $(BATS_DIR)/mcp/*.bats)
 BATS_TESTS_CHEZMOI := $(wildcard $(BATS_DIR)/chezmoi/*.bats)
 BATS_TESTS_COMMANDS := $(wildcard $(BATS_DIR)/commands/*.bats)
 BATS_TESTS_PROMPTS := $(wildcard $(BATS_DIR)/prompts/*.bats)
+BATS_TESTS_SYSTEM := $(wildcard $(BATS_DIR)/system/*.bats)
 
 # Color codes
 RED := \033[0;31m
@@ -33,6 +34,7 @@ NC := \033[0m
 
 .PHONY: test test-fast test-lint test-bats test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts
 .PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands
+.PHONY: deps-check deps-install deps-actions bats-system
 
 help:
 	@echo "Testing targets for dotfiles"
@@ -45,6 +47,9 @@ help:
 	@echo "  make test-commands- Run commands tests only"
 	@echo "  make test-install - Install test dependencies"
 	@echo "  make fmt-shell    - Format shell scripts with shfmt"
+	@echo "  make deps-check   - Check declarative system dependencies"
+	@echo "  make deps-install - Install declarative system dependencies on Ubuntu/Debian"
+	@echo "  make deps-actions - Show recommended actions for missing dependencies"
 	@echo ""
 	@echo "  make generate-commands  - Generate command artifacts"
 	@echo "  make validate-commands  - Validate command structure"
@@ -155,7 +160,7 @@ fmt-shell:
 # Bats tests (human-readable output)
 # ============================================
 
-test-bats: bats-helpers bats-mcp bats-chezmoi bats-commands bats-git-ai bats-prompts
+test-bats: bats-helpers bats-mcp bats-chezmoi bats-commands bats-git-ai bats-prompts bats-system
 	@echo ""
 	@echo "$(GREEN)==>$NC Bats tests passed"
 
@@ -198,6 +203,10 @@ bats-prompts:
 	@echo "$(BLUE)==>$NC Running prompt launcher tests..."
 	@$(call run_bats,$(BATS_DIR)/prompts/prompt-launchers.bats)
 
+bats-system:
+	@echo "$(BLUE)==>$NC Running system dependency tests..."
+	@$(call run_bats,$(BATS_DIR)/system/system-deps.bats)
+
 # ============================================
 # CI targets (JUnit/XML output)
 # ============================================
@@ -217,6 +226,15 @@ test: test-lint test-bats
 	@echo "$(GREEN)========================================"
 	@echo "All tests passed"
 	@echo "========================================$(NC)"
+
+deps-check:
+	@bash $(DOTFILES_DIR)/scripts/check-system-deps.sh $(DEPS_CHECK_ARGS)
+
+deps-install:
+	@bash $(DOTFILES_DIR)/scripts/install-system-packages.sh $(DEPS_INSTALL_ARGS)
+
+deps-actions:
+	@bash $(DOTFILES_DIR)/scripts/show-system-deps-actions.sh $(DEPS_ACTION_ARGS)
 
 test-fast: test-lint test-bats
 	@echo ""

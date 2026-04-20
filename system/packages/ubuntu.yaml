@@ -1,0 +1,49 @@
+schema_version: 1
+platform: ubuntu
+manager: apt
+packages:
+  - package: python3-pip
+    command: pip3
+    required: true
+    capability: python
+    note: Base Python package installer used by some local workflows.
+  - package: pipx
+    command: pipx
+    required: true
+    capability: python
+    note: Preferred isolated installer for user-scoped Python CLI tools.
+  - package: bubblewrap
+    command: bwrap
+    required: true
+    capability: sandbox
+    note: Required for Codex sandboxing to work cleanly on Linux and WSL.
+  - package: age
+    command: age
+    required: true
+    capability: secrets
+    note: Used for SOPS age key management in this repo.
+  - package: sops
+    command: sops
+    required: true
+    capability: secrets
+    note: Used to edit and manage encrypted secrets files.
+  - package: fd-find
+    command: fdfind
+    required: true
+    capability: cli
+    note: Debian/Ubuntu package that provides the fd-style file finder.
+  - package: tree
+    command: tree
+    required: false
+    capability: docs
+    note: Used by scripts/treegen.sh to regenerate STRUCTURE.md.
+  - package: shellcheck
+    command: shellcheck
+    required: false
+    capability: testing
+    note: Optional shell linting dependency used by make test-lint.
+  - package: shfmt
+    command: shfmt
+    required: false
+    capability: testing
+    note: Optional shell formatter used by make fmt-shell and test-lint.

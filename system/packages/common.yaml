@@ -1,0 +1,49 @@
+schema_version: 1
+platform: common
+manager: apt
+packages:
+  - package: git
+    command: git
+    required: true
+    capability: core
+    note: Required to clone the repo and use git workflow scripts.
+  - package: curl
+    command: curl
+    required: true
+    capability: bootstrap
+    note: Used by installation helpers and network-oriented tooling.
+  - package: zsh
+    command: zsh
+    required: true
+    capability: shell
+    note: Primary interactive shell managed by these dotfiles.
+  - package: tmux
+    command: tmux
+    required: true
+    capability: terminal
+    note: Managed terminal multiplexer configuration lives in the repo.
+  - package: jq
+    command: jq
+    required: true
+    capability: cli
+    note: Used by scripts and operational workflows for JSON processing.
+  - package: unzip
+    command: unzip
+    required: true
+    capability: bootstrap
+    note: Needed by several bootstrap and archive-based installs.
+  - package: make
+    command: make
+    required: true
+    capability: automation
+    note: Root task runner for tests and operational entry points.
+  - package: python3
+    command: python3
+    required: true
+    capability: automation
+    note: Required by repo tooling and dependency inventory helpers.
+  - package: ripgrep
+    command: rg
+    required: true
+    capability: cli
+    note: Preferred search tool across repo workflows and agent guidance.
