@@ -6,6 +6,8 @@ Guía paso a paso para configurar estos dotfiles en una máquina nueva.
 
 ## Requisitos previos
 
+Para el inventario declarativo de paquetes base del sistema y su chequeo/instalación por `apt`, ver [SYSTEM_DEPENDENCIES.md](SYSTEM_DEPENDENCIES.md). Esta guía mantiene solo el flujo general de bootstrap.
+
 | Herramienta | Instalación |
 |-------------|-------------|
 | **Chezmoi** | [Releases](https://github.com/twpayne/chezmoi/releases) o `go install github.com/twpayne/chezmoi/v2@latest` |

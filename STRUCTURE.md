@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-04-20 10:36:06
+**Generated:** 2026-04-20 10:59:43
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -659,6 +659,8 @@
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 playwright-ui-validation
 │   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 system-dependencies
+│   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 system-updates
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 vault-detect-errors
@@ -747,6 +749,7 @@
 │   ├── 📝 PROMPT_LAUNCHERS.md
 │   ├── 📝 README.md
 │   ├── 📝 SECRETS_EXAMPLES.md
+│   ├── 📝 SYSTEM_DEPENDENCIES.md
 │   ├── 📝 TESTING.md
 │   ├── 📝 TOKEN_GITHUB_GH.md
 │   ├── 📝 UPS.md
@@ -797,7 +800,9 @@
 │   ├── 📁 lib
 │   │   ├── 🔧 git-ai-common.sh
 │   │   ├── 🔧 git-ai-cursor-path.sh
-│   │   └── 🔧 prompt-vault-common.sh
+│   │   ├── 🔧 prompt-vault-common.sh
+│   │   └── 🐍 system_deps.py
+│   ├── 🔧 check-system-deps.sh
 │   ├── 🔧 generate-commands.sh
 │   ├── 🔧 git-set-ai-author.sh
 │   ├── 🔧 git-set-ai-disable.sh
@@ -829,6 +834,7 @@
 │   ├── 🔧 git_workflow.sh
 │   ├── 🔧 install-git-ai-wrapper.sh
 │   ├── 🔧 install-gitnexus.sh
+│   ├── 🔧 install-system-packages.sh
 │   ├── 🔧 materialize-commands.sh
 │   ├── 🔧 show_branches_with_dates.sh
 │   ├── 🔧 system_info.sh
@@ -837,6 +843,10 @@
 │   ├── 🔧 treegen.sh
 │   ├── 🔧 validate-commands-structure.sh
 │   └── 🔧 validate-skills-structure.sh
+├── 📁 system
+│   └── 📁 packages
+│       ├── ⚙️ common.yaml
+│       └── ⚙️ ubuntu.yaml
 ├── 📁 termux
 │   ├── 🔧 install.sh
 │   └── 🔧 install_plugins.sh
@@ -854,6 +864,8 @@
 │   │   │   └── 📄 validate-governance.bats
 │   │   ├── 📁 prompts
 │   │   │   └── 📄 prompt-launchers.bats
+│   │   ├── 📁 system
+│   │   │   └── 📄 system-deps.bats
 │   │   └── 📄 git-ai-author.bats
 │   └── 📄 Makefile.tests
 ├── 📁 tmux

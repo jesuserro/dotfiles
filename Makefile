@@ -4,3 +4,6 @@
 include tests/Makefile.tests
 
 .DEFAULT_GOAL := help
+
+DEPS_CHECK_ARGS ?=
+DEPS_INSTALL_ARGS ?=
