@@ -7,3 +7,4 @@ include tests/Makefile.tests
 
 DEPS_CHECK_ARGS ?=
 DEPS_INSTALL_ARGS ?=
+DEPS_ACTION_ARGS ?=

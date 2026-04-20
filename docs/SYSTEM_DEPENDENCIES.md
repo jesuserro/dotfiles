@@ -36,6 +36,7 @@ This separation is intentional:
 
 - `deps-install` answers “what APT packages does this Ubuntu/WSL machine need?”
 - `deps-check --include-optional` answers “what other CLIs and interop pieces does this workstation use?”
+- `deps-actions --include-optional` answers “what is the canonical next step to reconcile what is missing?”
 
 ## Verify
 
@@ -59,6 +60,28 @@ make deps-check DEPS_CHECK_ARGS=--include-optional
 ```
 
 On WSL, the default check also loads `system/packages/wsl.yaml`. Outside WSL it is ignored.
+
+## Reconcile missing tooling
+
+Show recommended actions for missing dependencies:
+
+```bash
+scripts/show-system-deps-actions.sh
+scripts/show-system-deps-actions.sh --include-optional
+```
+
+From `make`:
+
+```bash
+make deps-actions
+make deps-actions DEPS_ACTION_ARGS=--include-optional
+```
+
+This surface does not install anything. It only gives the canonic next step:
+
+- `apt` entries point back to `scripts/install-system-packages.sh`
+- `external:*` entries show the repo-preferred installer or reconciliation command when one exists
+- `environment:*` entries explain whether the capability is builtin or host-side
 
 ## Install on Ubuntu/Debian
 
@@ -94,12 +117,26 @@ make deps-install DEPS_INSTALL_ARGS="--dry-run --include-optional"
 - Installed by `deps-install`: `common.yaml` and `ubuntu.yaml` entries with manager `apt`.
 - Checked but not installed by `deps-install`: `tooling.yaml` and `wsl.yaml`.
 - Windows-side commands such as `wt.exe` and `powershell.exe` are declared for visibility from WSL, not for Linux-side installation.
+- Recommended but not auto-run: `show-system-deps-actions.sh` explains how to reconcile missing `external:*` and `environment:*` entries.
 
 ## Current operational examples
 
 - APT baseline: `git`, `zsh`, `tmux`, `python3`, `python3-pip`, `bubblewrap`, `ripgrep`, `fd-find`.
 - Non-APT tooling: `chezmoi`, `uv`, `node`, `npm`, `corepack`, `pnpm`, `codex`, `gitnexus`, `opencode`, `docker`.
 - WSL/Windows-side: `wslpath`, `powershell.exe`, `wt.exe`.
+
+## Canonical external guidance
+
+- `chezmoi`: install from the official release flow or `go install github.com/twpayne/chezmoi/v2@latest`
+- `uv`: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- `node` / `npm`: install together through your preferred WSL/Ubuntu Node distribution
+- `corepack`: `corepack enable`
+- `pnpm`: `corepack prepare pnpm@latest --activate`
+- `codex`: `npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest`
+- `gitnexus`: `npm install -g --prefix="$HOME/.npm-global" gitnexus@latest`
+- `opencode`: `curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path`
+- `docker`: manual workstation decision on WSL; the repo does not enforce one installer path
+- `wt.exe` / `powershell.exe`: Windows-host capabilities used from WSL, not Linux install targets
 
 ## How to extend the inventory
 

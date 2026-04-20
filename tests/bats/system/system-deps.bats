@@ -5,6 +5,7 @@ setup() {
     setup_temp_dir
     DOTFILES_DIR="$(get_dotfiles_dir)"
     CHECK_SCRIPT="${DOTFILES_DIR}/scripts/check-system-deps.sh"
+    ACTIONS_SCRIPT="${DOTFILES_DIR}/scripts/show-system-deps-actions.sh"
     HELPER_SCRIPT="${DOTFILES_DIR}/scripts/lib/system_deps.py"
     TEST_INVENTORY="${TEST_TEMP_DIR}/inventory.yaml"
 }
@@ -92,6 +93,53 @@ EOF
     run python3 "${HELPER_SCRIPT}" packages --manager apt --inventory "${apt_inventory}" --inventory "${tooling_inventory}"
     [[ "${status}" -eq 0 ]]
     [[ "${output}" == "git" ]]
+}
+
+@test "actions helper emits canonical guidance for known external tooling" {
+    cat > "${TEST_INVENTORY}" <<'EOF'
+schema_version: 1
+platform: common
+manager: external
+packages:
+  - package: @openai/codex
+    command: codex
+    required: false
+    capability: ai-cli
+    install_method: npm
+    note: Codex CLI.
+EOF
+
+    run python3 "${HELPER_SCRIPT}" actions --include-optional --inventory "${TEST_INVENTORY}"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"Install Codex CLI in the user npm prefix used by this repo."* ]]
+    [[ "${output}" == *'npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest'* ]]
+}
+
+@test "show-system-deps-actions reports actionable guidance for missing external tools" {
+    cat > "${TEST_INVENTORY}" <<'EOF'
+schema_version: 1
+platform: common
+manager: external
+packages:
+  - package: @openai/codex
+    command: codex-missing
+    required: false
+    capability: ai-cli
+    install_method: npm
+    note: Codex CLI.
+  - package: docker
+    command: docker-missing
+    required: false
+    capability: containers
+    install_method: manual
+    note: Docker workflow.
+EOF
+
+    run env PATH="/bin" PYTHON="/usr/bin/python3" bash "${ACTIONS_SCRIPT}" --include-optional --inventory "${TEST_INVENTORY}"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"SKIP @openai/codex -> codex-missing"* ]]
+    [[ "${output}" == *'npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest'* ]]
+    [[ "${output}" == *"Manual: use your chosen Docker Desktop WSL integration or Linux Docker Engine setup."* ]]
 }
 
 @test "check-system-deps fails when a required command is missing" {

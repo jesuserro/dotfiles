@@ -13,6 +13,139 @@ class InventoryError(Exception):
     """Raised when an inventory file does not match the supported schema."""
 
 
+def _tsv_value(value):
+    if value is None or value == "":
+        return "-"
+    return str(value)
+
+
+def _action_for_package(package):
+    command = package["command"]
+    package_name = package["package"]
+    manager = package["manager"]
+    install_method = package["install_method"]
+
+    if manager == "apt":
+        return {
+            "kind": "apt",
+            "summary": "Install with the Ubuntu/Debian APT bootstrap for this repo.",
+            "command": "scripts/install-system-packages.sh --dry-run && scripts/install-system-packages.sh",
+        }
+
+    by_command = {
+        "chezmoi": {
+            "kind": "manual",
+            "summary": "Install chezmoi from the official release flow or the upstream Go module.",
+            "command": "go install github.com/twpayne/chezmoi/v2@latest",
+        },
+        "uv": {
+            "kind": "installer",
+            "summary": "Install uv with the official installer used by Astral.",
+            "command": "curl -LsSf https://astral.sh/uv/install.sh | sh",
+        },
+        "node": {
+            "kind": "manual",
+            "summary": "Install Node.js with your preferred WSL/Ubuntu method so that node and npm are both available.",
+            "command": "Use your preferred Node installer for WSL/Ubuntu (for example nvm or NodeSource).",
+        },
+        "npm": {
+            "kind": "manual",
+            "summary": "npm should arrive with Node.js; reconcile Node first if npm is missing.",
+            "command": "Use your preferred Node installer for WSL/Ubuntu (for example nvm or NodeSource).",
+        },
+        "corepack": {
+            "kind": "manual",
+            "summary": "Enable Corepack after Node.js is installed.",
+            "command": "corepack enable",
+        },
+        "pnpm": {
+            "kind": "manual",
+            "summary": "Activate pnpm through Corepack instead of managing it separately in this repo.",
+            "command": "corepack prepare pnpm@latest --activate",
+        },
+        "codex": {
+            "kind": "installer",
+            "summary": "Install Codex CLI in the user npm prefix used by this repo.",
+            "command": 'npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest',
+        },
+        "@openai/codex": {
+            "kind": "installer",
+            "summary": "Install Codex CLI in the user npm prefix used by this repo.",
+            "command": 'npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest',
+        },
+        "gitnexus": {
+            "kind": "installer",
+            "summary": "Install GitNexus CLI in the user npm prefix used by this repo.",
+            "command": 'npm install -g --prefix="$HOME/.npm-global" gitnexus@latest',
+        },
+        "opencode": {
+            "kind": "installer",
+            "summary": "Install or refresh OpenCode with the official installer used by ups().",
+            "command": "curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path",
+        },
+        "docker": {
+            "kind": "manual",
+            "summary": "Treat Docker as a manual workstation choice on WSL rather than a dotfiles-managed installer.",
+            "command": "Manual: use your chosen Docker Desktop WSL integration or Linux Docker Engine setup.",
+        },
+        "wslpath": {
+            "kind": "environment",
+            "summary": "wslpath is provided by WSL itself; if it is missing, verify WSL/interop health.",
+            "command": "Verify that the shell is running inside WSL and that interop is enabled.",
+        },
+        "powershell.exe": {
+            "kind": "windows",
+            "summary": "Optional Windows-side capability used by ups() for winget from WSL.",
+            "command": "Install or repair PowerShell on the Windows host if you need that flow.",
+        },
+        "wt.exe": {
+            "kind": "windows",
+            "summary": "Optional Windows-side capability used by ups() to open a winget tab.",
+            "command": "Install or repair Windows Terminal on the Windows host if you need that flow.",
+        },
+    }
+    if command in by_command:
+        return by_command[command]
+    if package_name in by_command:
+        return by_command[package_name]
+
+    if install_method == "npm":
+        return {
+            "kind": "installer",
+            "summary": "Install this CLI in the user npm prefix used by the repo.",
+            "command": f'npm install -g --prefix="$HOME/.npm-global" {package_name}',
+        }
+    if install_method == "curl":
+        return {
+            "kind": "manual",
+            "summary": "Use the upstream installer for this curl-managed CLI.",
+            "command": "Consult the upstream installation guide for the canonical curl-based installer.",
+        }
+    if install_method == "corepack":
+        return {
+            "kind": "manual",
+            "summary": "Activate this CLI through Corepack once Node.js/Corepack are available.",
+            "command": f"corepack prepare {command}@latest --activate",
+        }
+    if install_method == "windows":
+        return {
+            "kind": "windows",
+            "summary": "This command belongs to the Windows host, not to the Linux package bootstrap.",
+            "command": "Install or repair it on Windows if you need the related WSL workflow.",
+        }
+    if install_method == "builtin":
+        return {
+            "kind": "environment",
+            "summary": "This command is expected from the runtime environment itself.",
+            "command": "Verify the environment rather than trying to install it through dotfiles.",
+        }
+    return {
+        "kind": "manual",
+        "summary": "Reconcile this dependency manually according to the repo workflow and platform.",
+        "command": "See docs/SYSTEM_DEPENDENCIES.md for the current recommended path.",
+    }
+
+
 def _parse_scalar(raw: str):
     value = raw.strip()
     if value.lower() == "true":
@@ -153,7 +286,7 @@ def _command_list(args):
                     package["platform"],
                     package["capability"],
                     package["manager"],
-                    package["install_method"],
+                    _tsv_value(package["install_method"]),
                     package["note"],
                     package["source_file"],
                 ]
@@ -176,6 +309,33 @@ def _command_validate(args):
     for path in args.inventory:
         payload[path] = parse_inventory(path)
     print(json.dumps(payload, indent=2, sort_keys=True))
+
+
+def _command_actions(args):
+    packages = load_packages(
+        args.inventory,
+        include_optional=args.include_optional,
+        manager=args.manager,
+    )
+    for package in packages:
+        action = _action_for_package(package)
+        print(
+            "\t".join(
+                [
+                    "required" if package["required"] else "optional",
+                    package["package"],
+                    package["command"],
+                    package["platform"],
+                    package["capability"],
+                    package["manager"],
+                    _tsv_value(package["install_method"]),
+                    action["kind"],
+                    action["summary"],
+                    action["command"],
+                    package["source_file"],
+                ]
+            )
+        )
 
 
 def build_parser():
@@ -216,6 +376,12 @@ def build_parser():
     )
     add_inventory_args(validate_parser, allow_manager=False)
     validate_parser.set_defaults(func=_command_validate)
+
+    actions_parser = subparsers.add_parser(
+        "actions", help="Emit merged packages with recommended reconciliation actions as TSV."
+    )
+    add_inventory_args(actions_parser)
+    actions_parser.set_defaults(func=_command_actions)
 
     return parser
 

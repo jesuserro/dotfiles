@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-04-20 11:14:02
+**Generated:** 2026-04-20 11:22:38
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -836,6 +836,7 @@
 │   ├── 🔧 install-gitnexus.sh
 │   ├── 🔧 install-system-packages.sh
 │   ├── 🔧 materialize-commands.sh
+│   ├── 🔧 show-system-deps-actions.sh
 │   ├── 🔧 show_branches_with_dates.sh
 │   ├── 🔧 system_info.sh
 │   ├── 📄 test.sh.example

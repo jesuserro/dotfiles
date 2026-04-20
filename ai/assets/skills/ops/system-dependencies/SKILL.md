@@ -40,6 +40,13 @@ Verify required and optional dependencies:
 - `scripts/check-system-deps.sh --include-optional`
 - `make deps-check DEPS_CHECK_ARGS=--include-optional`
 
+Show canonical reconciliation guidance for missing dependencies:
+
+- `scripts/show-system-deps-actions.sh`
+- `scripts/show-system-deps-actions.sh --include-optional`
+- `make deps-actions`
+- `make deps-actions DEPS_ACTION_ARGS=--include-optional`
+
 Install required packages on Ubuntu/Debian:
 
 - `scripts/install-system-packages.sh`
@@ -56,8 +63,9 @@ Preview installation first:
 2. Interpret missing required packages as actionable setup gaps.
 3. Distinguish APT-installable gaps from external tooling gaps and WSL/Windows-side interop gaps.
 4. Treat optional packages as useful but non-blocking unless the user task specifically needs them.
-5. If installation is appropriate, prefer a dry run before invoking the real Ubuntu/Debian installer.
-6. If a new dependency is truly intentional, add it to the smallest correct inventory file and keep the note brief and specific.
+5. Use `show-system-deps-actions.sh` to propose the canonical next step for missing `external:*` or `environment:*` entries.
+6. If installation is appropriate, prefer a dry run before invoking the real Ubuntu/Debian installer.
+7. If a new dependency is truly intentional, add it to the smallest correct inventory file and keep the note brief and specific.
 
 ## Interpretation Rules
 
@@ -68,6 +76,7 @@ Preview installation first:
 - `apt`: installable by `deps-install`.
 - `external:*`: operational CLI outside the APT bootstrap.
 - `environment:*`: command exposed by WSL or Windows-side interop rather than by Linux package installation.
+- `deps-actions`: recommendation surface; it suggests the canonical next action but does not execute it.
 - When `package` and `command` differ, read the output as `package -> command`, for example `fd-find -> fdfind` or `bubblewrap -> bwrap`.
 
 ## Rules
@@ -87,6 +96,7 @@ Preview installation first:
 - Do not treat optional absences as setup failures by default.
 - Do not change `system/packages/*.yaml` just to mirror one workstation.
 - Do not try to make `deps-install` manage Windows software.
+- Do not turn the recommendation surface into an auto-installer for npm/curl/Windows tooling.
 
 ## Example Flow
 
@@ -95,5 +105,6 @@ If Codex warns that `bubblewrap` is missing:
 1. Check whether `bubblewrap` is already declared in `system/packages/ubuntu.yaml`.
 2. Run `scripts/check-system-deps.sh --include-optional`.
 3. If `bubblewrap -> bwrap` is missing and marked `apt`, propose `scripts/install-system-packages.sh --dry-run`.
-4. Install if appropriate with `scripts/install-system-packages.sh`.
-5. Re-run the check to confirm the environment is healthy.
+4. If a missing dependency is `external:*` or `environment:*`, use `scripts/show-system-deps-actions.sh --include-optional` to suggest the canonical next step.
+5. Install or reconcile only through the appropriate path.
+6. Re-run the check to confirm the environment is healthy.
