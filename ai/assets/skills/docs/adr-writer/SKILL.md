@@ -1,3 +1,8 @@
+---
+name: adr-writer
+description: Guide for writing clear, actionable Architecture Decision Records.
+---
+
 # Dotfiles ADR Writer
 
 Guide for writing clear, actionable Architecture Decision Records.

@@ -1,3 +1,8 @@
+---
+name: sql-style
+description: Standards for writing clear, maintainable SQL.
+---
+
 # SQL Style Guide
 
 Standards for writing clear, maintainable SQL.

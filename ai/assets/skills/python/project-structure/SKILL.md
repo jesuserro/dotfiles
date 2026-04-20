@@ -1,3 +1,8 @@
+---
+name: project-structure
+description: Standards for creating well-organized Python projects.
+---
+
 # Python Project Structure
 
 Standards for creating well-organized Python projects.

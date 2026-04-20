@@ -1,3 +1,8 @@
+---
+name: schema-review
+description: Standards for reviewing database schemas and DDL changes.
+---
+
 # PostgreSQL Schema Review
 
 Standards for reviewing database schemas and DDL changes.
