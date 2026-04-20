@@ -108,6 +108,7 @@ def parse_inventory(path_str: str):
                 "package": str(package["package"]),
                 "command": str(package["command"]),
                 "required": bool(package.get("required", True)),
+                "install_method": str(package.get("install_method", "")),
                 "capability": str(package.get("capability", "")),
                 "note": str(package.get("note", "")),
             }
@@ -126,9 +127,7 @@ def load_packages(paths, include_optional=False, manager=None):
             if not include_optional and not package["required"]:
                 continue
             if manager and package["manager"] != manager:
-                raise InventoryError(
-                    f"{package['source_file']}: manager '{package['manager']}' does not match expected '{manager}'"
-                )
+                continue
             key = (package["manager"], package["package"], package["command"])
             if key in seen:
                 continue
@@ -153,6 +152,8 @@ def _command_list(args):
                     package["command"],
                     package["platform"],
                     package["capability"],
+                    package["manager"],
+                    package["install_method"],
                     package["note"],
                     package["source_file"],
                 ]

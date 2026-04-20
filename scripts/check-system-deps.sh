@@ -17,7 +17,10 @@ EOF
 
 detect_default_inventories() {
     local os_id="" os_like=""
-    local -a files=("${DOTFILES_ROOT}/system/packages/common.yaml")
+    local -a files=(
+        "${DOTFILES_ROOT}/system/packages/common.yaml"
+        "${DOTFILES_ROOT}/system/packages/tooling.yaml"
+    )
 
     if [[ -r /etc/os-release ]]; then
         # shellcheck disable=SC1091
@@ -28,6 +31,10 @@ detect_default_inventories() {
 
     if [[ "${os_id}" == "ubuntu" || "${os_id}" == "debian" || "${os_like}" == *"debian"* ]]; then
         files+=("${DOTFILES_ROOT}/system/packages/ubuntu.yaml")
+    fi
+
+    if [[ -r /proc/version ]] && grep -qi microsoft /proc/version; then
+        files+=("${DOTFILES_ROOT}/system/packages/wsl.yaml")
     fi
 
     printf '%s\n' "${files[@]}"
@@ -100,15 +107,29 @@ format_subject() {
     fi
 }
 
-while IFS=$'\t' read -r requirement package command platform capability note source_file; do
+format_origin() {
+    local manager="$1"
+    local install_method="$2"
+
+    if [[ "${manager}" == "apt" ]]; then
+        printf 'apt'
+    elif [[ -n "${install_method}" ]]; then
+        printf '%s:%s' "${manager}" "${install_method}"
+    else
+        printf '%s' "${manager}"
+    fi
+}
+
+while IFS=$'\t' read -r requirement package command platform capability manager install_method note source_file; do
     [[ -n "${package}" ]] || continue
     subject="$(format_subject "${package}" "${command}")"
+    origin="$(format_origin "${manager}" "${install_method}")"
 
     if command -v "${command}" >/dev/null 2>&1; then
         if [[ "${requirement}" == "required" ]]; then
-            printf 'OK   %-28s [required]\n' "${subject}"
+            printf 'OK   %-28s [required, %s]\n' "${subject}" "${origin}"
         else
-            printf 'INFO %-28s [optional]\n' "${subject}"
+            printf 'INFO %-28s [optional, %s]\n' "${subject}" "${origin}"
         fi
         if [[ "${requirement}" == "required" ]]; then
             required_ok=$((required_ok + 1))
@@ -117,9 +138,9 @@ while IFS=$'\t' read -r requirement package command platform capability note sou
         fi
     else
         if [[ "${requirement}" == "required" ]]; then
-            printf 'MISS %-28s [required]\n' "${subject}"
+            printf 'MISS %-28s [required, %s]\n' "${subject}" "${origin}"
         else
-            printf 'SKIP %-28s [optional]\n' "${subject}"
+            printf 'SKIP %-28s [optional, %s]\n' "${subject}" "${origin}"
         fi
         if [[ "${requirement}" == "required" ]]; then
             required_missing=$((required_missing + 1))

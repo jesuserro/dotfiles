@@ -22,9 +22,11 @@ This layer answers what a machine needs for the repo to work in practice, withou
 
 - `system/packages/common.yaml`
 - `system/packages/ubuntu.yaml`
+- `system/packages/tooling.yaml`
+- `system/packages/wsl.yaml`
 - Operational doc: [docs/SYSTEM_DEPENDENCIES.md](../../../docs/SYSTEM_DEPENDENCIES.md)
 
-Read the inventory before proposing changes. `package` is the concrete install name and `command` is the binary expected in `PATH`.
+Read the inventory before proposing changes. `package` is the concrete install name, `command` is the binary expected in `PATH`, and `install_method` clarifies non-APT or environment-scoped tooling.
 
 ## Operational Commands
 
@@ -52,9 +54,10 @@ Preview installation first:
 
 1. Run the dependency check first.
 2. Interpret missing required packages as actionable setup gaps.
-3. Treat optional packages as useful but non-blocking unless the user task specifically needs them.
-4. If installation is appropriate, prefer a dry run before invoking the real Ubuntu/Debian installer.
-5. If a new dependency is truly intentional, add it to the smallest correct inventory file and keep the note brief and specific.
+3. Distinguish APT-installable gaps from external tooling gaps and WSL/Windows-side interop gaps.
+4. Treat optional packages as useful but non-blocking unless the user task specifically needs them.
+5. If installation is appropriate, prefer a dry run before invoking the real Ubuntu/Debian installer.
+6. If a new dependency is truly intentional, add it to the smallest correct inventory file and keep the note brief and specific.
 
 ## Interpretation Rules
 
@@ -62,6 +65,9 @@ Preview installation first:
 - `MISS`: required dependency missing and should block a clean setup.
 - `INFO`: optional dependency present.
 - `SKIP`: optional dependency missing; report it without treating it as a hard failure.
+- `apt`: installable by `deps-install`.
+- `external:*`: operational CLI outside the APT bootstrap.
+- `environment:*`: command exposed by WSL or Windows-side interop rather than by Linux package installation.
 - When `package` and `command` differ, read the output as `package -> command`, for example `fd-find -> fdfind` or `bubblewrap -> bwrap`.
 
 ## Rules
@@ -71,6 +77,7 @@ Preview installation first:
 - Prefer intentional dependencies over convenience noise.
 - Keep `required` vs `optional` honest.
 - Use concrete Ubuntu/Debian package names in the apt-backed inventory.
+- Keep Windows-side commands such as `wt.exe` and `powershell.exe` out of the Linux installer path.
 - Treat `bubblewrap` as the canonical example of a real dependency discovered from an operational warning rather than from package mining.
 
 ## What Not to Do
@@ -79,6 +86,7 @@ Preview installation first:
 - Do not bypass the declarative inventory with ad hoc package lists in docs or aliases.
 - Do not treat optional absences as setup failures by default.
 - Do not change `system/packages/*.yaml` just to mirror one workstation.
+- Do not try to make `deps-install` manage Windows software.
 
 ## Example Flow
 
@@ -86,6 +94,6 @@ If Codex warns that `bubblewrap` is missing:
 
 1. Check whether `bubblewrap` is already declared in `system/packages/ubuntu.yaml`.
 2. Run `scripts/check-system-deps.sh --include-optional`.
-3. If `bubblewrap -> bwrap` is missing and the machine is Ubuntu/Debian, propose `scripts/install-system-packages.sh --dry-run`.
+3. If `bubblewrap -> bwrap` is missing and marked `apt`, propose `scripts/install-system-packages.sh --dry-run`.
 4. Install if appropriate with `scripts/install-system-packages.sh`.
 5. Re-run the check to confirm the environment is healthy.

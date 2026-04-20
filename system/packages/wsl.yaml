@@ -1,0 +1,22 @@
+schema_version: 1
+platform: wsl
+manager: environment
+packages:
+  - package: wslpath
+    command: wslpath
+    required: true
+    capability: interop
+    install_method: builtin
+    note: Required to translate Linux paths before invoking Windows-side commands.
+  - package: powershell.exe
+    command: powershell.exe
+    required: false
+    capability: windows
+    install_method: windows
+    note: Used by ups() to launch winget updates from WSL.
+  - package: wt.exe
+    command: wt.exe
+    required: false
+    capability: windows
+    install_method: windows
+    note: Used by ups() to open a Windows Terminal tab for winget.

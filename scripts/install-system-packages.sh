@@ -29,7 +29,12 @@ is_debian_like() {
 default_inventories() {
     printf '%s\n' \
         "${DOTFILES_ROOT}/system/packages/common.yaml" \
+        "${DOTFILES_ROOT}/system/packages/tooling.yaml" \
         "${DOTFILES_ROOT}/system/packages/ubuntu.yaml"
+
+    if [[ -r /proc/version ]] && grep -qi microsoft /proc/version; then
+        printf '%s\n' "${DOTFILES_ROOT}/system/packages/wsl.yaml"
+    fi
 }
 
 dry_run=0

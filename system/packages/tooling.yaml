@@ -1,0 +1,64 @@
+schema_version: 1
+platform: common
+manager: external
+packages:
+  - package: chezmoi
+    command: chezmoi
+    required: true
+    capability: bootstrap
+    install_method: manual
+    note: Required to apply the managed dotfiles into HOME.
+  - package: uv
+    command: uv
+    required: false
+    capability: python
+    install_method: manual
+    note: Used by ups() for uv tools and Python-focused workstation flows.
+  - package: node
+    command: node
+    required: false
+    capability: js-toolchain
+    install_method: manual
+    note: Base JavaScript runtime used by npm, corepack, pnpm and project tooling.
+  - package: npm
+    command: npm
+    required: false
+    capability: js-toolchain
+    install_method: manual
+    note: Used by ups() to update Codex, GitNexus and npm-backed MCP tooling.
+  - package: corepack
+    command: corepack
+    required: false
+    capability: js-toolchain
+    install_method: manual
+    note: Used by ups() to activate and synchronize pnpm.
+  - package: pnpm
+    command: pnpm
+    required: false
+    capability: js-toolchain
+    install_method: corepack
+    note: Used by ups() and auxiliary MCP repos such as excalidraw-mcp.
+  - package: @openai/codex
+    command: codex
+    required: false
+    capability: ai-cli
+    install_method: npm
+    note: Updated by ups() in the user npm prefix.
+  - package: gitnexus
+    command: gitnexus
+    required: false
+    capability: ai-cli
+    install_method: npm
+    note: GitNexus CLI is updated separately from the MCP launcher flow.
+  - package: opencode
+    command: opencode
+    required: false
+    capability: ai-cli
+    install_method: curl
+    note: Updated by ups() through the official install script.
+  - package: docker
+    command: docker
+    required: false
+    capability: containers
+    install_method: manual
+    note: Used by local aliases and WSL workstation container workflows.

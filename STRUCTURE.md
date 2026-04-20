@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-04-20 10:59:43
+**Generated:** 2026-04-20 11:14:02
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -846,7 +846,9 @@
 ├── 📁 system
 │   └── 📁 packages
 │       ├── ⚙️ common.yaml
-│       └── ⚙️ ubuntu.yaml
+│       ├── ⚙️ tooling.yaml
+│       ├── ⚙️ ubuntu.yaml
+│       └── ⚙️ wsl.yaml
 ├── 📁 termux
 │   ├── 🔧 install.sh
 │   └── 🔧 install_plugins.sh
