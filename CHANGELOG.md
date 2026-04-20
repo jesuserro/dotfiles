@@ -2,14 +2,34 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.04.10_2003] - 2026-04-10
+## [v2026.04.20_1036] - 2026-04-20
 
 ## Changes
+### Added
+- 2026-04-18 13:10 [82c0840](https://github.com/jesuserro/dotfiles/commit/82c0840) feat(aliases): enhance GitNexus update flow with error handling and reconciliation (Cursor Agent)
+  - Improved the `ups` function to attempt a clean reinstallation of GitNexus if the direct update fails, providing detailed feedback on the installation status.
+  - Added logic to report whether GitNexus was reconciled or if the previous version remains available after a failed update.
+  - Updated documentation to reflect the new behavior of the GitNexus update process.
+- 2026-04-18 12:49 [0c928d8](https://github.com/jesuserro/dotfiles/commit/0c928d8) feat(aliases): implement npm global prefix and enhance Codex update flow (Cursor Agent)
+  - Established a canonical npm global prefix for user-installed CLIs, set to `~/.npm-global`.
+  - Updated the `ups` function to handle the installation and update of Codex CLI, including logic to manage legacy conflicts and provide detailed warning messages.
+  - Adjusted documentation across various files to reflect the new npm prefix and update procedures for Codex and GitNexus.
+- 2026-04-13 11:19 [4cd4bb1](https://github.com/jesuserro/dotfiles/commit/4cd4bb1) feat(prompts): add new prompt bodies for documentation and improvement skills (Cursor Agent)
+  - Introduced new prompt bodies for `Update Documentation`, `Suggest Improvements`, and `Development Acceleration` in the prompt-launchers test file.
+  - Updated the test to reflect the inclusion of these new prompts in the supported catalog output.
+
 ### Documentation
-- 2026-04-10 20:02 [3bb8913](https://github.com/jesuserro/dotfiles/commit/3bb8913) docs(structure): update file tree and add new Git Rel troubleshooting documentation (Cursor Agent)
-  - Updated the generated timestamp in `STRUCTURE.md`.
-  - Added new directory for `git/git-rel-troubleshooting` and included `SKILL.md` for troubleshooting `git rel` incidents.
-  - Introduced `GIT_REL_INCIDENT.md` for operational maintenance and debugging guidance related to `git rel`.
+- 2026-04-20 10:36 [4bfb3cc](https://github.com/jesuserro/dotfiles/commit/4bfb3cc) docs(structure): update generated timestamp in STRUCTURE.md (Cursor Agent)
+- 2026-04-20 10:30 [39e8d32](https://github.com/jesuserro/dotfiles/commit/39e8d32) docs(skills): add metadata and descriptions to various SKILL.md files (Cursor Agent)
+  - Introduced YAML front matter to multiple SKILL.md files, providing names and descriptions for each skill.
+  - Updated documentation for Excalidraw architecture, ADR writer, plans and notepads naming, data contracts, PR conventions, Playwright UI validation, WSL2 local tools, schema review, SQL style, and Python project structure to enhance clarity and organization.
+- 2026-04-18 13:15 [1819c2d](https://github.com/jesuserro/dotfiles/commit/1819c2d) docs(UPS): document known issue with GitNexus CLI update process (Cursor Agent)
+  - Added a section detailing a known issue with the GitNexus CLI update process, highlighting potential fragility during incremental updates and providing mitigation steps.
+  - Clarified the behavior of the `ups` function regarding clean reinstallation attempts and the conditions under which it operates.
+  - Ensured documentation reflects the current state of the update flow for GitNexus, maintaining consistency with recent enhancements.
+- 2026-04-13 11:11 [3aee1dc](https://github.com/jesuserro/dotfiles/commit/3aee1dc) docs(structure): update generated timestamp and remove .codex from file tree (Cursor Agent)
+  - Updated the generated timestamp in `STRUCTURE.md` to reflect the current date.
+  - Removed the `.codex` file from the file tree documentation for clarity.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
