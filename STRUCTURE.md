@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-04-10 19:59:05
+**Generated:** 2026-04-20 10:36:06
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -665,6 +665,8 @@
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 vault-development-acceleration
 │   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 vault-project-wiki
+│   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 vault-review-diff
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 vault-suggest-improvements
@@ -748,6 +750,7 @@
 │   ├── 📝 TESTING.md
 │   ├── 📝 TOKEN_GITHUB_GH.md
 │   ├── 📝 UPS.md
+│   ├── 📝 VAULT_PROJECT_WIKI_FLOW.md
 │   └── 📝 VERIFICAR_MCP_STORE_ETL.md
 ├── 📁 dot_codex
 │   └── 📄 config.toml.tmpl

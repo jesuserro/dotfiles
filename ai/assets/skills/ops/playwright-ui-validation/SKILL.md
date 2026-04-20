@@ -1,3 +1,8 @@
+---
+name: playwright-ui-validation
+description: Reusable workflow for validating rendered operational and data-product surfaces with Playwright after backend changes.
+---
+
 # Dotfiles Playwright UI Validation
 
 Reusable workflow for validating rendered operational and data-product surfaces with Playwright after backend changes.

@@ -84,6 +84,7 @@ Visible skill names follow semantic origin, not just repository location:
 - `ops/vault-review-diff/` - `Vault Review Diff`
 - `ops/vault-detect-errors/` - `Vault Detect Errors`
 - `ops/vault-suggest-improvements/` - `Vault Suggest Improvements`
+- `ops/vault-project-wiki/` - `Vault Project Wiki`
 - `ops/vault-update-documentation/` - `Vault Update Documentation`
 - `ops/vault-write-commit-message/` - `Vault Write Commit Message`
 - `ops/mcp-governance/` - `Dotfiles MCP Governance`

@@ -1,3 +1,8 @@
+---
+name: pr-conventions
+description: Standards for creating, reviewing, and merging pull requests.
+---
+
 # Pull Request Conventions
 
 Standards for creating, reviewing, and merging pull requests.

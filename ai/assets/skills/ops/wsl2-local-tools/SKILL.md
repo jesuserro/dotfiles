@@ -1,3 +1,8 @@
+---
+name: wsl2-local-tools
+description: Guía breve para usar herramientas locales de WSL2 al inspeccionar proyectos, Docker y conectividad.
+---
+
 # Dotfiles WSL2 Local Tools
 
 ## When to Use

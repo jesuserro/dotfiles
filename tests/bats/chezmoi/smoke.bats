@@ -188,3 +188,27 @@ tomllib.loads(content)
 @test "ai assets script creates ~/.config/ai" {
     grep -q "\.config/ai" "$DOTFILES_DIR/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl"
 }
+
+@test "shell policy defines canonical npm global prefix for Codex and GitNexus" {
+    grep -q 'export NPM_CONFIG_PREFIX="$HOME/.npm-global"' "$DOTFILES_DIR/zsh/00-env.zsh"
+    grep -q 'path_prepend "\$NPM_CONFIG_PREFIX/bin"' "$DOTFILES_DIR/zsh/10-path.zsh"
+    grep -q 'npm install -g --prefix="\$npm_prefix" @openai/codex@latest' "$DOTFILES_DIR/aliases"
+    ! grep -q 'npm update -g codex' "$DOTFILES_DIR/aliases"
+    grep -q 'NPM_CONFIG_PREFIX="\${NPM_CONFIG_PREFIX:-\$HOME/.npm-global}"' "$DOTFILES_DIR/scripts/install-gitnexus.sh"
+    ! grep -q 'local_prefix="\$HOME/.local"' "$DOTFILES_DIR/aliases"
+    ! grep -q 'local_prefix="\$HOME/.local"' "$DOTFILES_DIR/scripts/install-gitnexus.sh"
+}
+
+@test "ups Codex flow handles legacy conflicts and summary reports warnings honestly" {
+    grep -q 'npm uninstall -g --prefix="\$npm_prefix" codex' "$DOTFILES_DIR/aliases"
+    grep -q "codex --version" "$DOTFILES_DIR/aliases"
+    grep -q 'Proceso completado con \${warnings} incidencia(s)/warning(s)' "$DOTFILES_DIR/aliases"
+}
+
+@test "ups GitNexus flow does not report update success after failed install with previous version still available" {
+    grep -q 'npm uninstall -g --prefix="\$npm_prefix" gitnexus' "$DOTFILES_DIR/aliases"
+    grep -q 'No se pudo actualizar GitNexus; sigue disponible la versión previa' "$DOTFILES_DIR/aliases"
+    grep -q 'No se pudo actualizar GitNexus y no hay binario usable' "$DOTFILES_DIR/aliases"
+    grep -q 'GitNexus ya estaba en versión' "$DOTFILES_DIR/aliases"
+    grep -q 'GitNexus reconciliado/reinstalado correctamente; versión final' "$DOTFILES_DIR/aliases"
+}

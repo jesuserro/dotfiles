@@ -1,3 +1,8 @@
+---
+name: data-contracts
+description: Standards for designing and documenting data contracts in ETL and data engineering contexts.
+---
+
 # Data Contracts
 
 Standards for designing and documenting data contracts in ETL and data engineering contexts.

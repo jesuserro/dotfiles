@@ -1,3 +1,8 @@
+---
+name: excalidraw-architecture
+description: Standards for creating clear, consistent technical diagrams with Excalidraw.
+---
+
 # Excalidraw Architecture Conventions
 
 Standards for creating clear, consistent technical diagrams with Excalidraw.
