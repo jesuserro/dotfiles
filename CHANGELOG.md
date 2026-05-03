@@ -2,22 +2,14 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.04.20_1125] - 2026-04-20
+## [v2026.05.03_0834] - 2026-05-03
 
 ## Changes
 ### Added
-- 2026-04-20 11:23 [18fa6ff](https://github.com/jesuserro/dotfiles/commit/18fa6ff) feat(dependencies): introduce `deps-actions` for actionable guidance on missing dependencies (Cursor Agent)
-  - Added `DEPS_ACTION_ARGS` to the Makefile for enhanced dependency management.
-  - Updated `SYSTEM_DEPENDENCIES.md` and `SKILL.md` to include instructions for using `deps-actions` to show recommended actions for missing dependencies.
-  - Enhanced `system_deps.py` to provide canonical guidance for external tooling installation.
-- 2026-04-20 11:14 [5d4ed81](https://github.com/jesuserro/dotfiles/commit/5d4ed81) feat(dependencies): enhance system dependency management with new tooling and WSL support (Cursor Agent)
-  - Added `tooling.yaml` and `wsl.yaml` to categorize non-APT and WSL-specific dependencies, respectively.
-  - Updated `SYSTEM_DEPENDENCIES.md` to reflect the new inventory structure and clarify installation methods.
-  - Modified scripts to incorporate new inventory files for dependency checks and installations.
-- 2026-04-20 11:01 [ba5f487](https://github.com/jesuserro/dotfiles/commit/ba5f487) feat(makefile): add dependency check and installation targets; update documentation (Cursor Agent)
-  - Introduced `deps-check` and `deps-install` targets in the Makefile for managing system dependencies.
-  - Updated `INSTALL.md` to include a reference for managing base system packages.
-  - Added `bats-system` target for running system dependency tests in the test suite.
+- 2026-05-03 08:34 [9026298](https://github.com/jesuserro/dotfiles/commit/9026298) feat(agent-workflow): introduce comprehensive agent workflow documentation and skills (Cursor Agent)
+  - Added `AGENT_WORKFLOW_FOR_AGENTS.md` to guide AI agents on orchestration, skill selection, and project delegation.
+  - Created `AGENT_WORKFLOW_LOOP.md` detailing the end-to-end process from idea to implementation, including phases for grilling ideas, generating specs, and creating GitHub issues.
+  - Introduced multiple new skills under `ai/assets/skills/ops/`, including `grill-plan`, `to-spec`, `to-issues`, `test-driven-change`, `architecture-review`, and `vault-issue-bridge`, each with specific guidelines and templates.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
