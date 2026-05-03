@@ -14,6 +14,8 @@ Flujo operativo transversal para que un agente decida si un cambio importante de
 - `vault_trabajo`: wiki destilada en `projects/<project>/knowledge/...`
 - `dotfiles`: capa operativa transversal para agentes, skills, prompts y convenciones
 
+Flujo más amplio desde idea hasta issues Markdown e implementación: [Agent Workflow Loop](AGENT_WORKFLOW_LOOP.md).
+
 ## Cuándo registrar una nota
 
 Registra o actualiza una nota cuando el cambio deja aprendizaje reutilizable:

@@ -91,6 +91,13 @@ Visible skill names follow semantic origin, not just repository location:
 - `ops/system-updates/` - `Dotfiles UPS Workflow`
 - `ops/playwright-ui-validation/` - `Dotfiles Playwright UI Validation`
 - `ops/wsl2-local-tools/` - `Dotfiles WSL2 Local Tools`
+- `ops/agent-workflow/` - `Dotfiles Agent Workflow`
+- `ops/grill-plan/` - `Dotfiles Grill Plan`
+- `ops/to-spec/` - `Dotfiles To Spec`
+- `ops/to-issues/` - `Dotfiles To Issues`
+- `ops/test-driven-change/` - `Dotfiles Test Driven Change`
+- `ops/architecture-review/` - `Dotfiles Architecture Review`
+- `ops/vault-issue-bridge/` - `Dotfiles Vault Issue Bridge`
 
 ### Postgres
 
@@ -129,3 +136,5 @@ Visible skill names follow semantic origin, not just repository location:
 
 - Architecture: [ai/SKILLS_ARCHITECTURE.md](../SKILLS_ARCHITECTURE.md)
 - ADR: [docs/adr/0003-skills-architecture.md](../../docs/adr/0003-skills-architecture.md)
+- Agent Workflow Loop (grill → spec → issues → tests → vault): [docs/AGENT_WORKFLOW_LOOP.md](../../docs/AGENT_WORKFLOW_LOOP.md)
+- Agent Workflow for agents (skill matrix, delegation, safety): [ai/AGENT_WORKFLOW_FOR_AGENTS.md](../../AGENT_WORKFLOW_FOR_AGENTS.md)

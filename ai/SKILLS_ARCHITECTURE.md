@@ -67,9 +67,11 @@ Some `Vault ...` skills are lightweight operational wrappers around canonical pr
 | `etl/` | Data engineering | Data contracts |
 | `git/` | Version control | PR conventions |
 | `gitnexus/` | Code intelligence | GitNexus skills (6 variants) |
-| `ops/` | Infrastructure/ops | Vault AI Prompt Consumer, Dotfiles Skill Registration, Vault Development Acceleration, Vault Review Diff, Vault Detect Errors, Vault Suggest Improvements, Vault Project Wiki, Vault Update Documentation, Vault Write Commit Message, Dotfiles MCP Governance, Dotfiles UPS Workflow, Dotfiles Playwright UI Validation, Dotfiles WSL2 Local Tools |
+| `ops/` | Infrastructure/ops | Vault AI Prompt Consumer, Dotfiles Skill Registration, Vault Development Acceleration, Vault Review Diff, Vault Detect Errors, Vault Suggest Improvements, Vault Project Wiki, Vault Update Documentation, Vault Write Commit Message, Dotfiles MCP Governance, Dotfiles UPS Workflow, Dotfiles Playwright UI Validation, Dotfiles WSL2 Local Tools, Dotfiles Agent Workflow, Dotfiles Grill Plan, Dotfiles To Spec, Dotfiles To Issues, Dotfiles Test Driven Change, Dotfiles Architecture Review, Dotfiles Vault Issue Bridge |
 | `postgres/` | Database | SQL style, schema review |
 | `python/` | Python development | Project structure |
+
+`run_after_11_link_ai_assets` publishes each **category** directory (for example `ops/`) to agent skill surfaces; new skills under `ai/assets/skills/ops/<name>/` require **no** Chezmoi template changes.
 
 ## What Goes in Global Skills
 
@@ -208,4 +210,6 @@ If a platform requires different skill formats, create adapters in `ai/adapters/
 - ADR: `docs/adr/0003-skills-architecture.md`
 - MCP Governance: `docs/adr/0001-mcp-governance.md`
 - AI Framework: `ai/README.md`
+- Agent Workflow Loop (human tutorial): `docs/AGENT_WORKFLOW_LOOP.md`
+- Agent Workflow for agents (orchestration): `ai/AGENT_WORKFLOW_FOR_AGENTS.md`
 - Sync Script: `.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl`

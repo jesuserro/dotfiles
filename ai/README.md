@@ -85,6 +85,13 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 | `ops/` | `playwright-ui-validation/` | `Dotfiles Playwright UI Validation` |
 | `ops/` | `system-updates/` | `Dotfiles UPS Workflow` |
 | `ops/` | `wsl2-local-tools/` | `Dotfiles WSL2 Local Tools` |
+| `ops/` | `agent-workflow/` | `Dotfiles Agent Workflow` (mapa de familia) |
+| `ops/` | `grill-plan/` | `Dotfiles Grill Plan` |
+| `ops/` | `to-spec/` | `Dotfiles To Spec` |
+| `ops/` | `to-issues/` | `Dotfiles To Issues` |
+| `ops/` | `test-driven-change/` | `Dotfiles Test Driven Change` |
+| `ops/` | `architecture-review/` | `Dotfiles Architecture Review` |
+| `ops/` | `vault-issue-bridge/` | `Dotfiles Vault Issue Bridge` |
 | `postgres/` | `schema-review/` | Guía de revisión de esquemas |
 | `postgres/` | `sql-style/` | Estilo SQL general |
 | `python/` | `project-structure/` | Estructura de proyectos Python |
@@ -120,6 +127,14 @@ Referencias:
 - referencia operativa corta: [docs/PROMPT_LAUNCHERS.md](../docs/PROMPT_LAUNCHERS.md)
 - guía reutilizable para agentes: `Vault AI Prompt Consumer` → [ai/assets/skills/ops/ai-prompt-consumer/SKILL.md](assets/skills/ops/ai-prompt-consumer/SKILL.md)
 - wrappers operativos derivados del vault: `Vault Development Acceleration`, `Vault Review Diff`, `Vault Detect Errors`, `Vault Suggest Improvements`, `Vault Update Documentation`, `Vault Write Commit Message`, `Vault Project Wiki`
+
+## Agent workflow (vault + issues + repo)
+
+Tutorial paso a paso: [Agent Workflow Loop](../docs/AGENT_WORKFLOW_LOOP.md).
+
+Guía operativa para agentes IA (orquestación, delegación, política `gh`/CLI): [AGENT_WORKFLOW_FOR_AGENTS.md](AGENT_WORKFLOW_FOR_AGENTS.md).
+
+Flujo transversal documentado en `Dotfiles Agent Workflow` → [ai/assets/skills/ops/agent-workflow/SKILL.md](assets/skills/ops/agent-workflow/SKILL.md): de idea a Grill Report, spec en vault, issues en Markdown para GitHub, implementación guiada por tests del repo, y notas en vault. Los artefactos bajo `projects/<project>/knowledge/reports/` viven en `vault_trabajo` (resolver raíz con `AI_PROMPTS_VAULT_ROOT`). No requiere cambios en Chezmoi: `run_after_11` ya enlaza la categoría `ops/`.
 
 ## Vault project wiki
 
