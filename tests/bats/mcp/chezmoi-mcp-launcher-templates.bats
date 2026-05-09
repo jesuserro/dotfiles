@@ -1,0 +1,54 @@
+#!/usr/bin/env bats
+# Chezmoi-managed MCP launcher templates under dot_local/share/chezmoi/bin/
+
+load '../helpers/common'
+
+setup() {
+	DOTFILES_DIR="$(get_dotfiles_dir)"
+	BIN="${DOTFILES_DIR}/bin"
+	TMPL_DIR="${DOTFILES_DIR}/dot_local/share/chezmoi/bin"
+	IGNORE="${DOTFILES_DIR}/.chezmoiignore"
+}
+
+bats_require_minimum_version 1.5.0
+
+@test "four executable_mcp-*-launcher.tmpl templates exist" {
+	for name in filesystem git gitnexus postgres; do
+		f="${TMPL_DIR}/executable_mcp-${name}-launcher.tmpl"
+		[[ -f "$f" ]]
+	done
+}
+
+@test ".chezmoiignore allows dot_local/share/chezmoi/bin" {
+	[[ -f "$IGNORE" ]]
+	grep -q '!.local/share/chezmoi/bin' "$IGNORE" || grep -q 'chezmoi/bin' "$IGNORE"
+}
+
+@test "bash -n passes for bin MCP launchers" {
+	for name in filesystem git gitnexus postgres; do
+		run bash -n "${BIN}/mcp-${name}-launcher"
+		[[ "${status}" -eq 0 ]]
+	done
+}
+
+@test "bash -n passes for chezmoi launcher templates" {
+	for name in filesystem git gitnexus postgres; do
+		run bash -n "${TMPL_DIR}/executable_mcp-${name}-launcher.tmpl"
+		[[ "${status}" -eq 0 ]]
+	done
+}
+
+@test "templates do not embed obvious token patterns" {
+	# Launchers must not ship secrets; only paths and env var names.
+	for name in filesystem git gitnexus postgres; do
+		f="${TMPL_DIR}/executable_mcp-${name}-launcher.tmpl"
+		! grep -qE 'ghp_[A-Za-z0-9]{10,}' "$f" || false
+		! grep -qE 'sk-[A-Za-z0-9]{10,}' "$f" || false
+	done
+}
+
+@test "git/gitnexus/postgres templates match bin copies (sync contract)" {
+	for name in git gitnexus postgres; do
+		diff -q "${BIN}/mcp-${name}-launcher" "${TMPL_DIR}/executable_mcp-${name}-launcher.tmpl"
+	done
+}

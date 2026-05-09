@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-09 23:31:59
+**Generated:** 2026-05-09 23:39:05
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -906,6 +906,7 @@
 │   │   ├── 📁 helpers
 │   │   │   └── 🔧 common.bash
 │   │   ├── 📁 mcp
+│   │   │   ├── 📄 chezmoi-mcp-launcher-templates.bats
 │   │   │   ├── 📄 filesystem-launcher.bats
 │   │   │   ├── 📄 git-launcher.bats
 │   │   │   └── 📄 validate-governance.bats

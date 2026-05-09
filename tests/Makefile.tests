@@ -178,12 +178,16 @@ bats-helpers:
 	fi
 	@echo "$(GREEN)==>$NC Helpers OK"
 
-bats-mcp: bats-filesystem bats-git bats-governance
+bats-mcp: bats-filesystem bats-chezmoi-mcp-launchers bats-git bats-governance
 	@echo "$(GREEN)==>$NC MCP tests passed"
 
 bats-filesystem:
 	@echo "$(BLUE)==>$NC Running filesystem-launcher tests..."
 	@$(call run_bats,$(BATS_DIR)/mcp/filesystem-launcher.bats)
+
+bats-chezmoi-mcp-launchers:
+	@echo "$(BLUE)==>$NC Running chezmoi MCP launcher template tests..."
+	@$(call run_bats,$(BATS_DIR)/mcp/chezmoi-mcp-launcher-templates.bats)
 
 bats-git:
 	@echo "$(BLUE)==>$NC Running git-launcher tests..."
@@ -226,7 +230,7 @@ test-ci: test-lint test-bats-ci test-chezmoi
 	@echo ""
 	@echo "$(GREEN)==>$NC CI tests completed"
 
-test-bats-ci: bats-helpers bats-filesystem bats-git bats-governance bats-chezmoi
+test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-git bats-governance bats-chezmoi
 
 # ============================================
 # Combined tests

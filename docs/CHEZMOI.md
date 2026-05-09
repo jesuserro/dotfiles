@@ -34,7 +34,7 @@ Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si ha
 | `~/.config/mcp-secrets.env` | Generado desde `secrets.sops.yaml` (SOPS) — nombre neutro |
 | `~/.secrets/codex.env` | Symlink → `~/.config/mcp-secrets.env` (legacy, mantener por compatibilidad) |
 | `~/.config/ai/runtime/` | Runtime (venv) — ver `ai/README.md` |
-| `~/.local/share/chezmoi/bin/mcp-filesystem-launcher` | `dot_local/share/chezmoi/bin/executable_mcp-filesystem-launcher.tmpl` |
+| `~/.local/share/chezmoi/bin/mcp-*-launcher` | `dot_local/share/chezmoi/bin/executable_mcp-*-launcher.tmpl` (`filesystem`, `git`, `gitnexus`, `postgres`) |
 
 ---
 
