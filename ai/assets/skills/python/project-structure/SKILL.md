@@ -208,7 +208,42 @@ from .services import UserService
 4. **Simple is better than complex**
 5. **Practicality beats purity**
 
+## Tooling Policy: uv first, pip fallback
+
+This dotfiles repo follows a transversal **uv-first / pip-fallback** policy for all Python work.
+
+### Defaults for new projects / new environments
+
+- Use `uv venv` to create virtualenvs.
+- Use `uv pip install -r requirements.txt` (or, better, `uv add` + `uv.lock` + `pyproject.toml`).
+- Use `uv tool install <tool>` for user-scoped CLIs (instead of `pipx install`).
+- Use `uvx <tool>` for one-off runs (instead of `pipx run`).
+- Use `uv run python script.py` inside uv-managed projects.
+
+### Equivalences
+
+| pip / pipx / venv | uv equivalent |
+|---|---|
+| `python -m venv .venv` | `uv venv` |
+| `pip install -r requirements.txt` | `uv pip install -r requirements.txt` |
+| `pip install <pkg>` | `uv pip install <pkg>` (in active venv) or `uv add <pkg>` (in uv project) |
+| `pipx install <tool>` | `uv tool install <tool>` |
+| `pipx run <tool>` | `uvx <tool>` |
+| `python script.py` | `uv run python script.py` (in uv project) |
+
+### Explicit exceptions (do NOT migrate)
+
+- `pip`, `pipx`, `python3-pip` stay installed as base system fallback.
+- The AI runtime venv at `~/.config/ai/runtime/.venv` keeps using `python3 -m venv` + `pip install -r requirements.txt`. The chezmoi script `.chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl` and the corresponding `ups` block must NOT be migrated to `uv` without an explicit, separate task.
+- `zsh/30-python.zsh` (alias `pip='pip3'`, `pyreq()`) is intentional legacy; do not change without an explicit task.
+
+### Installing uv
+
+Use `make install-uv` from the dotfiles root (idempotent, never edits rc files). Do not paste `curl|sh` blindly into docs or scripts.
+
 ## Related Skills
 
 - `sql-style`: For database code in Python
 - `data-contracts`: For API contracts
+- `dotfiles-bootstrap-install`: For `make install-uv` and the broader install flow
+- `dotfiles-ups-workflow`: For how `ups` updates `uv` prudently

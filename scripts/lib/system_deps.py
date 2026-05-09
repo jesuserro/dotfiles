@@ -40,8 +40,11 @@ def _action_for_package(package):
         },
         "uv": {
             "kind": "installer",
-            "summary": "Install uv with the official installer used by Astral.",
-            "command": "curl -LsSf https://astral.sh/uv/install.sh | sh",
+            "summary": (
+                "Install uv (preferred Python tool) with the repo's idempotent installer. "
+                "Fallback for direct use: 'curl -LsSf https://astral.sh/uv/install.sh | sh'."
+            ),
+            "command": "make install-uv",
         },
         "node": {
             "kind": "manual",

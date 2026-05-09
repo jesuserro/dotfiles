@@ -67,6 +67,7 @@ make install-check              # diagnóstico (no muta)
 make install DRY_RUN=1          # plan completo sin tocar el sistema
 make install                    # bootstrap real (no aplica chezmoi por defecto)
 make install-zsh-stack          # Oh My Zsh + Powerlevel10k + plugins (idempotente)
+make install-uv                 # uv (preferido para Python) — opt-in, fuera de make install
 make install-dotfiles DOTFILES_APPLY=1   # activación explícita de chezmoi apply
 ```
 
@@ -84,6 +85,7 @@ make install SKIP_EXTERNAL=1
 | `make install-apt` | Instala paquetes APT desde [`system/packages/*.yaml`](system/packages/) (mismo backend que `make deps-install`). |
 | `make install-external` | Solo recomendaciones (`make deps-actions`); detecta Docker, `wt.exe`, `winget.exe`, zsh stack — **nunca** instala host-side ni Docker Desktop. |
 | `make install-zsh-stack` | Clona Oh My Zsh, Powerlevel10k y plugins custom solo si faltan. **No** edita `~/.zshrc`. |
+| `make install-uv` | Instala **uv** (herramienta Python preferida) con el instalador oficial de Astral. Idempotente, opt-in, **fuera** de `make install`. No edita `~/.zshrc` ni `~/.bashrc`. |
 | `make install-dotfiles` | Plan chezmoi. **No ejecuta `apply`** salvo `DOTFILES_APPLY=1`. |
 | `make install-verify` | Versiones de zsh/git/chezmoi/sops/age/rg/docker. `STRICT=1` hace fallar si hay `FAIL` real. |
 | `make install` | Encadena: check → apt → external → dotfiles → verify. |

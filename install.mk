@@ -12,7 +12,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -33,5 +33,11 @@ install-verify:
 
 install-zsh-stack:
 	@bash $(DOTFILES_DIR)/scripts/install-zsh-stack.sh
+
+# Optional, opt-in installer for the Astral uv Python tool.
+# Intentionally NOT part of `make install`: uv is preferred for new Python
+# work but stays external/user-level, so users opt in explicitly.
+install-uv:
+	@bash $(DOTFILES_DIR)/scripts/install-uv.sh
 
 install: install-check install-apt install-external install-dotfiles install-verify

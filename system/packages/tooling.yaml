@@ -13,19 +13,19 @@ packages:
     required: false
     capability: python
     install_method: manual
-    note: Used by ups() for uv tools and Python-focused workstation flows.
+    note: Preferred Python tool (uv-first policy) for venvs and tool installs; install with 'make install-uv'. Stays optional so STRICT=1 does not break minimal machines.
   - package: node
     command: node
     required: false
     capability: js-toolchain
     install_method: manual
-    note: Base JavaScript runtime used by npm, corepack, pnpm and project tooling.
+    note: Base JavaScript runtime; required de facto on workstation use (codex, gitnexus, MCPs) but not a uv dependency. Stays optional so headless/CI machines do not fail.
   - package: npm
     command: npm
     required: false
     capability: js-toolchain
     install_method: manual
-    note: Used by ups() to update Codex, GitNexus and npm-backed MCP tooling.
+    note: Required de facto on workstation use (codex, gitnexus, corepack); ships with Node. Independent of the uv-first Python policy.
   - package: corepack
     command: corepack
     required: false

@@ -22,8 +22,9 @@ Orden de ejecución (no alterar sin motivo):
 3. **🧹 Limpieza** — (parte de APT)
 4. **📚 NPM** — `npm update -g codex`
 5. **⚡ Oh My Zsh** — `omz update`, `upgrade_oh_my_zsh_custom`
-6. **🔌 MCP** — excalidraw, npm servers, uv fetch, Python venv
-7. **🔄 Servicios** — `restart_apache` (Apache + MySQL)
+6. **🐍 uv (Python)** — `uv self update` solo si `uv` ya existe en `$HOME/.local/bin/uv`. Si falta, info y skip; instalar con `make install-uv` (no se hace desde `ups`).
+7. **🔌 MCP** — excalidraw, npm servers, uv fetch, Python venv
+8. **🔄 Servicios** — `restart_apache` (Apache + MySQL)
 
 ## Convenciones de código
 
@@ -63,8 +64,18 @@ fi
 | excalidraw | `~/mcp-servers/excalidraw-mcp` — git pull + pnpm install + build |
 | docker, postgres | `~/.config/mcp/servers/*/` — npm update |
 | fetch | `uv tool install mcp-server-fetch` |
-| Python (dagster, minio, etc.) | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
+| Python (dagster, minio, etc.) | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` (legado vivo: el venv runtime AI sigue intencionalmente con `pip` — no migrar sin tarea explícita) |
 | context7, github | npx — no requieren actualización |
+
+## Política transversal uv first / pip fallback
+
+Cuando añadas/modifiques bloques en `ups` o documentación relacionada:
+
+- **Prefiere `uv`** (`uv venv`, `uv pip install`, `uv tool install`, `uvx`, `uv self update`) para escenarios Python nuevos.
+- **No migres `pip`/`pipx`/`python3 -m venv`** existentes sin tarea explícita: pueden romper venvs legados.
+- **Runtime AI** (`~/.config/ai/runtime/.venv`) sigue con `pip`: no tocar.
+- **`zsh/30-python.zsh`** (alias `pip`, `pyreq`) sigue con `pip`: no tocar.
+- **`uv` no se instala desde `ups`**: si falta, sólo info y sugerencia de `make install-uv`.
 
 ## Añadir un nuevo MCP a la sección de ups
 

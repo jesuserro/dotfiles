@@ -23,9 +23,10 @@ Orquestar un **bootstrap inicial seguro**: diagnóstico, paquetes APT declarativ
 | `make install-apt` | Instala paquetes APT desde el inventario YAML (mismo backend que `make deps-install`). |
 | `make install-external` | Solo recomendaciones (incluye `deps-actions`); detecta Docker/wt/winget y la zsh stack de forma prudente. |
 | `make install-zsh-stack` | Clona Oh My Zsh, Powerlevel10k y plugins custom solo si faltan; idempotente; no toca `~/.zshrc`. |
+| `make install-uv` | Instala **uv** (preferido para Python) con el instalador oficial de Astral. Idempotente (no reinstala si existe), respeta `DRY_RUN=1`, no toca `~/.zshrc`/`~/.bashrc`. **Opt-in**: fuera de `make install`. |
 | `make install-dotfiles` | Plan chezmoi; **no aplica** por defecto. |
-| `make install-verify` | `PASS` / `WARN` / `FAIL` en versiones; Docker solo `WARN`. |
-| `make install` | Orden: check → apt → external → dotfiles → verify. `make install-zsh-stack` queda fuera del orquestador para mantener `make install` idempotente y ligero. |
+| `make install-verify` | `PASS` / `WARN` / `FAIL` en versiones; `uv`/`node`/`npm` y Docker solo `WARN` cuando faltan. |
+| `make install` | Orden: check → apt → external → dotfiles → verify. `make install-zsh-stack` y `make install-uv` quedan fuera del orquestador para mantener `make install` idempotente y ligero. |
 
 Variables de entorno / Make (pasar como `make target VAR=value`):
 
@@ -51,6 +52,7 @@ También: `DEPS_INSTALL_ARGS` se reenvía al instalador APT (igual que `deps-ins
 - **SOPS/Age:** se pueden instalar vía APT si el inventario lo declara; **no** se generan claves, no se tocan secretos ni desencriptado forzado.
 - **Windows host:** se detectan `wt.exe`, `winget.exe`, `powershell.exe` desde WSL; **no** se asume admin ni se ejecuta `winget install` por defecto.
 - **Zsh stack:** `install-zsh-stack` clona bajo `$HOME/.oh-my-zsh` y `$ZSH_CUSTOM/themes/powerlevel10k` solo si faltan; nunca edita `~/.zshrc`, `~/.p10k.zsh` ni archivos gestionados por chezmoi/RCM.
+- **uv:** `install-uv` descarga el script oficial de Astral a un temporal y lo ejecuta con `UV_NO_MODIFY_PATH=1`; no edita `~/.zshrc` ni `~/.bashrc`; no reinstala si `uv` ya está en `PATH`. Pertenece a la política transversal **uv first / pip fallback**: para escenarios Python nuevos prefiere `uv venv`, `uv pip install`, `uv tool install`, `uvx`. **No tocar** `pip`/`pipx`/`python3 -m venv` legados ni el venv runtime AI (`~/.config/ai/runtime/.venv`) salvo tarea explícita.
 
 ## Idempotency
 
@@ -67,8 +69,9 @@ También: `DEPS_INSTALL_ARGS` se reenvía al instalador APT (igual que `deps-ins
 2. `make install-apt` (o primero `DRY_RUN=1`)
 3. `make install-external` (revisar acciones manuales / corporativas; verá si la zsh stack falta)
 4. `make install-zsh-stack` (idempotente: solo clona lo que falte)
-5. `make install-dotfiles` → revisar `WARN`; aplicar solo cuando proceda: `make install-dotfiles DOTFILES_APPLY=1`
-6. `make install-verify` (en CI o máquina limpia: `STRICT=1` si quieres fallar ante binarios críticos ausentes)
+5. `make install-uv` (opt-in: instala `uv` con el instalador oficial; idempotente; no toca rc files)
+6. `make install-dotfiles` → revisar `WARN`; aplicar solo cuando proceda: `make install-dotfiles DOTFILES_APPLY=1`
+7. `make install-verify` (en CI o máquina limpia: `STRICT=1` si quieres fallar ante binarios críticos ausentes)
 
 ## Interpreting PASS / WARN / FAIL
 

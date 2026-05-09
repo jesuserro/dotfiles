@@ -37,6 +37,21 @@ version_or_fail() {
 	fi
 }
 
+# Optional / external user tooling: WARN if missing, never FAIL.
+# Used for tools that the repo prefers but does not require for a minimal setup
+# (uv, node, npm). They are still verified so STRICT=1 stays informative.
+version_or_warn() {
+	local bin="$1"
+	if command -v "${bin}" >/dev/null 2>&1; then
+		local full o
+		full="$("${bin}" --version 2>&1)" || full=""
+		o="${full%%$'\n'*}"
+		ver_line PASS "${bin}: ${o}"
+	else
+		ver_line WARN "${bin}: not in PATH (optional/external)"
+	fi
+}
+
 echo "==> Version checks"
 
 version_or_fail zsh
@@ -45,6 +60,15 @@ version_or_fail chezmoi
 version_or_fail sops
 version_or_fail age
 version_or_fail rg
+
+echo ""
+echo "==> External / preferred user tooling (WARN-only when missing)"
+# uv: preferred Python tool (uv-first policy). Install with 'make install-uv'.
+version_or_warn uv
+# node / npm: required de facto on workstation use, but kept optional for
+# headless/CI machines. Independent of the uv policy.
+version_or_warn node
+version_or_warn npm
 
 echo ""
 echo "==> Docker (WARN-only: never a FAIL here)"

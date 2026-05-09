@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-09 21:18:10
+**Generated:** 2026-05-09 21:36:38
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -867,6 +867,7 @@
 │   ├── 🔧 install-git-ai-wrapper.sh
 │   ├── 🔧 install-gitnexus.sh
 │   ├── 🔧 install-system-packages.sh
+│   ├── 🔧 install-uv.sh
 │   ├── 🔧 install-verify.sh
 │   ├── 🔧 install-zsh-stack.sh
 │   ├── 🔧 materialize-commands.sh
@@ -903,6 +904,7 @@
 │   │   │   └── 📄 prompt-launchers.bats
 │   │   ├── 📁 system
 │   │   │   ├── 📄 install-dotfiles.bats
+│   │   │   ├── 📄 install-uv.bats
 │   │   │   └── 📄 system-deps.bats
 │   │   └── 📄 git-ai-author.bats
 │   └── 📄 Makefile.tests
