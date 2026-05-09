@@ -8,11 +8,28 @@
 ![Neovim](https://img.shields.io/badge/Neovim-editor-00b0ff?style=flat-square)
 ![MCP](https://img.shields.io/badge/MCP-Cursor%20%7C%20Codex-00b0ff?style=flat-square)
 
-Personal dotfiles para Ubuntu 20.04+, Zsh, Oh My Zsh, TMUX y Neovim. Incluye **AI Workstation** (MCPs, skills, secretos) gestionado con Chezmoi.
-
 > **Aviso:** Este es un proyecto personal. No experimentes con estos dotfiles si no tienes un mínimo de experiencia con Linux y la terminal: podrías sobrescribir o romper configuraciones en tu sistema.
 
----
+## Qué es este repositorio
+
+`dotfiles` es una **capa de configuración de usuario para Linux y WSL2 Ubuntu**. Prepara el entorno personal de desarrollo y operación instalando herramientas a nivel de usuario, configurando shell/CLI/dotfiles y exponiendo skills y comandos útiles para agentes IA.
+
+Actúa como:
+
+- **Bootstrap** de máquina nueva (`make install*`).
+- **Configuración de usuario** Linux/WSL (zsh, Oh My Zsh, Powerlevel10k, tmux, Neovim, aliases).
+- **Capa CLI de mantenimiento** (`ups`, `deps-*`).
+- **Base de skills y comandos** para agentes IA (Cursor, Codex, OpenCode) gestionada con Chezmoi + SOPS + Age.
+- **Puente transversal** para trabajar en proyectos que viven **fuera** del repo, por ejemplo:
+  - `~/proyectos/`
+  - `~/store-etl/`
+  - `/mnt/c/Users/<user>/Documents/vault_trabajo/`
+
+Esos proyectos **no viven dentro** de `dotfiles`; este repo solo prepara el entorno para que trabajar con ellos sea más rápido, más seguro y reproducible.
+
+### Idempotencia
+
+Todos los flujos (`make install*`, `ups`, `make deps-*`) están diseñados para **ejecutarse más de una vez** sin romper el entorno ni duplicar instalaciones innecesarias. `DRY_RUN=1` permite previsualizar cualquier paso de bootstrap antes de aplicarlo.
 
 ## Arquitectura
 
@@ -33,56 +50,61 @@ flowchart TB
 
 | Sistema | Gestiona | Doc |
 |---------|----------|-----|
-| **Chezmoi + SOPS + Age** | MCPs, secretos, AI Workstation | [CHEZMOI.md](docs/CHEZMOI.md) |
+| **`make install*`** | Bootstrap inicial: APT, externos, chezmoi, verificación | [docs/ops/dotfiles-install.md](docs/ops/dotfiles-install.md) |
+| **Chezmoi + SOPS + Age** | MCPs, secretos, AI Workstation | [docs/CHEZMOI.md](docs/CHEZMOI.md) |
 | **RCM (rcup)** | zsh, tmux, vim, aliases | [RCM](http://thoughtbot.github.io/rcm/) |
+| **`ups`** | Mantenimiento periódico (APT + npm + MCP + OMZ) | [docs/UPS.md](docs/UPS.md) |
+| **`make deps-*`** | Inventario declarativo de dependencias | [docs/SYSTEM_DEPENDENCIES.md](docs/SYSTEM_DEPENDENCIES.md) |
 
----
+## Instalación / Bootstrap
+
+> Bootstrap inicial idempotente para Ubuntu nativo o **WSL2 Ubuntu** (PC corporativo Windows 11 Pro). La lógica vive en `scripts/install-*.sh`; el Makefile sólo orquesta.
+
+### Comandos recomendados
+
+```bash
+make install-check              # diagnóstico (no muta)
+make install DRY_RUN=1          # plan completo sin tocar el sistema
+make install                    # bootstrap real (no aplica chezmoi por defecto)
+make install-zsh-stack          # Oh My Zsh + Powerlevel10k + plugins (idempotente)
+make install-uv                 # uv (preferido para Python) — opt-in, fuera de make install
+make install-dotfiles DOTFILES_APPLY=1   # activación explícita de chezmoi apply
+```
+
+Variante prudente para entornos corporativos:
+
+```bash
+make install SKIP_EXTERNAL=1
+```
+
+### Targets disponibles
+
+| Target | Rol |
+|--------|-----|
+| `make install-check` | Preflight de bootstrap. Modo normal: `MISSING/WARN` no bloquean. `STRICT=1`: requeridos declarativos = `FAIL`. |
+| `make install-apt` | Instala paquetes APT desde [`system/packages/*.yaml`](system/packages/) (mismo backend que `make deps-install`). |
+| `make install-external` | Solo recomendaciones (`make deps-actions`); detecta Docker, `wt.exe`, `winget.exe`, zsh stack — **nunca** instala host-side ni Docker Desktop. |
+| `make install-zsh-stack` | Clona Oh My Zsh, Powerlevel10k y plugins custom solo si faltan. **No** edita `~/.zshrc`. |
+| `make install-uv` | Instala **uv** (herramienta Python preferida) con el instalador oficial de Astral. Idempotente, opt-in, **fuera** de `make install`. No edita `~/.zshrc` ni `~/.bashrc`. |
+| `make install-dotfiles` | Plan chezmoi. **No ejecuta `apply`** salvo `DOTFILES_APPLY=1`. |
+| `make install-verify` | Versiones de zsh/git/chezmoi/sops/age/rg/docker. `STRICT=1` hace fallar si hay `FAIL` real. |
+| `make install` | Encadena: check → apt → external → dotfiles → verify. |
+
+Variables soportadas: `DRY_RUN=1`, `STRICT=1`, `SKIP_EXTERNAL=1`, `SKIP_DOCKER=1`, `DOTFILES_APPLY=1`.
+
+**Skill para agentes:** [`Dotfiles bootstrap install`](ai/assets/skills/ops/dotfiles-install/SKILL.md).
 
 ## Cuándo usar qué: rcup, source y chezmoi
 
-En este proyecto conviven tres formas de aplicar cambios. Usa cada una en su momento:
-
 | Acción | Cuándo usarla |
 |--------|----------------|
-| **`rcup -v`** | Cuando cambias archivos del repo que RCM gestiona (zsh, tmux, vim, aliases). Crea o actualiza symlinks en tu `$HOME`. |
-| **`source ~/.zshrc`** | Después de `rcup` o de `ups`: recarga en la sesión actual los aliases, funciones y el PATH. No modifica archivos en disco. |
-| **`chezmoi --source=$HOME/dotfiles apply`** | Cuando cambias en el repo lo que Chezmoi gestiona (MCPs, plantillas en `dot_cursor/`, `dot_codex/`, secretos, runtime AI). Lleva esos cambios a `~/.cursor/`, `~/.codex/`, etc. |
-
-La política de npm global de usuario vive en la capa shell/RCM del repo (`zsh` + `aliases`), así que se publica con `rcup -v` y se activa en la sesión con `source ~/.zshrc`.
-
-**Ejemplo:** Si solo ejecutas `ups` (actualizar sistema y MCPs), no hace falta chezmoi; basta `source ~/.zshrc` para que la shell use la configuración actual. Chezmoi solo es necesario cuando **tú** editas plantillas o archivos del repo (por ejemplo añades un MCP en `dot_cursor/mcp.json.tmpl`).
+| **`rcup -v`** | Cambias archivos del repo que RCM gestiona (zsh, tmux, vim, aliases). Crea/actualiza symlinks en tu `$HOME`. |
+| **`source ~/.zshrc`** | Después de `rcup` o de `ups`: recarga aliases/funciones/PATH en la sesión actual. |
+| **`chezmoi --source=$HOME/dotfiles apply`** | Cambias en el repo lo que Chezmoi gestiona (MCPs, plantillas en `dot_cursor/`, `dot_codex/`, secretos, runtime AI). |
 
 **Detalle:** [docs/CHEZMOI.md#cuándo-usar-rcup-source-y-chezmoi](docs/CHEZMOI.md#cuándo-usar-rcup-source-y-chezmoi).
 
----
-
-## Install
-
-```bash
-git clone https://github.com/jesuserro/dotfiles.git ~/dotfiles
-cd ~/dotfiles
-chezmoi --source=$HOME/dotfiles apply
-rcup -v && source ~/.zshrc
-```
-
-**Guía completa:** [docs/INSTALL.md](docs/INSTALL.md) — requisitos, Age, SOPS, secretos.
-
----
-
-## Guías rápidas
-
-| Tarea | Doc |
-|-------|-----|
-| **Actualizar sistema** (APT, MCPs, Oh My Zsh) | [UPS.md](docs/UPS.md) |
-| Añadir un **MCP** servidor | [GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md#3-añadir-un-nuevo-mcp-servidor-python) |
-| Añadir un **skill** | [GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md#4-añadir-un-skill) |
-| Añadir un **secreto** (Postgres, MinIO) | [SECRETS_EXAMPLES.md](docs/SECRETS_EXAMPLES.md) |
-| Cambiar **token GitHub** | [CAMBIAR_TOKEN_GITHUB.md](docs/CAMBIAR_TOKEN_GITHUB.md) |
-| Aplicar cambios | `chezmoi --source=$HOME/dotfiles apply` |
-
----
-
-## Update
+## Update / Mantenimiento periódico
 
 ```bash
 cd ~/dotfiles
@@ -92,55 +114,53 @@ rcup -v
 source ~/.zshrc
 ```
 
-**Actualización integral del sistema:** `ups` — APT, npm, Oh My Zsh, MCPs. Ver [docs/UPS.md](docs/UPS.md).
+Actualización integral del sistema: `ups` (APT, npm, Oh My Zsh, MCPs). Ver [docs/UPS.md](docs/UPS.md).
 
----
+## Guías rápidas
 
-## Documentación
-
-| Doc | Contenido |
-|-----|-----------|
-| [docs/README.md](docs/README.md) | Índice completo |
-| [docs/MCP_TAXONOMY.md](docs/MCP_TAXONOMY.md) | Taxonomía de MCPs (clasificación y políticas) |
-| [docs/UPS.md](docs/UPS.md) | Comando `ups` — actualización del sistema |
-| [docs/INSTALL.md](docs/INSTALL.md) | Instalación paso a paso |
-| [docs/GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md) | MCPs, skills, comandos |
-| [docs/CHEZMOI.md](docs/CHEZMOI.md) | Chezmoi + SOPS + Age |
-| [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md) | Git (feat, rel, changelog) |
-| [ai/README.md](ai/README.md) | AI Workstation Framework |
-
----
+| Tarea | Doc |
+|-------|-----|
+| Bootstrap inicial detallado | [docs/INSTALL.md](docs/INSTALL.md) |
+| Inventario declarativo de dependencias | [docs/SYSTEM_DEPENDENCIES.md](docs/SYSTEM_DEPENDENCIES.md) |
+| CLI `make install*` | [docs/ops/dotfiles-install.md](docs/ops/dotfiles-install.md) |
+| Mantenimiento periódico | [docs/UPS.md](docs/UPS.md) |
+| Chezmoi + SOPS + Age | [docs/CHEZMOI.md](docs/CHEZMOI.md) |
+| MCPs, skills, comandos AI | [docs/GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md) |
+| Añadir un secreto | [docs/SECRETS_EXAMPLES.md](docs/SECRETS_EXAMPLES.md) |
+| Cambiar token GitHub | [docs/CAMBIAR_TOKEN_GITHUB.md](docs/CAMBIAR_TOKEN_GITHUB.md) |
+| Git workflow (feat, rel, changelog) | [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md) |
+| AI Workstation Framework | [ai/README.md](ai/README.md) |
+| Índice general | [docs/README.md](docs/README.md) |
 
 ## Estructura del repo
 
 ```
 dotfiles/
-├── ai/                 # AI Workstation (MCPs, skills)
+├── ai/                 # AI Workstation (MCPs, skills, prompts, runtime)
 ├── dot_cursor/         # Templates MCP Cursor
 ├── dot_codex/          # Templates Codex
 ├── docs/               # Documentación
+├── install.mk          # Targets make install*
+├── scripts/            # Scripts versionados (install-*, deps-*, git-*, ...)
+├── system/packages/    # Inventario YAML declarativo (APT/external/env)
 ├── zsh, tmux, vim/     # Shell, terminal, editor
 └── secrets.sops.yaml   # Secretos cifrados
 ```
-
----
 
 ## Customizations
 
 `~/dotfiles-local/*.local` — aliases, gitconfig, tmux, vimrc, zshrc. Ver [RCM](http://thoughtbot.github.io/rcm/).
 
----
-
 ## Testing
 
 ```bash
 make test           # All tests
-make test-install   # Install dependencies
+make test-fast      # Lint + bats (más rápido)
+make bats-system    # Solo tests del área install / deps
+make test-install   # Instala dependencias de test (shellcheck, shfmt, bats)
 ```
 
-See [docs/TESTING.md](docs/TESTING.md) for details.
-
----
+Ver [docs/TESTING.md](docs/TESTING.md) para más detalle.
 
 ## Resources
 
@@ -150,8 +170,8 @@ See [docs/TESTING.md](docs/TESTING.md) for details.
 | SOPS | [github.com/getsops/sops](https://github.com/getsops/sops) |
 | Age | [github.com/FiloSottile/age](https://github.com/FiloSottile/age) |
 | RCM | [thoughtbot.github.io/rcm](http://thoughtbot.github.io/rcm/) |
-
----
+| Oh My Zsh | [ohmyz.sh](https://ohmyz.sh/) |
+| Powerlevel10k | [github.com/romkatv/powerlevel10k](https://github.com/romkatv/powerlevel10k) |
 
 ## License
 

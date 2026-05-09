@@ -27,6 +27,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 | 📦 **GitNexus** | `npm install -g --prefix=~/.npm-global gitnexus@latest` |
 | 🤖 **OpenCode** | `curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path` |
 | ⚡ **Oh My Zsh** | `omz update`, `upgrade_oh_my_zsh_custom` |
+| 🐍 **uv (Python)** | `uv self update` solo si `uv` existe en `$HOME/.local/bin/uv`. Si falta, info y skip (instalar con `make install-uv`). Si vive en otra ruta (apt/brew), info: actualizar con su gestor. |
 | 📄 **RenderCV (jesuserro)** | `~/proyectos/jesuserro` — `git pull --rebase --autostash` + `uv pip install --python .venv/bin/python -U "rendercv[full]==2.7"` |
 | 🔌 **MCP** | excalidraw, docker/postgres, fetch, Python MCPs |
 | 🔄 **Servicios** | Reinicio Apache y MySQL (si están instalados) |
@@ -65,6 +66,7 @@ Estos MCPs usan `npx -y` o `uvx` y obtienen la última versión automáticamente
 
 ## Notas
 
+- **uv (Python):** `ups` solo intenta `uv self update` cuando `uv` ya está instalado en la ruta canónica del instalador oficial (`$HOME/.local/bin/uv`). Si `uv` falta, no lo instala (eso lo hace `make install-uv`). Si está gestionado por `apt`/`brew`/etc., `ups` lo informa pero deja la actualización a su gestor. El venv runtime AI (`~/.config/ai/runtime/.venv`) sigue intencionalmente con `python3 -m venv` + `pip install -r requirements.txt` por compatibilidad.
 - **WSL:** Detecta Ubuntu WSL y lo indica al inicio.
 - **winget en WSL:** Si `wt.exe` y `powershell.exe` están disponibles, `ups` abre una nueva pestaña de Windows Terminal y lanza la actualización de paquetes de Windows en paralelo.
 - **Errores e incidencias:** Si una sección falla, el proceso continúa. El resumen final ya distingue entre errores y warnings/incidencias, para no vender un éxito limpio cuando hubo fallos parciales.

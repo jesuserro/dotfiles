@@ -393,6 +393,42 @@ EOF
     _ups_info "Oh My Zsh no está instalado, omitiendo actualización"
   fi
 
+  # 🐍 Sección: Actualización de uv (preferido para Python)
+  # Política:
+  #   - Si uv no existe → info y skip (ups no instala uv: para eso, make install-uv).
+  #   - Si uv existe y vive en $HOME/.local/bin/uv (instalador oficial) → uv self update prudente.
+  #   - Si uv vive en otra ruta (apt, brew, ...) → info: actualizar con el gestor correspondiente.
+  _ups_section "🐍 Actualización de uv (Python)"
+  if ! command -v uv >/dev/null 2>&1; then
+    _ups_info "uv no está instalado; ups no lo instala. Para instalarlo: make install-uv"
+  else
+    local uv_path
+    uv_path=$(command -v uv 2>/dev/null || true)
+    local uv_before=""
+    uv_before=$(uv --version 2>/dev/null || true)
+    if [ "$uv_path" = "$HOME/.local/bin/uv" ]; then
+      _ups_progress "Actualizando uv en sitio (uv self update)..."
+      local uv_start=$(date +%s)
+      if uv self update 2>&1 | tee /tmp/ups_uv_self_update.log; then
+        local uv_time=$(($(date +%s) - uv_start))
+        local uv_after=""
+        uv_after=$(uv --version 2>/dev/null || true)
+        if [ -n "$uv_before" ] && [ -n "$uv_after" ] && [ "$uv_before" != "$uv_after" ]; then
+          _ups_success "uv actualizado (${uv_before} -> ${uv_after}, ${uv_time}s)"
+        elif [ -n "$uv_after" ]; then
+          _ups_success "uv verificado/actualizado (${uv_after}, ${uv_time}s)"
+        else
+          _ups_success "uv self update completado (${uv_time}s)"
+        fi
+      else
+        _ups_warning "uv self update falló (consulta /tmp/ups_uv_self_update.log)"
+      fi
+    else
+      _ups_info "uv detectado en ${uv_path} (no es la instalación oficial en \$HOME/.local/bin)"
+      _ups_info "Actualízalo con su gestor (apt/brew/...) o reinstala con: make install-uv"
+    fi
+  fi
+
   # 📄 Sección: Actualización de RenderCV en jesuserro
   _ups_section "📄 Actualización de RenderCV (jesuserro)"
   local jesuserro_dir="$HOME/proyectos/jesuserro"

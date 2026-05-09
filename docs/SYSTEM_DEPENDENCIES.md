@@ -128,7 +128,7 @@ make deps-install DEPS_INSTALL_ARGS="--dry-run --include-optional"
 ## Canonical external guidance
 
 - `chezmoi`: install from the official release flow or `go install github.com/twpayne/chezmoi/v2@latest`
-- `uv`: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- `uv`: `make install-uv` (preferred, idempotent, never edits rc files). Direct fallback: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - `node` / `npm`: install together through your preferred WSL/Ubuntu Node distribution
 - `corepack`: `corepack enable`
 - `pnpm`: `corepack prepare pnpm@latest --activate`
@@ -158,3 +158,31 @@ If the dependency only makes sense from WSL because it bridges into Windows, kee
 `bubblewrap` is tracked explicitly because Codex on Linux/WSL may rely on `bwrap` for sandboxing. If it is missing, agent workflows can degrade or warn even when the rest of the shell environment looks healthy.
 
 Optional packages are still reported by the checker, but they do not make the command fail.
+
+## Política Python: uv first, pip fallback
+
+Política transversal del repo para entornos y herramientas Python:
+
+- **`uv` preferido** (Astral) para venvs, lockfiles, herramientas y ejecución de scripts puntuales.
+- **`pip`/`pipx`** se conservan instalados como base del sistema (`python3-pip`, `pipx` siguen como APT requeridos) y como **fallback / legado vivo**: ningún script existente que use `pip` se modifica para evitar regresiones.
+- **`uv` se queda `required: false`** en el inventario para no romper `STRICT=1 make install-check` en máquinas mínimas. Para instalarlo de forma explícita: `make install-uv`.
+
+### Equivalencias canónicas
+
+| Mundo `pip`/`pipx` | Equivalente `uv` |
+|---|---|
+| `python -m venv .venv` | `uv venv` |
+| `pip install -r requirements.txt` | `uv pip install -r requirements.txt` |
+| `pip install <pkg>` (en venv ya activo) | `uv pip install <pkg>` |
+| `pipx install <tool>` | `uv tool install <tool>` |
+| `pipx run <tool>` | `uvx <tool>` |
+| `python script.py` (con proyecto `uv`) | `uv run python script.py` |
+
+### Excepciones explícitas
+
+- **Runtime AI** (`~/.config/ai/runtime/.venv`): se mantiene intencionalmente con `python3 -m venv` + `pip install -r requirements.txt` por compatibilidad con `.chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl` y la sección correspondiente de `ups`. Migrarlo a `uv` queda como tarea separada.
+- **`zsh/30-python.zsh`** (alias `pip='pip3'`, `pyreq()`): no se toca en esta fase para evitar regresiones en sesiones interactivas.
+
+### Cómo lo trata `ups`
+
+`ups` actualiza `uv` con `uv self update` **solo si ya existe** y vive en `$HOME/.local/bin/uv` (instalación oficial). Si falta, sólo informa y sugiere `make install-uv`. Si está en otra ruta (`apt`, `brew`...), informa para que lo actualice su gestor. Nunca lo instala desde `ups`.

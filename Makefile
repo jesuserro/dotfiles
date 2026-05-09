@@ -2,6 +2,7 @@
 # Root entry point — delegates to domain-specific Makefiles
 
 include tests/Makefile.tests
+include install.mk
 
 .DEFAULT_GOAL := help
 

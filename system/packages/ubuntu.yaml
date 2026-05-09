@@ -2,6 +2,16 @@ schema_version: 1
 platform: ubuntu
 manager: apt
 packages:
+  - package: build-essential
+    command: gcc
+    required: true
+    capability: build
+    note: Metapackage for compilers and libc dev headers used by native Python wheels and builds.
+  - package: python3-venv
+    command: python3
+    required: true
+    capability: python
+    note: Ensures the venv module alongside python3; shares the python3 binary in PATH checks.
   - package: python3-pip
     command: pip3
     required: true

@@ -1,0 +1,90 @@
+---
+name: dotfiles-bootstrap-install
+description: Guía operativa para el bootstrap inicial de dotfiles en Ubuntu/WSL con make install*. Úsala en una máquina nueva (PC corporativo Windows 11 + WSL2 Ubuntu), antes de confiar en ups o en deps-* para mantenimiento.
+---
+
+# Dotfiles bootstrap install (`make install*`)
+
+## Purpose
+
+Orquestar un **bootstrap inicial seguro**: diagnóstico, paquetes APT declarativos, orientación sobre herramientas externas, plan de chezmoi y verificación de versiones. La lógica vive en `scripts/install-*.sh`; el Makefile solo delega.
+
+## When to Use
+
+- Primera configuración de una estación con este repo en **WSL2 Ubuntu** o Ubuntu nativo.
+- Cuando un agente necesita el flujo canónico “instalar sin sorpresas” en entorno corporativo.
+- **No** sustituye a `ups` (actualización periódica) ni convierte `deps-*` en instalador silencioso de todo.
+
+## Commands
+
+| Command | Role |
+|---------|------|
+| `make install-check` | Solo diagnóstico (no muta). Entorno, herramientas base, más salida de `deps-check --include-optional`. |
+| `make install-apt` | Instala paquetes APT desde el inventario YAML (mismo backend que `make deps-install`). |
+| `make install-external` | Solo recomendaciones (incluye `deps-actions`); detecta Docker/wt/winget y la zsh stack de forma prudente. |
+| `make install-zsh-stack` | Clona Oh My Zsh, Powerlevel10k y plugins custom solo si faltan; idempotente; no toca `~/.zshrc`. |
+| `make install-uv` | Instala **uv** (preferido para Python) con el instalador oficial de Astral. Idempotente (no reinstala si existe), respeta `DRY_RUN=1`, no toca `~/.zshrc`/`~/.bashrc`. **Opt-in**: fuera de `make install`. |
+| `make install-dotfiles` | Plan chezmoi; **no aplica** por defecto. |
+| `make install-verify` | `PASS` / `WARN` / `FAIL` en versiones; `uv`/`node`/`npm` y Docker solo `WARN` cuando faltan. |
+| `make install` | Orden: check → apt → external → dotfiles → verify. `make install-zsh-stack` y `make install-uv` quedan fuera del orquestador para mantener `make install` idempotente y ligero. |
+
+Variables de entorno / Make (pasar como `make target VAR=value`):
+
+| Variable | Efecto |
+|----------|--------|
+| `DRY_RUN=1` | APT: `--dry-run`; chezmoi: solo imprime comandos; external: refuerza mensaje de no mutación. |
+| `STRICT=1` | En `install-check`: convierte `MISSING` declarativos de `deps-check` en `FAIL` (modo normal solo `WARN`). En `install-verify`: exit ≠ 0 si hay `FAIL` reales (sigue sin promocionar `WARN`). |
+| `SKIP_EXTERNAL=1` | Omite el bloque `install-external`. |
+| `SKIP_DOCKER=1` | En external: omite la sección Docker y filtra bloques docker en la salida de `deps-actions`. |
+| `DOTFILES_APPLY=1` | **Requerido** para que `install-dotfiles` ejecute `chezmoi apply` / `init --apply`. Sin esto, solo plan + `WARN` de aplicación pendiente. |
+
+También: `DEPS_INSTALL_ARGS` se reenvía al instalador APT (igual que `deps-install`).
+
+## install vs ups vs deps-*
+
+- **`make install*`**: bootstrap de máquina nueva; idempotente donde aplica; chezmoi **no** destructivo sin `DOTFILES_APPLY=1`.
+- **`ups`**: mantenimiento recurrente (APT, npm, MCP, etc.) definido en el alias; **no** modificar desde esta skill.
+- **`make deps-check` / `deps-install` / `deps-actions`**: capa declarativa YAML (`system/packages/*.yaml`); `install-apt` y `install-check` la reutilizan.
+
+## Safety
+
+- **Docker Desktop:** no se instala desde estos scripts; solo detección y `WARN`.
+- **SOPS/Age:** se pueden instalar vía APT si el inventario lo declara; **no** se generan claves, no se tocan secretos ni desencriptado forzado.
+- **Windows host:** se detectan `wt.exe`, `winget.exe`, `powershell.exe` desde WSL; **no** se asume admin ni se ejecuta `winget install` por defecto.
+- **Zsh stack:** `install-zsh-stack` clona bajo `$HOME/.oh-my-zsh` y `$ZSH_CUSTOM/themes/powerlevel10k` solo si faltan; nunca edita `~/.zshrc`, `~/.p10k.zsh` ni archivos gestionados por chezmoi/RCM.
+- **uv:** `install-uv` descarga el script oficial de Astral a un temporal y lo ejecuta con `UV_NO_MODIFY_PATH=1`; no edita `~/.zshrc` ni `~/.bashrc`; no reinstala si `uv` ya está en `PATH`. Pertenece a la política transversal **uv first / pip fallback**: para escenarios Python nuevos prefiere `uv venv`, `uv pip install`, `uv tool install`, `uvx`. **No tocar** `pip`/`pipx`/`python3 -m venv` legados ni el venv runtime AI (`~/.config/ai/runtime/.venv`) salvo tarea explícita.
+
+## Idempotency
+
+- `install-check` y `install-verify` no mutan el sistema.
+- `install-apt` delega en `apt-get`, idempotente por paquete.
+- `install-external` no instala nada (solo guía).
+- `install-dotfiles` no aplica chezmoi sin `DOTFILES_APPLY=1`.
+- `install-zsh-stack` clona solo si la ruta destino no existe.
+- `make install` puede repetirse sin efectos destructivos.
+
+## Recommended Flow (Windows 11 Pro + WSL2 Ubuntu)
+
+1. `make install-check`
+2. `make install-apt` (o primero `DRY_RUN=1`)
+3. `make install-external` (revisar acciones manuales / corporativas; verá si la zsh stack falta)
+4. `make install-zsh-stack` (idempotente: solo clona lo que falte)
+5. `make install-uv` (opt-in: instala `uv` con el instalador oficial; idempotente; no toca rc files)
+6. `make install-dotfiles` → revisar `WARN`; aplicar solo cuando proceda: `make install-dotfiles DOTFILES_APPLY=1`
+7. `make install-verify` (en CI o máquina limpia: `STRICT=1` si quieres fallar ante binarios críticos ausentes)
+
+## Interpreting PASS / WARN / FAIL
+
+- **PASS / OK:** herramienta presente o comprobación exitosa.
+- **WARN:** pendiente o opcional (Docker, interop Windows, secretos no configurados, aplicación chezmoi pendiente, paquetes APT que `install-apt` puede instalar).
+- **MISSING:** comando ausente entre las herramientas deseadas; en modo normal **no** rompe `install-check`.
+- **FAIL:** prerrequisito duro (no es Debian-like, falta `apt-get`, scripts internos no encontrados, error real de `check-system-deps.sh`) **o** dependencia declarativa requerida ausente con `STRICT=1`.
+
+`install-check` resume tres bloques: `Local probes`, `Declarative deps` (con estado `PASS` / `WARN` / `FAIL`) y `Hard prerequisites`. El veredicto final es `PASS`, `PASS_WITH_WARNINGS` o `FAIL`. En modo normal solo `FAIL` provoca exit ≠ 0; `STRICT=1` añade los faltantes declarativos al criterio de fallo.
+
+## References
+
+- [docs/ops/dotfiles-install.md](../../../../docs/ops/dotfiles-install.md)
+- [docs/INSTALL.md](../../../../docs/INSTALL.md)
+- [docs/SYSTEM_DEPENDENCIES.md](../../../../docs/SYSTEM_DEPENDENCIES.md)
+- [docs/UPS.md](../../../../docs/UPS.md)

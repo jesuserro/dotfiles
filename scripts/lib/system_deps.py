@@ -40,8 +40,11 @@ def _action_for_package(package):
         },
         "uv": {
             "kind": "installer",
-            "summary": "Install uv with the official installer used by Astral.",
-            "command": "curl -LsSf https://astral.sh/uv/install.sh | sh",
+            "summary": (
+                "Install uv (preferred Python tool) with the repo's idempotent installer. "
+                "Fallback for direct use: 'curl -LsSf https://astral.sh/uv/install.sh | sh'."
+            ),
+            "command": "make install-uv",
         },
         "node": {
             "kind": "manual",
@@ -87,6 +90,11 @@ def _action_for_package(package):
             "kind": "manual",
             "summary": "Treat Docker as a manual workstation choice on WSL rather than a dotfiles-managed installer.",
             "command": "Manual: use your chosen Docker Desktop WSL integration or Linux Docker Engine setup.",
+        },
+        "gh": {
+            "kind": "manual",
+            "summary": "GitHub CLI is optional; install via your approved channel (upstream .deb, package manager, or corporate catalog).",
+            "command": "See https://cli.github.com/ and your org policy for gh installation.",
         },
         "wslpath": {
             "kind": "environment",

@@ -20,3 +20,9 @@ packages:
     capability: windows
     install_method: windows
     note: Used by ups() to open a Windows Terminal tab for winget.
+  - package: winget.exe
+    command: winget.exe
+    required: false
+    capability: windows
+    install_method: windows
+    note: Windows Package Manager on the host; exposed in PATH from WSL when available.
