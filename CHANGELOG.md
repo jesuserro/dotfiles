@@ -2,28 +2,40 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.05.09_2139] - 2026-05-09
+## [v2026.05.09_2340] - 2026-05-09
 
 ## Changes
 ### Added
-- 2026-05-09 21:36 [324f990](https://github.com/jesuserro/dotfiles/commit/324f990) feat(install): introduce `install-uv` target for the Astral uv Python tool (Cursor Agent)
-  - Added `install-uv` target in `install.mk` for idempotent installation of the uv tool, ensuring it does not modify any shell configuration files.
-  - Updated `README.md` and `SKILL.md` to include instructions for installing uv and its role in the Python tooling policy.
-  - Enhanced documentation in `SYSTEM_DEPENDENCIES.md` and `UPS.md` to clarify the usage and update process for uv.
-- 2026-05-09 21:22 [aff89e0](https://github.com/jesuserro/dotfiles/commit/aff89e0) feat(install): add zsh stack installation target and enhance documentation (Cursor Agent)
-  - Introduced `install-zsh-stack` target in `install.mk` for idempotent installation of Oh My Zsh, Powerlevel10k, and related plugins without modifying `~/.zshrc`.
-  - Updated `README.md` and `SKILL.md` to include details on the new zsh stack installation process and its role in the overall bootstrap flow.
-  - Enhanced `install-external.sh` to detect the presence of the zsh stack and provide guidance for installation.
-- 2026-05-09 21:13 [864cb02](https://github.com/jesuserro/dotfiles/commit/864cb02) feat(install): enhance system dependency management and documentation (Cursor Agent)
-  - Included `install.mk` in the Makefile for improved installation management.
-  - Updated `README.md` to reflect new skills for dotfiles installation and system dependencies.
-  - Enhanced `system_deps.py` with guidance for optional GitHub CLI installation.
+- 2026-05-09 23:32 [220534e](https://github.com/jesuserro/dotfiles/commit/220534e) feat(chezmoi): enhance Obsidian MCP integration and configuration management (Cursor Agent)
+  - Added `obsidian_vault_path` to `.chezmoi.toml` for dynamic vault path management, allowing overrides in user-specific configurations.
+  - Updated various documentation files, including `README.md`, `CHEZMOI.md`, and `MCP_QUICKREF.md`, to reflect the new vault path configuration and its usage in MCP templates.
+  - Modified MCP templates to utilize the new `ai.obsidian_vault_path` variable, ensuring consistent path management across different environments.
+- 2026-05-09 23:17 [bcb8d5f](https://github.com/jesuserro/dotfiles/commit/bcb8d5f) feat(install): introduce ai-mcp-governance target for comprehensive MCP validation (Cursor Agent)
+  - Added `ai-mcp-governance` target in `install.mk` to orchestrate non-mutating checks for MCP governance, combining validation, rendering, and drift reporting in a single command.
+  - Updated `README.md`, `MCP_QUICKREF.md`, and `MCP_TAXONOMY.md` with instructions on using the new governance target, emphasizing its role in ensuring repository coherence.
+  - Enhanced `bin/validate-mcp-governance` script to perform the governance checks, ensuring alignment with the canonical MCP manifest.
+- 2026-05-09 23:11 [7c3338c](https://github.com/jesuserro/dotfiles/commit/7c3338c) feat(install): add ai-mcp-generate target for productive MCP template management (Cursor Agent)
+  - Introduced `ai-mcp-generate` target in `install.mk` to facilitate planning and productive generation of MCP templates, allowing for validation, rendering, and drift checks before applying changes.
+  - Updated `README.md`, `MCP_QUICKREF.md`, and `MCP_TAXONOMY.md` with detailed instructions on using the new target, emphasizing its role in managing MCP configurations.
+  - Enhanced `generate-mcp-configs.py` to support both dry-run and productive template generation, including backup functionality.
+- 2026-05-09 23:04 [5645380](https://github.com/jesuserro/dotfiles/commit/5645380) feat(install): add ai-mcp-render and ai-mcp-drift targets for MCP configuration management (Cursor Agent)
+  - Introduced `ai-mcp-render` target in `install.mk` to perform a dry-run rendering of MCP configurations, writing outputs to `build/mcps/` without modifying existing templates.
+  - Added `ai-mcp-drift` target to compare rendered configurations against current templates, generating a drift report and indicating unexpected changes.
+  - Updated `README.md` and `MCP_QUICKREF.md` with usage instructions for the new targets, emphasizing their roles in validating MCP configurations.
+- 2026-05-09 22:54 [9f0ccbb](https://github.com/jesuserro/dotfiles/commit/9f0ccbb) feat(install): add ai-mcp-validate target for MCP manifest validation (Cursor Agent)
+  - Introduced `ai-mcp-validate` target in `install.mk` to validate the canonical MCP manifest located at `ai/assets/mcps/MANIFEST.yaml` using a Python script.
+  - Updated `README.md` and `MCP_QUICKREF.md` to include instructions for the new validation target and its significance in ensuring MCP configuration integrity.
+  - Enhanced documentation in `MCP_TAXONOMY.md` and `adr/0001-mcp-governance.md` to reflect the new canonical intent for MCPs and the validation process.
+- 2026-05-09 22:45 [a3d356c](https://github.com/jesuserro/dotfiles/commit/a3d356c) feat(install): add ai-cursor-check target for non-mutating readiness check (Cursor Agent)
+  - Introduced `ai-cursor-check` target in `install.mk` to verify the alignment of Cursor MCPs, skills, and AI commands with repository templates without making system modifications.
+  - Updated `README.md` to include usage instructions for the new target and its purpose in ensuring system readiness.
+  - Enhanced `MCP_QUICKREF.md` with details on how to perform the readiness check and its implications for the installation process.
 
-### Documentation
-- 2026-05-09 21:39 [d0a11a6](https://github.com/jesuserro/dotfiles/commit/d0a11a6) docs(changelog): add `install-node` target for Node.js installation (Cursor Agent)
-  - Introduced `install-node` target in `install.mk` for idempotent installation of Node.js, ensuring no modifications to shell configuration files.
-  - Updated `README.md` and `SKILL.md` with instructions for installing Node.js and its significance in the development environment.
-  - Enhanced documentation in `SYSTEM_DEPENDENCIES.md` to clarify Node.js usage and update processes.
+### Fixed
+- 2026-05-09 23:40 [e12e21b](https://github.com/jesuserro/dotfiles/commit/e12e21b) fix(mcps): update CHEZMOI.md and tests for MCP launcher templates (Cursor Agent)
+  - Revised the entry for MCP launcher paths in `CHEZMOI.md` to reflect the new wildcard format for launcher templates.
+  - Added a new test target `bats-chezmoi-mcp-launchers` in `Makefile.tests` to validate the functionality of chezmoi MCP launcher templates.
+  - Updated the `test-bats-ci` target to include the new chezmoi launcher tests, ensuring comprehensive test coverage.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
