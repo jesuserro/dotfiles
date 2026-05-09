@@ -6,7 +6,7 @@
 ![Zsh](https://img.shields.io/badge/Zsh-shell-00b0ff?style=flat-square)
 ![TMUX](https://img.shields.io/badge/TMUX-terminal-00b0ff?style=flat-square)
 ![Neovim](https://img.shields.io/badge/Neovim-editor-00b0ff?style=flat-square)
-![MCP](https://img.shields.io/badge/MCP-Cursor%20%7C%20Codex-00b0ff?style=flat-square)
+![MCP](https://img.shields.io/badge/MCP-Cursor%20%7C%20Codex%20%7C%20OpenCode-00b0ff?style=flat-square)
 
 > **Aviso:** Este es un proyecto personal. No experimentes con estos dotfiles si no tienes un mínimo de experiencia con Linux y la terminal: podrías sobrescribir o romper configuraciones en tu sistema.
 
@@ -64,6 +64,7 @@ flowchart TB
 
 ```bash
 make install-check              # diagnóstico (no muta)
+make ai-mcp-validate            # valida el manifiesto canónico MCP (PyYAML; no muta)
 make ai-cursor-check            # readiness Cursor/MCP/skills (no muta; ver docs/MCP_QUICKREF.md)
 make install DRY_RUN=1          # plan completo sin tocar el sistema
 make install                    # bootstrap real (no aplica chezmoi por defecto)
@@ -89,6 +90,7 @@ make install SKIP_EXTERNAL=1
 | `make install-uv` | Instala **uv** (herramienta Python preferida) con el instalador oficial de Astral. Idempotente, opt-in, **fuera** de `make install`. No edita `~/.zshrc` ni `~/.bashrc`. |
 | `make install-dotfiles` | Plan chezmoi. **No ejecuta `apply`** salvo `DOTFILES_APPLY=1`. |
 | `make install-verify` | Versiones de zsh/git/chezmoi/sops/age/rg/docker. `STRICT=1` hace fallar si hay `FAIL` real. |
+| `make ai-mcp-validate` | Valida [ai/assets/mcps/MANIFEST.yaml](ai/assets/mcps/MANIFEST.yaml): intención canónica de MCPs por agente (Cursor/Codex/OpenCode). Requiere PyYAML. No muta; no sustituye aún a las plantillas Chezmoi. |
 | `make ai-cursor-check` | Comprueba sin mutar si `~/.cursor/mcp.json`, skills enlazados y comandos AI están alineados con los templates del repo. No instala ni ejecuta Cursor ni MCPs. `STRICT=1` endurece (p. ej. falta `~/.cursor/mcp.json`). |
 | `make install` | Encadena: check → apt → external → dotfiles → verify. |
 

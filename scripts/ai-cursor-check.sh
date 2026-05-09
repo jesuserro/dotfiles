@@ -3,8 +3,8 @@
 # Does not run Cursor, chezmoi apply, MCP servers, or print secret values.
 # STRICT=1 promotes missing critical Cursor pieces to FAIL / exit 1.
 #
-# TODO: a canonical MCP manifest (e.g. ai/assets/mcps/MANIFEST.yaml) could
-# drive counts and drift detection across Cursor/Codex/OpenCode from one source.
+# Canonical MCP intent: ai/assets/mcps/MANIFEST.yaml (validate with make ai-mcp-validate).
+# Template generation / drift vs manifest is a later phase; this script still uses templates + HOME.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -415,7 +415,7 @@ if [[ "${hn}" -ge 0 ]]; then
 else
 	line_info "MCP surfaces (from repo templates; asymmetry is expected): Cursor template=${ct}, Cursor home=(no ~/.cursor/mcp.json), Codex enabled=${ce}, OpenCode enabled=${oe}"
 fi
-line_info "TODO: canonical MCP manifest under ai/assets/mcps/ would unify surfaces in a future phase"
+	line_info "MCP manifest (intent): ai/assets/mcps/MANIFEST.yaml — run: make ai-mcp-validate"
 
 if [[ ! -f "${CURSOR_MCP}" ]]; then
 	line MISSING "~/.cursor/mcp.json missing (chezmoi apply likely not run for Cursor MCPs)"

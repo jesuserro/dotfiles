@@ -1,0 +1,365 @@
+# Canonical MCP intent for Cursor, Codex, and OpenCode (global Chezmoi scope).
+# Templates under dot_cursor/, dot_codex/, dot_config/opencode/ are NOT yet generated
+# from this file; run `make ai-mcp-validate` to verify schema and policy.
+#
+# Codex plugin blocks (e.g. github@openai-curated) are out of scope here.
+
+version: 1
+
+policy:
+  compatible_by_default_enabled: true
+  summary: >
+    Every compatible MCP is intended enabled on cursor, codex, and opencode.
+    Missing services, secrets, binaries, or host paths are surfaced by readiness
+    checks (WARN/MISSING/FAIL under STRICT), not by silently omitting servers.
+
+# Reserved for future per-project or per-stack overlays (not used by the validator yet).
+profiles:
+  global:
+    description: Chezmoi-managed global MCP intent (editor templates in this repo)
+  store-etl: {}
+  ixatu: {}
+  project-local: {}
+
+mcps:
+  - id: excalidraw
+    display_name: Excalidraw MCP
+    description: Diagrams and Excalidraw assets via local stdio server
+    layer: core
+    category: diagrams
+    runtime: node
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [node]
+    secrets: []
+    paths_probe:
+      - ~/mcp-servers/excalidraw-mcp/dist/index.js
+    notes: Codex template sets cwd to the excalidraw repo; same bundle path for all surfaces.
+
+  - id: context7
+    display_name: Context7
+    description: Up-to-date library and framework documentation
+    layer: core
+    category: docs
+    runtime: npx
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [npx, node]
+    secrets: []
+    paths_probe: []
+    notes: Resolved at runtime via npx -y @upstash/context7-mcp
+
+  - id: docker
+    display_name: Docker MCP
+    description: Docker operations via Node MCP server
+    layer: core
+    category: containers
+    runtime: node
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [node, docker]
+    secrets: []
+    paths_probe:
+      - ~/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js
+    notes: Server path matches current dotfiles templates (not @docker/mcp-servers).
+
+  - id: grafana
+    display_name: Grafana MCP
+    description: Grafana dashboards, datasources, Explore, incidents
+    layer: platform
+    category: observability
+    runtime: uvx
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [uvx, uv]
+    secrets: []
+    paths_probe: []
+    notes: >
+      Dev-oriented URLs and placeholder creds live in generated templates;
+      production should override via env without committing secrets to the manifest.
+
+  - id: opentelemetry
+    display_name: OpenTelemetry MCP
+    description: OTel semantic conventions and backends (e.g. Tempo)
+    layer: platform
+    category: observability
+    runtime: uvx
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [uvx, uv]
+    secrets: []
+    paths_probe: []
+    notes: Pinned extra package in templates; readiness should verify backend reachability.
+
+  - id: github
+    display_name: GitHub MCP
+    description: GitHub API via codex-mcp-github wrapper
+    layer: core
+    category: scm
+    runtime: bash
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [bash]
+    secrets:
+      - path: ~/.secrets/codex.env
+        keys_hint: [GITHUB_TOKEN]
+    paths_probe:
+      - ~/.local/bin/codex-mcp-github
+    notes: Wrapper sources codex.env; never store token values in this manifest.
+
+  - id: fetch
+    display_name: MCP Fetch
+    description: HTTP GET fetch server (official MCP)
+    layer: core
+    category: network
+    runtime: uvx
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [uvx, uv]
+    secrets: []
+    paths_probe: []
+    notes: "No extra notes."
+
+  - id: gitnexus
+    display_name: GitNexus
+    description: Structural code intelligence and graph-backed context
+    layer: knowledge
+    category: semantic
+    runtime: launcher
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [node]
+    secrets: []
+    paths_probe:
+      - ~/.local/share/chezmoi/bin/mcp-gitnexus-launcher
+    notes: Index under ~/.gitnexus/; separate from this manifest.
+
+  - id: filesystem
+    display_name: Filesystem MCP
+    description: Whitelist-scoped filesystem access
+    layer: core
+    category: filesystem
+    runtime: launcher
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: []
+    secrets: []
+    paths_probe:
+      - ~/.local/share/chezmoi/bin/mcp-filesystem-launcher
+    notes: Allowed roots enforced inside launcher policy.
+
+  - id: git
+    display_name: Git MCP
+    description: Local git operations with cwd-based repo detection
+    layer: core
+    category: scm
+    runtime: launcher
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [git]
+    secrets: []
+    paths_probe:
+      - ~/.local/share/chezmoi/bin/mcp-git-launcher
+    notes: "No extra notes."
+
+  - id: sequential-thinking
+    display_name: Sequential Thinking
+    description: Structured reasoning helper from modelcontextprotocol
+    layer: core
+    category: cognitive
+    runtime: npx
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [npx, node]
+    secrets: []
+    paths_probe: []
+    notes: "No extra notes."
+
+  - id: obsidian
+    display_name: Obsidian (mcpvault)
+    description: Semantic vault operations (notes, tags, frontmatter)
+    layer: domain
+    category: knowledge_base
+    runtime: npx
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [npx, node]
+    secrets: []
+    paths_probe:
+      - /mnt/c/Users/jesus/Documents/vault
+    notes: >
+      Vault path matches current templates; readiness should WARN if the Windows path
+      is missing under WSL. Not a reason to disable the MCP in the manifest.
+
+  - id: playwright
+    display_name: Playwright MCP
+    description: Browser automation and testing
+    layer: core
+    category: browser
+    runtime: npx
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [npx, node]
+    secrets: []
+    paths_probe: []
+    notes: "No extra notes."
+
+  - id: postgres
+    display_name: PostgreSQL MCP
+    description: Postgres via mcp-postgres-launcher and neutral secrets file
+    layer: connection
+    category: database
+    runtime: launcher
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: []
+    secrets:
+      - path: ~/.config/mcp-secrets.env
+        keys_hint: [POSTGRES_DSN, MCP_POSTGRES_SECRETS]
+    paths_probe:
+      - ~/.local/share/chezmoi/bin/mcp-postgres-launcher
+    notes: >
+      Connection strings belong in mcp-secrets.env; launcher stays global.
+      Parity templates for Cursor/OpenCode are a later generator phase.
+
+  - id: trino
+    display_name: Trino MCP
+    description: Trino query engine MCP via venv python module
+    layer: connection
+    category: database
+    runtime: venv_python
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [python, uv]
+    secrets: []
+    paths_probe:
+      - ~/.config/ai/runtime/.venv/bin/python
+    notes: Connection-oriented env in templates; service reachability is readiness.
+
+  - id: dagster
+    display_name: Dagster MCP
+    description: Dagster GraphQL introspection and ops helpers
+    layer: platform
+    category: data_orchestration
+    runtime: venv_python
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [python]
+    secrets: []
+    paths_probe:
+      - ~/.config/ai/runtime/.venv/bin/python
+    notes: Server path under dotfiles ai/runtime/mcp/servers/dagster at materialization time.
+
+  - id: minio
+    display_name: MinIO MCP
+    description: S3-compatible object storage operations
+    layer: platform
+    category: storage
+    runtime: bash
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [bash, python]
+    secrets:
+      - path: ~/.secrets/codex.env
+        keys_hint: [MINIO_ACCESS_KEY, MINIO_SECRET_KEY]
+    paths_probe:
+      - ~/.config/ai/runtime/.venv/bin/python
+    notes: Entry uses bash sourcing codex.env then venv python server module.
+
+  - id: tempo
+    display_name: Tempo MCP
+    description: Grafana Tempo trace backend wrapper
+    layer: platform
+    category: observability
+    runtime: venv_python
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [python]
+    secrets: []
+    paths_probe:
+      - ~/.config/ai/runtime/.venv/bin/python
+    notes: "No extra notes."
+
+  - id: loki
+    display_name: Loki MCP
+    description: Grafana Loki logs wrapper
+    layer: platform
+    category: observability
+    runtime: venv_python
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [python]
+    secrets: []
+    paths_probe:
+      - ~/.config/ai/runtime/.venv/bin/python
+    notes: "No extra notes."
+
+  - id: prometheus
+    display_name: Prometheus MCP
+    description: Prometheus metrics queries
+    layer: platform
+    category: observability
+    runtime: venv_python
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [python]
+    secrets: []
+    paths_probe:
+      - ~/.config/ai/runtime/.venv/bin/python
+    notes: "No extra notes."
+
+  - id: store_etl_ops
+    display_name: Store ETL Ops MCP
+    description: Curated make/store-etl operational wrapper
+    layer: platform
+    category: etl
+    runtime: venv_python
+    surfaces:
+      cursor: { enabled: true }
+      codex: { enabled: true }
+      opencode: { enabled: true }
+    requires: [python]
+    secrets: []
+    paths_probe:
+      - ~/.config/ai/runtime/.venv/bin/python
+    notes: Expects store-etl workspace conventions; readiness may WARN if repo absent.

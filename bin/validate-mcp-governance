@@ -2,6 +2,12 @@
 # MCP Governance Validator
 # Validates MCP configuration follows the layered architecture convention
 # See: docs/adr/0001-mcp-governance.md
+#
+# Legacy / policy-specific: checks grep-based rules on existing templates.
+# Canonical MCP *intent* for agents lives in ai/assets/mcps/MANIFEST.yaml and is
+# validated by `make ai-mcp-validate` (scripts/validate-mcp-manifest.py).
+# The governance script will be reconciled with the manifest in a later phase;
+# it may still contradict newer default-enabled policy until then.
 
 set -euo pipefail
 

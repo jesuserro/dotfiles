@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-09 22:42:41
+**Generated:** 2026-05-09 22:54:13
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -604,6 +604,8 @@
 │   │   │   │   └── 📝 COMMAND.md
 │   │   │   ├── 📝 README.md
 │   │   │   └── ⚙️ registry.yaml
+│   │   ├── 📁 mcps
+│   │   │   └── ⚙️ MANIFEST.yaml
 │   │   ├── 📁 prompts
 │   │   │   └── 📄 .keep
 │   │   ├── 📁 rules
@@ -880,6 +882,7 @@
 │   ├── 🔧 test_python3_make.sh
 │   ├── 🔧 treegen.sh
 │   ├── 🔧 validate-commands-structure.sh
+│   ├── 🐍 validate-mcp-manifest.py
 │   └── 🔧 validate-skills-structure.sh
 ├── 📁 system
 │   └── 📁 packages
@@ -908,6 +911,7 @@
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 install-dotfiles.bats
 │   │   │   ├── 📄 install-uv.bats
+│   │   │   ├── 📄 mcp-manifest.bats
 │   │   │   └── 📄 system-deps.bats
 │   │   └── 📄 git-ai-author.bats
 │   └── 📄 Makefile.tests

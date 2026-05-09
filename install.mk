@@ -12,7 +12,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv ai-cursor-check
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv ai-cursor-check ai-mcp-validate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -43,5 +43,9 @@ install-uv:
 # Non-mutating readiness: Cursor MCPs, skills, AI commands (no chezmoi apply).
 ai-cursor-check:
 	@bash $(DOTFILES_DIR)/scripts/ai-cursor-check.sh
+
+# Non-mutating: validate canonical MCP manifest (ai/assets/mcps/MANIFEST.yaml).
+ai-mcp-validate:
+	@python3 $(DOTFILES_DIR)/scripts/validate-mcp-manifest.py
 
 install: install-check install-apt install-external install-dotfiles install-verify

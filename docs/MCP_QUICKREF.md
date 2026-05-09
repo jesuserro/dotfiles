@@ -2,14 +2,23 @@
 
 **For AI agents working with this dotfiles repository**
 
-## Three Layers
+## Canonical intent (SSOT)
 
-| Layer | Scope | `enabled` | Examples |
-|-------|-------|-----------|----------|
-| Core | All projects | true | docker, github, fetch, context7, excalidraw, playwright, filesystem, git, sequential-thinking |
-| Knowledge/Semantic | All projects | true | gitnexus |
-| Platform | All (opt-in) | false | dagster, loki, minio, prometheus, tempo |
-| Connection-Specific | Per-project | per-project | postgres, trino |
+- **`ai/assets/mcps/MANIFEST.yaml`** — single source of truth for **which** MCPs exist and **how** they are intended on **cursor**, **codex**, and **opencode** (all compatible servers **enabled by default** unless a surface has a documented `enabled: false` + `reason`).
+- **`make ai-mcp-validate`** — validates that manifest (schema, ids, surfaces, secrets shape). Requires **PyYAML**. Non-mutating.
+- **Chezmoi templates** (`dot_cursor/mcp.json.tmpl`, `dot_codex/config.toml.tmpl`, `dot_config/opencode/opencode.json.tmpl`) are **not yet generated** from the manifest; they may still differ until a later generator phase. Readiness for a live machine remains **`make ai-cursor-check`** (Cursor HOME + templates).
+
+## Classification (layers)
+
+Layers describe *purpose*; default **activation** for global agents follows the manifest policy above (compatible = enabled). Readiness checks surface missing services, secrets, or binaries as WARN/MISSING/FAIL (`STRICT=1`), not by hiding MCPs from a surface.
+
+| Layer | Scope | Examples |
+|-------|-------|----------|
+| Core | All projects | docker, github, fetch, context7, excalidraw, playwright, filesystem, git, sequential-thinking |
+| Knowledge/Semantic | All projects | gitnexus |
+| Domain | Optional vault path | obsidian |
+| Platform | Local services | dagster, loki, minio, prometheus, tempo, store_etl_ops |
+| Connection | DB / engines | postgres, trino |
 
 ## GitNexus
 
@@ -86,8 +95,8 @@ This MCP is from the official MCP repository. It provides cognitive support for 
 | **Type** | Domain-specific MCP (Obsidian operations) |
 | **Scope** | Global optional |
 | **Config Pattern** | `npx -y @bitbonsai/mcpvault /mnt/c/Users/jesus/Documents/vault` |
-| **Enabled** | false (opt-in) |
-| **Vault** | `/mnt/c/Users/jesus/Documents/vault` |
+| **Enabled (manifest intent)** | true on all surfaces (vault path must exist for usefulness) |
+| **Vault** | `/mnt/c/Users/jesus/Documents/vault` (readiness WARN if missing under WSL) |
 
 ### Relationship with Filesystem MCP
 
@@ -98,10 +107,9 @@ These are complementary, not interchangeable. Enable both for full Obsidian inte
 
 ## Anti-Patterns
 
-- ❌ Hardcoded DSN in global config
-- ❌ Database MCPs as "global" connections
-- ❌ Platform MCPs enabled by default
-- ❌ Client-named secrets (use `mcp-secrets.env`)
+- ❌ Hardcoded production secrets in repo files or in `MANIFEST.yaml` (only paths / `keys_hint`)
+- ❌ Silently omitting an MCP from a surface without a documented `reason`
+- ❌ Client-named secrets for new work (prefer neutral `mcp-secrets.env` / documented paths)
 
 ## Verificar readiness para Cursor
 
@@ -113,14 +121,15 @@ make ai-cursor-check
 STRICT=1 make ai-cursor-check
 ```
 
-- **Cursor puede tener menos entradas MCP que Codex u OpenCode**: las plantillas en `dot_cursor/mcp.json.tmpl`, `dot_codex/config.toml.tmpl` y `dot_config/opencode/opencode.json.tmpl` no son simétricas por diseño; el check lo informa como `INFO`, no como error.
+- **Paridad real vs manifiesto**: hasta que exista el generador, las plantillas pueden seguir con menos MCPs que el manifiesto; `ai-cursor-check` sigue informando recuentos como `INFO`. La intención canónica vive en `ai/assets/mcps/MANIFEST.yaml` (`make ai-mcp-validate`).
 - Si falta `~/.cursor/mcp.json`, lo más probable es que no se haya aplicado Chezmoi con la fuente del repo: `make install-dotfiles DOTFILES_APPLY=1` o `chezmoi --source=$HOME/dotfiles apply`.
-- Un manifiesto MCP canónico único (p. ej. bajo `ai/assets/mcps/`) sería una mejora futura para unificar recuentos y drift entre clientes.
 
 ## Key Files
 
-- `docs/MCP_TAXONOMY.md` — Canonical taxonomy (layers, policies, criteria)
-- `docs/adr/0001-mcp-governance.md` — Full ADR
+- `ai/assets/mcps/MANIFEST.yaml` — Canonical MCP intent (per surface)
+- `scripts/validate-mcp-manifest.py` — Manifest validator
+- `docs/MCP_TAXONOMY.md` — Taxonomy and evolution notes
+- `docs/adr/0001-mcp-governance.md` — ADR (includes supersession notes)
 - `docs/OPENCODE.md` — Operational guide
 - `ai/assets/skills/mcp-governance/SKILL.md` — Skill for agents
 
@@ -133,8 +142,9 @@ npx/python/wrapper     DSN/credentials/env
 
 ## Adding MCPs
 
-1. Classify: Core / Platform / Connection-Specific
-2. Set correct `enabled` default
-3. Use shared runtime paths
-4. Keep connection profile project-specific
-5. Validate: `~/dotfiles/bin/validate-mcp-governance`
+1. Classify layer (core / knowledge / domain / platform / connection).
+2. Add an entry to `ai/assets/mcps/MANIFEST.yaml` with `surfaces.cursor|codex|opencode` and `enabled: false` + `reason` only for real incompatibilities.
+3. Use shared runtime paths; keep secret **values** out of the repo (paths and `keys_hint` only).
+4. Run `make ai-mcp-validate`.
+5. Later: regenerate Chezmoi templates from the manifest (planned phase).
+6. Legacy: `bin/validate-mcp-governance` still exists and will be reconciled with the manifest.

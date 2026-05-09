@@ -102,6 +102,21 @@ trino MCP:
 
 ---
 
+## Evolution (2026) — compatible-enabled-by-default
+
+Earlier sections of this ADR assumed **platform MCPs disabled by default** in global configs and **database MCPs** limited to project-local templates to avoid noisy connection failures.
+
+That policy is **partially superseded** for **global agent parity**:
+
+- **Canonical intent** for which MCPs exist and how they apply to **Cursor, Codex, and OpenCode** now lives in **`ai/assets/mcps/MANIFEST.yaml`**, validated with **`make ai-mcp-validate`**.
+- **Default:** every compatible MCP is **intended `enabled: true`** on all three surfaces. Gaps (missing services, secrets, binaries, WSL paths) are handled by **readiness** tooling (`make ai-cursor-check` and future checks), not by silently withholding a server from one client.
+- **Exceptions** must be explicit in the manifest: `enabled: false` plus a non-empty **`reason`** (e.g. a future technical incompatibility).
+- **Chezmoi templates** are not yet generated from the manifest; until a generator lands, templates may still reflect older counts. **`bin/validate-mcp-governance`** remains a legacy, grep-based check and will be reconciled with the manifest in a later phase; it must not be treated as contradicting the manifest’s product policy.
+
+The separation **runtime (shared) vs connection profile (sensitive / per-project)** remains valid engineering guidance; only the *default visibility* of those MCPs across global agent surfaces changed.
+
+---
+
 ## References
 
 - Taxonomía: `docs/MCP_TAXONOMY.md`
