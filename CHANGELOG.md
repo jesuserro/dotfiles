@@ -2,14 +2,28 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.05.03_0834] - 2026-05-03
+## [v2026.05.09_2139] - 2026-05-09
 
 ## Changes
 ### Added
-- 2026-05-03 08:34 [9026298](https://github.com/jesuserro/dotfiles/commit/9026298) feat(agent-workflow): introduce comprehensive agent workflow documentation and skills (Cursor Agent)
-  - Added `AGENT_WORKFLOW_FOR_AGENTS.md` to guide AI agents on orchestration, skill selection, and project delegation.
-  - Created `AGENT_WORKFLOW_LOOP.md` detailing the end-to-end process from idea to implementation, including phases for grilling ideas, generating specs, and creating GitHub issues.
-  - Introduced multiple new skills under `ai/assets/skills/ops/`, including `grill-plan`, `to-spec`, `to-issues`, `test-driven-change`, `architecture-review`, and `vault-issue-bridge`, each with specific guidelines and templates.
+- 2026-05-09 21:36 [324f990](https://github.com/jesuserro/dotfiles/commit/324f990) feat(install): introduce `install-uv` target for the Astral uv Python tool (Cursor Agent)
+  - Added `install-uv` target in `install.mk` for idempotent installation of the uv tool, ensuring it does not modify any shell configuration files.
+  - Updated `README.md` and `SKILL.md` to include instructions for installing uv and its role in the Python tooling policy.
+  - Enhanced documentation in `SYSTEM_DEPENDENCIES.md` and `UPS.md` to clarify the usage and update process for uv.
+- 2026-05-09 21:22 [aff89e0](https://github.com/jesuserro/dotfiles/commit/aff89e0) feat(install): add zsh stack installation target and enhance documentation (Cursor Agent)
+  - Introduced `install-zsh-stack` target in `install.mk` for idempotent installation of Oh My Zsh, Powerlevel10k, and related plugins without modifying `~/.zshrc`.
+  - Updated `README.md` and `SKILL.md` to include details on the new zsh stack installation process and its role in the overall bootstrap flow.
+  - Enhanced `install-external.sh` to detect the presence of the zsh stack and provide guidance for installation.
+- 2026-05-09 21:13 [864cb02](https://github.com/jesuserro/dotfiles/commit/864cb02) feat(install): enhance system dependency management and documentation (Cursor Agent)
+  - Included `install.mk` in the Makefile for improved installation management.
+  - Updated `README.md` to reflect new skills for dotfiles installation and system dependencies.
+  - Enhanced `system_deps.py` with guidance for optional GitHub CLI installation.
+
+### Documentation
+- 2026-05-09 21:39 [d0a11a6](https://github.com/jesuserro/dotfiles/commit/d0a11a6) docs(changelog): add `install-node` target for Node.js installation (Cursor Agent)
+  - Introduced `install-node` target in `install.mk` for idempotent installation of Node.js, ensuring no modifications to shell configuration files.
+  - Updated `README.md` and `SKILL.md` with instructions for installing Node.js and its significance in the development environment.
+  - Enhanced documentation in `SYSTEM_DEPENDENCIES.md` to clarify Node.js usage and update processes.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
