@@ -64,6 +64,7 @@ flowchart TB
 
 ```bash
 make install-check              # diagnóstico (no muta)
+make ai-cursor-check            # readiness Cursor/MCP/skills (no muta; ver docs/MCP_QUICKREF.md)
 make install DRY_RUN=1          # plan completo sin tocar el sistema
 make install                    # bootstrap real (no aplica chezmoi por defecto)
 make install-zsh-stack          # Oh My Zsh + Powerlevel10k + plugins (idempotente)
@@ -88,6 +89,7 @@ make install SKIP_EXTERNAL=1
 | `make install-uv` | Instala **uv** (herramienta Python preferida) con el instalador oficial de Astral. Idempotente, opt-in, **fuera** de `make install`. No edita `~/.zshrc` ni `~/.bashrc`. |
 | `make install-dotfiles` | Plan chezmoi. **No ejecuta `apply`** salvo `DOTFILES_APPLY=1`. |
 | `make install-verify` | Versiones de zsh/git/chezmoi/sops/age/rg/docker. `STRICT=1` hace fallar si hay `FAIL` real. |
+| `make ai-cursor-check` | Comprueba sin mutar si `~/.cursor/mcp.json`, skills enlazados y comandos AI están alineados con los templates del repo. No instala ni ejecuta Cursor ni MCPs. `STRICT=1` endurece (p. ej. falta `~/.cursor/mcp.json`). |
 | `make install` | Encadena: check → apt → external → dotfiles → verify. |
 
 Variables soportadas: `DRY_RUN=1`, `STRICT=1`, `SKIP_EXTERNAL=1`, `SKIP_DOCKER=1`, `DOTFILES_APPLY=1`.

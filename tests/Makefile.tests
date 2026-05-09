@@ -50,6 +50,7 @@ help:
 	@echo "  make deps-check   - Check declarative system dependencies"
 	@echo "  make deps-install - Install declarative system dependencies on Ubuntu/Debian"
 	@echo "  make deps-actions - Show recommended actions for missing dependencies"
+	@echo "  make ai-cursor-check - Cursor/MCP/skills readiness (repo root; target in install.mk; covered by bats-system)"
 	@echo ""
 	@echo "  make generate-commands  - Generate command artifacts"
 	@echo "  make validate-commands  - Validate command structure"
@@ -208,6 +209,7 @@ bats-system:
 	@$(call run_bats,$(BATS_DIR)/system/system-deps.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-dotfiles.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-uv.bats)
+	@$(call run_bats,$(BATS_DIR)/system/ai-cursor-check.bats)
 
 # ============================================
 # CI targets (JUnit/XML output)

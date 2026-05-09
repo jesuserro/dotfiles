@@ -12,7 +12,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv ai-cursor-check
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -39,5 +39,9 @@ install-zsh-stack:
 # work but stays external/user-level, so users opt in explicitly.
 install-uv:
 	@bash $(DOTFILES_DIR)/scripts/install-uv.sh
+
+# Non-mutating readiness: Cursor MCPs, skills, AI commands (no chezmoi apply).
+ai-cursor-check:
+	@bash $(DOTFILES_DIR)/scripts/ai-cursor-check.sh
 
 install: install-check install-apt install-external install-dotfiles install-verify

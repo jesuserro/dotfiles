@@ -103,6 +103,20 @@ These are complementary, not interchangeable. Enable both for full Obsidian inte
 - ❌ Platform MCPs enabled by default
 - ❌ Client-named secrets (use `mcp-secrets.env`)
 
+## Verificar readiness para Cursor
+
+Comprueba **sin mutar el sistema** si el entorno está alineado con lo que publican los dotfiles para Cursor (MCP global, skills, comandos). No instala dependencias, no ejecuta Cursor ni los servidores MCP, no imprime secretos.
+
+```bash
+cd ~/dotfiles
+make ai-cursor-check
+STRICT=1 make ai-cursor-check
+```
+
+- **Cursor puede tener menos entradas MCP que Codex u OpenCode**: las plantillas en `dot_cursor/mcp.json.tmpl`, `dot_codex/config.toml.tmpl` y `dot_config/opencode/opencode.json.tmpl` no son simétricas por diseño; el check lo informa como `INFO`, no como error.
+- Si falta `~/.cursor/mcp.json`, lo más probable es que no se haya aplicado Chezmoi con la fuente del repo: `make install-dotfiles DOTFILES_APPLY=1` o `chezmoi --source=$HOME/dotfiles apply`.
+- Un manifiesto MCP canónico único (p. ej. bajo `ai/assets/mcps/`) sería una mejora futura para unificar recuentos y drift entre clientes.
+
 ## Key Files
 
 - `docs/MCP_TAXONOMY.md` — Canonical taxonomy (layers, policies, criteria)
