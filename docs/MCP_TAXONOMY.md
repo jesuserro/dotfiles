@@ -95,7 +95,7 @@ MCPs using custom launchers (no update needed):
 5. When ready, run `make ai-mcp-generate APPLY=1`, then `chezmoi apply` (or `make install-dotfiles DOTFILES_APPLY=1`)
 6. Document in MCP_QUICKREF.md
 7. Update UPS.md if explicit update needed
-8. Reconcile `bin/validate-mcp-governance` when that script is aligned with the manifest
+8. Run `make ai-mcp-governance` (or `bin/validate-mcp-governance`) before commit when MCP intent or templates change
 
 ---
 
@@ -130,7 +130,7 @@ MCPs using custom launchers (no update needed):
 | `make ai-mcp-validate` | Manifest structure and policy checks |
 | `make ai-mcp-render` / `make ai-mcp-drift` | Dry-run under `build/mcps/` + drift vs templates |
 | `make ai-mcp-generate APPLY=1` | Write productive MCP templates after gates (no `APPLY` = plan only) |
-| `bin/validate-mcp-governance` | Legacy template grep checks (reconciliation planned) |
+| `make ai-mcp-governance` / `bin/validate-mcp-governance` | Non-mutating: validate + render + drift (repo governance) |
 
 ---
 

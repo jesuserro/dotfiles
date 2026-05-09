@@ -67,6 +67,7 @@ make install-check              # diagnóstico (no muta)
 make ai-mcp-validate            # valida el manifiesto canónico MCP (PyYAML; no muta)
 make ai-mcp-render              # render dry-run MCP a build/mcps/ (no toca plantillas Chezmoi)
 make ai-mcp-drift               # informe de drift manifiesto+recetas vs plantillas (exit 1 si hay drift inesperado)
+make ai-mcp-governance          # valida+render+drift en un paso (no muta; mismo contrato que los tres anteriores)
 make ai-mcp-generate            # plan: no escribe; con APPLY=1 valida+render+drift y actualiza plantillas MCP Chezmoi
 make ai-cursor-check            # readiness Cursor/MCP/skills (no muta; ver docs/MCP_QUICKREF.md)
 make install DRY_RUN=1          # plan completo sin tocar el sistema
@@ -96,6 +97,7 @@ make install SKIP_EXTERNAL=1
 | `make ai-mcp-validate` | Valida [ai/assets/mcps/MANIFEST.yaml](ai/assets/mcps/MANIFEST.yaml): intención canónica de MCPs por agente (Cursor/Codex/OpenCode). Requiere PyYAML. No muta; no sustituye aún a las plantillas Chezmoi. |
 | `make ai-mcp-render` | Genera evidencia bajo `build/mcps/` (JSON Cursor, fragmento TOML `mcp_servers`, JSON OpenCode) desde el manifiesto + recetas Python. No muta `dot_cursor/`, `dot_codex/`, `dot_config/`. |
 | `make ai-mcp-drift` | Compara ese render con las plantillas actuales; `exit 0` si solo hay `INTENTIONAL_PENDING_PARITY`, `exit 1` si hay `UNEXPECTED_DRIFT`. Escribe `build/mcps/drift-report.json`. |
+| `make ai-mcp-governance` | Encadena **`ai-mcp-validate`**, **`ai-mcp-render`** y **`ai-mcp-drift`** vía [`bin/validate-mcp-governance`](bin/validate-mcp-governance). No muta. Propaga códigos de salida (p. ej. `2` si falta PyYAML). No sustituye a **`make ai-cursor-check`** (readiness en HOME). |
 | `make ai-mcp-generate` | Sin `APPLY=1`: solo plan (no muta). Con **`APPLY=1`**: ejecuta validación + render + drift; si hay `UNEXPECTED_DRIFT` no escribe; si no, actualiza `dot_cursor/mcp.json.tmpl`, `dot_codex/config.toml.tmpl` (solo bloque `mcp_servers`, conserva preámbulo y `[plugins.*]`), `dot_config/opencode/opencode.json.tmpl`. Copias de respaldo bajo `build/mcps/backups/`. Luego hace falta **chezmoi apply** para HOME. |
 | `make ai-cursor-check` | Comprueba sin mutar si `~/.cursor/mcp.json`, skills enlazados y comandos AI están alineados con los templates del repo. No instala ni ejecuta Cursor ni MCPs. `STRICT=1` endurece (p. ej. falta `~/.cursor/mcp.json`). |
 | `make install` | Encadena: check → apt → external → dotfiles → verify. |

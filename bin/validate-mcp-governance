@@ -1,230 +1,56 @@
 #!/usr/bin/env bash
-# MCP Governance Validator
-# Validates MCP configuration follows the layered architecture convention
-# See: docs/adr/0001-mcp-governance.md
+# MCP governance: repo coherence (manifest + recipes + templates).
 #
-# Legacy / policy-specific: checks grep-based rules on existing templates.
-# Canonical MCP *intent* for agents lives in ai/assets/mcps/MANIFEST.yaml and is
-# validated by `make ai-mcp-validate` (scripts/validate-mcp-manifest.py).
-# The governance script will be reconciled with the manifest in a later phase;
-# it may still contradict newer default-enabled policy until then.
+# Canonical MCP *intent* lives in ai/assets/mcps/MANIFEST.yaml.
+# This script orchestrates the same non-mutating checks as:
+#   make ai-mcp-validate && make ai-mcp-render && make ai-mcp-drift
+#
+# It does NOT validate local readiness (HOME, secrets, binaries, Cursor runtime);
+# use: make ai-cursor-check
+#
+# See: docs/adr/0001-mcp-governance.md, docs/MCP_QUICKREF.md
 
 set -euo pipefail
 
-ERRORS=0
-WARNINGS=0
+_bin_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_default_root="$(cd "${_bin_dir}/.." && pwd)"
+if [[ -n "${DOTFILES_DIR:-}" ]]; then
+	if [[ ! -d "$DOTFILES_DIR" ]]; then
+		echo "MCP governance validation: FAIL" >&2
+		echo "DOTFILES_DIR is not a directory: $DOTFILES_DIR" >&2
+		exit 1
+	fi
+	DOTFILES_DIR="$(cd "$DOTFILES_DIR" && pwd)"
+else
+	DOTFILES_DIR="$_default_root"
+fi
 
-log_error() {
-    echo "❌ ERROR: $1" >&2
-    ERRORS=$((ERRORS + 1))
+if [[ ! -f "${DOTFILES_DIR}/Makefile" ]] || [[ ! -d "${DOTFILES_DIR}/ai/assets/mcps" ]]; then
+	echo "MCP governance validation: FAIL" >&2
+	echo "DOTFILES_DIR does not look like dotfiles repo root: $DOTFILES_DIR" >&2
+	exit 1
+fi
+
+_run_make() {
+	local target=$1
+	echo ""
+	echo "========================================"
+	echo "==> make ${target}"
+	echo "========================================"
+	if ! make -C "$DOTFILES_DIR" "$target"; then
+		local ec=$?
+		echo "MCP governance validation: FAIL" >&2
+		exit "$ec"
+	fi
 }
 
-log_warning() {
-    echo "⚠️  WARNING: $1" >&2
-    WARNINGS=$((WARNINGS + 1))
-}
+echo "MCP governance (validate + render + drift)"
+echo "DOTFILES_DIR=${DOTFILES_DIR}"
 
-log_success() {
-    echo "✅ $1"
-}
+_run_make ai-mcp-validate
+_run_make ai-mcp-render
+_run_make ai-mcp-drift
 
-echo "========================================"
-echo "MCP Governance Validator"
-echo "========================================"
 echo ""
-
-# Find dotfiles source
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
-if [[ ! -d "$DOTFILES_DIR" ]]; then
-    log_error "dotfiles directory not found at $DOTFILES_DIR"
-    exit 1
-fi
-
-# ============================================
-# Check 1: OpenCode global config should NOT contain database MCPs with hardcoded DSN
-# ============================================
-echo "📋 Checking OpenCode global MCP config..."
-
-GLOBAL_OPENCODE="$DOTFILES_DIR/dot_config/opencode/opencode.json.tmpl"
-GLOBAL_CODEX="$DOTFILES_DIR/dot_codex/config.toml.tmpl"
-
-# For OpenCode: database MCPs should NOT be in global config at all
-if [[ -f "$GLOBAL_OPENCODE" ]]; then
-    if grep -q '"postgres"' "$GLOBAL_OPENCODE" 2>/dev/null; then
-        log_error "postgres found in OpenCode global config - should be project-specific only"
-    fi
-    
-    # Trino in OpenCode global is OK only if disabled (platform pattern)
-    if grep -q '"trino"' "$GLOBAL_OPENCODE" 2>/dev/null; then
-        if grep -A5 '"trino"' "$GLOBAL_OPENCODE" | grep -q '"enabled": true' 2>/dev/null; then
-            log_warning "trino enabled in OpenCode global - should be disabled by default (platform pattern)"
-        fi
-    fi
-fi
-
-# For Codex: database MCPs can exist but should use env vars, not hardcoded values
-if [[ -f "$GLOBAL_CODEX" ]]; then
-    if grep -q "postgres" "$GLOBAL_CODEX" 2>/dev/null; then
-        # Check if using wrapper (good) vs hardcoded DSN (bad)
-        if grep -q "mcp-postgres-launcher" "$GLOBAL_CODEX" 2>/dev/null; then
-            log_success "postgres in Codex uses launcher wrapper pattern"
-        elif grep -q 'DSN=' "$GLOBAL_CODEX" 2>/dev/null; then
-            log_error "postgres in Codex has hardcoded DSN - use wrapper instead"
-        fi
-    fi
-fi
-
-# ============================================
-# Check 2: Platform MCPs should be disabled by default
-# ============================================
-echo "📋 Checking platform MCPs are disabled by default..."
-
-PLATFORM_MCPS="dagster loki minio prometheus tempo store_etl_ops"
-
-if [[ -f "$GLOBAL_OPENCODE" ]]; then
-    for mcp in $PLATFORM_MCPS; do
-        if grep -q "\"$mcp\"" "$GLOBAL_OPENCODE" 2>/dev/null; then
-            # Check if this specific MCP is enabled (look at 10 lines after MCP name)
-            if grep -A10 "\"$mcp\"" "$GLOBAL_OPENCODE" 2>/dev/null | grep -q '"enabled": true'; then
-                log_error "Platform MCP '$mcp' should be disabled by default in global config"
-            fi
-        fi
-    done
-fi
-
-# ============================================
-# Check 3: Project-specific configs exist for database MCPs
-# ============================================
-echo "📋 Checking project-specific configs..."
-
-STORE_ETL_CONFIG="$DOTFILES_DIR/dot_config/store-etl/store-etl.mcp.json.tmpl"
-
-if [[ -f "$STORE_ETL_CONFIG" ]]; then
-    if grep -q "postgres" "$STORE_ETL_CONFIG" 2>/dev/null; then
-        log_success "postgres found in project-specific config (store-etl)"
-    else
-        log_warning "postgres not found in store-etl project config"
-    fi
-    
-    if grep -q "trino" "$STORE_ETL_CONFIG" 2>/dev/null; then
-        log_success "trino found in project-specific config (store-etl)"
-    else
-        log_warning "trino not found in store-etl project config"
-    fi
-fi
-
-# ============================================
-# Check 4: Secrets file uses neutral naming
-# ============================================
-echo "📋 Checking secrets file naming..."
-
-SECRETS_SCRIPT="$DOTFILES_DIR/.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl"
-if [[ -f "$SECRETS_SCRIPT" ]]; then
-    if grep -q "mcp-secrets.env" "$SECRETS_SCRIPT" 2>/dev/null; then
-        log_success "Secrets file uses neutral naming (mcp-secrets.env)"
-    fi
-    
-    if grep -q 'codex\.env' "$SECRETS_SCRIPT" 2>/dev/null; then
-        log_warning "Legacy 'codex.env' reference found - ensure it's for backwards compatibility only"
-    fi
-fi
-
-# ============================================
-# Check 5: Wrapper script exists for postgres
-# ============================================
-echo "📋 Checking MCP launcher scripts..."
-
-WRAPPER="$DOTFILES_DIR/bin/mcp-postgres-launcher"
-if [[ -f "$WRAPPER" ]]; then
-    log_success "PostgreSQL launcher wrapper exists"
-else
-    log_warning "PostgreSQL launcher wrapper not found at $WRAPPER"
-fi
-
-# ============================================
-# Check 6: New Core MCPs (filesystem, git, sequential-thinking)
-# ============================================
-echo "📋 Checking new core MCPs..."
-
-# Check filesystem launcher
-FILESYSTEM_LAUNCHER="$DOTFILES_DIR/bin/mcp-filesystem-launcher"
-if [[ -f "$FILESYSTEM_LAUNCHER" ]]; then
-    log_success "Filesystem launcher wrapper exists"
-    # Check it contains allowed roots
-    if grep -q "/home/jesus/dotfiles" "$FILESYSTEM_LAUNCHER" && \
-       grep -q "/home/jesus/proyectos" "$FILESYSTEM_LAUNCHER" && \
-       grep -q "/home/jesus/.config" "$FILESYSTEM_LAUNCHER" && \
-       grep -q "/mnt/c/Users/jesus/Documents/vault" "$FILESYSTEM_LAUNCHER"; then
-        log_success "Filesystem launcher has correct whitelist policy"
-    else
-        log_warning "Filesystem launcher may be missing required allowed roots"
-    fi
-else
-    log_error "Filesystem launcher wrapper not found at $FILESYSTEM_LAUNCHER"
-fi
-
-# Check git launcher
-GIT_LAUNCHER="$DOTFILES_DIR/bin/mcp-git-launcher"
-if [[ -f "$GIT_LAUNCHER" ]]; then
-    log_success "Git launcher wrapper exists"
-    # Check it has proper detection logic
-    if grep -q "git rev-parse --show-toplevel" "$GIT_LAUNCHER" && \
-       grep -q "MCP_GIT_REPO" "$GIT_LAUNCHER"; then
-        log_success "Git launcher has proper repo detection and override support"
-    else
-        log_warning "Git launcher may be missing proper detection logic"
-    fi
-else
-    log_error "Git launcher wrapper not found at $GIT_LAUNCHER"
-fi
-
-# Check sequential-thinking is configured in all clients
-echo "📋 Checking sequential-thinking MCP configuration..."
-
-for config_file in "$DOTFILES_DIR/dot_cursor/mcp.json.tmpl" \
-                   "$DOTFILES_DIR/dot_config/opencode/opencode.json.tmpl" \
-                   "$DOTFILES_DIR/dot_codex/config.toml.tmpl"; do
-    if [[ -f "$config_file" ]]; then
-        if grep -q "sequential-thinking" "$config_file" 2>/dev/null; then
-            log_success "sequential-thinking found in $(basename "$config_file")"
-        else
-            log_warning "sequential-thinking not found in $(basename "$config_file")"
-        fi
-    fi
-done
-
-# ============================================
-# Check 7: ADR exists
-# ============================================
-echo "📋 Checking ADR documentation..."
-
-ADR="$DOTFILES_DIR/docs/adr/0001-mcp-governance.md"
-if [[ -f "$ADR" ]]; then
-    log_success "ADR for MCP governance exists"
-else
-    log_warning "ADR not found at $ADR"
-fi
-
-# ============================================
-# Summary
-# ============================================
-echo ""
-echo "========================================"
-echo "Summary"
-echo "========================================"
-echo "Errors:   $ERRORS"
-echo "Warnings: $WARNINGS"
-echo ""
-
-if [[ $ERRORS -gt 0 ]]; then
-    echo "❌ Validation FAILED"
-    echo ""
-    echo "Fix the errors above before committing."
-    exit 1
-elif [[ $WARNINGS -gt 0 ]]; then
-    echo "⚠️  Validation PASSED with warnings"
-    exit 0
-else
-    echo "✅ Validation PASSED"
-    exit 0
-fi
+echo "MCP governance validation: PASS"
+exit 0

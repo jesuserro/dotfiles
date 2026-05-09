@@ -54,6 +54,7 @@ help:
 	@echo "  make ai-mcp-validate - Validate ai/assets/mcps/MANIFEST.yaml (PyYAML required)"
 	@echo "  make ai-mcp-render   - Dry-run MCP configs to build/mcps/ (PyYAML required)"
 	@echo "  make ai-mcp-drift    - Drift report vs templates (PyYAML required)"
+	@echo "  make ai-mcp-governance - validate + render + drift (non-mutating; PyYAML required)"
 	@echo "  make ai-mcp-generate - Plan only; use APPLY=1 to write productive MCP templates (PyYAML required)"
 	@echo ""
 	@echo "  make generate-commands  - Generate command artifacts"

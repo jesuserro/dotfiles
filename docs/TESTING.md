@@ -95,7 +95,7 @@ Lint reports findings but does not fail. Use `make fmt-shell` to auto-format.
 
 ### Current
 - **MCP Launchers**: `mcp-filesystem-launcher`, `mcp-git-launcher`
-- **MCP Governance**: `validate-mcp-governance`
+- **MCP governance (manifest + drift)**: `bin/validate-mcp-governance` / `make ai-mcp-governance` (see `tests/bats/mcp/validate-governance.bats`)
 - **Chezmoi Scripts**: smoke tests for run_after_* scripts
 - **MCP Templates**: syntax validation
 

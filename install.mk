@@ -12,7 +12,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-generate
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -55,6 +55,10 @@ ai-mcp-render:
 # Non-mutating: render + drift report vs Chezmoi templates (exit 1 on UNEXPECTED_DRIFT).
 ai-mcp-drift:
 	@python3 $(DOTFILES_DIR)/scripts/generate-mcp-configs.py drift
+
+# Non-mutating: same gates as ai-mcp-validate + ai-mcp-render + ai-mcp-drift (orchestrated by bin/validate-mcp-governance).
+ai-mcp-governance:
+	@bash $(DOTFILES_DIR)/bin/validate-mcp-governance
 
 # Plan only unless APPLY=1: then validate → render → drift → overwrite dot_cursor/dot_codex/dot_config MCP templates.
 ai-mcp-generate:

@@ -5,114 +5,101 @@ description: Guides classification, integration and maintenance of MCP servers f
 
 # Dotfiles MCP Governance
 
-Guía para mantener la arquitectura de MCPs según la convención de capas.
+Guía para mantener la arquitectura de MCPs según la convención de capas y el **manifiesto canónico**.
 
-## Referencia rápida
+## Fuente de verdad
 
-| Capa | Scope | enabled | Ejemplos |
-|------|-------|---------|----------|
-| **Core Workstation** | Todos proyectos | `true` | docker, github, fetch, context7, excalidraw, playwright |
-| **Platform** | Todos proyectos (opt-in) | `false` | dagster, loki, minio, prometheus, tempo, store_etl_ops |
-| **Connection-Specific** | Solo proyecto | per-project | postgres, trino |
+- **Intención producto** (qué MCPs existen y en qué superficies están activos): **`ai/assets/mcps/MANIFEST.yaml`**, con **`policy.compatible_by_default_enabled: true`**.
+- **Coherencia repo** (manifiesto + recetas Python + plantillas Chezmoi): **`make ai-mcp-governance`** o **`bin/validate-mcp-governance`** (encadena validate + render + drift).
+- **Readiness en máquina** (HOME, Cursor, secretos, binarios): **`make ai-cursor-check`** — no lo sustituye governance.
+
+## Referencia rápida (capas = rol, no segunda política de `enabled`)
+
+| Capa | Scope | Manifest default (superficies globales) | Ejemplos |
+|------|-------|----------------------------------------|----------|
+| **Core Workstation** | Todos los proyectos | enabled | docker, github, fetch, context7, excalidraw, playwright, filesystem, git, sequential-thinking |
+| **Platform** | Servicios locales | enabled (readiness si el servicio no está) | dagster, loki, minio, prometheus, tempo, store_etl_ops |
+| **Connection-oriented** | DB / motores | enabled; credenciales fuera del repo | postgres, trino |
 
 ## Anti-patterns a evitar
 
-- ❌ DSN hardcodeado en config global
-- ❌ MCP de base de datos como "global"
-- ❌ Platform MCPs con `enabled: true` por defecto
-- ❌ Secrets con nombres de cliente (usar `mcp-secrets.env`)
+- DSN o contraseñas hardcodeadas en plantillas del repo
+- Omitir un MCP de una superficie sin **`enabled: false` + `reason`** en **`MANIFEST.yaml`**
+- Mantener scripts grep que impongan otra política de activación que contradiga el manifiesto
+- Confundir **governance** (drift / manifiesto) con **readiness** (`ai-cursor-check`)
 
 ## Añadir un nuevo MCP
 
-### Paso 1: Clasificar
+### Paso 1: Clasificar (rol)
 
-¿El MCP es transversal a todos los proyectos?
-- **Sí** → ¿Depende de servicio local específico?
-  - **No** → **Core Workstation** (`enabled: true`)
-  - **Sí** → **Platform** (`enabled: false`)
-- **No** → ¿Requiere credenciales/DSN project-specific?
-  - **Sí** → **Connection-Specific** (config per-project)
+Asigna **layer** / **category** en el manifiesto según propósito (core, knowledge, domain, platform, connection).
 
-### Paso 2: Definir runtime
+### Paso 2: Superficies
+
+Declara **`surfaces.cursor`**, **`codex`**, **`opencode`**. Usa **`enabled: false` + `reason`** solo para incompatibilidades reales.
+
+### Paso 3: Definir runtime
 
 - **npm/npx**: `npx -y @vendor/package`
 - **Python**: `~/.config/ai/runtime/.venv/bin/python -m module`
 - **Wrapper**: `~/.local/share/chezmoi/bin/mcp-<name>-launcher`
 
-### Paso 3: Definir conexión
+### Paso 4: Secretos y conexión
 
-| Tipo | Ubicación |
-|------|-----------|
-| Core/Platform | `env` block en config global |
-| Connection-Specific | `~/.config/mcp-secrets.env` o env block per-project |
+| Qué | Dónde |
+|-----|--------|
+| Forma de secretos (paths, `keys_hint`) | Entrada **`secrets`** en **`MANIFEST.yaml`** |
+| Valores sensibles | `~/.config/mcp-secrets.env`, `~/.secrets/codex.env`, etc. (fuera de git) |
+| Overrides por stack | Plantillas bajo `dot_config/<proyecto>/` cuando haga falta |
 
-### Paso 4: Configurar
+### Paso 5: Recetas y plantillas
 
-**Global** (`dot_config/opencode/opencode.json.tmpl`):
-```json
-{
-  "mcp": {
-    "<name>": {
-      "command": ["..."],
-      "enabled": true|false
-    }
-  }
-}
-```
-
-**Project-specific** (`dot_config/<project>/<project>.mcp.json.tmpl`):
-```json
-{
-  "mcpServers": {
-    "<name>": {
-      "command": "...",
-      "env": {}
-    }
-  }
-}
-```
+Actualiza **`scripts/generate-mcp-configs.py`** si cambian `command` / `args` / `env`. Ejecuta **`make ai-mcp-governance`**. Para escribir plantillas productivas: **`make ai-mcp-generate APPLY=1`** (solo cuando toque regenerar).
 
 ## Runtime vs Connection Profile
 
 ```
-┌─────────────────────┐     ┌─────────────────────┐
-│  MCP Tool (shared) │     │  Connection Profile  │
-│  - npx package     │     │  - DSN / endpoint   │
-│  - python -m       │ ──▶ │  - Credentials      │
-│  - wrapper script  │     │  - Catalog/Schema   │
-└─────────────────────┘     └─────────────────────┘
+┌─────────────────────┐     ┌─────────────────────────┐
+│  MCP Tool (shared)  │     │  Connection profile     │
+│  - npx package      │     │  - DSN / endpoint       │
+│  - python -m        │ ──▶ │  - Credenciales       │
+│  - wrapper script   │     │  - Catalog / schema     │
+└─────────────────────┘     └─────────────────────────┘
 ```
 
-**Regla**: Runtime puede ser compartido; Connection debe ser project-specific.
+**Regla:** el runtime puede ser compartido y versionado en dotfiles; los **valores** de conexión viven fuera del repo o en configs por stack.
 
 ## Archivos clave
 
 | Archivo | Propósito |
 |---------|-----------|
+| `ai/assets/mcps/MANIFEST.yaml` | Intención canónica por superficie |
+| `scripts/validate-mcp-manifest.py` | Validación del manifiesto |
+| `scripts/generate-mcp-configs.py` | Render + drift + generate |
+| `bin/validate-mcp-governance` | Orquestación validate + render + drift |
 | `docs/adr/0001-mcp-governance.md` | ADR formal |
-| `docs/OPENCODE.md` | Guía operativa |
-| `dot_config/opencode/AGENTS.md.tmpl` | Instrucciones para IAs |
-| `dot_config/opencode/opencode.json.tmpl` | MCPs globales |
-| `dot_config/store-etl/store-etl.mcp.json.tmpl` | MCPs project-specific |
+| `docs/MCP_QUICKREF.md` | Referencia operativa |
 
 ## Verificar configuración
 
 ```bash
-# Ver MCPs activos
-opencode mcp list
-
-# Debuguear un MCP específico
-opencode mcp debug <nombre>
-
-# Ver secrets
-cat ~/.config/mcp-secrets.env
+cd ~/dotfiles
+make ai-mcp-governance    # coherencia repo (PyYAML)
+make ai-cursor-check      # readiness local (Cursor/HOME)
 ```
+
+Para depurar en runtime (cuando OpenCode está instalado):
+
+```bash
+opencode mcp list
+opencode mcp debug <nombre>
+```
+
+No uses `cat` de archivos de secretos en logs compartidos.
 
 ## Checklist al añadir MCP
 
-- [ ] Clasificar en la capa correcta
-- [ ] Definir runtime path (compartido)
-- [ ] Definir connection profile (project-specific si aplica)
-- [ ] Configurar `enabled` correcto
-- [ ] Documentar en docs/OPENCODE.md
-- [ ] Probar con `opencode mcp debug`
+- [ ] Entrada en **`MANIFEST.yaml`** con las tres superficies (o excepción documentada)
+- [ ] Recetas en **`generate-mcp-configs.py`** si aplica
+- [ ] `make ai-mcp-validate` y `make ai-mcp-governance` en verde
+- [ ] Tras tocar plantillas: `make ai-mcp-generate APPLY=1` cuando corresponda, luego publicar HOME y `make ai-cursor-check`
