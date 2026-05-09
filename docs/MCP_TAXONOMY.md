@@ -11,17 +11,19 @@ This document establishes the taxonomy for all MCPs integrated in the workstatio
 - Operational policy (how each type is managed)
 - Criteria for adding/removing MCPs
 
+**Canonical activation intent** for Cursor, Codex, and OpenCode lives in **`ai/assets/mcps/MANIFEST.yaml`** (validated with `make ai-mcp-validate`). Layers below describe *role*; default **enabled** intent for every compatible MCP on every surface is **true**, with missing services or secrets handled by **readiness** checks, not by silently dropping servers from a client.
+
 ---
 
 ## Classification Layers
 
-| Layer | Scope | Default | Examples |
-|-------|-------|---------|----------|
-| **Core** | All projects | `true` | docker, github, fetch, context7, filesystem, git, sequential-thinking |
-| **Knowledge/Semantic** | All projects | `true` | gitnexus |
-| **Domain-Specific** | Opt-in | `false` | obsidian |
-| **Platform** | Opt-in | `false` | dagster, loki, minio, prometheus, tempo, store_etl_ops |
-| **Connection-Specific** | Per-project | per-project | postgres, trino |
+| Layer | Scope | Manifest default (global surfaces) | Examples |
+|-------|-------|--------------------------------------|----------|
+| **Core** | All projects | enabled | docker, github, fetch, context7, filesystem, git, sequential-thinking |
+| **Knowledge/Semantic** | All projects | enabled | gitnexus |
+| **Domain-Specific** | Vault / host paths | enabled (readiness if path missing) | obsidian |
+| **Platform** | Local services | enabled (readiness if service down) | dagster, loki, minio, prometheus, tempo, store_etl_ops |
+| **Connection-Specific** | Credentials / DSN | enabled (readiness if secrets or DB absent) | postgres, trino |
 
 ### Layer Descriptions
 
@@ -29,9 +31,9 @@ This document establishes the taxonomy for all MCPs integrated in the workstatio
 
 **Knowledge/Semantic:** Code understanding and documentation generation. Always available.
 
-**Domain-Specific:** Tools focused on specific domains (e.g., Obsidian). Disabled by default, enable when needed.
+**Domain-Specific:** Tools focused on specific domains (e.g., Obsidian). Intended enabled globally; path and host availability are readiness concerns.
 
-**Platform:** Tools requiring specific local services. Disabled by default to avoid connection errors.
+**Platform:** Tools requiring specific local services. Intended enabled globally; connectivity errors are readiness WARN/MISSING, not a reason to omit the MCP from the manifest.
 
 **Connection-Specific:** MCPs with project-dependent credentials. Runtime is global, connection is project-specific.
 
@@ -60,7 +62,7 @@ These MCPs use `npx -y` or `uvx` and get latest version automatically:
 | context7 | `npx -y @upstash/context7-mcp` |
 | github | `npx -y @modelcontextprotocol/server-github` |
 | sequential-thinking | `npx -y @modelcontextprotocol/server-sequential-thinking` |
-| obsidian | `npx -y @bitbonsai/mcpvault` |
+| obsidian | `npx -y @bitbonsai/mcpvault` + vault path from Chezmoi `ai.obsidian_vault_path` (see [CHEZMOI.md](./CHEZMOI.md)) |
 | git | `uvx mcp-server-git` |
 
 ### Launcher-Managed
@@ -87,11 +89,13 @@ MCPs using custom launchers (no update needed):
 ### Process
 
 1. Classify: Core / Knowledge / Domain / Platform / Connection
-2. Set correct `enabled` default
-3. Add to configuration templates (Cursor, OpenCode, Codex)
-4. Document in MCP_QUICKREF.md
-5. Update UPS.md if explicit update needed
-6. Add validation in `bin/validate-mcp-governance` if applicable
+2. Add or update the entry in `ai/assets/mcps/MANIFEST.yaml` (all three surfaces; document any `enabled: false` with `reason`)
+3. Run `make ai-mcp-validate`
+4. Update execution recipes in `scripts/generate-mcp-configs.py` if `command`/`args`/`env` change; run `make ai-mcp-render` and `make ai-mcp-drift`
+5. When ready, run `make ai-mcp-generate APPLY=1`, then `chezmoi apply` (or `make install-dotfiles DOTFILES_APPLY=1`)
+6. Document in MCP_QUICKREF.md
+7. Update UPS.md if explicit update needed
+8. Run `make ai-mcp-governance` (or `bin/validate-mcp-governance`) before commit when MCP intent or templates change
 
 ---
 
@@ -109,7 +113,7 @@ MCPs using custom launchers (no update needed):
 | Type | Definition | Configuration |
 |------|------------|---------------|
 | **Global** | Available in all projects | Templates in `dot_cursor/`, `dot_codex/`, `dot_config/opencode/` |
-| **Domain-Optional** | Global but disabled by default | Same as global, `enabled: false` |
+| **Domain-Optional** | Global; path-dependent | Same as global; readiness if vault/host path missing |
 | **Project-Local** | Per-project only | In project's own config, not in global templates |
 
 ---
@@ -122,7 +126,11 @@ MCPs using custom launchers (no update needed):
 | `docs/MCP_QUICKREF.md` | Quick reference for agents |
 | `docs/adr/0001-mcp-governance.md` | Architectural decision record |
 | `docs/UPS.md` | Update management |
-| `bin/validate-mcp-governance` | Validation script |
+| `ai/assets/mcps/MANIFEST.yaml` | Canonical MCP intent per surface |
+| `make ai-mcp-validate` | Manifest structure and policy checks |
+| `make ai-mcp-render` / `make ai-mcp-drift` | Dry-run under `build/mcps/` + drift vs templates |
+| `make ai-mcp-generate APPLY=1` | Write productive MCP templates after gates (no `APPLY` = plan only) |
+| `make ai-mcp-governance` / `bin/validate-mcp-governance` | Non-mutating: validate + render + drift (repo governance) |
 
 ---
 

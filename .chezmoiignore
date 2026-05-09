@@ -15,6 +15,11 @@
 !.secrets
 !.secrets/**
 !.secrets/codex.env
+!.local
+!.local/share
+!.local/share/chezmoi
+!.local/share/chezmoi/bin
+!.local/share/chezmoi/bin/**
 !proyectos
 !proyectos/store-etl
 !proyectos/store-etl/.cursor

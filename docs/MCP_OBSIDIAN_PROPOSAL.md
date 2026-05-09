@@ -4,13 +4,15 @@
 **Estado:** Propuesto (no implementado)  
 **MCP relacionado:** Filesystem MCP (ya integrado)
 
+> **Histórico / legado:** Los ejemplos con ruta absoluta fija más abajo son del diseño inicial. La configuración actual del repo usa **`ai.obsidian_vault_path`** en Chezmoi y plantillas MCP generadas con `make ai-mcp-generate APPLY=1` — ver [CHEZMOI.md](./CHEZMOI.md) y [MCP_QUICKREF.md](./MCP_QUICKREF.md).
+
 ---
 
 ## Contexto
 
-El Filesystem MCP ya proporciona acceso al vault de Obsidian en:
+El Filesystem MCP ya proporciona acceso al vault de Obsidian en la ruta configurada (hoy vía Chezmoi `ai.obsidian_vault_path`; ver [CHEZMOI.md](./CHEZMOI.md)):
 ```
-/mnt/c/Users/jesus/Documents/vault
+<OBSIDIAN_VAULT_PATH>
 ```
 
 Esto cubre necesidades básicas de lectura/escritura de archivos.
@@ -42,8 +44,8 @@ Esto cubre necesidades básicas de lectura/escritura de archivos.
 
 set -euo pipefail
 
-# Default vault path (Windows mount via WSL)
-DEFAULT_VAULT="/mnt/c/Users/jesus/Documents/vault"
+# Default vault path (Windows mount via WSL) — en el repo real usar dato Chezmoi, no hardcode
+DEFAULT_VAULT="<OBSIDIAN_VAULT_PATH>"
 
 # Allow override via OBSIDIAN_VAULT env var
 VAULT_PATH="${OBSIDIAN_VAULT:-$DEFAULT_VAULT}"
@@ -117,7 +119,7 @@ vim ~/dotfiles/bin/mcp-obsidian-launcher
 chezmoi --source=$HOME/dotfiles apply
 
 # 4. Probar
-npx @bitbonsai/mcpvault /mnt/c/Users/jesus/Documents/vault
+npx @bitbonsai/mcpvault <OBSIDIAN_VAULT_PATH>
 ```
 
 ---

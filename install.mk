@@ -12,7 +12,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -39,5 +39,29 @@ install-zsh-stack:
 # work but stays external/user-level, so users opt in explicitly.
 install-uv:
 	@bash $(DOTFILES_DIR)/scripts/install-uv.sh
+
+# Non-mutating readiness: Cursor MCPs, skills, AI commands (no chezmoi apply).
+ai-cursor-check:
+	@bash $(DOTFILES_DIR)/scripts/ai-cursor-check.sh
+
+# Non-mutating: validate canonical MCP manifest (ai/assets/mcps/MANIFEST.yaml).
+ai-mcp-validate:
+	@python3 $(DOTFILES_DIR)/scripts/validate-mcp-manifest.py
+
+# Non-mutating: dry-run MCP templates under build/mcps/ (does not touch dot_cursor/dot_codex/dot_config).
+ai-mcp-render:
+	@python3 $(DOTFILES_DIR)/scripts/generate-mcp-configs.py render
+
+# Non-mutating: render + drift report vs Chezmoi templates (exit 1 on UNEXPECTED_DRIFT).
+ai-mcp-drift:
+	@python3 $(DOTFILES_DIR)/scripts/generate-mcp-configs.py drift
+
+# Non-mutating: same gates as ai-mcp-validate + ai-mcp-render + ai-mcp-drift (orchestrated by bin/validate-mcp-governance).
+ai-mcp-governance:
+	@bash $(DOTFILES_DIR)/bin/validate-mcp-governance
+
+# Plan only unless APPLY=1: then validate → render → drift → overwrite dot_cursor/dot_codex/dot_config MCP templates.
+ai-mcp-generate:
+	@python3 $(DOTFILES_DIR)/scripts/generate-mcp-configs.py generate $(if $(filter 1 true yes on,$(APPLY)),--apply,)
 
 install: install-check install-apt install-external install-dotfiles install-verify

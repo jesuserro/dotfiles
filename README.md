@@ -6,7 +6,7 @@
 ![Zsh](https://img.shields.io/badge/Zsh-shell-00b0ff?style=flat-square)
 ![TMUX](https://img.shields.io/badge/TMUX-terminal-00b0ff?style=flat-square)
 ![Neovim](https://img.shields.io/badge/Neovim-editor-00b0ff?style=flat-square)
-![MCP](https://img.shields.io/badge/MCP-Cursor%20%7C%20Codex-00b0ff?style=flat-square)
+![MCP](https://img.shields.io/badge/MCP-Cursor%20%7C%20Codex%20%7C%20OpenCode-00b0ff?style=flat-square)
 
 > **Aviso:** Este es un proyecto personal. No experimentes con estos dotfiles si no tienes un mínimo de experiencia con Linux y la terminal: podrías sobrescribir o romper configuraciones en tu sistema.
 
@@ -23,7 +23,7 @@ Actúa como:
 - **Puente transversal** para trabajar en proyectos que viven **fuera** del repo, por ejemplo:
   - `~/proyectos/`
   - `~/store-etl/`
-  - `/mnt/c/Users/<user>/Documents/vault_trabajo/`
+  - `/mnt/c/Users/<user>/Documents/vault_trabajo/` (MCP Obsidian/Filesystem: dato Chezmoi `ai.obsidian_vault_path`; ver [docs/CHEZMOI.md](docs/CHEZMOI.md))
 
 Esos proyectos **no viven dentro** de `dotfiles`; este repo solo prepara el entorno para que trabajar con ellos sea más rápido, más seguro y reproducible.
 
@@ -64,6 +64,12 @@ flowchart TB
 
 ```bash
 make install-check              # diagnóstico (no muta)
+make ai-mcp-validate            # valida el manifiesto canónico MCP (PyYAML; no muta)
+make ai-mcp-render              # render dry-run MCP a build/mcps/ (no toca plantillas Chezmoi)
+make ai-mcp-drift               # informe de drift manifiesto+recetas vs plantillas (exit 1 si hay drift inesperado)
+make ai-mcp-governance          # valida+render+drift en un paso (no muta; mismo contrato que los tres anteriores)
+make ai-mcp-generate            # plan: no escribe; con APPLY=1 valida+render+drift y actualiza plantillas MCP Chezmoi
+make ai-cursor-check            # readiness Cursor/MCP/skills (no muta; ver docs/MCP_QUICKREF.md)
 make install DRY_RUN=1          # plan completo sin tocar el sistema
 make install                    # bootstrap real (no aplica chezmoi por defecto)
 make install-zsh-stack          # Oh My Zsh + Powerlevel10k + plugins (idempotente)
@@ -88,6 +94,12 @@ make install SKIP_EXTERNAL=1
 | `make install-uv` | Instala **uv** (herramienta Python preferida) con el instalador oficial de Astral. Idempotente, opt-in, **fuera** de `make install`. No edita `~/.zshrc` ni `~/.bashrc`. |
 | `make install-dotfiles` | Plan chezmoi. **No ejecuta `apply`** salvo `DOTFILES_APPLY=1`. |
 | `make install-verify` | Versiones de zsh/git/chezmoi/sops/age/rg/docker. `STRICT=1` hace fallar si hay `FAIL` real. |
+| `make ai-mcp-validate` | Valida [ai/assets/mcps/MANIFEST.yaml](ai/assets/mcps/MANIFEST.yaml): intención canónica de MCPs por agente (Cursor/Codex/OpenCode). Requiere PyYAML. No muta; no sustituye aún a las plantillas Chezmoi. |
+| `make ai-mcp-render` | Genera evidencia bajo `build/mcps/` (JSON Cursor, fragmento TOML `mcp_servers`, JSON OpenCode) desde el manifiesto + recetas Python. No muta `dot_cursor/`, `dot_codex/`, `dot_config/`. |
+| `make ai-mcp-drift` | Compara ese render con las plantillas actuales; `exit 0` si solo hay `INTENTIONAL_PENDING_PARITY`, `exit 1` si hay `UNEXPECTED_DRIFT`. Escribe `build/mcps/drift-report.json`. |
+| `make ai-mcp-governance` | Encadena **`ai-mcp-validate`**, **`ai-mcp-render`** y **`ai-mcp-drift`** vía [`bin/validate-mcp-governance`](bin/validate-mcp-governance). No muta. Propaga códigos de salida (p. ej. `2` si falta PyYAML). No sustituye a **`make ai-cursor-check`** (readiness en HOME). |
+| `make ai-mcp-generate` | Sin `APPLY=1`: solo plan (no muta). Con **`APPLY=1`**: ejecuta validación + render + drift; si hay `UNEXPECTED_DRIFT` no escribe; si no, actualiza `dot_cursor/mcp.json.tmpl`, `dot_codex/config.toml.tmpl` (solo bloque `mcp_servers`, conserva preámbulo y `[plugins.*]`), `dot_config/opencode/opencode.json.tmpl`. Copias de respaldo bajo `build/mcps/backups/`. Luego hace falta **chezmoi apply** para HOME. |
+| `make ai-cursor-check` | Comprueba sin mutar si `~/.cursor/mcp.json`, skills enlazados y comandos AI están alineados con los templates del repo. No instala ni ejecuta Cursor ni MCPs. `STRICT=1` endurece (p. ej. falta `~/.cursor/mcp.json`). |
 | `make install` | Encadena: check → apt → external → dotfiles → verify. |
 
 Variables soportadas: `DRY_RUN=1`, `STRICT=1`, `SKIP_EXTERNAL=1`, `SKIP_DOCKER=1`, `DOTFILES_APPLY=1`.

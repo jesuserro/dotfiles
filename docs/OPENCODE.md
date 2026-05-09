@@ -37,87 +37,50 @@ Available in all projects, enabled by default:
 ### Layer 3: Knowledge / Semantic
 - `gitnexus` - Code understanding and documentation generation
 
-### Layer 4: Domain-Specific (Optional)
+### Layer 4: Domain-Specific
 - `obsidian` - Obsidian vault operations (notes, frontmatter, tags, search)
-  - **Note:** Requires Obsidian vault at `/mnt/c/Users/jesus/Documents/vault`
-  - **Enabled:** false (opt-in, see docs/MCP_OBSIDIAN_PROPOSAL.md)
+  - **Note:** Vault path comes from Chezmoi **`ai.obsidian_vault_path`** (default in repo: `/mnt/c/Users/jesus/Documents/vault_trabajo`; override locally when needed). See [CHEZMOI.md](./CHEZMOI.md).
+  - **Intent:** `enabled: true` on global surfaces per **`ai/assets/mcps/MANIFEST.yaml`**; missing vault path is a **readiness** concern (`make ai-cursor-check`), not a reason to omit the MCP from the manifest
   - **Complementary to:** Filesystem MCP (raw file access)
 
 ### Layer 4: Platform / Data Stack
 
-**Defined globally but disabled by default.** Enable per-project when needed:
-- `dagster` - Dagster orchestrator (requires `localhost:3000`)
-- `loki` - Log aggregation (requires `localhost:3100`)
-- `minio` - S3-compatible storage (requires `localhost:9000`)
-- `prometheus` - Metrics (requires `localhost:9090`)
-- `tempo` - Trace visualization (requires `localhost:3200`)
+**Global templates, intended enabled by default** (same policy as Cursor/Codex: `compatible_by_default_enabled` in the manifest). Missing local services produce connection noise at runtime; **`make ai-cursor-check`** and logs should surface that, rather than silently disabling servers in the repo templates.
+
+- `dagster` - Dagster orchestrator (expects `localhost:3000` by default in templates)
+- `loki` - Log aggregation
+- `minio` - S3-compatible storage
+- `prometheus` - Metrics
+- `tempo` - Trace visualization
 - `store_etl_ops` - Store ETL operations
 
-#### Why disabled by default?
+Optional **project-local** `opencode.json` can still narrow or override behavior for a repo without changing the dotfiles-wide intent in **`MANIFEST.yaml`**.
 
-Platform MCPs depend on specific local services running. Enabling them globally would cause:
-- Connection errors on startup (services not running)
-- Noise in projects where they're irrelevant
-- Confusion about available tools
+### Layer 4: Database MCPs (Runtime vs connection profile)
 
-**The policy is conservative by design:**
-- MCPs that are general workstation tools → `enabled: true`
-- MCPs that are platform-specific → `enabled: false` unless explicitly needed
+**Global OpenCode template lists the MCP** so all agents have parity with the manifest; **connection material** stays in neutral files / env blocks (not hardcoded secrets in git).
 
-### Layer 4: Database MCPs (Runtime Global + Connection Project-Specific)
+- `postgres` - Uses **`mcp-postgres-launcher`** and `MCP_POSTGRES_SECRETS` → `~/.config/mcp-secrets.env` (DSN and credentials live there, not in the repo)
+- `trino` - Uses venv `python -m trino_mcp` with an `env` block for endpoints/catalog in the template (tune per machine or override per project)
 
-**Defined at project level, not globally.** The runtime tools exist in the workstation, but connections are project-specific:
-
-- `postgres` - PostgreSQL database (uses `~/bin/mcp-postgres-launcher`)
-- `trino` - Trino query engine (uses `~/.config/ai/runtime/.venv/bin/python -m trino_mcp`)
-
-#### Why NOT global?
-
-Database connections depend on project-specific context:
-- Host, port, database/schema/catalog
-- User, password, authentication method
-- Project secrets (DSN from `~/.config/mcp-secrets.env`)
-- Stack-specific configuration (e.g., Trino catalog)
-
-A "global" PostgreSQL or Trino connection would incorrectly couple all projects to one DSN, which is wrong.
-
-#### The correct model: Runtime Global + Connection Project-Specific
+#### Runtime vs connection (still the engineering model)
 
 ```
-Runtime (tooling):      ~/bin/mcp-postgres-launcher or ~/.config/ai/runtime/.venv
-Connection (config):   Project-specific (env vars, secrets file)
-Activation:            Per-project via local mcp.json or opencode.json
+Runtime (shared):     launcher / venv python module
+Connection profile: env vars, ~/.config/mcp-secrets.env, project-local overrides
 ```
-
-**Architecture:**
 
 | Component | PostgreSQL | Trino |
 |----------|------------|-------|
-| Launcher/Runtime | `~/bin/mcp-postgres-launcher` | `~/.config/ai/runtime/.venv/bin/python -m trino_mcp` |
-| Connection Config | `~/.config/mcp-secrets.env` (POSTGRES_DSN) | `env` block (TRINO_HOST, etc.) |
+| Launcher/Runtime | `mcp-postgres-launcher` (Chezmoi materialized path) | `~/.config/ai/runtime/.venv/bin/python -m trino_mcp` |
+| Connection config | `~/.config/mcp-secrets.env` (via `MCP_POSTGRES_SECRETS`) | `env` block in template (override locally if needed) |
 
-**Pattern:**
-- Both follow the same architecture: launcher + connection profile
-- The launcher handles runtime (npx/Python)
-- Connection profile provides credentials and endpoint details
-- Project-specific config keeps secrets isolated per project/stack
-
-**Current implementation:**
-- `store-etl` project uses `dot_config/store-etl/store-etl.mcp.json.tmpl`
-- Wrapper: `~/bin/mcp-postgres-launcher` (created 2025)
-- Secrets: `~/.config/mcp-secrets.env` (renamed from legacy `~/.secrets/codex.env`)
-- Trino uses `env` block for connection (same pattern as `dagster`, `loki`, etc.)
+**Project-specific stacking:** `dot_config/store-etl/store-etl.mcp.json.tmpl` can add stack-focused MCP wiring without changing the global intent file in git.
 
 This separation ensures:
 - No duplicated runtime installation
-- No cross-project credential leakage
-- Clean project boundaries
-- Consistent pattern across all database MCPs
-
-**Example: `dagster`**
-- Defined globally so it's available in all projects without duplication
-- Disabled by default because most projects don't have a Dagster instance at `localhost:3000`
-- In `store_etl` or similar projects, enable it via project-local `opencode.json`
+- Credentials are not committed to the dotfiles repo
+- Optional per-project stacks keep extra isolation when you need it
 
 ## Materialization
 
@@ -146,21 +109,9 @@ opencode mcp debug docker
 opencode mcp debug github
 ```
 
-## Enabling Platform MCPs
+## Optional per-project overrides
 
-To enable a platform MCP for a specific project, create a local `opencode.json` in the project:
-
-```json
-{
-  "mcp": {
-    "dagster": {
-      "enabled": true
-    }
-  }
-}
-```
-
-Or use the global config and set `enabled: true` directly.
+Global templates already declare platform MCPs **enabled** per manifest. If a project should **turn off** or narrow a server, use a local `opencode.json` in that project (merge semantics depend on OpenCode; treat as an escape hatch, not the default policy).
 
 ## Extending Configuration
 
@@ -188,8 +139,8 @@ If an MCP fails to start:
 
 ## Design Decisions
 
-- **Disabled platform MCPs**: Platform-specific MCPs (dagster, loki, etc.) are disabled by default to avoid connection errors when their services aren't running
-- **Database MCPs as project-specific**: PostgreSQL and Trino MCPs are NOT globally configured because their connections depend on project context (host, DSN, secrets, catalog). The runtime tools exist globally, but connections are project-specific.
+- **Platform MCPs enabled in templates by default**: Canonical intent is **`ai/assets/mcps/MANIFEST.yaml`** (`compatible_by_default_enabled: true`). Missing services are **readiness** (warnings / failures in checks), not a reason to fork product policy in grep scripts.
+- **Database MCPs**: Global template wires **shared runtime** (launcher / venv); **secrets and DSN** live outside git (`mcp-secrets.env`, env blocks). Per-project files like `store-etl` remain for stack-specific composition.
 - **Reused paths**: MCP server paths follow the same patterns as Codex configuration to maintain consistency
 - **Global-first**: MCPs are defined globally to avoid duplication across projects
 - **Playwright as global workstation**: Browser automation is a general-purpose tool that belongs in the core workstation layer
@@ -274,49 +225,26 @@ When adding new configs:
 - Client-wide tools → `dot_config/opencode/`
 - Project-specific stacks → `dot_config/<project-name>/`
 
-### Database MCPs: Runtime global, connection project-specific
+### Database MCPs: Runtime global, connection profile outside git
 
 PostgreSQL and Trino follow this pattern:
-- **Runtime** (launcher): `~/bin/mcp-postgres-launcher` or `~/.config/ai/runtime/.venv/bin/python -m trino_mcp`
-- **Connection** (secrets/env): `~/.config/mcp-secrets.env` or env block
-- **Why?** Each project has different hosts, catalogs, credentials
+- **Runtime** (launcher / venv): materialized launcher path or `~/.config/ai/runtime/.venv/bin/python -m trino_mcp`
+- **Connection** (secrets/env): `~/.config/mcp-secrets.env`, env blocks — **values** are not committed to the dotfiles repo
+- **Why?** The same tool can point at different instances; secrets stay out of git
 
-**Convention (2025+):**
-- Database MCPs use a **launcher wrapper** for runtime isolation
-- Connection profile is **project-specific** (secrets file or env block)
-- The launcher receives connection via `MCP_POSTGRES_SECRETS` env var or direct argument
-
-Do NOT add postgres/trino to `dot_config/opencode/opencode.json.tmpl` as "global" connections. They belong in project-specific configs like `dot_config/store-etl/`.
+**Convention:** update **`ai/assets/mcps/MANIFEST.yaml`** and recipes in **`scripts/generate-mcp-configs.py`**, then **`make ai-mcp-governance`** before landing template changes. The global `opencode.json.tmpl` may list postgres/trino **because manifest parity requires it**; that is not the same as hardcoding a production DSN in the repo.
 
 ---
 
-## MCP Design Convention (2025+)
+## MCP Design Convention (2025+) — superseded in product policy by the manifest
 
-### The Three Layers
+**Canonical activation intent** is **`ai/assets/mcps/MANIFEST.yaml`** (`compatible_by_default_enabled: true`). The table below describes **roles** (layers), not a second source of defaults:
 
-| Layer | Scope | `enabled` default | Examples |
-|-------|-------|-------------------|----------|
-| **Core Workstation** | All projects, all sessions | `true` | `docker`, `github`, `fetch`, `context7`, `excalidraw`, `playwright` |
-| **Platform Specialized** | All projects, optional per-project | `false` | `dagster`, `loki`, `prometheus`, `tempo`, `minio`, `store_etl_ops` |
-| **Data / Connection-Specific** | Project-specific only | Per-project | `postgres`, `trino`, future DB connectors |
-
-### Decision Criteria
-
-**A. MCP should be Core Workstation when:**
-- It's a transversal tool used in **any** project
-- No external service dependency (or always available: Docker, network)
-- Examples: Docker CLI, GitHub API, HTTP fetch, documentation lookup, diagrams, browser automation
-
-**B. MCP should be Platform Specialized when:**
-- Depends on a **specific local service** (localhost:XXXX)
-- Useful only for particular stacks or projects
-- Must be `enabled: false` by default to avoid connection noise
-
-**C. MCP should be Connection-Specific when:**
-- Requires **project-specific credentials** (DSN, secrets, tokens)
-- Has **per-project configuration** (host, port, catalog, schema)
-- The same MCP tool could connect to different instances per project
-- Examples: Database connectors (PostgreSQL, Trino, MySQL), API clients with project keys
+| Layer | Role | Manifest default (global surfaces) | Examples |
+|-------|------|-------------------------------------|----------|
+| **Core Workstation** | Daily dev tools | enabled | `docker`, `github`, `fetch`, … |
+| **Platform Specialized** | Local stack services | enabled (readiness if down) | `dagster`, `loki`, `prometheus`, `tempo`, `minio`, `store_etl_ops` |
+| **Data / Connection-oriented** | DB engines, credentials | enabled; secrets via env/files | `postgres`, `trino` |
 
 ### Runtime vs Connection Profile
 
@@ -325,61 +253,32 @@ Do NOT add postgres/trino to `dot_config/opencode/opencode.json.tmpl` as "global
 │  MCP Tool (shared)                                      │
 │  - npx package                                          │
 │  - python -m module                                     │
-│  - docker image                                         │
+│  - launcher script                                      │
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐
-│  Connection Profile (project-specific)                   │
+│  Connection profile (sensitive / per machine or project) │
 │  - DSN / endpoint                                       │
 │  - Credentials / secrets                                │
-│  - Catalog / schema / namespace                         │
-│  - Auth method                                          │
+│  - Catalog / schema                                     │
 └─────────────────────────────────────────────────────────┘
 ```
-
-**Key distinction:**
-- **Runtime/Launcher**: The tool itself (npx, python module). Can be shared globally.
-- **Connection Profile**: The specific endpoint + credentials. Must be project-specific.
 
 ### Anti-Patterns to Avoid
 
 | Anti-Pattern | Why it's wrong | Correct approach |
 |--------------|----------------|-----------------|
-| Hardcoded DSN in global config | Couples all projects to one database | Use project-specific config or env vars |
-| "Global" database MCP | Assumes one DSN fits all projects | Keep connection profile per-project |
-| `enabled: true` for platform MCPs | Causes errors when services aren't running | Default to `false`, enable per-project |
-| Secrets file named after a client | Couples secrets to tool naming | Use neutral names like `mcp-secrets.env` |
-| Runtime path hardcoded in project | Duplicates tool installation | Reference shared runtime paths |
+| Hardcoded DSN or passwords in repo templates | Secrets in git | Paths + `keys_hint` in manifest; values in `mcp-secrets.env` |
+| Silently omitting an MCP from a surface | Hides intent drift | `enabled: false` + `reason` in **`MANIFEST.yaml`** only |
+| Secrets file named after a client | Couples secrets to tool naming | Neutral names like `mcp-secrets.env` |
+| A second “default disabled” policy in scripts | Contradicts manifest | Use **`make ai-mcp-governance`** + **`make ai-cursor-check`** |
 
 ### Adding a New MCP
 
-1. **Classify it**: Core / Platform / Connection-Specific?
-2. **Set default `enabled`**:
-   - Core → `true`
-   - Platform → `false`
-   - Connection-Specific → per-project config (not global)
-3. **Define runtime path**: Use shared paths (`~/.config/ai/runtime/.venv`, `npx`, etc.)
-4. **Define connection profile**: Keep in project-specific config or env block
-5. **Document**: Add to this convention with the appropriate layer
+1. Add or update **`MANIFEST.yaml`** (all surfaces; document exceptions with `reason`).
+2. Update **`scripts/generate-mcp-configs.py`** recipes if command/env differ.
+3. Run **`make ai-mcp-governance`**, then **`make ai-mcp-generate APPLY=1`** when you intend to refresh Chezmoi templates.
 
-### Quick Reference
+### Quick Reference (intent lives in the manifest)
 
-```
-# Global workstation (enabled: true)
-docker, github, fetch, context7, excalidraw, playwright, filesystem, git, sequential-thinking
-
-# Knowledge/Semantic (enabled: true)
-gitnexus
-
-# Platform specialized (enabled: false)
-dagster, loki, minio, prometheus, tempo, store_etl_ops
-
-# Connection-specific (project-only)
-postgres, trino, [future DB MCPs]
-```
-
-This convention ensures:
-- No cross-project credential leakage
-- No connection errors from missing services
-- Clear separation between shared tooling and project configuration
-- Scalable pattern for future MCP integrations
+Use **`docs/MCP_TAXONOMY.md`** and **`docs/MCP_QUICKREF.md`** for the authoritative list by layer; defaults follow **`MANIFEST.yaml`**, not this historical section.

@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-09 21:36:38
+**Generated:** 2026-05-09 23:39:05
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -604,6 +604,8 @@
 │   │   │   │   └── 📝 COMMAND.md
 │   │   │   ├── 📝 README.md
 │   │   │   └── ⚙️ registry.yaml
+│   │   ├── 📁 mcps
+│   │   │   └── ⚙️ MANIFEST.yaml
 │   │   ├── 📁 prompts
 │   │   │   └── 📄 .keep
 │   │   ├── 📁 rules
@@ -804,6 +806,9 @@
 │       └── 📄 opencode.json.tmpl
 ├── 📁 dot_cursor
 │   └── 📄 mcp.json.tmpl
+├── 📁 dot_local
+│   └── 📁 share
+│       └── 📁 chezmoi
 ├── 📁 git_hooks
 │   └── 📄 pre-commit
 ├── 📁 local
@@ -813,6 +818,7 @@
 │   ├── 📝 branch_feature_1-migration-to-chezmoi-sops-age.md
 │   ├── 📝 branch_feature_10-adding-agent-authory.md
 │   ├── 📝 branch_feature_11-adding-prompt-launcher.md
+│   ├── 📝 branch_feature_12-adding-make-install.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
@@ -831,8 +837,10 @@
 │   │   ├── 🔧 install_common.sh
 │   │   ├── 🔧 prompt-vault-common.sh
 │   │   └── 🐍 system_deps.py
+│   ├── 🔧 ai-cursor-check.sh
 │   ├── 🔧 check-system-deps.sh
 │   ├── 🔧 generate-commands.sh
+│   ├── 🐍 generate-mcp-configs.py
 │   ├── 🔧 git-set-ai-author.sh
 │   ├── 🔧 git-set-ai-disable.sh
 │   ├── 🔧 git-set-ai-enable.sh
@@ -878,6 +886,7 @@
 │   ├── 🔧 test_python3_make.sh
 │   ├── 🔧 treegen.sh
 │   ├── 🔧 validate-commands-structure.sh
+│   ├── 🐍 validate-mcp-manifest.py
 │   └── 🔧 validate-skills-structure.sh
 ├── 📁 system
 │   └── 📁 packages
@@ -897,14 +906,18 @@
 │   │   ├── 📁 helpers
 │   │   │   └── 🔧 common.bash
 │   │   ├── 📁 mcp
+│   │   │   ├── 📄 chezmoi-mcp-launcher-templates.bats
 │   │   │   ├── 📄 filesystem-launcher.bats
 │   │   │   ├── 📄 git-launcher.bats
 │   │   │   └── 📄 validate-governance.bats
 │   │   ├── 📁 prompts
 │   │   │   └── 📄 prompt-launchers.bats
 │   │   ├── 📁 system
+│   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 install-dotfiles.bats
 │   │   │   ├── 📄 install-uv.bats
+│   │   │   ├── 📄 mcp-manifest.bats
+│   │   │   ├── 📄 mcp-render-drift.bats
 │   │   │   └── 📄 system-deps.bats
 │   │   └── 📄 git-ai-author.bats
 │   └── 📄 Makefile.tests

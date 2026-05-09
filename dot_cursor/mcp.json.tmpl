@@ -2,22 +2,32 @@
   "mcpServers": {
     "excalidraw": {
       "command": "/usr/bin/node",
-      "args": ["{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"],
+      "args": [
+        "{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp/dist/index.js",
+        "--stdio"
+      ],
       "env": {}
     },
     "context7": {
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"],
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
       "env": {}
     },
     "docker": {
       "command": "/usr/bin/node",
-      "args": ["{{ .chezmoi.homeDir }}/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"],
+      "args": [
+        "{{ .chezmoi.homeDir }}/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"
+      ],
       "env": {}
     },
     "grafana": {
       "command": "uvx",
-      "args": ["mcp-grafana"],
+      "args": [
+        "mcp-grafana"
+      ],
       "env": {
         "GRAFANA_URL": "http://localhost:3002",
         "GRAFANA_USERNAME": "admin",
@@ -26,7 +36,11 @@
     },
     "opentelemetry": {
       "command": "uvx",
-      "args": ["--with", "opentelemetry-semantic-conventions-ai==0.4.13", "opentelemetry-mcp"],
+      "args": [
+        "--with",
+        "opentelemetry-semantic-conventions-ai==0.4.13",
+        "opentelemetry-mcp"
+      ],
       "env": {
         "BACKEND_TYPE": "tempo",
         "BACKEND_URL": "http://localhost:3200"
@@ -34,12 +48,17 @@
     },
     "github": {
       "command": "/usr/bin/bash",
-      "args": ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec {{ .chezmoi.homeDir }}/.local/bin/codex-mcp-github"],
+      "args": [
+        "-lc",
+        "source ~/.secrets/codex.env 2>/dev/null; exec {{ .chezmoi.homeDir }}/.local/bin/codex-mcp-github"
+      ],
       "env": {}
     },
     "fetch": {
       "command": "uvx",
-      "args": ["mcp-server-fetch"],
+      "args": [
+        "mcp-server-fetch"
+      ],
       "env": {}
     },
     "gitnexus": {
@@ -59,17 +78,104 @@
     },
     "sequential-thinking": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
       "env": {}
     },
     "obsidian": {
       "command": "npx",
-      "args": ["-y", "@bitbonsai/mcpvault", "/mnt/c/Users/jesus/Documents/vault"],
+      "args": [
+        "-y",
+        "@bitbonsai/mcpvault",
+        "{{ .ai.obsidian_vault_path }}"
+      ],
       "env": {}
     },
     "playwright": {
       "command": "npx",
-      "args": ["-y", "@executeautomation/playwright-mcp-server"],
+      "args": [
+        "-y",
+        "@executeautomation/playwright-mcp-server"
+      ],
+      "env": {}
+    },
+    "postgres": {
+      "command": "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-postgres-launcher",
+      "args": [],
+      "env": {
+        "MCP_POSTGRES_SECRETS": "{{ .chezmoi.homeDir }}/.config/mcp-secrets.env"
+      }
+    },
+    "trino": {
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
+      "args": [
+        "-m",
+        "trino_mcp"
+      ],
+      "env": {
+        "TRINO_HOST": "localhost",
+        "TRINO_PORT": "8080",
+        "TRINO_USER": "admin",
+        "TRINO_CATALOG": "iceberg",
+        "TRINO_HTTP_SCHEME": "http",
+        "AUTH_METHOD": "NONE"
+      }
+    },
+    "dagster": {
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
+      "args": [
+        "{{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/dagster/server.py"
+      ],
+      "env": {
+        "DAGSTER_GRAPHQL_URL": "http://localhost:3000/graphql",
+        "DAGSTER_TIMEOUT_SECONDS": "30"
+      }
+    },
+    "minio": {
+      "command": "/usr/bin/bash",
+      "args": [
+        "-lc",
+        "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec {{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python {{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/minio/server.py"
+      ],
+      "env": {}
+    },
+    "tempo": {
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
+      "args": [
+        "{{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/tempo/server.py"
+      ],
+      "env": {
+        "TEMPO_BASE_URL": "http://localhost:3200",
+        "TEMPO_TIMEOUT_SECONDS": "30"
+      }
+    },
+    "loki": {
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
+      "args": [
+        "{{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/loki/server.py"
+      ],
+      "env": {
+        "LOKI_BASE_URL": "http://localhost:3100",
+        "LOKI_TIMEOUT_SECONDS": "30"
+      }
+    },
+    "prometheus": {
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
+      "args": [
+        "{{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/prometheus/server.py"
+      ],
+      "env": {
+        "PROMETHEUS_URL": "http://localhost:9090",
+        "PROMETHEUS_TIMEOUT_SECONDS": "15"
+      }
+    },
+    "store_etl_ops": {
+      "command": "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python",
+      "args": [
+        "{{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/store_etl_ops/server.py"
+      ],
       "env": {}
     }
   }

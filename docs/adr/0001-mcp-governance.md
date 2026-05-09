@@ -25,9 +25,11 @@ A decision was needed on how to classify, scope, and configure these MCPs to avo
 
 ## Decision
 
+> **Note (2026):** Default **`enabled`** intent for global agent surfaces is now driven solely by **`ai/assets/mcps/MANIFEST.yaml`** (`compatible_by_default_enabled: true`). The table below records the **original 2025 classification**; product defaults for Cursor/Codex/OpenCode follow the manifest and the **Evolution (2026)** section, not the middle column here.
+
 ### 1. Three-Layer Classification
 
-| Layer | Scope | `enabled` default | Rationale |
+| Layer | Scope | `enabled` default (historical 2025) | Rationale |
 |-------|-------|-------------------|-----------|
 | **Core Workstation** | All projects | `true` | Transversal tools used everywhere |
 | **Knowledge/Semantic** | All projects | `true` | Code understanding and documentation |
@@ -49,7 +51,7 @@ postgres MCP:
 
 filesystem MCP:
   - Runtime: ~/.local/share/chezmoi/bin/mcp-filesystem-launcher (shared)
-  - Policy: Fixed whitelist of allowed roots (/home/jesus/dotfiles, /home/jesus/proyectos, /home/jesus/.config, /mnt/c/Users/jesus/Documents/vault)
+  - Policy: Fixed whitelist of allowed roots (/home/jesus/dotfiles, /home/jesus/proyectos, /home/jesus/.config, plus Obsidian vault path from Chezmoi data `ai.obsidian_vault_path` in the managed launcher template)
 
 git MCP:
   - Runtime: ~/.local/share/chezmoi/bin/mcp-git-launcher        (shared)
@@ -64,19 +66,19 @@ trino MCP:
   - Connection: env block (TRINO_HOST, TRINO_CATALOG, etc.)      (project-specific)
 ```
 
-### 3. Activation Policy
+### 3. Activation Policy (historical 2025)
 
 - **Core Workstation MCPs**: Always enabled globally
-- **Platform Specialized MCPs**: Disabled by default, enable per-project when the service is available
-- **Connection-Specific MCPs**: Never globalize the connection; keep in project-specific config
+- **Platform Specialized MCPs**: (Superseded for global templates — see **Evolution (2026)**.) Historically: disabled by default in global configs.
+- **Connection-Specific MCPs**: Runtime shared; connection material outside git or per-stack configs
 
 ### 4. Anti-Patterns Prohibited
 
 | Anti-Pattern | Why |
 |--------------|-----|
 | Hardcoded DSN in global config | Couples all projects to one database |
-| "Global" database MCP | Assumes one DSN fits all projects |
-| `enabled: true` for platform MCPs | Causes connection errors when services are down |
+| Secret **values** committed in repo or manifest | Use paths / `keys_hint` only; values in user secrets files |
+| Silently omitting an MCP from a surface without manifest `reason` | Hides intent drift vs other agents |
 | Secrets file named after client | Couples secrets to tool naming (use neutral names) |
 
 ---
@@ -97,8 +99,23 @@ trino MCP:
 
 ### Neutral
 
-- **Project-specific configs**: MCPs like `postgres` and `trino` live in `dot_config/store-etl/` not in global config
+- **Project-specific configs**: Optional stack configs (e.g. `dot_config/store-etl/`) complement global templates; global parity is defined in **`MANIFEST.yaml`**
 - **GitNexus**: MCP global de conocimiento estructural. Su índice vive en `~/.gitnexus/` y es multi-repo. La wiki generada se направляет a `docs/wiki/` por convención.
+
+---
+
+## Evolution (2026) — compatible-enabled-by-default
+
+Earlier sections of this ADR assumed **platform MCPs disabled by default** in global configs and **database MCPs** limited to project-local templates to avoid noisy connection failures.
+
+That policy is **partially superseded** for **global agent parity**:
+
+- **Canonical intent** for which MCPs exist and how they apply to **Cursor, Codex, and OpenCode** now lives in **`ai/assets/mcps/MANIFEST.yaml`**, validated with **`make ai-mcp-validate`**.
+- **Default:** every compatible MCP is **intended `enabled: true`** on all three surfaces. Gaps (missing services, secrets, binaries, WSL paths) are handled by **readiness** tooling (`make ai-cursor-check` and future checks), not by silently withholding a server from one client.
+- **Exceptions** must be explicit in the manifest: `enabled: false` plus a non-empty **`reason`** (e.g. a future technical incompatibility).
+- **Chezmoi templates** can be synced from manifest + recipes using **`make ai-mcp-generate APPLY=1`** (after `make ai-mcp-validate`, `make ai-mcp-render`, and `make ai-mcp-drift` with no unexpected drift). Without **`APPLY=1`**, `make ai-mcp-generate` is plan-only and writes nothing. Publishing to HOME still requires **chezmoi apply**. **`bin/validate-mcp-governance`** (and **`make ai-mcp-governance`**) orchestrates the same non-mutating gates as **`ai-mcp-validate`**, **`ai-mcp-render`**, and **`ai-mcp-drift`**; it does **not** embed a second product policy and does **not** substitute readiness checks (**`make ai-cursor-check`**).
+
+The separation **runtime (shared) vs connection profile (sensitive / per-project)** remains valid engineering guidance; only the *default visibility* of those MCPs across global agent surfaces changed.
 
 ---
 
