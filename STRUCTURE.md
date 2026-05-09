@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-09 23:04:08
+**Generated:** 2026-05-09 23:31:59
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -806,6 +806,9 @@
 │       └── 📄 opencode.json.tmpl
 ├── 📁 dot_cursor
 │   └── 📄 mcp.json.tmpl
+├── 📁 dot_local
+│   └── 📁 share
+│       └── 📁 chezmoi
 ├── 📁 git_hooks
 │   └── 📄 pre-commit
 ├── 📁 local

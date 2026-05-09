@@ -65,7 +65,13 @@ bats_require_minimum_version 1.5.0
     grep -q "/home/jesus/dotfiles" "$LAUNCHER"
     grep -q "/home/jesus/proyectos" "$LAUNCHER"
     grep -q "/home/jesus/.config" "$LAUNCHER"
-    grep -q "/mnt/c/Users/jesus/Documents/vault" "$LAUNCHER"
+    grep -q "/mnt/c/Users/jesus/Documents/vault_trabajo" "$LAUNCHER"
+}
+
+@test "chezmoi filesystem launcher template uses ai.obsidian_vault_path" {
+    tmpl="$DOTFILES_DIR/dot_local/share/chezmoi/bin/executable_mcp-filesystem-launcher.tmpl"
+    [[ -f "$tmpl" ]]
+    grep -q '{{ .ai.obsidian_vault_path }}' "$tmpl"
 }
 
 @test "realpath is used for path resolution" {
@@ -115,7 +121,7 @@ bats_require_minimum_version 1.5.0
     [[ "$output" == *"/home/jesus/dotfiles"* ]]
     [[ "$output" == *"/home/jesus/proyectos"* ]]
     [[ "$output" == *"/home/jesus/.config"* ]]
-    [[ "$output" == *"/mnt/c/Users/jesus/Documents/vault"* ]]
+    [[ "$output" == *"/mnt/c/Users/jesus/Documents/vault_trabajo"* ]]
 }
 
 @test "exec is used for final command" {

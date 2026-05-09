@@ -209,11 +209,12 @@ mcps:
       opencode: { enabled: true }
     requires: [npx, node]
     secrets: []
-    paths_probe:
-      - /mnt/c/Users/jesus/Documents/vault
+    paths_probe: []
     notes: >
-      Vault path matches current templates; readiness should WARN if the Windows path
-      is missing under WSL. Not a reason to disable the MCP in the manifest.
+      Vault path is not hardcoded in this manifest. MCP templates use Chezmoi data
+      ai.obsidian_vault_path (see .chezmoi.toml [data.ai]). After apply, readiness
+      can WARN if the resolved Windows/WSL path is missing. Not a reason to disable
+      the MCP in the manifest.
 
   - id: playwright
     display_name: Playwright MCP

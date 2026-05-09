@@ -9,7 +9,7 @@
 - **`make ai-mcp-render`** — dry-run: writes `build/mcps/dot_cursor/mcp.json.tmpl`, `build/mcps/dot_codex/mcp_servers.toml.tmpl` (MCP fragment only), `build/mcps/dot_config/opencode/opencode.json.tmpl` from `MANIFEST.yaml` plus **Python recipes** in `scripts/generate-mcp-configs.py`. Does **not** overwrite Chezmoi templates. `build/mcps/` is gitignored.
 - **`make ai-mcp-drift`** — runs render, compares intent + recipes vs current templates, prints a human drift report and `build/mcps/drift-report.json`. **`exit 0`** when differences are only **`INTENTIONAL_PENDING_PARITY`**. **`exit 1`** on **`UNEXPECTED_DRIFT`** (e.g. extra MCP in template, or command/env/cwd mismatch when both sides are active). **`exit 2`** if PyYAML is missing.
 - **`make ai-mcp-governance`** / **`bin/validate-mcp-governance`** — non-mutating orchestration of **`ai-mcp-validate`**, **`ai-mcp-render`**, and **`ai-mcp-drift`** (same Make contract). Ends with **`MCP governance validation: PASS`** or **`FAIL`**. This is **governance** (repo coherence), not **readiness** (local HOME / Cursor / secrets); use **`make ai-cursor-check`** for the latter.
-- **`make ai-mcp-generate`** — **Plan only** by default: prints targets and **`Re-run with APPLY=1`**; writes **nothing** (not even `build/mcps/`). **`make ai-mcp-generate APPLY=1`**: invokes **`scripts/validate-mcp-manifest.py`**, then **`render`** + **`drift`** in-process (same gates as `make ai-mcp-render` / `make ai-mcp-drift`) — aborts if validation fails or **`UNEXPECTED_DRIFT`**; then writes productive templates from `build/mcps/` with temp-file + parse validation + timestamped backups under **`build/mcps/backups/`**. Codex: replaces only **`[mcp_servers.*]`** content; keeps preamble and **`[plugins.*]`**. After apply, run **`make ai-mcp-drift`** again (expect no unexpected drift) and **`chezmoi apply`** / **`make install-dotfiles DOTFILES_APPLY=1`** to publish HOME, then **`make ai-cursor-check`**.
+- **`make ai-mcp-generate`** — **Plan only** by default: prints targets and **`Re-run with APPLY=1`**; writes **nothing** (not even `build/mcps/`). **`make ai-mcp-generate APPLY=1`**: invokes **`scripts/validate-mcp-manifest.py`**, then **`render`**, writes productive templates from `build/mcps/` with temp-file + parse validation + timestamped backups under **`build/mcps/backups/`**, then runs **`drift`** — aborts if validation/render fails, write fails, or **`UNEXPECTED_DRIFT`** remains after write (productive templates must match MANIFEST + recipes). Codex: replaces only **`[mcp_servers.*]`** content; keeps preamble and **`[plugins.*]`**. Then run **`chezmoi apply`** / **`make install-dotfiles DOTFILES_APPLY=1`** to publish HOME, then **`make ai-cursor-check`**.
 - **Chezmoi templates** (`dot_cursor/mcp.json.tmpl`, `dot_codex/config.toml.tmpl`, `dot_config/opencode/opencode.json.tmpl`) are the **productive** copies in-repo; keep them aligned with **`MANIFEST.yaml`** using **validate → render → drift** (or **`make ai-mcp-governance`**), then **`make ai-mcp-generate APPLY=1`** when you intend to refresh templates from the generator.
 
 **Suggested flow:** `make ai-mcp-validate` → `make ai-mcp-render` → `make ai-mcp-drift` → (or **`make ai-mcp-governance`**) → review → **`make ai-mcp-generate APPLY=1`** (only when regenerating templates) → `make ai-mcp-drift` (sanity) → **`chezmoi apply`** (or `make install-dotfiles DOTFILES_APPLY=1`) → `make ai-cursor-check`.
@@ -55,7 +55,7 @@ gnx-wiki-here    # Generate wiki (requires OPENAI_API_KEY)
 | **Type** | Core MCP (filesystem access) |
 | **Scope** | Global with whitelist policy |
 | **Config Pattern** | Launcher wrapper |
-| **Allowed Roots** | `/home/jesus/dotfiles`, `/home/jesus/proyectos`, `/home/jesus/.config`, `/mnt/c/Users/jesus/Documents/vault` |
+| **Allowed Roots** | `/home/jesus/dotfiles`, `/home/jesus/proyectos`, `/home/jesus/.config`, plus vault path from Chezmoi **`ai.obsidian_vault_path`** (rendered in `dot_local/.../executable_mcp-filesystem-launcher.tmpl`; repo `bin/mcp-filesystem-launcher` keeps the same default path for local use) |
 | **Launcher** | `~/.local/share/chezmoi/bin/mcp-filesystem-launcher` |
 
 ### Policy
@@ -100,9 +100,9 @@ This MCP is from the official MCP repository. It provides cognitive support for 
 |--------|-------|
 | **Type** | Domain-specific MCP (Obsidian operations) |
 | **Scope** | Global optional |
-| **Config Pattern** | `npx -y @bitbonsai/mcpvault /mnt/c/Users/jesus/Documents/vault` |
+| **Config Pattern** | `npx -y @bitbonsai/mcpvault` + last arg = **`{{ .ai.obsidian_vault_path }}`** (rendered by Chezmoi from `.chezmoi.toml` `[data.ai]`) |
 | **Enabled (manifest intent)** | true on all surfaces (vault path must exist for usefulness) |
-| **Vault** | `/mnt/c/Users/jesus/Documents/vault` (readiness WARN if missing under WSL) |
+| **Vault** | Default in repo: `/mnt/c/Users/jesus/Documents/vault_trabajo`; override per machine in `~/.config/chezmoi/chezmoi.toml` — see [CHEZMOI.md](./CHEZMOI.md). Readiness: `make ai-cursor-check` (path from `~/.cursor/mcp.json`). |
 
 ### Relationship with Filesystem MCP
 

@@ -5,7 +5,7 @@ Dry-run and productive MCP config generation from ai/assets/mcps/MANIFEST.yaml +
 Subcommands:
   render   — write build/mcps/* (does not touch Chezmoi templates)
   drift    — compare renders + manifest intent vs current templates; classify drift
-  generate — plan only unless --apply: then validate → render → drift (no unexpected) → write templates
+  generate — plan only unless --apply: then validate → render → write templates → drift (no unexpected)
 
 Chezmoi placeholders must appear literally; never use str.format on strings containing {{.
 """
@@ -40,6 +40,8 @@ TMPL_OPENCODE = REPO_ROOT / "dot_config" / "opencode" / "opencode.json.tmpl"
 # Literal Chezmoi template fragments (do not pass through str.format)
 H = "{{ .chezmoi.homeDir }}"
 # {{ .chezmoi.sourceDir }} — add to recipes only as literal string when needed (never str.format).
+# Obsidian mcpvault vault root — set in .chezmoi.toml [data.ai] obsidian_vault_path (override locally).
+OBSIDIAN_VAULT_TMPL = "{{ .ai.obsidian_vault_path }}"
 
 SURFACES = ("cursor", "codex", "opencode")
 
@@ -352,17 +354,17 @@ def build_mcp_surface_recipes() -> Dict[str, Dict[str, Dict[str, Any]]]:
         "obsidian": _r(
             cursor={
                 "command": "npx",
-                "args": ["-y", "@bitbonsai/mcpvault", "/mnt/c/Users/jesus/Documents/vault"],
+                "args": ["-y", "@bitbonsai/mcpvault", OBSIDIAN_VAULT_TMPL],
                 "env": {},
             },
             codex={
                 "command": "npx",
-                "args": ["-y", "@bitbonsai/mcpvault", "/mnt/c/Users/jesus/Documents/vault"],
+                "args": ["-y", "@bitbonsai/mcpvault", OBSIDIAN_VAULT_TMPL],
                 "env": {},
             },
             opencode={
                 "type": "local",
-                "command": ["npx", "-y", "@bitbonsai/mcpvault", "/mnt/c/Users/jesus/Documents/vault"],
+                "command": ["npx", "-y", "@bitbonsai/mcpvault", OBSIDIAN_VAULT_TMPL],
                 "environment": {},
             },
         ),
@@ -1083,13 +1085,8 @@ def cmd_generate(args: argparse.Namespace) -> int:
         print("FAIL render; not writing templates", file=sys.stderr)
         return 1
 
-    d_ns = argparse.Namespace(manifest=str(manifest_path))
-    if cmd_drift(d_ns) != 0:
-        print(
-            "FAIL drift (unexpected drift, parse error, or render issue); not writing templates",
-            file=sys.stderr,
-        )
-        return 1
+    # Do not require pre-apply drift=0: productive templates may legitimately lag
+    # MANIFEST+recipes until this command writes them. Drift is enforced after write.
 
     print("==> MCP generate APPLY=1 — writing productive templates (atomic + backups)")
     try:
@@ -1138,6 +1135,15 @@ def cmd_generate(args: argparse.Namespace) -> int:
         tomllib.loads(TMPL_CODEX.read_text(encoding="utf-8"))
     except Exception as exc:  # noqa: BLE001
         print(f"FAIL post-write validation: {exc}", file=sys.stderr)
+        return 1
+
+    d_ns = argparse.Namespace(manifest=str(manifest_path))
+    if cmd_drift(d_ns) != 0:
+        print(
+            "FAIL drift after apply (unexpected drift, parse error, or render issue); "
+            "productive templates may be inconsistent",
+            file=sys.stderr,
+        )
         return 1
 
     try:

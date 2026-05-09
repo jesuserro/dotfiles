@@ -75,7 +75,7 @@ enabled = true
 
 [mcp_servers.obsidian]
 command = "npx"
-args = ["-y", "@bitbonsai/mcpvault", "/mnt/c/Users/jesus/Documents/vault"]
+args = ["-y", "@bitbonsai/mcpvault", "{{ .ai.obsidian_vault_path }}"]
 enabled = true
 
 [mcp_servers.playwright]

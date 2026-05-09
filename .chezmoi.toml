@@ -7,3 +7,7 @@
     # Template uses: {{ (sops "mcp.key") }}
     # Extra data for templates
     storeEtlDir = "{{ .chezmoi.homeDir }}/proyectos/store-etl"
+
+# Obsidian / mcpvault + Filesystem MCP whitelist (override in ~/.config/chezmoi/chezmoi.toml when needed)
+[data.ai]
+    obsidian_vault_path = "/mnt/c/Users/jesus/Documents/vault_trabajo"

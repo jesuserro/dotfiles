@@ -62,7 +62,7 @@ These MCPs use `npx -y` or `uvx` and get latest version automatically:
 | context7 | `npx -y @upstash/context7-mcp` |
 | github | `npx -y @modelcontextprotocol/server-github` |
 | sequential-thinking | `npx -y @modelcontextprotocol/server-sequential-thinking` |
-| obsidian | `npx -y @bitbonsai/mcpvault` |
+| obsidian | `npx -y @bitbonsai/mcpvault` + vault path from Chezmoi `ai.obsidian_vault_path` (see [CHEZMOI.md](./CHEZMOI.md)) |
 | git | `uvx mcp-server-git` |
 
 ### Launcher-Managed

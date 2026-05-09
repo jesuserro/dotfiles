@@ -455,6 +455,63 @@ else
 	fi
 fi
 
+echo ""
+echo "==> 5a. Obsidian MCP vault path (~/.cursor/mcp.json)"
+if [[ ! -f "${CURSOR_MCP}" ]]; then
+	line_info "Skipping Obsidian vault check (~/.cursor/mcp.json not present)"
+elif ! python3 -c "import json; json.load(open('${CURSOR_MCP}'))" 2>/dev/null; then
+	line WARN "Skipping Obsidian vault check (~/.cursor/mcp.json is not valid JSON)"
+else
+	while IFS='|' read -r ob_st ob_msg; do
+		[[ -z "${ob_st}" ]] && continue
+		case "${ob_st}" in
+		OK) line OK "${ob_msg}" ;;
+		WARN) line WARN "${ob_msg}" ;;
+		MISSING) line MISSING "${ob_msg}" ;;
+		INFO) line_info "${ob_msg}" ;;
+		*) line_info "${ob_st}|${ob_msg}" ;;
+		esac
+	done < <(python3 - "${CURSOR_MCP}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    data = json.loads(path.read_text(encoding="utf-8"))
+except (OSError, json.JSONDecodeError) as exc:
+    print(f"WARN|Could not read Cursor MCP config: {exc}")
+    raise SystemExit(0)
+srv = (data.get("mcpServers") or {}).get("obsidian")
+if not srv or not isinstance(srv, dict):
+    print("MISSING|No obsidian MCP in ~/.cursor/mcp.json")
+    raise SystemExit(0)
+args = srv.get("args")
+if not isinstance(args, list) or len(args) == 0:
+    print("MISSING|obsidian MCP has no args in ~/.cursor/mcp.json")
+    raise SystemExit(0)
+vault = args[-1]
+if not isinstance(vault, str) or not vault.strip():
+    print("MISSING|Could not determine Obsidian vault path from obsidian.args (last arg)")
+    raise SystemExit(0)
+if "{{" in vault or "}}" in vault:
+    print(
+        "WARN|Obsidian vault arg looks like an unrendered Chezmoi template "
+        f"(set [data.ai] obsidian_vault_path and run chezmoi apply): {vault}"
+    )
+    raise SystemExit(0)
+print(f"INFO|Obsidian vault path from ~/.cursor/mcp.json: {vault}")
+vp = Path(vault)
+if vp.exists():
+    print("OK|Obsidian vault path exists on disk")
+elif vault.startswith("/mnt/"):
+    print(f"WARN|Obsidian vault path not found (WSL/host?): {vault}")
+else:
+    print(f"WARN|Obsidian vault path missing on disk: {vault}")
+PY
+	)
+fi
+
 # Soft path checks from rendered home json
 if [[ -f "${CURSOR_MCP}" ]] && python3 -c "import json; json.load(open('${CURSOR_MCP}'))" 2>/dev/null; then
 	while IFS= read -r p; do

@@ -23,7 +23,7 @@ Actúa como:
 - **Puente transversal** para trabajar en proyectos que viven **fuera** del repo, por ejemplo:
   - `~/proyectos/`
   - `~/store-etl/`
-  - `/mnt/c/Users/<user>/Documents/vault_trabajo/`
+  - `/mnt/c/Users/<user>/Documents/vault_trabajo/` (MCP Obsidian/Filesystem: dato Chezmoi `ai.obsidian_vault_path`; ver [docs/CHEZMOI.md](docs/CHEZMOI.md))
 
 Esos proyectos **no viven dentro** de `dotfiles`; este repo solo prepara el entorno para que trabajar con ellos sea más rápido, más seguro y reproducible.
 

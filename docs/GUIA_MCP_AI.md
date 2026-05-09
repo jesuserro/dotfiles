@@ -133,7 +133,7 @@ El alias `ups` incluye una sección que actualiza los servidores MCP:
 | **filesystem** | Launcher local — no requiere actualización |
 | **git** | `uvx mcp-server-git` — se actualiza al ejecutarse |
 | **sequential-thinking** | `npx -y @modelcontextprotocol/server-sequential-thinking` (obtiene latest al ejecutar) |
-| **obsidian** | `npx -y @bitbonsai/mcpvault` (obtiene latest al ejecutar) |
+| **obsidian** | `npx -y @bitbonsai/mcpvault` + ruta del vault desde Chezmoi `ai.obsidian_vault_path` (ver [CHEZMOI.md](./CHEZMOI.md); plantillas vía `make ai-mcp-generate APPLY=1`) |
 | **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
 | **context7, github, gitnexus (MCP)** | Usan `npx` — obtienen la última versión al ejecutarse |
 

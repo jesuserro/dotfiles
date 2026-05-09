@@ -39,7 +39,7 @@ Available in all projects, enabled by default:
 
 ### Layer 4: Domain-Specific
 - `obsidian` - Obsidian vault operations (notes, frontmatter, tags, search)
-  - **Note:** Requires Obsidian vault at `/mnt/c/Users/jesus/Documents/vault` for usefulness under WSL
+  - **Note:** Vault path comes from Chezmoi **`ai.obsidian_vault_path`** (default in repo: `/mnt/c/Users/jesus/Documents/vault_trabajo`; override locally when needed). See [CHEZMOI.md](./CHEZMOI.md).
   - **Intent:** `enabled: true` on global surfaces per **`ai/assets/mcps/MANIFEST.yaml`**; missing vault path is a **readiness** concern (`make ai-cursor-check`), not a reason to omit the MCP from the manifest
   - **Complementary to:** Filesystem MCP (raw file access)
 

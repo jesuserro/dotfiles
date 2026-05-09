@@ -57,6 +57,17 @@ _sum() {
 	grep -q '{{ \.chezmoi\.homeDir }}' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
 }
 
+@test "rendered MCP configs use Chezmoi ai.obsidian_vault_path for Obsidian" {
+	if ! python3 -c "import yaml" 2>/dev/null; then
+		skip "PyYAML not installed"
+	fi
+	run make -C "${DOTFILES_DIR}" ai-mcp-render
+	[[ "${status}" -eq 0 ]]
+	grep -q '{{ \.ai\.obsidian_vault_path }}' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
+	grep -q '{{ \.ai\.obsidian_vault_path }}' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
+	grep -q '{{ \.ai\.obsidian_vault_path }}' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
+}
+
 @test "make ai-mcp-drift exits 0 with intentional parity only" {
 	if ! python3 -c "import yaml" 2>/dev/null; then
 		skip "PyYAML not installed"
