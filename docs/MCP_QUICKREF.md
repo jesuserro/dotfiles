@@ -6,7 +6,11 @@
 
 - **`ai/assets/mcps/MANIFEST.yaml`** — single source of truth for **which** MCPs exist and **how** they are intended on **cursor**, **codex**, and **opencode** (all compatible servers **enabled by default** unless a surface has a documented `enabled: false` + `reason`).
 - **`make ai-mcp-validate`** — validates that manifest (schema, ids, surfaces, secrets shape). Requires **PyYAML**. Non-mutating.
-- **Chezmoi templates** (`dot_cursor/mcp.json.tmpl`, `dot_codex/config.toml.tmpl`, `dot_config/opencode/opencode.json.tmpl`) are **not yet generated** from the manifest; they may still differ until a later generator phase. Readiness for a live machine remains **`make ai-cursor-check`** (Cursor HOME + templates).
+- **`make ai-mcp-render`** — dry-run: writes `build/mcps/dot_cursor/mcp.json.tmpl`, `build/mcps/dot_codex/mcp_servers.toml.tmpl` (MCP fragment only), `build/mcps/dot_config/opencode/opencode.json.tmpl` from `MANIFEST.yaml` plus **Python recipes** in `scripts/generate-mcp-configs.py`. Does **not** overwrite Chezmoi templates. `build/mcps/` is gitignored.
+- **`make ai-mcp-drift`** — runs render, compares intent + recipes vs current templates, prints a human drift report and `build/mcps/drift-report.json`. **`exit 0`** when differences are only **`INTENTIONAL_PENDING_PARITY`** (expected until real template parity). **`exit 1`** on **`UNEXPECTED_DRIFT`** (e.g. extra MCP in template, or command/env/cwd mismatch when both sides are active). **`exit 2`** if PyYAML is missing.
+- **Chezmoi templates** (`dot_cursor/mcp.json.tmpl`, `dot_codex/config.toml.tmpl`, `dot_config/opencode/opencode.json.tmpl`) are **not yet overwritten** by the generator; use **validate → render → drift** to review evidence before any future apply phase. Readiness for a live machine remains **`make ai-cursor-check`** (Cursor HOME + templates).
+
+**Suggested flow:** `make ai-mcp-validate` → `make ai-mcp-render` → `make ai-mcp-drift` → read stdout / `drift-report.json` → later, human-approved parity updates templates (not automated in this phase).
 
 ## Classification (layers)
 
@@ -128,6 +132,7 @@ STRICT=1 make ai-cursor-check
 
 - `ai/assets/mcps/MANIFEST.yaml` — Canonical MCP intent (per surface)
 - `scripts/validate-mcp-manifest.py` — Manifest validator
+- `scripts/generate-mcp-configs.py` — Dry-run render + drift (`render` / `drift` subcommands)
 - `docs/MCP_TAXONOMY.md` — Taxonomy and evolution notes
 - `docs/adr/0001-mcp-governance.md` — ADR (includes supersession notes)
 - `docs/OPENCODE.md` — Operational guide

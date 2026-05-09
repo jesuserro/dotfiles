@@ -12,7 +12,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv ai-cursor-check ai-mcp-validate
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -47,5 +47,13 @@ ai-cursor-check:
 # Non-mutating: validate canonical MCP manifest (ai/assets/mcps/MANIFEST.yaml).
 ai-mcp-validate:
 	@python3 $(DOTFILES_DIR)/scripts/validate-mcp-manifest.py
+
+# Non-mutating: dry-run MCP templates under build/mcps/ (does not touch dot_cursor/dot_codex/dot_config).
+ai-mcp-render:
+	@python3 $(DOTFILES_DIR)/scripts/generate-mcp-configs.py render
+
+# Non-mutating: render + drift report vs Chezmoi templates (exit 1 on UNEXPECTED_DRIFT).
+ai-mcp-drift:
+	@python3 $(DOTFILES_DIR)/scripts/generate-mcp-configs.py drift
 
 install: install-check install-apt install-external install-dotfiles install-verify

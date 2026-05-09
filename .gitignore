@@ -29,3 +29,6 @@ vim/pack/*
 
 # Generated command artifacts (regenerated from ai/assets/commands/)
 build/commands/
+
+# MCP dry-run renders + drift-report.json (scripts/generate-mcp-configs.py)
+build/mcps/

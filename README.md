@@ -65,6 +65,8 @@ flowchart TB
 ```bash
 make install-check              # diagnóstico (no muta)
 make ai-mcp-validate            # valida el manifiesto canónico MCP (PyYAML; no muta)
+make ai-mcp-render              # render dry-run MCP a build/mcps/ (no toca plantillas Chezmoi)
+make ai-mcp-drift               # informe de drift manifiesto+recetas vs plantillas (exit 1 si hay drift inesperado)
 make ai-cursor-check            # readiness Cursor/MCP/skills (no muta; ver docs/MCP_QUICKREF.md)
 make install DRY_RUN=1          # plan completo sin tocar el sistema
 make install                    # bootstrap real (no aplica chezmoi por defecto)
@@ -91,6 +93,8 @@ make install SKIP_EXTERNAL=1
 | `make install-dotfiles` | Plan chezmoi. **No ejecuta `apply`** salvo `DOTFILES_APPLY=1`. |
 | `make install-verify` | Versiones de zsh/git/chezmoi/sops/age/rg/docker. `STRICT=1` hace fallar si hay `FAIL` real. |
 | `make ai-mcp-validate` | Valida [ai/assets/mcps/MANIFEST.yaml](ai/assets/mcps/MANIFEST.yaml): intención canónica de MCPs por agente (Cursor/Codex/OpenCode). Requiere PyYAML. No muta; no sustituye aún a las plantillas Chezmoi. |
+| `make ai-mcp-render` | Genera evidencia bajo `build/mcps/` (JSON Cursor, fragmento TOML `mcp_servers`, JSON OpenCode) desde el manifiesto + recetas Python. No muta `dot_cursor/`, `dot_codex/`, `dot_config/`. |
+| `make ai-mcp-drift` | Compara ese render con las plantillas actuales; `exit 0` si solo hay `INTENTIONAL_PENDING_PARITY`, `exit 1` si hay `UNEXPECTED_DRIFT`. Escribe `build/mcps/drift-report.json`. |
 | `make ai-cursor-check` | Comprueba sin mutar si `~/.cursor/mcp.json`, skills enlazados y comandos AI están alineados con los templates del repo. No instala ni ejecuta Cursor ni MCPs. `STRICT=1` endurece (p. ej. falta `~/.cursor/mcp.json`). |
 | `make install` | Encadena: check → apt → external → dotfiles → verify. |
 

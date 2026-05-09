@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-09 22:54:13
+**Generated:** 2026-05-09 23:04:08
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -837,6 +837,7 @@
 │   ├── 🔧 ai-cursor-check.sh
 │   ├── 🔧 check-system-deps.sh
 │   ├── 🔧 generate-commands.sh
+│   ├── 🐍 generate-mcp-configs.py
 │   ├── 🔧 git-set-ai-author.sh
 │   ├── 🔧 git-set-ai-disable.sh
 │   ├── 🔧 git-set-ai-enable.sh
@@ -912,6 +913,7 @@
 │   │   │   ├── 📄 install-dotfiles.bats
 │   │   │   ├── 📄 install-uv.bats
 │   │   │   ├── 📄 mcp-manifest.bats
+│   │   │   ├── 📄 mcp-render-drift.bats
 │   │   │   └── 📄 system-deps.bats
 │   │   └── 📄 git-ai-author.bats
 │   └── 📄 Makefile.tests
