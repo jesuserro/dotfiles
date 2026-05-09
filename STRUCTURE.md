@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-03 08:33:57
+**Generated:** 2026-05-09 21:06:01
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -657,6 +657,8 @@
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 architecture-review
 │   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 dotfiles-install
+│   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 dotfiles-skill-registration
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 grill-plan
@@ -749,6 +751,8 @@
 │   │   │   ├── 🖼️ architecture-overview.jpg
 │   │   │   └── 🖼️ architecture-overview.svg
 │   │   └── 📝 PROJECT_DATA.md
+│   ├── 📁 ops
+│   │   └── 📝 dotfiles-install.md
 │   ├── 📁 plans
 │   │   ├── 📝 PLAN_000009.md
 │   │   └── 📄 PLAN_000009.md:Zone.Identifier
@@ -824,6 +828,7 @@
 │   ├── 📁 lib
 │   │   ├── 🔧 git-ai-common.sh
 │   │   ├── 🔧 git-ai-cursor-path.sh
+│   │   ├── 🔧 install_common.sh
 │   │   ├── 🔧 prompt-vault-common.sh
 │   │   └── 🐍 system_deps.py
 │   ├── 🔧 check-system-deps.sh
@@ -856,9 +861,13 @@
 │   ├── 📝 git_start_feature.md
 │   ├── 🔧 git_start_feature.sh
 │   ├── 🔧 git_workflow.sh
+│   ├── 🔧 install-check.sh
+│   ├── 🔧 install-dotfiles.sh
+│   ├── 🔧 install-external.sh
 │   ├── 🔧 install-git-ai-wrapper.sh
 │   ├── 🔧 install-gitnexus.sh
 │   ├── 🔧 install-system-packages.sh
+│   ├── 🔧 install-verify.sh
 │   ├── 🔧 materialize-commands.sh
 │   ├── 🔧 show-system-deps-actions.sh
 │   ├── 🔧 show_branches_with_dates.sh
@@ -892,6 +901,7 @@
 │   │   ├── 📁 prompts
 │   │   │   └── 📄 prompt-launchers.bats
 │   │   ├── 📁 system
+│   │   │   ├── 📄 install-dotfiles.bats
 │   │   │   └── 📄 system-deps.bats
 │   │   └── 📄 git-ai-author.bats
 │   └── 📄 Makefile.tests
@@ -930,6 +940,7 @@
 ├── 📄 gitconfig
 ├── 📄 gitignore
 ├── 📄 gitmessage
+├── 🔨 install.mk
 ├── 📄 rcrc
 ├── ⚙️ secrets.sops.yaml
 ├── 📄 secrets.sops.yaml.new

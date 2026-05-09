@@ -88,6 +88,11 @@ def _action_for_package(package):
             "summary": "Treat Docker as a manual workstation choice on WSL rather than a dotfiles-managed installer.",
             "command": "Manual: use your chosen Docker Desktop WSL integration or Linux Docker Engine setup.",
         },
+        "gh": {
+            "kind": "manual",
+            "summary": "GitHub CLI is optional; install via your approved channel (upstream .deb, package manager, or corporate catalog).",
+            "command": "See https://cli.github.com/ and your org policy for gh installation.",
+        },
         "wslpath": {
             "kind": "environment",
             "summary": "wslpath is provided by WSL itself; if it is missing, verify WSL/interop health.",

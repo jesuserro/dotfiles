@@ -56,6 +56,12 @@ packages:
     capability: ai-cli
     install_method: curl
     note: Updated by ups() through the official install script.
+  - package: gh
+    command: gh
+    required: false
+    capability: git
+    install_method: manual
+    note: GitHub CLI; optional for gh-driven workflows from WSL.
   - package: docker
     command: docker
     required: false

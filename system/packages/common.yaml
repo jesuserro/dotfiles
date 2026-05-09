@@ -12,6 +12,11 @@ packages:
     required: true
     capability: bootstrap
     note: Used by installation helpers and network-oriented tooling.
+  - package: wget
+    command: wget
+    required: true
+    capability: bootstrap
+    note: Used by bootstrap scripts and download workflows alongside curl.
   - package: zsh
     command: zsh
     required: true

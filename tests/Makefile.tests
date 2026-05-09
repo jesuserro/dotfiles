@@ -206,6 +206,7 @@ bats-prompts:
 bats-system:
 	@echo "$(BLUE)==>$NC Running system dependency tests..."
 	@$(call run_bats,$(BATS_DIR)/system/system-deps.bats)
+	@$(call run_bats,$(BATS_DIR)/system/install-dotfiles.bats)
 
 # ============================================
 # CI targets (JUnit/XML output)

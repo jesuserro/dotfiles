@@ -79,6 +79,7 @@ Visible skill names follow semantic origin, not just repository location:
 ### Ops
 
 - `ops/ai-prompt-consumer/` - `Vault AI Prompt Consumer`
+- `ops/dotfiles-install/` - `Dotfiles bootstrap install`
 - `ops/dotfiles-skill-registration/` - `Dotfiles Skill Registration`
 - `ops/vault-development-acceleration/` - `Vault Development Acceleration`
 - `ops/vault-review-diff/` - `Vault Review Diff`
@@ -88,6 +89,7 @@ Visible skill names follow semantic origin, not just repository location:
 - `ops/vault-update-documentation/` - `Vault Update Documentation`
 - `ops/vault-write-commit-message/` - `Vault Write Commit Message`
 - `ops/mcp-governance/` - `Dotfiles MCP Governance`
+- `ops/system-dependencies/` - `Dotfiles System Dependencies`
 - `ops/system-updates/` - `Dotfiles UPS Workflow`
 - `ops/playwright-ui-validation/` - `Dotfiles Playwright UI Validation`
 - `ops/wsl2-local-tools/` - `Dotfiles WSL2 Local Tools`
