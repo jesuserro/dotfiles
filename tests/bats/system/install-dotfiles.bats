@@ -61,6 +61,19 @@ WRAP
 	rm -rf "${fake_root}"
 }
 
+@test "install-zsh-stack DRY_RUN never clones and is idempotent" {
+	run env DRY_RUN=1 bash "${DOTFILES_DIR}/scripts/install-zsh-stack.sh"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"DRY_RUN"* || "${output}" == *"already present"* ]]
+	[[ "${output}" == *"never touches"* || "${output}" == *"NOT touched"* ]]
+}
+
+@test "install-external surfaces zsh stack detection" {
+	run bash "${DOTFILES_DIR}/scripts/install-external.sh"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"Zsh stack"* ]]
+}
+
 @test "install-check STRICT fails when declarative requirements are missing" {
 	local fake_root
 	fake_root="$(mktemp -d)"

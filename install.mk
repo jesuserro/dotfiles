@@ -12,7 +12,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -30,5 +30,8 @@ install-dotfiles:
 
 install-verify:
 	@bash $(DOTFILES_DIR)/scripts/install-verify.sh
+
+install-zsh-stack:
+	@bash $(DOTFILES_DIR)/scripts/install-zsh-stack.sh
 
 install: install-check install-apt install-external install-dotfiles install-verify

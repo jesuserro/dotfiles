@@ -65,6 +65,27 @@ else
 	printf '%s\n' "${actions_out}"
 fi
 
+echo ""
+echo "==> Zsh stack (Oh My Zsh / Powerlevel10k / plugins) — detection only"
+ZSH_DIR_PROBE="${ZSH:-${HOME}/.oh-my-zsh}"
+P10K_DIR_PROBE="${ZSH_CUSTOM:-${ZSH_DIR_PROBE}/custom}/themes/powerlevel10k"
+zsh_stack_missing=0
+if [[ -d "${ZSH_DIR_PROBE}/.git" ]]; then
+	install_label OK "Oh My Zsh present at ${ZSH_DIR_PROBE}"
+else
+	install_label WARN "Oh My Zsh missing — run 'make install-zsh-stack' (idempotent, never touches ~/.zshrc)"
+	zsh_stack_missing=1
+fi
+if [[ -d "${P10K_DIR_PROBE}/.git" ]]; then
+	install_label OK "Powerlevel10k present at ${P10K_DIR_PROBE}"
+else
+	install_label WARN "Powerlevel10k missing — run 'make install-zsh-stack'"
+	zsh_stack_missing=1
+fi
+if [[ ${zsh_stack_missing} -eq 1 ]]; then
+	install_label WARN "install-external never installs the zsh stack itself; use 'make install-zsh-stack' or 'DRY_RUN=1 make install-zsh-stack' first."
+fi
+
 if install_is_wsl; then
 	echo ""
 	echo "==> Windows host tools (from WSL)"

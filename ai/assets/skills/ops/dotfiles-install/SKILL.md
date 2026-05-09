@@ -21,10 +21,11 @@ Orquestar un **bootstrap inicial seguro**: diagnóstico, paquetes APT declarativ
 |---------|------|
 | `make install-check` | Solo diagnóstico (no muta). Entorno, herramientas base, más salida de `deps-check --include-optional`. |
 | `make install-apt` | Instala paquetes APT desde el inventario YAML (mismo backend que `make deps-install`). |
-| `make install-external` | Solo recomendaciones (incluye `deps-actions`); detecta Docker/wt/winget de forma prudente. |
+| `make install-external` | Solo recomendaciones (incluye `deps-actions`); detecta Docker/wt/winget y la zsh stack de forma prudente. |
+| `make install-zsh-stack` | Clona Oh My Zsh, Powerlevel10k y plugins custom solo si faltan; idempotente; no toca `~/.zshrc`. |
 | `make install-dotfiles` | Plan chezmoi; **no aplica** por defecto. |
 | `make install-verify` | `PASS` / `WARN` / `FAIL` en versiones; Docker solo `WARN`. |
-| `make install` | Orden: check → apt → external → dotfiles → verify. |
+| `make install` | Orden: check → apt → external → dotfiles → verify. `make install-zsh-stack` queda fuera del orquestador para mantener `make install` idempotente y ligero. |
 
 Variables de entorno / Make (pasar como `make target VAR=value`):
 
@@ -49,14 +50,25 @@ También: `DEPS_INSTALL_ARGS` se reenvía al instalador APT (igual que `deps-ins
 - **Docker Desktop:** no se instala desde estos scripts; solo detección y `WARN`.
 - **SOPS/Age:** se pueden instalar vía APT si el inventario lo declara; **no** se generan claves, no se tocan secretos ni desencriptado forzado.
 - **Windows host:** se detectan `wt.exe`, `winget.exe`, `powershell.exe` desde WSL; **no** se asume admin ni se ejecuta `winget install` por defecto.
+- **Zsh stack:** `install-zsh-stack` clona bajo `$HOME/.oh-my-zsh` y `$ZSH_CUSTOM/themes/powerlevel10k` solo si faltan; nunca edita `~/.zshrc`, `~/.p10k.zsh` ni archivos gestionados por chezmoi/RCM.
+
+## Idempotency
+
+- `install-check` y `install-verify` no mutan el sistema.
+- `install-apt` delega en `apt-get`, idempotente por paquete.
+- `install-external` no instala nada (solo guía).
+- `install-dotfiles` no aplica chezmoi sin `DOTFILES_APPLY=1`.
+- `install-zsh-stack` clona solo si la ruta destino no existe.
+- `make install` puede repetirse sin efectos destructivos.
 
 ## Recommended Flow (Windows 11 Pro + WSL2 Ubuntu)
 
 1. `make install-check`
 2. `make install-apt` (o primero `DRY_RUN=1`)
-3. `make install-external` (revisar acciones manuales / corporativas)
-4. `make install-dotfiles` → revisar `WARN`; aplicar solo cuando proceda: `make install-dotfiles DOTFILES_APPLY=1`
-5. `make install-verify` (en CI o máquina limpia: `STRICT=1` si quieres fallar ante binarios críticos ausentes)
+3. `make install-external` (revisar acciones manuales / corporativas; verá si la zsh stack falta)
+4. `make install-zsh-stack` (idempotente: solo clona lo que falte)
+5. `make install-dotfiles` → revisar `WARN`; aplicar solo cuando proceda: `make install-dotfiles DOTFILES_APPLY=1`
+6. `make install-verify` (en CI o máquina limpia: `STRICT=1` si quieres fallar ante binarios críticos ausentes)
 
 ## Interpreting PASS / WARN / FAIL
 
