@@ -7,71 +7,33 @@ log_dir = "~/.codex-logs"
 # ─────────────────────────────────────────────
 # MCP: Excalidraw (diagramas)
 # ─────────────────────────────────────────────
+
 [mcp_servers.excalidraw]
 command = "/usr/bin/node"
 args = ["{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"]
-cwd = "{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp"
 enabled = true
+cwd = "{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp"
 
-# ─────────────────────────────────────────────
-# MCP: Context7 (documentación dinámica)
-# ─────────────────────────────────────────────
 [mcp_servers.context7]
 command = "npx"
 args = ["-y", "@upstash/context7-mcp"]
 enabled = true
 
-# ─────────────────────────────────────────────
-# MCP: Postgres (usa POSTGRES_DSN desde ~/.config/mcp-secrets.env)
-# Pattern: Runtime Global + Connection Project-Specific
-# ─────────────────────────────────────────────
-[mcp_servers.postgres]
-command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-postgres-launcher"
-enabled = true
-
-[mcp_servers.postgres.env]
-MCP_POSTGRES_SECRETS = "{{ .chezmoi.homeDir }}/.config/mcp-secrets.env"
-
-# ─────────────────────────────────────────────
-# MCP: Trino
-# ─────────────────────────────────────────────
-[mcp_servers.trino]
-command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
-args = ["-m", "trino_mcp"]
-enabled = true
-
-[mcp_servers.trino.env]
-TRINO_HOST = "localhost"
-TRINO_PORT = "8080"
-TRINO_USER = "admin"
-TRINO_CATALOG = "iceberg"
-TRINO_HTTP_SCHEME = "http"
-AUTH_METHOD = "NONE"
-
-# ─────────────────────────────────────────────
-# MCP: Docker
-# ─────────────────────────────────────────────
 [mcp_servers.docker]
 command = "/usr/bin/node"
 args = ["{{ .chezmoi.homeDir }}/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"]
 enabled = true
 
-# ─────────────────────────────────────────────
-# MCP: Grafana (oficial: grafana/mcp-grafana)
-# ─────────────────────────────────────────────
 [mcp_servers.grafana]
 command = "uvx"
 args = ["mcp-grafana"]
 enabled = true
 
 [mcp_servers.grafana.env]
+GRAFANA_PASSWORD = "admin"
 GRAFANA_URL = "http://localhost:3002"
 GRAFANA_USERNAME = "admin"
-GRAFANA_PASSWORD = "admin"
 
-# ─────────────────────────────────────────────
-# MCP: OpenTelemetry (popular: traceloop/opentelemetry-mcp-server)
-# ─────────────────────────────────────────────
 [mcp_servers.opentelemetry]
 command = "uvx"
 args = ["--with", "opentelemetry-semantic-conventions-ai==0.4.13", "opentelemetry-mcp"]
@@ -81,17 +43,67 @@ enabled = true
 BACKEND_TYPE = "tempo"
 BACKEND_URL = "http://localhost:3200"
 
-# ─────────────────────────────────────────────
-# MCP: GitHub (usa GITHUB_TOKEN desde ~/.secrets/codex.env)
-# ─────────────────────────────────────────────
 [mcp_servers.github]
 command = "/usr/bin/bash"
 args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; exec {{ .chezmoi.homeDir }}/.local/bin/codex-mcp-github"]
 enabled = true
 
-# ─────────────────────────────────────────────
-# MCP: Dagster (wrapper stdio local)
-# ─────────────────────────────────────────────
+[mcp_servers.fetch]
+command = "uvx"
+args = ["mcp-server-fetch"]
+enabled = true
+
+[mcp_servers.gitnexus]
+command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-gitnexus-launcher"
+args = []
+enabled = true
+
+[mcp_servers.filesystem]
+command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-filesystem-launcher"
+args = []
+enabled = true
+
+[mcp_servers.git]
+command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-git-launcher"
+args = []
+enabled = true
+
+[mcp_servers.sequential-thinking]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+enabled = true
+
+[mcp_servers.obsidian]
+command = "npx"
+args = ["-y", "@bitbonsai/mcpvault", "/mnt/c/Users/jesus/Documents/vault"]
+enabled = true
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@executeautomation/playwright-mcp-server"]
+enabled = true
+
+[mcp_servers.postgres]
+command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-postgres-launcher"
+args = []
+enabled = true
+
+[mcp_servers.postgres.env]
+MCP_POSTGRES_SECRETS = "{{ .chezmoi.homeDir }}/.config/mcp-secrets.env"
+
+[mcp_servers.trino]
+command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
+args = ["-m", "trino_mcp"]
+enabled = true
+
+[mcp_servers.trino.env]
+AUTH_METHOD = "NONE"
+TRINO_CATALOG = "iceberg"
+TRINO_HOST = "localhost"
+TRINO_HTTP_SCHEME = "http"
+TRINO_PORT = "8080"
+TRINO_USER = "admin"
+
 [mcp_servers.dagster]
 command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
 args = ["{{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/dagster/server.py"]
@@ -101,17 +113,11 @@ enabled = true
 DAGSTER_GRAPHQL_URL = "http://localhost:3000/graphql"
 DAGSTER_TIMEOUT_SECONDS = "30"
 
-# ─────────────────────────────────────────────
-# MCP: MinIO/S3 (usa MINIO_ACCESS_KEY/SECRET desde ~/.secrets/codex.env)
-# ─────────────────────────────────────────────
 [mcp_servers.minio]
 command = "/usr/bin/bash"
 args = ["-lc", "source ~/.secrets/codex.env 2>/dev/null; export MINIO_ENDPOINT='http://localhost:9000'; export MINIO_SECURE='false'; export MINIO_REGION='us-east-1'; exec {{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python {{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/minio/server.py"]
 enabled = true
 
-# ─────────────────────────────────────────────
-# MCP: OTEL/Tempo (wrapper stdio local)
-# ─────────────────────────────────────────────
 [mcp_servers.tempo]
 command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
 args = ["{{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/tempo/server.py"]
@@ -121,9 +127,6 @@ enabled = true
 TEMPO_BASE_URL = "http://localhost:3200"
 TEMPO_TIMEOUT_SECONDS = "30"
 
-# ─────────────────────────────────────────────
-# MCP: Loki (wrapper stdio local)
-# ─────────────────────────────────────────────
 [mcp_servers.loki]
 command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
 args = ["{{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/loki/server.py"]
@@ -133,85 +136,18 @@ enabled = true
 LOKI_BASE_URL = "http://localhost:3100"
 LOKI_TIMEOUT_SECONDS = "30"
 
-# ─────────────────────────────────────────────
-# MCP: Prometheus (OTEL metrics)
-# ─────────────────────────────────────────────
 [mcp_servers.prometheus]
 command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
 args = ["{{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/prometheus/server.py"]
 enabled = true
 
 [mcp_servers.prometheus.env]
-PROMETHEUS_URL = "http://localhost:9090"
 PROMETHEUS_TIMEOUT_SECONDS = "15"
+PROMETHEUS_URL = "http://localhost:9090"
 
-# ─────────────────────────────────────────────
-# MCP: Store-ETL Ops (curated make wrapper)
-# ─────────────────────────────────────────────
 [mcp_servers.store_etl_ops]
 command = "{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python"
 args = ["{{ .chezmoi.homeDir }}/dotfiles/ai/runtime/mcp/servers/store_etl_ops/server.py"]
-enabled = true
-
-# ─────────────────────────────────────────────
-# MCP: Fetch (HTTP GET, official MCP server)
-# ─────────────────────────────────────────────
-[mcp_servers.fetch]
-command = "uvx"
-args = ["mcp-server-fetch"]
-enabled = true
-
-# ─────────────────────────────────────────────
-# MCP: GitNexus (inteligencia estructural de código)
-# ─────────────────────────────────────────────
-[mcp_servers.gitnexus]
-command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-gitnexus-launcher"
-args = []
-enabled = true
-
-# ─────────────────────────────────────────────
-# MCP: Filesystem (acceso controlado a filesystem local)
-# Política: whitelist de rutas permitidas
-# ─────────────────────────────────────────────
-[mcp_servers.filesystem]
-command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-filesystem-launcher"
-args = []
-enabled = true
-
-# ─────────────────────────────────────────────
-# MCP: Git (operaciones Git locales)
-# Detecta el repo actual dinámicamente desde cwd
-# ─────────────────────────────────────────────
-[mcp_servers.git]
-command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-git-launcher"
-args = []
-enabled = true
-
-# ─────────────────────────────────────────────
-# MCP: Sequential Thinking (razonamiento estructurado)
-# Herramienta de apoyo cognitivo
-# ─────────────────────────────────────────────
-[mcp_servers.sequential-thinking]
-command = "npx"
-args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
-enabled = true
-
-# ─────────────────────────────────────────────
-# MCP: Obsidian/mcpvault (operaciones semánticas sobre vault)
-# Complemento de Filesystem MCP - acceso a notas, frontmatter, tags
-# Global opcional - habilitar si se usa Obsidian
-# ─────────────────────────────────────────────
-[mcp_servers.obsidian]
-command = "npx"
-args = ["-y", "@bitbonsai/mcpvault", "/mnt/c/Users/jesus/Documents/vault"]
-enabled = false
-
-# ─────────────────────────────────────────────
-# MCP: Playwright (browser automation and testing)
-# ─────────────────────────────────────────────
-[mcp_servers.playwright]
-command = "npx"
-args = ["-y", "@executeautomation/playwright-mcp-server"]
 enabled = true
 
 [plugins."github@openai-curated"]

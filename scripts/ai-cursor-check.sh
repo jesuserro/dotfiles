@@ -4,7 +4,7 @@
 # STRICT=1 promotes missing critical Cursor pieces to FAIL / exit 1.
 #
 # Canonical MCP intent: ai/assets/mcps/MANIFEST.yaml (validate with make ai-mcp-validate).
-# Template generation / drift vs manifest is a later phase; this script still uses templates + HOME.
+# Cursor template MCP count should follow MANIFEST after `make ai-mcp-generate APPLY=1` + chezmoi apply; this script does not assume a fixed count.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -193,6 +193,27 @@ cursor_tpl_n = 0
 if cursor_t.is_file():
     cursor_tpl_n = count_cursor_servers(load_json_maybe_templated(cursor_t))
 
+manifest_cursor_expected = -1
+man_path = dotfiles / "ai" / "assets" / "mcps" / "MANIFEST.yaml"
+if man_path.is_file():
+    try:
+        import yaml  # type: ignore
+
+        yd = yaml.safe_load(man_path.read_text(encoding="utf-8"))
+        mclist = yd.get("mcps") or []
+        manifest_cursor_expected = 0
+        for e in mclist:
+            if not isinstance(e, dict):
+                continue
+            surf = e.get("surfaces") or {}
+            if not isinstance(surf, dict):
+                continue
+            cur = surf.get("cursor")
+            if isinstance(cur, dict) and cur.get("enabled") is True:
+                manifest_cursor_expected += 1
+    except Exception:
+        manifest_cursor_expected = -1
+
 codex_en = 0
 if codex_t.is_file():
     codex_en = count_codex_enabled(codex_t.read_text(encoding="utf-8"))
@@ -218,6 +239,7 @@ print(
     json.dumps(
         {
             "cursor_template_count": cursor_tpl_n,
+            "manifest_cursor_expected": manifest_cursor_expected,
             "codex_enabled_count": codex_en,
             "opencode_enabled_count": opencode_en,
             "cursor_home_count": home_n,
@@ -409,13 +431,18 @@ ce="$(printf '%s' "${stats_json}" | python3 -c "import json,sys; d=json.load(sys
 oe="$(printf '%s' "${stats_json}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('opencode_enabled_count',0))" 2>/dev/null || echo 0)"
 hn="$(printf '%s' "${stats_json}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('cursor_home_count',-1))" 2>/dev/null || echo -1)"
 herr="$(printf '%s' "${stats_json}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('cursor_home_error',''))" 2>/dev/null || echo "")"
+mf="$(printf '%s' "${stats_json}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('manifest_cursor_expected',-1))" 2>/dev/null || echo -1)"
 
 if [[ "${hn}" -ge 0 ]]; then
-	line_info "MCP surfaces (from repo templates; asymmetry is expected): Cursor template=${ct}, Cursor home=${hn}, Codex enabled=${ce}, OpenCode enabled=${oe}"
+	line_info "MCP surfaces: Cursor template=${ct} (manifest cursor enabled=${mf}), Cursor home=${hn}, Codex enabled=${ce}, OpenCode enabled=${oe}"
 else
-	line_info "MCP surfaces (from repo templates; asymmetry is expected): Cursor template=${ct}, Cursor home=(no ~/.cursor/mcp.json), Codex enabled=${ce}, OpenCode enabled=${oe}"
+	line_info "MCP surfaces: Cursor template=${ct} (manifest cursor enabled=${mf}), Cursor home=(no ~/.cursor/mcp.json), Codex enabled=${ce}, OpenCode enabled=${oe}"
 fi
-	line_info "MCP manifest (intent): ai/assets/mcps/MANIFEST.yaml — run: make ai-mcp-validate"
+line_info "MCP manifest: ai/assets/mcps/MANIFEST.yaml — validate: make ai-mcp-validate; drift: make ai-mcp-drift; apply templates: make ai-mcp-generate APPLY=1"
+
+if [[ "${mf}" -ge 0 && "${ct}" -ge 0 && "${ct}" -ne "${mf}" ]]; then
+	line WARN "Cursor template MCP count (${ct}) != MANIFEST cursor enabled (${mf}) — sync with: make ai-mcp-generate APPLY=1, then chezmoi apply"
+fi
 
 if [[ ! -f "${CURSOR_MCP}" ]]; then
 	line MISSING "~/.cursor/mcp.json missing (chezmoi apply likely not run for Cursor MCPs)"

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Dry-run MCP config generator from ai/assets/mcps/MANIFEST.yaml + Python recipes.
+Dry-run and productive MCP config generation from ai/assets/mcps/MANIFEST.yaml + Python recipes.
 
 Subcommands:
-  render — write build/mcps/* (does not touch Chezmoi templates)
-  drift  — compare renders + manifest intent vs current templates; classify drift
+  render   — write build/mcps/* (does not touch Chezmoi templates)
+  drift    — compare renders + manifest intent vs current templates; classify drift
+  generate — plan only unless --apply: then validate → render → drift (no unexpected) → write templates
 
 Chezmoi placeholders must appear literally; never use str.format on strings containing {{.
 """
@@ -13,7 +14,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
+import shutil
+import subprocess
 import sys
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Set, Tuple
@@ -25,6 +31,7 @@ OUT_CURSOR = BUILD_MCPS / "dot_cursor" / "mcp.json.tmpl"
 OUT_CODEX = BUILD_MCPS / "dot_codex" / "mcp_servers.toml.tmpl"
 OUT_OPENCODE = BUILD_MCPS / "dot_config" / "opencode" / "opencode.json.tmpl"
 OUT_DRIFT_JSON = BUILD_MCPS / "drift-report.json"
+BACKUP_ROOT = BUILD_MCPS / "backups"
 
 TMPL_CURSOR = REPO_ROOT / "dot_cursor" / "mcp.json.tmpl"
 TMPL_CODEX = REPO_ROOT / "dot_codex" / "config.toml.tmpl"
@@ -79,6 +86,81 @@ def manifest_ids(mcps: List[Dict[str, Any]]) -> Set[str]:
         if isinstance(mid, str):
             out.add(mid)
     return out
+
+
+def count_manifest_surface_enabled(mcps: List[Dict[str, Any]], surface: str) -> int:
+    return sum(1 for e in mcps if isinstance(e, dict) and manifest_surface_enabled(e, surface))
+
+
+_RE_MCP_SERVERS_HEADER = re.compile(r"(?m)^\[mcp_servers\.[^\]]+\]\s*$")
+_RE_PLUGINS_HEADER = re.compile(r"(?m)^\[plugins\.[^\]]+\]\s*$")
+
+
+def merge_codex_productive(full_toml: str, mcp_fragment: str) -> str:
+    """
+    Replace every [mcp_servers.*] block (and nested [mcp_servers.*.env]) with mcp_fragment,
+    preserving preamble before the first [mcp_servers. and any trailing [plugins.*] section.
+    """
+    m0 = _RE_MCP_SERVERS_HEADER.search(full_toml)
+    if not m0:
+        raise ValueError("Codex template: no [mcp_servers.*] section found")
+    preamble = full_toml[: m0.start()]
+    m1 = _RE_PLUGINS_HEADER.search(full_toml, m0.start())
+    if m1:
+        tail = full_toml[m1.start() :]
+    else:
+        tail = ""
+    frag = mcp_fragment.strip()
+    if frag:
+        frag = frag + "\n" if not frag.endswith("\n") else frag
+    body = preamble.rstrip() + "\n\n" + frag
+    if tail.strip():
+        body = body.rstrip() + "\n\n" + tail.lstrip("\n")
+    if not body.endswith("\n"):
+        body += "\n"
+    return body
+
+
+def _run_validate_manifest(manifest_path: Path) -> int:
+    script = REPO_ROOT / "scripts" / "validate-mcp-manifest.py"
+    r = subprocess.run(
+        [sys.executable, str(script), str(manifest_path)],
+        cwd=str(REPO_ROOT),
+    )
+    return int(r.returncode)
+
+
+def _atomic_write_text(
+    dest: Path,
+    content: str,
+    *,
+    backup_dir: Path,
+    validate_json: bool = False,
+    validate_toml: bool = False,
+) -> None:
+    import tempfile  # noqa: PLC0415
+    import tomllib  # noqa: PLC0415
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    if dest.is_file():
+        shutil.copy2(dest, backup_dir / f"{ts}_{dest.name}.bak")
+
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{dest.name}.", suffix=".tmp", dir=str(dest.parent), text=True)
+    os.close(fd)
+    tmp_path = Path(tmp_name)
+    try:
+        tmp_path.write_text(content, encoding="utf-8")
+        if validate_json:
+            json.loads(tmp_path.read_text(encoding="utf-8"))
+        if validate_toml:
+            tomllib.loads(tmp_path.read_text(encoding="utf-8"))
+        os.replace(tmp_path, dest)
+    except Exception:
+        if tmp_path.exists():
+            tmp_path.unlink()
+        raise
 
 
 # --- Recipes: canonical execution payload per MCP per surface (matches current templates) ---
@@ -968,23 +1050,136 @@ def cmd_drift(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_generate(args: argparse.Namespace) -> int:
+    manifest_path = Path(args.manifest)
+    apply = bool(getattr(args, "apply", False))
+    if not apply:
+        print("==> MCP generate — plan only (no files written, including build/mcps/)")
+        print("")
+        print("Would update productive Chezmoi templates from rendered artifacts:")
+        print(f"  {OUT_CURSOR}")
+        print(f"    -> {TMPL_CURSOR}")
+        print(f"  {OUT_CODEX} (MCP fragment)")
+        print(f"    -> {TMPL_CODEX} (replace [mcp_servers.*] only; preamble + [plugins.*] preserved)")
+        print(f"  {OUT_OPENCODE}")
+        print(f"    -> {TMPL_OPENCODE}")
+        print("")
+        print("Recommended gate sequence before APPLY=1:")
+        print("  make ai-mcp-validate && make ai-mcp-render && make ai-mcp-drift")
+        print("")
+        print("Re-run with APPLY=1 to update productive MCP templates:")
+        print("  make ai-mcp-generate APPLY=1")
+        print("  # or: python3 scripts/generate-mcp-configs.py generate --apply")
+        return 0
+
+    print("==> MCP generate APPLY=1 — pre-flight gates")
+    vr = _run_validate_manifest(manifest_path)
+    if vr != 0:
+        print("FAIL manifest validation (see validate-mcp-manifest.py); not writing templates", file=sys.stderr)
+        return 1
+
+    r_ns = argparse.Namespace(manifest=str(manifest_path), _quiet_render_ok=False)
+    if cmd_render(r_ns) != 0:
+        print("FAIL render; not writing templates", file=sys.stderr)
+        return 1
+
+    d_ns = argparse.Namespace(manifest=str(manifest_path))
+    if cmd_drift(d_ns) != 0:
+        print(
+            "FAIL drift (unexpected drift, parse error, or render issue); not writing templates",
+            file=sys.stderr,
+        )
+        return 1
+
+    print("==> MCP generate APPLY=1 — writing productive templates (atomic + backups)")
+    try:
+        cursor_body = OUT_CURSOR.read_text(encoding="utf-8")
+        json.loads(cursor_body)
+        _atomic_write_text(
+            TMPL_CURSOR,
+            cursor_body,
+            backup_dir=BACKUP_ROOT,
+            validate_json=True,
+            validate_toml=False,
+        )
+
+        op_body = OUT_OPENCODE.read_text(encoding="utf-8")
+        json.loads(op_body)
+        _atomic_write_text(
+            TMPL_OPENCODE,
+            op_body,
+            backup_dir=BACKUP_ROOT,
+            validate_json=True,
+            validate_toml=False,
+        )
+
+        codex_frag = OUT_CODEX.read_text(encoding="utf-8")
+        full_codex = TMPL_CODEX.read_text(encoding="utf-8")
+        merged = merge_codex_productive(full_codex, codex_frag)
+        import tomllib  # noqa: PLC0415
+
+        tomllib.loads(merged)
+        _atomic_write_text(
+            TMPL_CODEX,
+            merged,
+            backup_dir=BACKUP_ROOT,
+            validate_json=False,
+            validate_toml=True,
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"FAIL apply write/validate: {exc}", file=sys.stderr)
+        return 1
+
+    try:
+        json.loads(TMPL_CURSOR.read_text(encoding="utf-8"))
+        json.loads(TMPL_OPENCODE.read_text(encoding="utf-8"))
+        import tomllib  # noqa: PLC0415
+
+        tomllib.loads(TMPL_CODEX.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        print(f"FAIL post-write validation: {exc}", file=sys.stderr)
+        return 1
+
+    try:
+        _, mcps = load_manifest(manifest_path)
+    except Exception:
+        mcps = []
+    print("")
+    print("==> Summary (MANIFEST.yaml enabled counts)")
+    print(f"  cursor:   {count_manifest_surface_enabled(mcps, 'cursor')} MCPs")
+    print(f"  codex:    {count_manifest_surface_enabled(mcps, 'codex')} MCPs")
+    print(f"  opencode: {count_manifest_surface_enabled(mcps, 'opencode')} MCPs")
+    print("")
+    print("OK productive templates updated.")
+    print("Publish to HOME with: chezmoi --source=$HOME/dotfiles apply  (or make install-dotfiles DOTFILES_APPLY=1)")
+    print("Then: make ai-cursor-check")
+    return 0
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="MCP config dry-run render + drift from MANIFEST.yaml")
+    parser = argparse.ArgumentParser(description="MCP config dry-run render + drift + generate from MANIFEST.yaml")
     parser.add_argument(
         "command",
-        choices=("render", "drift"),
-        help="render: write build/mcps/*; drift: render + compare to Chezmoi templates",
+        choices=("render", "drift", "generate"),
+        help="render | drift | generate (use generate --apply to write templates)",
     )
     parser.add_argument(
         "--manifest",
         default=str(DEFAULT_MANIFEST),
         help="Path to MANIFEST.yaml",
     )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="With generate: run gates and write productive Chezmoi templates",
+    )
     args = parser.parse_args()
     try:
         if args.command == "render":
             return cmd_render(args)
-        return cmd_drift(args)
+        if args.command == "drift":
+            return cmd_drift(args)
+        return cmd_generate(args)
     except SystemExit as se:
         code = se.code
         if isinstance(code, int):

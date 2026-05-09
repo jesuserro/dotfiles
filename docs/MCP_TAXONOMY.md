@@ -91,10 +91,11 @@ MCPs using custom launchers (no update needed):
 1. Classify: Core / Knowledge / Domain / Platform / Connection
 2. Add or update the entry in `ai/assets/mcps/MANIFEST.yaml` (all three surfaces; document any `enabled: false` with `reason`)
 3. Run `make ai-mcp-validate`
-4. Later: sync generated templates (Cursor, Codex, OpenCode) from the manifest
-5. Document in MCP_QUICKREF.md
-6. Update UPS.md if explicit update needed
-7. Reconcile `bin/validate-mcp-governance` when that script is aligned with the manifest
+4. Update execution recipes in `scripts/generate-mcp-configs.py` if `command`/`args`/`env` change; run `make ai-mcp-render` and `make ai-mcp-drift`
+5. When ready, run `make ai-mcp-generate APPLY=1`, then `chezmoi apply` (or `make install-dotfiles DOTFILES_APPLY=1`)
+6. Document in MCP_QUICKREF.md
+7. Update UPS.md if explicit update needed
+8. Reconcile `bin/validate-mcp-governance` when that script is aligned with the manifest
 
 ---
 
@@ -127,6 +128,8 @@ MCPs using custom launchers (no update needed):
 | `docs/UPS.md` | Update management |
 | `ai/assets/mcps/MANIFEST.yaml` | Canonical MCP intent per surface |
 | `make ai-mcp-validate` | Manifest structure and policy checks |
+| `make ai-mcp-render` / `make ai-mcp-drift` | Dry-run under `build/mcps/` + drift vs templates |
+| `make ai-mcp-generate APPLY=1` | Write productive MCP templates after gates (no `APPLY` = plan only) |
 | `bin/validate-mcp-governance` | Legacy template grep checks (reconciliation planned) |
 
 ---

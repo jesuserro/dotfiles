@@ -64,8 +64,64 @@ _sum() {
 	run make -C "${DOTFILES_DIR}" ai-mcp-drift
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" == *"INTENTIONAL_PENDING_PARITY"* ]]
-	[[ "${output}" == *"[cursor]"* ]] || [[ "${output}" == *"cursor"* ]]
-	[[ "${output}" == *"[opencode]"* ]] || [[ "${output}" == *"opencode"* ]]
-	[[ "${output}" == *"obsidian"* ]]
+	[[ "${output}" == *"--- UNEXPECTED_DRIFT ---"* ]]
+	[[ "${output}" == *"(none)"* ]]
 	[[ -f "${BUILD_MCPS}/drift-report.json" ]]
 }
+
+@test "make ai-mcp-generate without APPLY does not modify productive templates" {
+	if ! python3 -c "import yaml" 2>/dev/null; then
+		skip "PyYAML not installed"
+	fi
+	local a b c
+	a="$(_sum "${TMPL_CURSOR}")"
+	b="$(_sum "${TMPL_CODEX}")"
+	c="$(_sum "${TMPL_OPENCODE}")"
+	run make -C "${DOTFILES_DIR}" ai-mcp-generate
+	[[ "${status}" -eq 0 ]]
+	[[ "$(_sum "${TMPL_CURSOR}")" == "${a}" ]]
+	[[ "$(_sum "${TMPL_CODEX}")" == "${b}" ]]
+	[[ "$(_sum "${TMPL_OPENCODE}")" == "${c}" ]]
+}
+
+@test "make ai-mcp-generate without APPLY prints APPLY=1 hint" {
+	if ! python3 -c "import yaml" 2>/dev/null; then
+		skip "PyYAML not installed"
+	fi
+	run make -C "${DOTFILES_DIR}" ai-mcp-generate
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"APPLY=1"* ]]
+	[[ "${output}" == *"plan only"* ]] || [[ "${output}" == *"no files written"* ]]
+}
+
+@test "merge_codex_productive preserves preamble and plugins (in-memory)" {
+	if ! python3 -c "import yaml" 2>/dev/null; then
+		skip "PyYAML not installed"
+	fi
+	cd "${DOTFILES_DIR}" || exit 1
+	run python3 -c "
+import runpy
+from pathlib import Path
+root = Path('.')
+g = runpy.run_path('scripts/generate-mcp-configs.py')
+full = (root / 'dot_codex' / 'config.toml.tmpl').read_text(encoding='utf-8')
+frag = '[mcp_servers.__probe_merge__]\ncommand = \"true\"\nenabled = true\n'
+out = g['merge_codex_productive'](full, frag)
+import tomllib
+tomllib.loads(out)
+assert 'model =' in out
+assert '[plugins.' in out
+assert '__probe_merge__' in out
+assert 'excalidraw' not in out
+"
+	[[ "${status}" -eq 0 ]]
+}
+
+@test "validate render drift generate plan succeed in sequence" {
+	if ! python3 -c "import yaml" 2>/dev/null; then
+		skip "PyYAML not installed"
+	fi
+	run bash -c "cd '${DOTFILES_DIR}' && make ai-mcp-validate && make ai-mcp-render && make ai-mcp-drift && make ai-mcp-generate"
+	[[ "${status}" -eq 0 ]]
+}
+
