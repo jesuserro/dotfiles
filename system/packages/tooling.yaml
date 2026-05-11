@@ -7,7 +7,7 @@ packages:
     required: true
     capability: bootstrap
     install_method: manual
-    note: Required to apply the managed dotfiles into HOME.
+    note: Required to apply managed dotfiles. Install via 'make install-chezmoi' (opt-in, idempotent, no sudo) or upstream get.chezmoi.io.
   - package: sops
     command: sops
     required: true

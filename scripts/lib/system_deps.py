@@ -34,9 +34,12 @@ def _action_for_package(package):
 
     by_command = {
         "chezmoi": {
-            "kind": "manual",
-            "summary": "Install chezmoi from the official release flow or the upstream Go module.",
-            "command": "go install github.com/twpayne/chezmoi/v2@latest",
+            "kind": "installer",
+            "summary": (
+                "Install chezmoi (dotfiles engine) with the repo's idempotent installer. "
+                "Fallback for direct use: 'sh -c \"$(curl -fsLS get.chezmoi.io)\" -- -b \"$HOME/.local/bin\"'."
+            ),
+            "command": "make install-chezmoi",
         },
         "sops": {
             "kind": "installer",

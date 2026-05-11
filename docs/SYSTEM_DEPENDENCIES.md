@@ -138,7 +138,7 @@ A fail-fast preflight (`make test-deps-check`, also wired into `test-fast` / `te
 
 ## Canonical external guidance
 
-- `chezmoi`: install from the official release flow or `go install github.com/twpayne/chezmoi/v2@latest`
+- `chezmoi`: `make install-chezmoi` (preferred, idempotent, no sudo, drops the binary at `~/.local/bin/chezmoi`). Direct fallback: `sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"` or download from https://github.com/twpayne/chezmoi/releases.
 - `sops`: `make install-sops` (preferred, idempotent, no sudo, sha256-verified, pinned version). Direct fallback: download the matching `sops-vX.Y.Z.linux.<arch>` binary from https://github.com/getsops/sops/releases and drop it at `~/.local/bin/sops`. Not in Ubuntu APT repos.
 - `uv`: `make install-uv` (preferred, idempotent, never edits rc files). Direct fallback: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - `node` / `npm`: install together through your preferred WSL/Ubuntu Node distribution

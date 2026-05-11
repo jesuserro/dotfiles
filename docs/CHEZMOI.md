@@ -56,9 +56,9 @@ Tras cambiar el dato: **`chezmoi apply`** (o `make install-dotfiles DOTFILES_APP
 
 ## Requisitos
 
-- **Chezmoi:** [releases](https://github.com/twpayne/chezmoi/releases) o `~/dotfiles/bin/chezmoi`
+- **Chezmoi:** `make install-chezmoi` (preferido, opt-in, idempotente, sin sudo, deja el binario en `~/.local/bin/chezmoi`). Fallback: `sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"` o [releases](https://github.com/twpayne/chezmoi/releases).
 - **Age:** `sudo apt install age` o [releases](https://github.com/FiloSottile/age/releases)
-- **SOPS:** [releases](https://github.com/getsops/sops/releases)
+- **SOPS:** `make install-sops` (opt-in, idempotente, sin sudo) o [releases](https://github.com/getsops/sops/releases)
 - **yq** o **python3 + PyYAML** para el script de generación de secretos
 
 ---

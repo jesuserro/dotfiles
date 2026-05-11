@@ -27,7 +27,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv install-sops ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv install-sops install-chezmoi ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -61,6 +61,14 @@ install-uv:
 # touches secrets. Supports DRY_RUN=1.
 install-sops:
 	@bash $(DOTFILES_DIR)/scripts/install-sops.sh
+
+# Optional, opt-in installer for chezmoi (twpayne/chezmoi). Uses the upstream
+# get.chezmoi.io installer with -b "$HOME/.local/bin" so the binary lands
+# user-level (no sudo, no apt-get, no Go toolchain). Intentionally NOT part of
+# `make install`: chezmoi is the dotfiles engine itself, so corporate
+# workstations prefer explicit opt-in. Supports DRY_RUN=1 and is idempotent.
+install-chezmoi:
+	@bash $(DOTFILES_DIR)/scripts/install-chezmoi.sh
 
 # Non-mutating readiness: Cursor MCPs, skills, AI commands (no chezmoi apply).
 ai-cursor-check:

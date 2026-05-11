@@ -10,7 +10,7 @@ Para el inventario declarativo de paquetes base del sistema y su chequeo/instala
 
 | Herramienta | Instalación |
 |-------------|-------------|
-| **Chezmoi** | [Releases](https://github.com/twpayne/chezmoi/releases) o `go install github.com/twpayne/chezmoi/v2@latest` |
+| **Chezmoi** | `make install-chezmoi` (opt-in, idempotente, sin sudo) o fallback `sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"` / [releases](https://github.com/twpayne/chezmoi/releases) |
 | **Age** | `sudo apt install age` (en APT en Ubuntu/Debian) o [releases](https://github.com/FiloSottile/age/releases) |
 | **SOPS** | `make install-sops` (opt-in, idempotente, sin sudo) o [releases](https://github.com/getsops/sops/releases). No está en APT de Ubuntu. |
 | **RCM** | `sudo apt install rcm` (para zsh, tmux, vim) |
@@ -32,6 +32,7 @@ make install DRY_RUN=1
 make install SKIP_EXTERNAL=1
 
 # 4. Instaladores opt-in (uno por uno, idempotentes, soportan DRY_RUN=1)
+make install-chezmoi # chezmoi (twpayne/chezmoi) en ~/.local/bin (sin Go, sin sudo)
 make install-sops    # descarga sops oficial (getsops/sops v3.9.4) a ~/.local/bin
 make install-uv      # uv (Astral) en ~/.local/bin
 make install-zsh-stack   # Oh My Zsh + Powerlevel10k + plugins (no toca ~/.zshrc)
