@@ -38,6 +38,14 @@ def _action_for_package(package):
             "summary": "Install chezmoi from the official release flow or the upstream Go module.",
             "command": "go install github.com/twpayne/chezmoi/v2@latest",
         },
+        "sops": {
+            "kind": "installer",
+            "summary": (
+                "Install sops (SOPS+Age secrets) with the repo's idempotent installer. "
+                "Direct fallback: download the pinned binary from https://github.com/getsops/sops/releases."
+            ),
+            "command": "make install-sops",
+        },
         "uv": {
             "kind": "installer",
             "summary": (

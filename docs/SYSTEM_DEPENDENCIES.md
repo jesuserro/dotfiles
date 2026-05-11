@@ -121,13 +121,14 @@ make deps-install DEPS_INSTALL_ARGS="--dry-run --include-optional"
 
 ## Current operational examples
 
-- APT baseline: `git`, `zsh`, `tmux`, `python3`, `python3-pip`, `bubblewrap`, `ripgrep`, `fd-find`.
-- Non-APT tooling: `chezmoi`, `uv`, `node`, `npm`, `corepack`, `pnpm`, `codex`, `gitnexus`, `opencode`, `docker`.
+- APT baseline: `git`, `zsh`, `tmux`, `python3`, `python3-pip`, `bubblewrap`, `ripgrep`, `fd-find`, `age`.
+- Non-APT tooling: `chezmoi`, `sops`, `uv`, `node`, `npm`, `corepack`, `pnpm`, `codex`, `gitnexus`, `opencode`, `docker`.
 - WSL/Windows-side: `wslpath`, `powershell.exe`, `wt.exe`.
 
 ## Canonical external guidance
 
 - `chezmoi`: install from the official release flow or `go install github.com/twpayne/chezmoi/v2@latest`
+- `sops`: `make install-sops` (preferred, idempotent, no sudo, sha256-verified, pinned version). Direct fallback: download the matching `sops-vX.Y.Z.linux.<arch>` binary from https://github.com/getsops/sops/releases and drop it at `~/.local/bin/sops`. Not in Ubuntu APT repos.
 - `uv`: `make install-uv` (preferred, idempotent, never edits rc files). Direct fallback: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - `node` / `npm`: install together through your preferred WSL/Ubuntu Node distribution
 - `corepack`: `corepack enable`

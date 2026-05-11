@@ -3,6 +3,21 @@
 
 DOTFILES_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
+# --- Fail-fast guard: refuse hyphenated DRY-RUN/dry-run variants ---------------
+# The supported flag is DRY_RUN=1 (with underscore). Hyphenated variants like
+# DRY-RUN=1 silently bypass our dry-run plumbing (Make treats them as a different
+# variable), which on a fresh machine would trigger a real sudo + apt-get install
+# while the user thinks they are in dry-run. Abort at parse time, before any
+# recipe runs, so no sudo / apt-get / external script is invoked by accident.
+BAD_DRY_RUN_VARS := $(strip \
+  $(if $(filter command line,$(origin DRY-RUN)),DRY-RUN=$(DRY-RUN)) \
+  $(if $(filter command line,$(origin dry-run)),dry-run=$(dry-run)) \
+  $(if $(filter command line,$(origin Dry-Run)),Dry-Run=$(Dry-Run)) \
+  $(if $(filter command line,$(origin DRYRUN)),DRYRUN=$(DRYRUN)))
+ifneq ($(BAD_DRY_RUN_VARS),)
+$(error Unsupported variable name: $(BAD_DRY_RUN_VARS). Use DRY_RUN=1 with underscore. Aborting before any APT/sudo action.)
+endif
+
 export DRY_RUN
 export STRICT
 export SKIP_EXTERNAL
@@ -12,7 +27,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv install-sops ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -39,6 +54,13 @@ install-zsh-stack:
 # work but stays external/user-level, so users opt in explicitly.
 install-uv:
 	@bash $(DOTFILES_DIR)/scripts/install-uv.sh
+
+# Optional, opt-in installer for the SOPS secrets editor (getsops/sops).
+# Intentionally NOT part of `make install`: sops is external (not in Ubuntu APT
+# repos), and corporate workstations prefer explicit opt-in for tooling that
+# touches secrets. Supports DRY_RUN=1.
+install-sops:
+	@bash $(DOTFILES_DIR)/scripts/install-sops.sh
 
 # Non-mutating readiness: Cursor MCPs, skills, AI commands (no chezmoi apply).
 ai-cursor-check:

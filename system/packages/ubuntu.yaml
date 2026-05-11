@@ -32,11 +32,6 @@ packages:
     required: true
     capability: secrets
     note: Used for SOPS age key management in this repo.
-  - package: sops
-    command: sops
-    required: true
-    capability: secrets
-    note: Used to edit and manage encrypted secrets files.
   - package: fd-find
     command: fdfind
     required: true

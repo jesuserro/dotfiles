@@ -8,6 +8,12 @@ packages:
     capability: bootstrap
     install_method: manual
     note: Required to apply the managed dotfiles into HOME.
+  - package: sops
+    command: sops
+    required: true
+    capability: secrets
+    install_method: manual
+    note: SOPS+Age secrets manager. Not in Ubuntu APT repos; install via 'make install-sops' (opt-in, idempotent) or from https://github.com/getsops/sops/releases.
   - package: uv
     command: uv
     required: false
