@@ -53,9 +53,11 @@ make ai-cursor-check
 > `Dry-Run=1` o `DRYRUN=1`, para evitar instalaciones reales accidentales en
 > bootstrap de máquina nueva.
 >
-> **Bats test runner.** `make install` instala también `bats` (vía APT) si no
-> está presente, para que `make test-fast` funcione sin pasos adicionales en
-> una máquina nueva.
+> **Test/lint tooling.** `make install` instala también las herramientas de
+> validación (`bats`, `shellcheck`, `shfmt`) vía APT para que `make test-fast`
+> funcione sin pasos adicionales en una máquina nueva. Un preflight
+> (`make test-deps-check`, integrado en `test-fast` / `test-bats` / `test`)
+> falla rápido con mensaje accionable si alguna falta.
 
 ---
 

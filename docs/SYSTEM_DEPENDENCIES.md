@@ -121,11 +121,20 @@ make deps-install DEPS_INSTALL_ARGS="--dry-run --include-optional"
 
 ## Current operational examples
 
-- APT baseline: `git`, `zsh`, `tmux`, `python3`, `python3-pip`, `bubblewrap`, `ripgrep`, `fd-find`, `age`, `bats`.
+- APT baseline: `git`, `zsh`, `tmux`, `python3`, `python3-pip`, `bubblewrap`, `ripgrep`, `fd-find`, `age`.
+- APT test/lint tooling: `bats`, `shellcheck`, `shfmt` (required: true, see "Test/lint dependencies" below).
 - Non-APT tooling: `chezmoi`, `sops`, `uv`, `node`, `npm`, `corepack`, `pnpm`, `codex`, `gitnexus`, `opencode`, `docker`.
 - WSL/Windows-side: `wslpath`, `powershell.exe`, `wt.exe`.
 
-`bats` is the Bats test runner used by `make test-fast` / `make test-bats`. It is intentionally part of the required APT baseline so a fresh machine can validate the repo without extra steps. On Ubuntu/Debian it pulls `parallel` and `sysstat` as transitive APT deps.
+## Test/lint dependencies (APT)
+
+`make test-fast` and `make test-lint` rely on three small CLIs that are intentionally part of the required APT baseline so a fresh machine can validate the repo without extra steps:
+
+- `bats` — Bats test runner (Ubuntu APT pulls `parallel` and `sysstat` as transitive deps).
+- `shellcheck` — shell linter used by `lint-shellcheck`.
+- `shfmt` — shell formatter used by `lint-shfmt` / `fmt-shell`.
+
+A fail-fast preflight (`make test-deps-check`, also wired into `test-fast` / `test-bats` / `test`) verifies these three are in `PATH` before running anything, and prints `Run: make install SKIP_EXTERNAL=1` if any is missing. This avoids silent hangs or partial runs on fresh machines.
 
 ## Canonical external guidance
 

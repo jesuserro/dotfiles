@@ -34,15 +34,16 @@ NC := \033[0m
 
 .PHONY: test test-fast test-lint test-bats test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts
 .PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands
-.PHONY: deps-check deps-install deps-actions bats-system
+.PHONY: deps-check deps-install deps-actions bats-system test-deps-check
 
 help:
 	@echo "Testing targets for dotfiles"
 	@echo ""
-	@echo "  make test         - Run all tests (lint + bats + chezmoi)"
-	@echo "  make test-fast    - Run lint + bats (no chezmoi smoke)"
-	@echo "  make test-lint    - Run shellcheck and shfmt checks"
-	@echo "  make test-bats    - Run bats tests only"
+	@echo "  make test         - Run all tests (preflight + lint + bats + chezmoi)"
+	@echo "  make test-fast    - Run preflight + lint + bats (no chezmoi smoke)"
+	@echo "  make test-deps-check - Fail-fast check for bats/shellcheck/shfmt in PATH"
+	@echo "  make test-lint    - Run shellcheck and shfmt checks (fail if tool missing)"
+	@echo "  make test-bats    - Run bats tests only (preflight included)"
 	@echo "  make test-chezmoi - Run chezmoi smoke tests only"
 	@echo "  make test-commands- Run commands tests only"
 	@echo "  make test-install - Install test dependencies"
@@ -95,6 +96,31 @@ test-install:
 	@echo "$(GREEN)==>$NC Test dependencies ready"
 
 # ============================================
+# Preflight: fail-fast for required test/lint deps
+# ============================================
+# Verifies that bats / shellcheck / shfmt are in PATH before invoking the
+# corresponding suites. Avoids silent hangs and prints the actionable next
+# command. All three are declared as required APT packages in
+# system/packages/ubuntu.yaml, so a single 'make install SKIP_EXTERNAL=1' fixes
+# the missing ones on a fresh Ubuntu/WSL machine.
+
+test-deps-check:
+	@missing=""; \
+	for cmd in bats shellcheck shfmt; do \
+		if ! command -v $$cmd >/dev/null 2>&1; then \
+			missing="$$missing $$cmd"; \
+		fi; \
+	done; \
+	if [ -n "$$missing" ]; then \
+		echo "$(RED)==>$NC Missing test dependency:$$missing"; \
+		echo "$(YELLOW)    These are declared as required APT packages in system/packages/ubuntu.yaml.$NC"; \
+		echo "$(YELLOW)    Run: make install SKIP_EXTERNAL=1$NC"; \
+		echo "$(YELLOW)    Or, for just the test/lint tooling: sudo apt-get install -y bats shellcheck shfmt$NC"; \
+		exit 1; \
+	fi; \
+	echo "$(GREEN)==>$NC Test/lint dependencies present (bats, shellcheck, shfmt)"
+
+# ============================================
 # Linting
 # ============================================
 
@@ -104,42 +130,46 @@ test-lint: lint-shellcheck lint-shfmt
 
 lint-shellcheck:
 	@echo "$(BLUE)==>$NC Running shellcheck..."
-	@if ! command -v shellcheck &>/dev/null; then \
-		echo "$(YELLOW)==>$NC shellcheck not installed. Run: make test-install"; \
-	else \
-		shellcheck_warnings=0; \
-		for f in $(SHELL_FILES); do \
-			if shellcheck -x -S warning "$$f" 2>/dev/null; then \
-				echo "$(GREEN)  OK$(NC) $$f"; \
-			else \
-				echo "$(YELLOW)  WARN$(NC) $$f"; \
-				shellcheck_warnings=$$((shellcheck_warnings + 1)); \
-			fi; \
-		done; \
-		if [ $$shellcheck_warnings -gt 0 ]; then \
-			echo "$(YELLOW)==>$NC shellcheck: $$shellcheck_warnings file(s) with warnings"; \
+	@if ! command -v shellcheck >/dev/null 2>&1; then \
+		echo "$(RED)==>$NC Missing test dependency: shellcheck"; \
+		echo "$(YELLOW)    Run: make install SKIP_EXTERNAL=1$NC"; \
+		echo "$(YELLOW)    Or:  sudo apt-get install -y shellcheck$NC"; \
+		exit 1; \
+	fi
+	@shellcheck_warnings=0; \
+	for f in $(SHELL_FILES); do \
+		if shellcheck -x -S warning "$$f" 2>/dev/null; then \
+			echo "$(GREEN)  OK$(NC) $$f"; \
 		else \
-			echo "$(GREEN)==>$NC shellcheck passed"; \
+			echo "$(YELLOW)  WARN$(NC) $$f"; \
+			shellcheck_warnings=$$((shellcheck_warnings + 1)); \
 		fi; \
+	done; \
+	if [ $$shellcheck_warnings -gt 0 ]; then \
+		echo "$(YELLOW)==>$NC shellcheck: $$shellcheck_warnings file(s) with warnings"; \
+	else \
+		echo "$(GREEN)==>$NC shellcheck passed"; \
 	fi
 
 lint-shfmt:
 	@echo "$(BLUE)==>$NC Running shfmt check..."
-	@if ! command -v shfmt &>/dev/null; then \
-		echo "$(YELLOW)==>$NC shfmt not installed. Run: make test-install"; \
-	else \
-		unformatted=0; \
-		for f in $(SHELL_FILES); do \
-			if ! shfmt -l "$$f" >/dev/null 2>&1; then \
-				echo "$(YELLOW)  DIFF$(NC) $$f"; \
-				unformatted=$$((unformatted + 1)); \
-			fi; \
-		done; \
-		if [ $$unformatted -gt 0 ]; then \
-			echo "$(YELLOW)==>$NC shfmt: $$unformatted file(s) differ. Run: make fmt-shell"; \
-		else \
-			echo "$(GREEN)==>$NC shfmt passed"; \
+	@if ! command -v shfmt >/dev/null 2>&1; then \
+		echo "$(RED)==>$NC Missing test dependency: shfmt"; \
+		echo "$(YELLOW)    Run: make install SKIP_EXTERNAL=1$NC"; \
+		echo "$(YELLOW)    Or:  sudo apt-get install -y shfmt$NC"; \
+		exit 1; \
+	fi
+	@unformatted=0; \
+	for f in $(SHELL_FILES); do \
+		if ! shfmt -l "$$f" >/dev/null 2>&1; then \
+			echo "$(YELLOW)  DIFF$(NC) $$f"; \
+			unformatted=$$((unformatted + 1)); \
 		fi; \
+	done; \
+	if [ $$unformatted -gt 0 ]; then \
+		echo "$(YELLOW)==>$NC shfmt: $$unformatted file(s) differ. Run: make fmt-shell"; \
+	else \
+		echo "$(GREEN)==>$NC shfmt passed"; \
 	fi
 
 fmt-shell:
@@ -166,7 +196,7 @@ fmt-shell:
 # Bats tests (human-readable output)
 # ============================================
 
-test-bats: bats-helpers bats-mcp bats-chezmoi bats-commands bats-git-ai bats-prompts bats-system
+test-bats: test-deps-check bats-helpers bats-mcp bats-chezmoi bats-commands bats-git-ai bats-prompts bats-system
 	@echo ""
 	@echo "$(GREEN)==>$NC Bats tests passed"
 
@@ -238,7 +268,7 @@ test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-git b
 # Combined tests
 # ============================================
 
-test: test-lint test-bats
+test: test-deps-check test-lint test-bats
 	@echo ""
 	@echo "$(GREEN)========================================"
 	@echo "All tests passed"
@@ -253,7 +283,7 @@ deps-install:
 deps-actions:
 	@bash $(DOTFILES_DIR)/scripts/show-system-deps-actions.sh $(DEPS_ACTION_ARGS)
 
-test-fast: test-lint test-bats
+test-fast: test-deps-check test-lint test-bats
 	@echo ""
 	@echo "$(GREEN)========================================"
 	@echo "Fast tests passed"

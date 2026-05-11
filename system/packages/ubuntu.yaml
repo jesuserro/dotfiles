@@ -44,14 +44,14 @@ packages:
     note: Used by scripts/treegen.sh to regenerate STRUCTURE.md.
   - package: shellcheck
     command: shellcheck
-    required: false
-    capability: testing
-    note: Optional shell linting dependency used by make test-lint.
+    required: true
+    capability: linting
+    note: Required by shell lint / make test-fast (make test-lint -> lint-shellcheck).
   - package: shfmt
     command: shfmt
-    required: false
-    capability: testing
-    note: Optional shell formatter used by make fmt-shell and test-lint.
+    required: true
+    capability: linting
+    note: Required by shell format check / make test-fast (make test-lint -> lint-shfmt, make fmt-shell).
   - package: bats
     command: bats
     required: true
