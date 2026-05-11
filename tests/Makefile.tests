@@ -108,17 +108,17 @@ test-deps-check:
 	@missing=""; \
 	for cmd in bats shellcheck shfmt; do \
 		if ! command -v $$cmd >/dev/null 2>&1; then \
-			missing="$$missing $$cmd"; \
+			if [ -z "$$missing" ]; then missing="$$cmd"; else missing="$$missing $$cmd"; fi; \
 		fi; \
 	done; \
 	if [ -n "$$missing" ]; then \
-		echo "$(RED)==>$NC Missing test dependency:$$missing"; \
-		echo "$(YELLOW)    These are declared as required APT packages in system/packages/ubuntu.yaml.$NC"; \
-		echo "$(YELLOW)    Run: make install SKIP_EXTERNAL=1$NC"; \
-		echo "$(YELLOW)    Or, for just the test/lint tooling: sudo apt-get install -y bats shellcheck shfmt$NC"; \
+		echo "Missing test dependency: $$missing"; \
+		echo "These are declared as required APT packages in system/packages/ubuntu.yaml."; \
+		echo "Run: make install SKIP_EXTERNAL=1"; \
+		echo "Or, for just the test/lint tooling: sudo apt-get install -y bats shellcheck shfmt"; \
 		exit 1; \
 	fi; \
-	echo "$(GREEN)==>$NC Test/lint dependencies present (bats, shellcheck, shfmt)"
+	echo "==> Test/lint dependencies present (bats, shellcheck, shfmt)"
 
 # ============================================
 # Linting
@@ -129,11 +129,11 @@ test-lint: lint-shellcheck lint-shfmt
 	@echo "$(GREEN)==>$NC Lint completed"
 
 lint-shellcheck:
-	@echo "$(BLUE)==>$NC Running shellcheck..."
+	@echo "$(BLUE)==>$(NC) Running shellcheck..."
 	@if ! command -v shellcheck >/dev/null 2>&1; then \
-		echo "$(RED)==>$NC Missing test dependency: shellcheck"; \
-		echo "$(YELLOW)    Run: make install SKIP_EXTERNAL=1$NC"; \
-		echo "$(YELLOW)    Or:  sudo apt-get install -y shellcheck$NC"; \
+		echo "Missing test dependency: shellcheck"; \
+		echo "Run: make install SKIP_EXTERNAL=1"; \
+		echo "Or:  sudo apt-get install -y shellcheck"; \
 		exit 1; \
 	fi
 	@shellcheck_warnings=0; \
@@ -152,11 +152,11 @@ lint-shellcheck:
 	fi
 
 lint-shfmt:
-	@echo "$(BLUE)==>$NC Running shfmt check..."
+	@echo "$(BLUE)==>$(NC) Running shfmt check..."
 	@if ! command -v shfmt >/dev/null 2>&1; then \
-		echo "$(RED)==>$NC Missing test dependency: shfmt"; \
-		echo "$(YELLOW)    Run: make install SKIP_EXTERNAL=1$NC"; \
-		echo "$(YELLOW)    Or:  sudo apt-get install -y shfmt$NC"; \
+		echo "Missing test dependency: shfmt"; \
+		echo "Run: make install SKIP_EXTERNAL=1"; \
+		echo "Or:  sudo apt-get install -y shfmt"; \
 		exit 1; \
 	fi
 	@unformatted=0; \

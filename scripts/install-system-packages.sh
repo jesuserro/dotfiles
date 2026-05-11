@@ -146,18 +146,30 @@ fi
 # Avoids the opaque "E: Unable to locate package <x>" failure halfway through
 # the install. system_deps.py 'packages' already returns required-only by
 # default, so any package missing here counts as required and must abort.
+#
+# Parsing is done in pure bash to avoid SIGPIPE (exit 141) under `pipefail`
+# when awk/head would close the pipe early before apt-cache flushes its output.
 if command -v apt-cache >/dev/null 2>&1; then
     available_pkgs=()
     missing_pkgs=()
     for _pkg in "${packages[@]}"; do
-        _candidate="$(apt-cache policy "${_pkg}" 2>/dev/null | awk '/Candidate:/ {print $2; exit}')"
+        _policy_out="$(apt-cache policy "${_pkg}" 2>/dev/null || true)"
+        _candidate=""
+        while IFS= read -r _line; do
+            if [[ "${_line}" == *Candidate:* ]]; then
+                # Strip the "  Candidate: " prefix (trim leading whitespace + label).
+                _candidate="${_line#*Candidate:}"
+                _candidate="${_candidate## }"
+                break
+            fi
+        done <<< "${_policy_out}"
         if [[ -z "${_candidate}" || "${_candidate}" == "(none)" ]]; then
             missing_pkgs+=("${_pkg}")
         else
             available_pkgs+=("${_pkg}")
         fi
     done
-    unset _pkg _candidate
+    unset _pkg _policy_out _candidate _line
 
     if [[ ${#missing_pkgs[@]} -gt 0 ]]; then
         echo "APT preflight: the following required packages have no installation candidate in this distro's APT sources:" >&2
