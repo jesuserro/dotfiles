@@ -12,7 +12,7 @@ Cómo dar de alta o modificar secretos en `secrets.sops.yaml` (SOPS + Age).
 
 ```yaml
 mcp:
-  github_personal_access_token: "ghp_xxxxxxxxxxxxxxxxxxxx"
+  github_personal_access_token: "<github-classic-token>"
   postgres_dsn: "postgresql://user:password@localhost:5432/mydb"
   minio_access_key: "minioadmin"
   minio_secret_key: "minioadmin"
@@ -33,7 +33,7 @@ mcp:
 
    ```yaml
    mcp:
-     github_personal_access_token: "ghp_TuTokenRealAqui1234567890abcdef"
+     github_personal_access_token: "<github-classic-token>"
    ```
 
 3. **Guardar y salir** (SOPS cifra automáticamente).
@@ -41,10 +41,10 @@ mcp:
 4. **Aplicar cambios:**
 
    ```bash
-   chezmoi --source=$HOME/dotfiles apply
+   make install-dotfiles DOTFILES_APPLY=1
    ```
 
-5. **Verificar:** el script post-apply genera `~/.config/store-etl/secrets.env` con `GITHUB_PERSONAL_ACCESS_TOKEN` y `GITHUB_TOKEN`.  
+5. **Verificar:** el script post-apply genera `~/.config/mcp-secrets.env` con `GITHUB_PERSONAL_ACCESS_TOKEN` y `GITHUB_TOKEN`; `~/.secrets/codex.env` queda como adaptador de compatibilidad.
    **Token:** solo classic (`ghp_`), fine-grained deprecado. Ver [TOKEN_GITHUB_GH.md](TOKEN_GITHUB_GH.md).
 
 ---
@@ -75,10 +75,10 @@ mcp:
 4. **Aplicar:**
 
    ```bash
-   chezmoi --source=$HOME/dotfiles apply
+   make install-dotfiles DOTFILES_APPLY=1
    ```
 
-5. **Verificar:** `~/.config/store-etl/secrets.env` contendrá `export POSTGRES_DSN="..."`.
+5. **Verificar sin mostrar valores:** `grep -q '^export POSTGRES_DSN=' ~/.config/mcp-secrets.env`.
 
 ---
 
@@ -101,10 +101,10 @@ mcp:
 3. **Guardar y aplicar:**
 
    ```bash
-   chezmoi --source=$HOME/dotfiles apply
+   make install-dotfiles DOTFILES_APPLY=1
    ```
 
-4. **Resultado:** además de `secrets.env`, se crean `~/.secrets/store-etl/minio_access_key` y `minio_secret_key` para compatibilidad con docker-compose.
+4. **Resultado:** además del archivo canonico `~/.config/mcp-secrets.env`, se crean `~/.secrets/store-etl/minio_access_key` y `minio_secret_key` para compatibilidad con docker-compose.
 
 ---
 
@@ -113,8 +113,8 @@ mcp:
 Si quieres un secreto nuevo que el script aún no procesa:
 
 1. **Editar** `secrets.sops.yaml` y añadir bajo `mcp:` (o nueva sección).
-2. **Modificar** `.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl` para que el script genere la variable correspondiente en `secrets.env`.
-3. **Aplicar** con `chezmoi apply`.
+2. **Modificar** `.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl` para que el script genere la variable correspondiente en `~/.config/mcp-secrets.env`.
+3. **Aplicar** con `make install-dotfiles DOTFILES_APPLY=1`.
 
 ---
 
@@ -123,8 +123,8 @@ Si quieres un secreto nuevo que el script aún no procesa:
 | Acción | Comando |
 |--------|---------|
 | Editar secretos | `sops secrets.sops.yaml` |
-| Aplicar tras editar | `chezmoi --source=$HOME/dotfiles apply` |
-| Ver secretos (descifrado) | `sops -d secrets.sops.yaml` |
+| Aplicar tras editar | `make install-dotfiles DOTFILES_APPLY=1` |
+| Validar sin mostrar valores | `grep -q '^export GITHUB_PERSONAL_ACCESS_TOKEN=' ~/.config/mcp-secrets.env` |
 
 ---
 
@@ -133,3 +133,5 @@ Si quieres un secreto nuevo que el script aún no procesa:
 - Age instalado y clave en `~/.config/sops/age/keys.txt`
 - `.sops.yaml` configurado con tu public key
 - Ver [CHEZMOI.md](CHEZMOI.md) para la configuración inicial.
+
+No pegues tokens en chat y evita `sops -d secrets.sops.yaml` en terminal como flujo normal; usa `sops secrets.sops.yaml`, que abre el editor y vuelve a cifrar al guardar.

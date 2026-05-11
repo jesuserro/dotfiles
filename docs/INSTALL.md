@@ -80,11 +80,13 @@ cd ~/dotfiles
 
 ```bash
 mkdir -p ~/.config/sops/age
-age-keygen -o ~/.config/sops/age/keys.txt
-grep "public key:" ~/.config/sops/age/keys.txt
+test -f ~/.config/sops/age/keys.txt
+age-keygen -y ~/.config/sops/age/keys.txt
 ```
 
-Copiar la public key y editar `~/.config/sops/age/keys.txt` en `.sops.yaml` del repo (reemplazar `AGE_PUBLIC_KEY_AQUI`).
+Si `secrets.sops.yaml` ya viene cifrado en el repo, restaura/importa la clave privada Age correspondiente al recipient de `.sops.yaml`; no generes una clave nueva esperando descifrar el archivo actual. La clave privada queda en `~/.config/sops/age/keys.txt` y nunca se versiona.
+
+Para rotar a otra clave, genera una nueva clave, actualiza `.sops.yaml` con su public key y re-encripta con `sops updatekeys secrets.sops.yaml`.
 
 ### 3. Crear secretos (opcional)
 
@@ -100,8 +102,6 @@ Añadir valores bajo `mcp:`. Ver [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
 ### 4. Aplicar dotfiles
 
 ```bash
-chezmoi --source=$HOME/dotfiles apply
-# o, equivalente:
 make install-dotfiles DOTFILES_APPLY=1
 ```
 

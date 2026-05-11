@@ -30,8 +30,8 @@ export DAGSTER_GRAPHQL_URL="http://localhost:3000/graphql"
 export DAGSTER_TIMEOUT_SECONDS="30"
 
 # MinIO/S3
-# MinIO se configura leyendo `~/.secrets/codex.env`, que a su vez es un
-# symlink a `~/.config/store-etl/secrets.env` generado por Chezmoi+SOPS.
+# MinIO se configura leyendo `~/.secrets/codex.env`, adaptador hacia
+# `~/.config/mcp-secrets.env` generado por Chezmoi+SOPS.
 # Las variables relevantes son:
 # - MINIO_ENDPOINT (por defecto http://localhost:9000)
 # - MINIO_ACCESS_KEY

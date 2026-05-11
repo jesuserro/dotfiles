@@ -4,8 +4,9 @@
 # What this installs:
 #   ~/.local/bin/codex-mcp-github — a small Bash launcher referenced by every
 #   Chezmoi MCP template (Cursor, Codex, OpenCode). The wrapper exists so the
-#   GitHub token never appears in mcp.json: it sources ~/.secrets/codex.env at
-#   runtime, validates that a token is set, and execs the canonical GitHub MCP.
+#   GitHub token never appears in mcp.json: it sources ~/.config/mcp-secrets.env
+#   first, falls back to ~/.secrets/codex.env, validates that a token is set,
+#   and execs the canonical GitHub MCP.
 #
 # Contract:
 #   - DRY_RUN=1: prints the wrapper that would be written and exits.
@@ -14,7 +15,8 @@
 #     Otherwise, overwrites with a single atomic mv.
 #   - Never writes to ~/.secrets/* nor reads token values.
 #   - The materialized wrapper itself:
-#       * sources ~/.secrets/codex.env when present (set -a / set +a),
+#       * sources ~/.config/mcp-secrets.env when present (set -a / set +a),
+#         or ~/.secrets/codex.env as the compatibility fallback,
 #       * accepts GITHUB_PERSONAL_ACCESS_TOKEN or GITHUB_TOKEN,
 #       * fails with exit 2 and a clear message (no token value printed) when
 #         neither is set,
@@ -45,14 +47,22 @@ dry() {
 wrapper_body() {
 	cat <<'WRAPPER'
 #!/usr/bin/env bash
-# codex-mcp-github — wrapper that injects the GitHub token from ~/.secrets and
-# execs the canonical GitHub MCP server. Managed by dotfiles
+# codex-mcp-github — wrapper that injects the GitHub token from the canonical
+# MCP secrets file and execs the canonical GitHub MCP server. Managed by dotfiles
 # (scripts/install-mcp-github.sh); do not edit by hand. The wrapper never
 # prints the token, only the variable names it expects.
 set -euo pipefail
 
-SECRETS_FILE="${HOME}/.secrets/codex.env"
-if [[ -f "${SECRETS_FILE}" ]]; then
+CANONICAL_SECRETS_FILE="${HOME}/.config/mcp-secrets.env"
+COMPAT_SECRETS_FILE="${HOME}/.secrets/codex.env"
+SECRETS_FILE=""
+if [[ -f "${CANONICAL_SECRETS_FILE}" ]]; then
+	SECRETS_FILE="${CANONICAL_SECRETS_FILE}"
+elif [[ -f "${COMPAT_SECRETS_FILE}" ]]; then
+	SECRETS_FILE="${COMPAT_SECRETS_FILE}"
+fi
+
+if [[ -n "${SECRETS_FILE}" ]]; then
 	# shellcheck disable=SC1090
 	set -a
 	. "${SECRETS_FILE}"
@@ -62,7 +72,8 @@ fi
 token="${GITHUB_PERSONAL_ACCESS_TOKEN:-${GITHUB_TOKEN:-}}"
 if [[ -z "${token}" ]]; then
 	echo "codex-mcp-github: missing GITHUB_PERSONAL_ACCESS_TOKEN (or GITHUB_TOKEN)." >&2
-	echo "                  Set it in ~/.secrets/codex.env (presence-only; never" >&2
+	echo "                  Set it in ~/.config/mcp-secrets.env (or the legacy" >&2
+	echo "                  ~/.secrets/codex.env adapter); never" >&2
 	echo "                  print the value). Then re-run the MCP from Cursor/Codex." >&2
 	exit 2
 fi
@@ -101,8 +112,9 @@ print_dry_plan() {
 	echo "  4. Verify with: test -x ${TARGET_PATH}"
 	echo ""
 	echo "[DRY_RUN] Notes:"
-	echo "  - The wrapper sources ~/.secrets/codex.env at runtime; this script"
-	echo "    never reads or prints that file's content."
+	echo "  - The wrapper sources ~/.config/mcp-secrets.env at runtime, falling"
+	echo "    back to ~/.secrets/codex.env; this script never reads or prints"
+	echo "    either file's content."
 	echo "  - Without a token, the wrapper exits 2 with a clear message and no"
 	echo "    secret material in the output."
 	echo "  - Without npx in PATH, the wrapper exits 127 and hints at"
@@ -145,7 +157,7 @@ main() {
 
 	echo ""
 	echo "Next steps (no secrets are read by this script):"
-	echo "  1. Ensure GITHUB_PERSONAL_ACCESS_TOKEN is set in ~/.secrets/codex.env."
+	echo "  1. Ensure GITHUB_PERSONAL_ACCESS_TOKEN is materialized in ~/.config/mcp-secrets.env."
 	echo "  2. Run 'make ai-cursor-check' to see wrapper-presence vs token-presence."
 	echo "  3. Restart Cursor/Codex to pick up the wrapper."
 }

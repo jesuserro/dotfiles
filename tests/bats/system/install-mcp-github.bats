@@ -28,6 +28,7 @@ teardown() {
 	[[ "${output}" == *"BEGIN wrapper body"* ]]
 	[[ "${output}" == *"@modelcontextprotocol/server-github"* ]]
 	[[ "${output}" == *"GITHUB_PERSONAL_ACCESS_TOKEN"* ]]
+	[[ "${output}" == *".config/mcp-secrets.env"* ]]
 	# Must not have written anything.
 	[[ ! -e "${WRAPPER}" ]]
 }
@@ -38,6 +39,8 @@ teardown() {
 	[[ -x "${WRAPPER}" ]]
 	# Must contain the canonical exec line.
 	grep -q "@modelcontextprotocol/server-github" "${WRAPPER}"
+	grep -q "CANONICAL_SECRETS_FILE" "${WRAPPER}"
+	grep -q ".config/mcp-secrets.env" "${WRAPPER}"
 	# Must NOT inline any token value (only the variable names).
 	! grep -E "(ghp_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{10,})" "${WRAPPER}"
 }
@@ -79,7 +82,7 @@ teardown() {
 	# Provide a fake token via env var (NOT via a file we have to write to
 	# the user's ~/.secrets). Use the stub PATH so npx is unreachable.
 	run -127 env -i HOME="${TEST_TEMP_DIR}/empty_home" PATH="${stub_path}" \
-		GITHUB_PERSONAL_ACCESS_TOKEN="ghp_DUMMY_NEVER_USED" "${WRAPPER}"
+		GITHUB_PERSONAL_ACCESS_TOKEN="DUMMY_TOKEN_NEVER_USED" "${WRAPPER}"
 	[[ "${status}" -eq 127 ]]
 	[[ "${output}" == *"npx not in PATH"* ]]
 	[[ "${output}" == *"install-node-stack"* ]]

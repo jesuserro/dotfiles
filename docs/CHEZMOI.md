@@ -101,17 +101,28 @@ chezmoi apply
 
 ## Configuración de Age + SOPS (una vez)
 
-### 1. Generar clave Age
+### 1. Validar o restaurar la clave Age
 
 ```bash
 mkdir -p ~/.config/sops/age
-age-keygen -o ~/.config/sops/age/keys.txt
-grep "public key:" ~/.config/sops/age/keys.txt
+test -f ~/.config/sops/age/keys.txt
+age-keygen -y ~/.config/sops/age/keys.txt
 ```
 
-### 2. Editar `.sops.yaml` en el repo
+Si `secrets.sops.yaml` ya existe cifrado, no generes una clave nueva a ciegas: restaura/importa primero la clave privada que corresponde al recipient de `.sops.yaml`. La clave privada vive en `~/.config/sops/age/keys.txt` y nunca se versiona.
 
-Reemplazar `AGE_PUBLIC_KEY_AQUI` por la public key obtenida. El archivo define qué rutas cifrar:
+Para rotar a una clave nueva:
+
+```bash
+age-keygen -o ~/.config/sops/age/keys.txt.new
+age-keygen -y ~/.config/sops/age/keys.txt.new
+# Actualiza .sops.yaml con la nueva public key y re-encripta:
+sops updatekeys secrets.sops.yaml
+```
+
+### 2. Revisar `.sops.yaml` en el repo
+
+El archivo define qué rutas cifrar y qué recipient Age puede descifrarlas:
 
 ```yaml
 creation_rules:
@@ -119,22 +130,22 @@ creation_rules:
     age: age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-### 3. Cifrar secretos
+### 3. Editar secretos
 
 ```bash
 cd ~/dotfiles
 sops secrets.sops.yaml
 ```
 
-Rellenar los valores reales en el YAML y guardar (SOPS cifra al salir).
+Rellenar los valores reales en el editor abierto por SOPS y guardar. No pegues tokens en chat ni uses `sops -d` en terminal como flujo normal.
 
 ### 4. Aplicar
 
 ```bash
-chezmoi --source=$HOME/dotfiles apply
+make install-dotfiles DOTFILES_APPLY=1
 ```
 
-Se genera `~/.config/mcp-secrets.env` desde `secrets.sops.yaml` y el symlink `~/.secrets/codex.env` apunta a ese archivo (compatibilidad).
+Se genera `~/.config/mcp-secrets.env` desde `secrets.sops.yaml`; `~/.secrets/codex.env` queda como compatibilidad apuntando a ese archivo.
 
 ---
 
@@ -143,8 +154,9 @@ Se genera `~/.config/mcp-secrets.env` desde `secrets.sops.yaml` y el symlink `~/
 | Archivo | Descripción |
 |---------|-------------|
 | `secrets.sops.yaml` | En repo, cifrado. Contiene `mcp.github_personal_access_token`, `mcp.postgres_dsn`, `mcp.minio_access_key`, `mcp.minio_secret_key`. |
-| `~/.config/mcp-secrets.env` | Generado por Chezmoi al hacer `apply`. Nombre neutro para MCPs. No versionar. |
-| `~/.secrets/codex.env` | Symlink legacy a `~/.config/mcp-secrets.env` (mantener por compatibilidad). |
+| `~/.config/mcp-secrets.env` | Canonico generado por Chezmoi al hacer `apply`. Nombre neutro para MCPs. No versionar. |
+| `~/.secrets/codex.env` | Adaptador de compatibilidad a `~/.config/mcp-secrets.env`. No versionar. |
+| `~/.config/store-etl/secrets.env` | Copia legacy para consumidores antiguos. No usar como fuente principal ni versionar. |
 
 ---
 
@@ -154,8 +166,8 @@ El script `.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl` se ejecuta tras `ap
 
 1. Desencripta `secrets.sops.yaml` con SOPS.
 2. Genera `~/.config/mcp-secrets.env` (variables export, nombre neutro).
-3. Copia a `~/.config/mcp-secrets.env` y crea symlink legacy `~/.secrets/codex.env`.
-4. Crea archivos de compatibilidad para docker-compose en `~/.secrets/store-etl/`.
+3. Crea `~/.secrets/codex.env` como adaptador legacy hacia `~/.config/mcp-secrets.env`.
+4. Mantiene `~/.config/store-etl/secrets.env` y archivos de MinIO solo como compatibilidad legacy.
 
 Requiere: `sops`, `yq` o `python3` con PyYAML.
 

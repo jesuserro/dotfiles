@@ -15,7 +15,7 @@ Este documento describe la migración inicial de la gestión de MCPs (Cursor/Cod
   - `~/.codex/config.toml`
   - Symlink `~/.secrets/codex.env` → `~/.config/store-etl/secrets.env`
 - Los servidores MCP Python están en `~/dotfiles/ai/runtime/mcp/servers/**`; runtime en `~/.config/ai/runtime/`.
-- Secreto canónico: `~/.config/store-etl/secrets.env` (generado desde `secrets.sops.yaml`).
+- Estado vigente: el secreto canonico es `~/.config/mcp-secrets.env`; `~/.secrets/codex.env` queda como adaptador y `~/.config/store-etl/secrets.env` como compatibilidad legacy. Ver [CHEZMOI.md](CHEZMOI.md).
 
 ---
 

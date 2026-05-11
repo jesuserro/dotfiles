@@ -7,15 +7,15 @@
 ## Flujo
 
 1. **secrets.sops.yaml** → `mcp.github_personal_access_token` (classic, scope `project`)
-2. **chezmoi apply** → genera `~/.config/store-etl/secrets.env` con `GITHUB_TOKEN`, `GH_TOKEN`, `GITHUB_PERSONAL_ACCESS_TOKEN`
-3. **~/.secrets/codex.env** (symlink) → usado por MCPs, zsh, Cursor, Codex
+2. **make install-dotfiles DOTFILES_APPLY=1** → genera `~/.config/mcp-secrets.env` con `GITHUB_TOKEN`, `GH_TOKEN`, `GITHUB_PERSONAL_ACCESS_TOKEN`
+3. **~/.secrets/codex.env** → adaptador de compatibilidad hacia `~/.config/mcp-secrets.env`
 
 ## Qué token usa cada contexto
 
 | Contexto | Token | Origen |
 |----------|-------|--------|
-| `gh` CLI (terminal) | Classic | `~/.secrets/codex.env` → SOPS |
-| MCP GitHub (Cursor/Codex) | Classic | `~/.secrets/codex.env` → SOPS |
+| `gh` CLI (terminal) | Classic | `~/.config/mcp-secrets.env` → SOPS |
+| MCP GitHub (Cursor/Codex) | Classic | `~/.config/mcp-secrets.env` o adaptador `~/.secrets/codex.env` → SOPS |
 | CI (GitHub Actions) | `secrets.GITHUB_TOKEN` | Token automático del workflow |
 
 ## Requisitos
