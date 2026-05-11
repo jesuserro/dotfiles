@@ -121,9 +121,11 @@ make deps-install DEPS_INSTALL_ARGS="--dry-run --include-optional"
 
 ## Current operational examples
 
-- APT baseline: `git`, `zsh`, `tmux`, `python3`, `python3-pip`, `bubblewrap`, `ripgrep`, `fd-find`, `age`.
+- APT baseline: `git`, `zsh`, `tmux`, `python3`, `python3-pip`, `bubblewrap`, `ripgrep`, `fd-find`, `age`, `bats`.
 - Non-APT tooling: `chezmoi`, `sops`, `uv`, `node`, `npm`, `corepack`, `pnpm`, `codex`, `gitnexus`, `opencode`, `docker`.
 - WSL/Windows-side: `wslpath`, `powershell.exe`, `wt.exe`.
+
+`bats` is the Bats test runner used by `make test-fast` / `make test-bats`. It is intentionally part of the required APT baseline so a fresh machine can validate the repo without extra steps. On Ubuntu/Debian it pulls `parallel` and `sysstat` as transitive APT deps.
 
 ## Canonical external guidance
 

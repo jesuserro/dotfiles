@@ -52,3 +52,8 @@ packages:
     required: false
     capability: testing
     note: Optional shell formatter used by make fmt-shell and test-lint.
+  - package: bats
+    command: bats
+    required: true
+    capability: testing
+    note: Bats test runner required to validate the repo via make test-fast / make test-bats. Available in Ubuntu APT (pulls parallel + sysstat as deps).

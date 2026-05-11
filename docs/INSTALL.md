@@ -52,6 +52,10 @@ make ai-cursor-check
 > aborta fast con mensaje claro si pasas `DRY-RUN=1`, `dry-run=1`,
 > `Dry-Run=1` o `DRYRUN=1`, para evitar instalaciones reales accidentales en
 > bootstrap de máquina nueva.
+>
+> **Bats test runner.** `make install` instala también `bats` (vía APT) si no
+> está presente, para que `make test-fast` funcione sin pasos adicionales en
+> una máquina nueva.
 
 ---
 
