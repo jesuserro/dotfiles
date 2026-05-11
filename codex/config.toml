@@ -52,8 +52,8 @@ AUTH_METHOD = "NONE"
 # MCP: Docker
 # ─────────────────────────────────────────────
 [mcp_servers.docker]
-command = "/usr/bin/node"
-args = ["/home/jesus/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"]
+command = "npx"
+args = ["-y", "@0xshariq/docker-mcp-server"]
 enabled = true
 
 # ─────────────────────────────────────────────

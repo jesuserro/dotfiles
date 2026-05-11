@@ -128,7 +128,8 @@ El alias `ups` incluye una sección que actualiza los servidores MCP:
 | MCP / Origen | Qué hace `ups` |
 |--------------|----------------|
 | **excalidraw** | `~/mcp-servers/excalidraw-mcp` — `git pull` + `pnpm install` + `pnpm run build` |
-| **docker, postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` |
+| **docker** | `npx -y @0xshariq/docker-mcp-server` (latest al ejecutar; sin materialización local) |
+| **postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` (solo si existe) |
 | **fetch** | `uv tool install mcp-server-fetch` (instala o actualiza) |
 | **filesystem** | Launcher local — no requiere actualización |
 | **git** | `uvx mcp-server-git` — se actualiza al ejecutarse |

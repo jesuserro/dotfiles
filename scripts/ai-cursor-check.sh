@@ -70,10 +70,11 @@ probe_cmd_missing_strict() {
 	if command -v "${cmd}" >/dev/null 2>&1; then
 		line OK "${label} (${cmd} in PATH)"
 	else
+		local hint="install the Node.js stack: 'make install-node-stack' (opt-in, APT-only) or 'sudo apt-get install -y nodejs npm'"
 		if [[ ${strict_mode} -eq 1 ]]; then
-			line MISSING "${label} (${cmd} not in PATH; needed for several Cursor MCPs)"
+			line MISSING "${label} (${cmd} not in PATH; needed for several Cursor MCPs) — ${hint}"
 		else
-			line WARN "${label} (${cmd} not in PATH)"
+			line WARN "${label} (${cmd} not in PATH) — ${hint}"
 		fi
 	fi
 }
@@ -272,13 +273,33 @@ if [[ -f "${CURSOR_MCP}" ]]; then
 		if [[ -f "${excal_path}" ]]; then
 			line OK "Excalidraw MCP bundle present (${excal_path})"
 		else
-			line MISSING "Excalidraw MCP bundle missing (${excal_path}) but excalidraw is in ~/.cursor/mcp.json"
+			line MISSING "Excalidraw MCP bundle missing (${excal_path}) but excalidraw is in ~/.cursor/mcp.json — run 'make install-mcp-excalidraw' to clone + build (opt-in, idempotent)"
 		fi
 	else
 		line_info "Excalidraw entry not in ~/.cursor/mcp.json — skipping excalidraw path check"
 	fi
 else
 	line_info "No ~/.cursor/mcp.json — skipping excalidraw path check"
+fi
+
+# --- GitHub MCP wrapper: separate wrapper-missing vs token-missing ---
+gh_wrapper="${HOME_ROOT}/.local/bin/codex-mcp-github"
+if [[ -f "${CURSOR_MCP}" ]] && python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); exit(0 if 'github' in d.get('mcpServers',{}) else 1)" 2>/dev/null; then
+	if [[ -x "${gh_wrapper}" ]]; then
+		line OK "GitHub MCP wrapper present and executable (${gh_wrapper})"
+	elif [[ -e "${gh_wrapper}" ]]; then
+		line MISSING "GitHub MCP wrapper exists but is not executable (${gh_wrapper}) — re-run 'make install-mcp-github' to fix permissions"
+	else
+		line MISSING "GitHub MCP wrapper missing (${gh_wrapper}) — run 'make install-mcp-github' to materialize it (opt-in, no sudo, no token reads)"
+	fi
+	# Token presence is checked separately from the wrapper. We do NOT read
+	# the file content; only its existence. The wrapper itself fails with a
+	# clear message when the env var is unset, so users see the boundary.
+	if [[ -L "${HOME_ROOT}/.secrets/codex.env" || -f "${HOME_ROOT}/.secrets/codex.env" ]]; then
+		line_info "GitHub MCP secrets file present at ~/.secrets/codex.env (token contents not read here)"
+	else
+		line WARN "GitHub MCP secrets file missing (~/.secrets/codex.env) — set GITHUB_PERSONAL_ACCESS_TOKEN there; wrapper will exit 2 with a clear message until it is present"
+	fi
 fi
 
 echo ""

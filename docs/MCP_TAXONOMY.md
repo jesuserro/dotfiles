@@ -50,7 +50,8 @@ These MCPs require explicit installation or update via `ups`:
 | gitnexus CLI | `npm install -g --prefix=~/.npm-global gitnexus@latest` |
 | excalidraw | `git pull` + `pnpm install` + `pnpm run build` |
 | fetch | `uv tool install mcp-server-fetch` |
-| docker, postgres | `npm update` in `~/.config/mcp/servers/*/` |
+| docker | `npx -y @0xshariq/docker-mcp-server` (latest at runtime) |
+| postgres | `npm update` in `~/.config/mcp/servers/*/` (only if present) |
 | Python MCPs | `pip install -r requirements.txt -U` in venv |
 
 ### Runtime-Managed (Automatic)

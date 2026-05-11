@@ -27,7 +27,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv install-sops install-chezmoi set-default-shell-zsh ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv install-sops install-chezmoi install-node-stack install-mcp-github install-mcp-excalidraw set-default-shell-zsh ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -77,6 +77,33 @@ install-sops:
 # workstations prefer explicit opt-in. Supports DRY_RUN=1 and is idempotent.
 install-chezmoi:
 	@bash $(DOTFILES_DIR)/scripts/install-chezmoi.sh
+
+# Optional, opt-in installer for the Node.js stack (nodejs + npm) via APT.
+# Intentionally NOT part of `make install`: several MCPs require npx at runtime
+# (context7, sequential-thinking, obsidian, playwright, docker, the filesystem
+# launcher), but workstations may legitimately defer Node until needed. Uses
+# stock Ubuntu/Debian packages only; NodeSource/NVM/FNM are out of scope here.
+# Supports DRY_RUN=1 and is idempotent.
+install-node-stack:
+	@bash $(DOTFILES_DIR)/scripts/install-node-stack.sh
+
+# Optional, opt-in materializer for the GitHub MCP wrapper at
+# ~/.local/bin/codex-mcp-github. The wrapper sources ~/.secrets/codex.env at
+# runtime so the GitHub token never ends up inside mcp.json. Intentionally NOT
+# part of `make install`: secrets material lives outside this repo, and a
+# missing token must fail cleanly without blocking the rest of the bootstrap.
+# Supports DRY_RUN=1 and is idempotent.
+install-mcp-github:
+	@bash $(DOTFILES_DIR)/scripts/install-mcp-github.sh
+
+# Optional, opt-in materializer for the Excalidraw MCP under
+# ~/mcp-servers/excalidraw-mcp (yctimlin/mcp_excalidraw). Clones or updates the
+# repo, runs `npm install` and the project's build script, then validates that
+# dist/index.js exists. Intentionally NOT part of `make install`: the build
+# pulls dependencies from npm and may take minutes on a fresh machine.
+# Supports DRY_RUN=1 and is idempotent.
+install-mcp-excalidraw:
+	@bash $(DOTFILES_DIR)/scripts/install-mcp-excalidraw.sh
 
 # Non-mutating readiness: Cursor MCPs, skills, AI commands (no chezmoi apply).
 ai-cursor-check:

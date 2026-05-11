@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-11 12:44:20
+**Generated:** 2026-05-11 13:58:51
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -302,6 +302,9 @@
 │   ├── 🔧 install-external.sh
 │   ├── 🔧 install-git-ai-wrapper.sh
 │   ├── 🔧 install-gitnexus.sh
+│   ├── 🔧 install-mcp-excalidraw.sh
+│   ├── 🔧 install-mcp-github.sh
+│   ├── 🔧 install-node-stack.sh
 │   ├── 🔧 install-sops.sh
 │   ├── 🔧 install-system-packages.sh
 │   ├── 🔧 install-uv.sh
@@ -347,6 +350,9 @@
 │   │   │   ├── 📄 dry-run-guard.bats
 │   │   │   ├── 📄 install-chezmoi.bats
 │   │   │   ├── 📄 install-dotfiles.bats
+│   │   │   ├── 📄 install-mcp-excalidraw.bats
+│   │   │   ├── 📄 install-mcp-github.bats
+│   │   │   ├── 📄 install-node-stack.bats
 │   │   │   ├── 📄 install-sops.bats
 │   │   │   ├── 📄 install-uv.bats
 │   │   │   ├── 📄 mcp-manifest.bats

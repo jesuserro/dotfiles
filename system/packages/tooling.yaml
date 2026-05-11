@@ -25,13 +25,13 @@ packages:
     required: false
     capability: js-toolchain
     install_method: manual
-    note: Base JavaScript runtime; required de facto on workstation use (codex, gitnexus, MCPs) but not a uv dependency. Stays optional so headless/CI machines do not fail.
+    note: Base JavaScript runtime; required de facto on workstation use (codex, gitnexus, npx-based MCPs) but not a uv dependency. Install with 'make install-node-stack' (opt-in, APT-only) or your distro's package manager. Stays optional so headless/CI machines do not fail.
   - package: npm
     command: npm
     required: false
     capability: js-toolchain
     install_method: manual
-    note: Required de facto on workstation use (codex, gitnexus, corepack); ships with Node. Independent of the uv-first Python policy.
+    note: Required de facto on workstation use (codex, gitnexus, corepack, npx-based MCPs); ships with Node. Install with 'make install-node-stack' (opt-in, APT-only). Independent of the uv-first Python policy.
   - package: corepack
     command: corepack
     required: false

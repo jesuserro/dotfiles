@@ -17,9 +17,10 @@
       "env": {}
     },
     "docker": {
-      "command": "/usr/bin/node",
+      "command": "npx",
       "args": [
-        "{{ .chezmoi.homeDir }}/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"
+        "-y",
+        "@0xshariq/docker-mcp-server"
       ],
       "env": {}
     },
