@@ -13,7 +13,8 @@ Para el inventario declarativo de paquetes base del sistema y su chequeo/instala
 | **Chezmoi** | `make install-chezmoi` (opt-in, idempotente, sin sudo) o fallback `sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"` / [releases](https://github.com/twpayne/chezmoi/releases) |
 | **Age** | `sudo apt install age` (en APT en Ubuntu/Debian) o [releases](https://github.com/FiloSottile/age/releases) |
 | **SOPS** | `make install-sops` (opt-in, idempotente, sin sudo) o [releases](https://github.com/getsops/sops/releases). No está en APT de Ubuntu. |
-| **RCM** | `sudo apt install rcm` (para zsh, tmux, vim) |
+
+> Chezmoi es el único gestor activo de dotfiles. RCM (`rcup`) ya no forma parte del bootstrap y no se instala desde aquí; las referencias históricas se conservan únicamente como contexto en `docs/CHEZMOI.md`.
 
 ---
 
@@ -43,6 +44,10 @@ make install-zsh-stack   # Oh My Zsh + Powerlevel10k + plugins (no toca ~/.zshrc
 #            obsidian_vault_path = "/ruta/real/del/vault"
 
 # 6. Publicar dotfiles (chezmoi apply) — opt-in con DOTFILES_APPLY=1
+#    Crea/actualiza también los symlinks ~/.zshrc, ~/.p10k.zsh y ~/.aliases.
+#    Si esos ficheros existen con contenido custom, añade ZSH_RC_APPLY=1
+#    para permitir backup con timestamp + reemplazo. Si solo hay un stub
+#    trivial (vacío o `. "$HOME/.local/bin/env"`) el backup es automático.
 make install-dotfiles DOTFILES_APPLY=1
 
 # 7. Validar Cursor/MCPs/skills/commands (no-mutante)
@@ -96,14 +101,27 @@ Añadir valores bajo `mcp:`. Ver [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
 
 ```bash
 chezmoi --source=$HOME/dotfiles apply
+# o, equivalente:
+make install-dotfiles DOTFILES_APPLY=1
 ```
 
-### 5. Aplicar RCM (zsh, tmux, vim)
+Esto crea/actualiza también los symlinks `~/.zshrc`, `~/.p10k.zsh` y `~/.aliases` apuntando al repo. Si ya existen con contenido custom, ejecuta:
 
 ```bash
-rcup -v
+ZSH_RC_APPLY=1 make install-dotfiles DOTFILES_APPLY=1
+```
+
+para permitir backup con timestamp (`~/.zshrc.backup.YYYYMMDD-HHMMSS`) + reemplazo. Stubs triviales (vacíos o solo `. "$HOME/.local/bin/env"`) se respaldan automáticamente sin necesidad del flag.
+
+### 5. Recargar la sesión
+
+```bash
+exec zsh -l
+# o, en la sesión actual:
 source ~/.zshrc
 ```
+
+> El paso histórico `rcup -v` (RCM) ha sido retirado del flujo activo: Chezmoi gestiona ahora los RC files de la zsh stack.
 
 ---
 
@@ -112,11 +130,11 @@ source ~/.zshrc
 ```bash
 git clone https://github.com/jesuserro/dotfiles.git ~/dotfiles && \
 cd ~/dotfiles && \
-chezmoi --source=$HOME/dotfiles apply && \
-rcup -v && source ~/.zshrc
+make install-dotfiles DOTFILES_APPLY=1 && \
+exec zsh -l
 ```
 
-*(Requiere Age, SOPS y Chezmoi instalados previamente.)*
+*(Requiere Age, SOPS, Chezmoi y la zsh stack — `make install-zsh-stack` — instalados previamente.)*
 
 ---
 

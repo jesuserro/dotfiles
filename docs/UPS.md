@@ -2,7 +2,7 @@
 
 Actualización integral del sistema: Windows/winget en WSL, paquetes APT, npm, OpenCode, Oh My Zsh, repositorios auxiliares, servidores MCP y servicios.
 
-**Definición:** `aliases` (gestionado por RCM/rcup)
+**Definición:** `aliases` (cargado por `~/.aliases`, symlink gestionado por Chezmoi).
 
 ---
 

@@ -34,7 +34,7 @@ NC := \033[0m
 
 .PHONY: test test-fast test-lint test-bats test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts
 .PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands
-.PHONY: deps-check deps-install deps-actions bats-system test-deps-check
+.PHONY: deps-check deps-install deps-actions bats-system bats-zsh test-deps-check
 
 help:
 	@echo "Testing targets for dotfiles"
@@ -243,7 +243,7 @@ bats-prompts:
 	@echo "$(BLUE)==>$NC Running prompt launcher tests..."
 	@$(call run_bats,$(BATS_DIR)/prompts/prompt-launchers.bats)
 
-bats-system:
+bats-system: bats-zsh
 	@echo "$(BLUE)==>$NC Running system dependency tests..."
 	@$(call run_bats,$(BATS_DIR)/system/system-deps.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-dotfiles.bats)
@@ -254,6 +254,10 @@ bats-system:
 	@$(call run_bats,$(BATS_DIR)/system/ai-cursor-check.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-manifest.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-render-drift.bats)
+
+bats-zsh:
+	@echo "$(BLUE)==>$NC Running zsh stack RC symlink tests..."
+	@$(call run_bats,$(BATS_DIR)/zsh/rc_symlinks.bats)
 
 # ============================================
 # CI targets (JUnit/XML output)

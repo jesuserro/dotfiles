@@ -30,7 +30,7 @@ Todos los targets están diseñados para ejecutarse más de una vez:
 - **SOPS / Age:** verificación si el inventario lo declara, pero no se generan claves ni se tocan secretos.
 - **Windows host (`wt.exe`, `winget.exe`, `powershell.exe`):** solo detección desde WSL; no se asume admin ni se ejecuta `winget install`.
 - **chezmoi:** sin `DOTFILES_APPLY=1` no se aplica nada destructivo.
-- **Oh My Zsh / Powerlevel10k:** clones bajo `$HOME/.oh-my-zsh` y `$ZSH_CUSTOM/themes/powerlevel10k` solo si faltan; `~/.zshrc` queda en manos de chezmoi/RCM.
+- **Oh My Zsh / Powerlevel10k:** clones bajo `$HOME/.oh-my-zsh` y `$ZSH_CUSTOM/themes/powerlevel10k` solo si faltan; los RC files (`~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`) los gestiona Chezmoi vía `make install-dotfiles DOTFILES_APPLY=1`. RCM/rcup queda fuera del flujo activo.
 - **uv:** `make install-uv` descarga el script oficial de Astral a un fichero temporal antes de ejecutarlo (sin `curl|sh` opaco), pasa `UV_NO_MODIFY_PATH=1` para que el instalador no edite rc files, y nunca reinstala si `uv` ya está en `PATH`. No entra en `make install`.
 
 ## Documentación relacionada

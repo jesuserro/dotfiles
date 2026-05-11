@@ -1,15 +1,16 @@
 # Migración MCP a Chezmoi + SOPS + Age
 
-Este documento describe la migración de la gestión de MCPs (Cursor/Codex) a **Chezmoi** con secretos cifrados con **SOPS** y **Age**, manteniendo **rcup** para el resto de dotfiles.
+Este documento describe la migración inicial de la gestión de MCPs (Cursor/Codex) a **Chezmoi** con secretos cifrados con **SOPS** y **Age**.
+
+> **Estado actual:** Chezmoi gestiona también los RC files de la zsh stack (`~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`). RCM/rcup queda fuera del flujo activo. Ver [CHEZMOI.md](CHEZMOI.md) para el alcance vigente.
 
 📖 **Referencia principal:** [CHEZMOI.md](CHEZMOI.md)
 
 ---
 
-## Restricciones
+## Restricciones (alcance original de la migración MCP)
 
-- **NO** se ha tocado rcup, zsh, tmux, vim, git.
-- **Solo** se gestionan con Chezmoi:
+- **Solo** se gestionaban con Chezmoi:
   - `~/.cursor/mcp.json` (MCPs globales: excalidraw, context7, docker, github, fetch)
   - `~/.codex/config.toml`
   - Symlink `~/.secrets/codex.env` → `~/.config/store-etl/secrets.env`
@@ -43,6 +44,5 @@ Para requisitos, uso de Chezmoi, configuración Age+SOPS y estructura de secreto
 ## No hacer
 
 - Postgres: npx. Trino: venv mcp. Docker: `~/.codex/mcp/docker` si existe.
-- No eliminar rcup.
-- No tocar zsh, tmux, vim.
+- No reintroducir RCM/rcup en el flujo activo.
 - No mover los servidores MCP de `ai/runtime/mcp/`.
