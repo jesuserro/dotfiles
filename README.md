@@ -92,6 +92,7 @@ make install SKIP_EXTERNAL=1
 | `make install-apt` | Instala paquetes APT desde [`system/packages/*.yaml`](system/packages/) (mismo backend que `make deps-install`). |
 | `make install-external` | Solo recomendaciones (`make deps-actions`); detecta Docker, `wt.exe`, `winget.exe`, zsh stack — **nunca** instala host-side ni Docker Desktop. |
 | `make install-zsh-stack` | Clona Oh My Zsh, Powerlevel10k y plugins custom solo si faltan. **No** edita `~/.zshrc`: ese symlink lo crea Chezmoi en `make install-dotfiles DOTFILES_APPLY=1`. |
+| `make set-default-shell-zsh` | **Opt-in**, fuera de `make install`. Por defecto sólo informa. `APPLY=1` ejecuta `chsh -s "$(command -v zsh)"`. `ZSH_BASHRC_FALLBACK=1` añade un bloque idempotente a `~/.bashrc` con backup (fallback WSL). Soporta `DRY_RUN=1`. Nunca usa `sudo`. |
 | `make install-uv` | Instala **uv** (herramienta Python preferida) con el instalador oficial de Astral. Idempotente, opt-in, **fuera** de `make install`. No edita `~/.zshrc` ni `~/.bashrc`. |
 | `make install-dotfiles` | Plan chezmoi. **No ejecuta `apply`** salvo `DOTFILES_APPLY=1`. |
 | `make install-verify` | Versiones de zsh/git/chezmoi/sops/age/rg/docker. `STRICT=1` hace fallar si hay `FAIL` real. |

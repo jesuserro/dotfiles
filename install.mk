@@ -27,7 +27,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv install-sops install-chezmoi ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv install-sops install-chezmoi set-default-shell-zsh ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -48,6 +48,14 @@ install-verify:
 
 install-zsh-stack:
 	@bash $(DOTFILES_DIR)/scripts/install-zsh-stack.sh
+
+# Opt-in helper to make zsh the default login shell. Intentionally NOT part of
+# `make install`: changing the login shell or editing ~/.bashrc is a personal
+# decision. Read-only by default; APPLY=1 runs `chsh`; ZSH_BASHRC_FALLBACK=1
+# appends an idempotent auto-exec block to ~/.bashrc (WSL fallback). Supports
+# DRY_RUN=1 and is idempotent.
+set-default-shell-zsh:
+	@bash $(DOTFILES_DIR)/scripts/set-default-shell-zsh.sh
 
 # Optional, opt-in installer for the Astral uv Python tool.
 # Intentionally NOT part of `make install`: uv is preferred for new Python

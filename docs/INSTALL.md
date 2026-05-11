@@ -123,6 +123,45 @@ source ~/.zshrc
 
 > El paso histórico `rcup -v` (RCM) ha sido retirado del flujo activo: Chezmoi gestiona ahora los RC files de la zsh stack.
 
+### 6. (Opcional) Convertir zsh en la shell por defecto
+
+`make install` y `make install-zsh-stack` no cambian la shell de login: esa es una decisión personal (cambia el comportamiento de Bash/WSL). Hay dos caminos, ambos opt-in:
+
+**Camino preferido — `chsh` (persistente, vale para cualquier terminal):**
+
+```bash
+chsh -s "$(command -v zsh)"
+# cierra y reabre la terminal
+echo "$SHELL"          # debe imprimir .../zsh
+ps -p $$ -o comm=      # debe imprimir zsh
+```
+
+Si `chsh` rechaza la shell con "non-standard", añade primero la ruta a `/etc/shells`:
+
+```bash
+echo "$(command -v zsh)" | sudo tee -a /etc/shells
+```
+
+**Fallback WSL — bloque idempotente en `~/.bashrc`** (sin `sudo`, útil cuando la terminal no respeta `/etc/passwd` o no quieres tocar `chsh`):
+
+```bash
+# >>> dotfiles zsh-fallback >>>
+if [ -t 1 ] && [ -z "${ZSH_VERSION:-}" ] && command -v zsh >/dev/null 2>&1; then
+    exec zsh -l
+fi
+# <<< dotfiles zsh-fallback <<<
+```
+
+**Helper opt-in del repo** que orquesta lo anterior con backups (no se ejecuta dentro de `make install`):
+
+```bash
+make set-default-shell-zsh                          # sólo informa, no muta
+APPLY=1 make set-default-shell-zsh                  # ejecuta `chsh -s`
+ZSH_BASHRC_FALLBACK=1 make set-default-shell-zsh    # añade el bloque a ~/.bashrc con backup
+```
+
+Soporta `DRY_RUN=1`, es idempotente y nunca usa `sudo`.
+
 ---
 
 ## Resumen en una línea

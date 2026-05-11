@@ -502,8 +502,15 @@ EOF
   fi
   
   # 2. Servidores npm en ~/.config/mcp/servers/* (docker, postgres, etc.)
-  if [ -d "$HOME/.config/mcp/servers" ]; then
-    for mcp_dir in "$HOME/.config/mcp/servers"/*/; do
+  # Calificador zsh (N) = nullglob local al patrón: si no hay matches (directorio
+  # inexistente o vacío), el array queda vacío y NO se dispara `no matches found`.
+  # No tocamos `setopt nomatch` global de la sesión.
+  local -a mcp_server_dirs
+  mcp_server_dirs=( "$HOME"/.config/mcp/servers/*/(N) )
+  if (( ${#mcp_server_dirs[@]} == 0 )); then
+    _ups_info "No hay servidores MCP locales en ~/.config/mcp/servers, omitiendo"
+  else
+    for mcp_dir in "${mcp_server_dirs[@]}"; do
       [ -d "$mcp_dir" ] || continue
       local pkg_json="$mcp_dir/package.json"
       if [ -f "$pkg_json" ]; then
