@@ -32,3 +32,6 @@ build/commands/
 
 # MCP dry-run renders + drift-report.json (scripts/generate-mcp-configs.py)
 build/mcps/
+
+# Local installer artifact from get.chezmoi.io when mis-invoked
+/bin/chezmoi

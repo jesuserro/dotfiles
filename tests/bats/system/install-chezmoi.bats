@@ -64,6 +64,43 @@ EOF
 	[[ "${output}" != *"==> Downloading official installer"* ]]
 }
 
+@test "install-chezmoi detects ~/.local/bin/chezmoi even when not in PATH (idempotent fallback)" {
+	# Stage a fake $HOME with chezmoi pre-installed at ~/.local/bin/chezmoi but
+	# absent from PATH. The script must NOT re-download; it must detect the
+	# binary on disk, print the PATH hint, and exit 0.
+	local fake_home="${TEST_TEMP_DIR}/home"
+	mkdir -p "${fake_home}/.local/bin"
+	cat > "${fake_home}/.local/bin/chezmoi" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+	--version) echo "chezmoi v2.70.3 (stub)";;
+	*) exit 0;;
+esac
+EOF
+	chmod +x "${fake_home}/.local/bin/chezmoi"
+
+	run env HOME="${fake_home}" PATH="/usr/bin:/bin" bash "${INSTALL_CHEZMOI}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"chezmoi already installed"* ]]
+	[[ "${output}" == *"NOT in your current PATH"* ]]
+	[[ "${output}" == *"v2.70.3"* ]]
+	[[ "${output}" != *"==> Downloading official installer"* ]]
+}
+
+@test "install-chezmoi DRY_RUN uses local 'sh script -b' invocation (no '--' separator)" {
+	# Regression guard: the local-exec line in the dry-run plan must NOT pass
+	# '--' before '-b "$HOME/.local/bin"'. Using 'sh script.sh -- -b dir' makes
+	# the upstream installer leak '-b' to the newly installed chezmoi, which
+	# fails with: chezmoi: unknown shorthand flag: 'b' in -b.
+	run env DRY_RUN=1 PATH="/usr/bin:/bin" bash "${INSTALL_CHEZMOI}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *'sh /tmp/install-chezmoi.<rand>.sh -b "'* ]]
+	[[ "${output}" != *'sh /tmp/install-chezmoi.<rand>.sh -- -b'* ]]
+	# Upstream one-liner with '--' must still be documented (it is required for
+	# the 'sh -c "$(curl …)" -- args' form to satisfy $0).
+	[[ "${output}" == *'sh -c "$(curl -fsLS https://get.chezmoi.io)" -- -b "'* ]]
+}
+
 @test "system_deps actions recommend 'make install-chezmoi' for chezmoi" {
 	local inv="${TEST_TEMP_DIR}/chezmoi.yaml"
 	cat > "${inv}" <<'EOF'
