@@ -118,6 +118,8 @@ Los aliases viven en `zsh/55-aliases-azure.zsh` y se cargan desde el `zshrc` mod
 
 No hay aliases para crear o borrar recursos.
 
+Nota sobre `azsetsub`: ejecuta `az account set --subscription`. No crea, borra ni modifica recursos Azure, pero sí cambia la suscripción activa que usarán comandos posteriores de Azure CLI. Úsalo conscientemente y verifica después el contexto con `azacct` o `az account show --output table`.
+
 ## Separación de responsabilidades
 
 `dotfiles`:
