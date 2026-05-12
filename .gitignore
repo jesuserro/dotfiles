@@ -35,3 +35,4 @@ build/mcps/
 
 # Local installer artifact from get.chezmoi.io when mis-invoked
 /bin/chezmoi
+secrets.sops.yaml.old-age1mq3-unreadable
