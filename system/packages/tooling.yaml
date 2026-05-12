@@ -74,3 +74,9 @@ packages:
     capability: containers
     install_method: manual
     note: Used by local aliases and WSL workstation container workflows.
+  - package: azure-cli
+    command: az
+    required: false
+    capability: azure
+    install_method: manual
+    note: Azure CLI is opt-in for Azure workstations; install manually with 'make install-azure-cli'. Not part of 'make install', and login remains manual with 'az login'.

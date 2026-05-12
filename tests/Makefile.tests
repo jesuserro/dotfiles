@@ -251,6 +251,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/install-sops.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-chezmoi.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-node-stack.bats)
+	@$(call run_bats,$(BATS_DIR)/system/install-azure-cli.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-mcp-github.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-mcp-excalidraw.bats)
 	@$(call run_bats,$(BATS_DIR)/system/dry-run-guard.bats)

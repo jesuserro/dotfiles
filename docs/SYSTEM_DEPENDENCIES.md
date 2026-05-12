@@ -142,6 +142,7 @@ A fail-fast preflight (`make test-deps-check`, also wired into `test-fast` / `te
 - `sops`: `make install-sops` (preferred, idempotent, no sudo, sha256-verified, pinned version). Direct fallback: download the matching `sops-vX.Y.Z.linux.<arch>` binary from https://github.com/getsops/sops/releases and drop it at `~/.local/bin/sops`. Not in Ubuntu APT repos.
 - `uv`: `make install-uv` (preferred, idempotent, never edits rc files). Direct fallback: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - `node` / `npm`: install together through your preferred WSL/Ubuntu Node distribution
+- `azure-cli`: `make install-azure-cli` (opt-in, Debian/Ubuntu/WSL via Microsoft's official Azure CLI repository). It is not part of `make install`; `az login` remains manual.
 - `corepack`: `corepack enable`
 - `pnpm`: `corepack prepare pnpm@latest --activate`
 - `codex`: `npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest`
@@ -178,6 +179,26 @@ Política transversal del repo para entornos y herramientas Python:
 - **`uv` preferido** (Astral) para venvs, lockfiles, herramientas y ejecución de scripts puntuales.
 - **`pip`/`pipx`** se conservan instalados como base del sistema (`python3-pip`, `pipx` siguen como APT requeridos) y como **fallback / legado vivo**: ningún script existente que use `pip` se modifica para evitar regresiones.
 - **`uv` se queda `required: false`** en el inventario para no romper `STRICT=1 make install-check` en máquinas mínimas. Para instalarlo de forma explícita: `make install-uv`.
+
+## Azure CLI opt-in
+
+`azure-cli` / `az` vive en `system/packages/tooling.yaml` como `external` y
+`required: false`. Esto permite verlo con `deps-check --include-optional` y
+recibir la recomendación `make install-azure-cli` con `deps-actions
+--include-optional`, sin convertir Azure en dependencia base.
+
+Reglas de la Fase 1C:
+
+- `make install`, `make install-check`, `make install-verify`, `make deps-check`
+  y `scripts/check-system-deps.sh` no deben fallar porque falte `az`.
+- `make install-azure-cli` y `scripts/install-azure-cli.sh` son manuales y
+  opt-in; soportan `DRY_RUN=1`.
+- `bash scripts/check-azure-tools.sh` puede fallar si falta `az`, porque es el
+  check explícito de readiness Azure.
+- `az login`, selección de suscripción, extensiones como `containerapp` y
+  recursos Azure siguen siendo acciones manuales fuera del bootstrap base.
+- `yq` es herramienta recomendada general; su ausencia no bloquea Azure CLI ni
+  la instalación de Dotfiles.
 
 ### Equivalencias canónicas
 

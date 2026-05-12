@@ -107,6 +107,16 @@ def _action_for_package(package):
             "summary": "GitHub CLI is optional; install via your approved channel (upstream .deb, package manager, or corporate catalog).",
             "command": "See https://cli.github.com/ and your org policy for gh installation.",
         },
+        "az": {
+            "kind": "installer",
+            "summary": "Azure CLI is optional and opt-in for Azure workstations; login remains manual after install.",
+            "command": "make install-azure-cli",
+        },
+        "azure-cli": {
+            "kind": "installer",
+            "summary": "Azure CLI is optional and opt-in for Azure workstations; login remains manual after install.",
+            "command": "make install-azure-cli",
+        },
         "wslpath": {
             "kind": "environment",
             "summary": "wslpath is provided by WSL itself; if it is missing, verify WSL/interop health.",

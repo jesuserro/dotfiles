@@ -27,7 +27,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv install-sops install-chezmoi install-node-stack install-mcp-github install-mcp-excalidraw set-default-shell-zsh ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv install-sops install-chezmoi install-node-stack install-azure-cli install-mcp-github install-mcp-excalidraw set-default-shell-zsh ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -86,6 +86,13 @@ install-chezmoi:
 # Supports DRY_RUN=1 and is idempotent.
 install-node-stack:
 	@bash $(DOTFILES_DIR)/scripts/install-node-stack.sh
+
+# Optional, opt-in installer for Azure CLI (az) using Microsoft's official
+# Debian/Ubuntu repository. Intentionally NOT part of `make install`: Azure is
+# workstation/project-specific and login remains manual (`az login`). Supports
+# DRY_RUN=1 and never installs Docker Engine or Azure CLI extensions.
+install-azure-cli:
+	@bash $(DOTFILES_DIR)/scripts/install-azure-cli.sh
 
 # Optional, opt-in materializer for the GitHub MCP wrapper at
 # ~/.local/bin/codex-mcp-github. The wrapper sources ~/.secrets/codex.env at

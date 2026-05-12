@@ -10,6 +10,19 @@ Los despliegues concretos de `energy-offer-comparator` deben vivir en ese repo: 
 
 ## Herramientas esperadas
 
+Azure CLI es **opt-in** en este repo. No se instala con `make install`, no
+bloquea los checks generales y solo debe instalarse cuando el usuario lo pida
+explícitamente:
+
+```bash
+DRY_RUN=1 make install-azure-cli
+make install-azure-cli
+```
+
+El instalador usa el repo oficial de Microsoft para Debian/Ubuntu/WSL, pero no
+ejecuta login, no selecciona suscripciones, no instala Docker Engine, no instala
+extensiones y no toca `~/.azure`.
+
 Críticas para esta fase:
 
 - `az`
@@ -33,6 +46,9 @@ Comprueba el entorno sin mutar nada:
 ```bash
 bash scripts/check-azure-tools.sh
 ```
+
+Este check sí puede fallar si falta `az`, porque es un readiness check Azure
+explícito. En equipos sin Azure no hace falta ejecutarlo.
 
 ## Azure CLI
 

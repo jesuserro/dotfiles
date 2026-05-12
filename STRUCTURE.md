@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-12 13:33:01
+**Generated:** 2026-05-12 15:05:11
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -317,6 +317,7 @@
 │   ├── 📝 git_start_feature.md
 │   ├── 🔧 git_start_feature.sh
 │   ├── 🔧 git_workflow.sh
+│   ├── 🔧 install-azure-cli.sh
 │   ├── 🔧 install-check.sh
 │   ├── 🔧 install-chezmoi.sh
 │   ├── 🔧 install-dotfiles.sh
@@ -370,6 +371,7 @@
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
 │   │   │   ├── 📄 dry-run-guard.bats
+│   │   │   ├── 📄 install-azure-cli.bats
 │   │   │   ├── 📄 install-chezmoi.bats
 │   │   │   ├── 📄 install-dotfiles.bats
 │   │   │   ├── 📄 install-mcp-excalidraw.bats
