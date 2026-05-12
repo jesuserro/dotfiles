@@ -23,7 +23,12 @@ El instalador usa el repo oficial de Microsoft para Debian/Ubuntu/WSL, pero no
 ejecuta login, no selecciona suscripciones, no instala Docker Engine, no instala
 extensiones y no toca `~/.azure`.
 
-Críticas para esta fase:
+Azure CLI está declarado como herramienta externa opcional en el inventario de
+dependencias (`system/packages/tooling.yaml`). Esto permite recomendar
+`make install-azure-cli` sin convertir `az` en dependencia base de Dotfiles ni
+bloquear equipos sin Azure.
+
+Críticas solo para el flujo Azure:
 
 - `az`
 - `docker`
@@ -179,8 +184,10 @@ Si hacen falta más adelante, deben tratarse como fase separada por su superfici
 
 ## TODO posteriores
 
-- Decidir canal de instalación de Azure CLI para WSL2/corporativo.
-- Valorar `scripts/install-azure-cli.sh` opt-in, idempotente y con `DRY_RUN=1`.
-- Valorar declarar `azure-cli` en `system/packages/tooling.yaml`.
-- Preparar scripts específicos en `energy-offer-comparator`.
-- Valorar Managed Identity y `AcrPull` más adelante.
+- Resuelto: instalador opt-in `scripts/install-azure-cli.sh` con `DRY_RUN=1`.
+- Resuelto: target manual `make install-azure-cli` fuera de `make install`.
+- Resuelto: `azure-cli` declarado como herramienta externa opcional en
+  `system/packages/tooling.yaml`.
+- Validar instalación real de Azure CLI en equipo de trabajo.
+- Valorar automatización opcional de la extensión `containerapp`.
+- Preparar Fase 2 en `energy-offer-comparator`.
