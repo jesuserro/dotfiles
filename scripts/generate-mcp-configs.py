@@ -211,18 +211,18 @@ def build_mcp_surface_recipes() -> Dict[str, Dict[str, Dict[str, Any]]]:
         ),
         "docker": _r(
             cursor={
-                "command": "npx",
-                "args": ["-y", "@0xshariq/docker-mcp-server"],
+                "command": "docker.exe",
+                "args": ["mcp", "gateway", "run"],
                 "env": {},
             },
             codex={
-                "command": "npx",
-                "args": ["-y", "@0xshariq/docker-mcp-server"],
+                "command": "docker.exe",
+                "args": ["mcp", "gateway", "run"],
                 "env": {},
             },
             opencode={
                 "type": "local",
-                "command": ["npx", "-y", "@0xshariq/docker-mcp-server"],
+                "command": ["docker.exe", "mcp", "gateway", "run"],
                 "environment": {},
             },
         ),

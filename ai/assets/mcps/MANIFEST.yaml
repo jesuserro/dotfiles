@@ -60,24 +60,21 @@ mcps:
 
   - id: docker
     display_name: Docker MCP
-    description: Docker operations via Node MCP server
+    description: Docker Desktop MCP Gateway official stdio server
     layer: core
     category: containers
-    runtime: npx
+    runtime: docker
     surfaces:
       cursor: { enabled: true }
       codex: { enabled: true }
       opencode: { enabled: true }
-    requires: [npx, node, docker]
+    requires: [docker.exe]
     secrets: []
     paths_probe: []
     notes: >
-      Resolved at runtime via npx -y @0xshariq/docker-mcp-server. The previous
-      local materialization under ~/.codex/mcp/docker/node_modules/ was reverted
-      because no installer materialized it and Cursor/Codex/OpenCode silently
-      failed to activate the MCP. To switch to the official @docker/mcp-servers
-      package, change the recipe in scripts/generate-mcp-configs.py and the
-      three Chezmoi templates atomically.
+      Use the official Docker Desktop MCP Gateway via `docker.exe mcp gateway
+      run`. Use docker.exe from WSL because Linux docker CLI reports "Docker
+      Desktop is not running" for MCP Toolkit, while Docker Engine still works.
 
   - id: grafana
     display_name: Grafana MCP

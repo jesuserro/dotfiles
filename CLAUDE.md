@@ -41,11 +41,3 @@ This project is indexed by GitNexus as **dotfiles** (2836 symbols, 3311 relation
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
-
-## Vault Project Wiki
-
-When a relevant implementation leaves durable knowledge behind, use `ai/assets/skills/ops/vault-project-wiki/SKILL.md` and `docs/VAULT_PROJECT_WIKI_FLOW.md` to decide whether it belongs in `vault_trabajo/projects/<project>/knowledge/...`.
-
-- Keep the project repo as the source of truth for code and implementation docs
-- Use the vault for distilled, reusable project knowledge
-- Use `dotfiles` as the transversal operational layer that teaches agents when and how to capture that knowledge

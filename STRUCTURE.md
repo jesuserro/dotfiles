@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-11 14:30:07
+**Generated:** 2026-05-12 09:05:56
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -14,12 +14,31 @@
 │   ├── 📄 run_after_13_link_git_ai_wrapper.sh.tmpl
 │   ├── 📄 run_after_14_link_prompt_launchers.sh.tmpl
 │   └── 📄 run_before_00_backup_rc_files.sh.tmpl
+├── 📁 .claude
+│   └── 📁 skills
+│       └── 📁 gitnexus
+│           ├── 📁 gitnexus-cli
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-debugging
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-exploring
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-guide
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-impact-analysis
+│           │   └── 📝 SKILL.md
+│           └── 📁 gitnexus-refactoring
+│               └── 📝 SKILL.md
 ├── 📁 .cursor
 │   └── 📁 rules
 │       └── 📄 aliases-conventions.mdc
 ├── 📁 .github
 │   └── 📁 workflows
 │       └── ⚙️ release.yml
+├── 📁 .gitnexus
+│   ├── 📄 .gitignore
+│   ├── 📄 lbug
+│   └── ⚙️ meta.json
 ├── 📁 ai
 │   ├── 📁 adapters
 │   │   ├── 📁 codex
@@ -390,6 +409,7 @@
 ├── ⚙️ .sops.yaml
 ├── 📝 AGENTS.md
 ├── 📝 CHANGELOG.md
+├── 📝 CLAUDE.md
 ├── 🔨 Makefile
 ├── 📝 README.md
 ├── 📝 STRUCTURE.md
@@ -402,6 +422,7 @@
 ├── 📄 rcrc
 ├── ⚙️ secrets.sops.yaml
 ├── 📄 secrets.sops.yaml.new
+├── 📄 secrets.sops.yaml.old-age1mq3-unreadable
 ├── 📄 symlink_dot_aliases.tmpl
 ├── 📄 symlink_dot_codex_mcp
 ├── 📄 symlink_dot_p10k.zsh.tmpl

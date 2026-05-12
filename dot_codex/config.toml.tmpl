@@ -20,8 +20,8 @@ args = ["-y", "@upstash/context7-mcp"]
 enabled = true
 
 [mcp_servers.docker]
-command = "npx"
-args = ["-y", "@0xshariq/docker-mcp-server"]
+command = "docker.exe"
+args = ["mcp", "gateway", "run"]
 enabled = true
 
 [mcp_servers.grafana]

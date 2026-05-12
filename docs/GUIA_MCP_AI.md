@@ -128,7 +128,7 @@ El alias `ups` incluye una sección que actualiza los servidores MCP:
 | MCP / Origen | Qué hace `ups` |
 |--------------|----------------|
 | **excalidraw** | `~/mcp-servers/excalidraw-mcp` — `git pull` + `pnpm install` + `pnpm run build` |
-| **docker** | `npx -y @0xshariq/docker-mcp-server` (latest al ejecutar; sin materialización local) |
+| **docker** | Docker Desktop MCP Gateway oficial: `docker.exe mcp gateway run` desde WSL |
 | **postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` (solo si existe) |
 | **fetch** | `uv tool install mcp-server-fetch` (instala o actualiza) |
 | **filesystem** | Launcher local — no requiere actualización |
@@ -137,6 +137,24 @@ El alias `ups` incluye una sección que actualiza los servidores MCP:
 | **obsidian** | `npx -y @bitbonsai/mcpvault` + ruta del vault desde Chezmoi `ai.obsidian_vault_path` (ver [CHEZMOI.md](./CHEZMOI.md); plantillas vía `make ai-mcp-generate APPLY=1`) |
 | **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
 | **context7, github, gitnexus (MCP)** | Usan `npx` — obtienen la última versión al ejecutarse |
+
+### Docker MCP en WSL
+
+El MCP de Docker usa el Gateway oficial de Docker Desktop y debe lanzarse desde
+WSL con `docker.exe mcp gateway run`. El comando Linux `docker mcp gateway run`
+puede fallar con `Docker Desktop is not running` aunque `docker ps` funcione
+contra Docker Desktop.
+
+Validación manual:
+
+```bash
+docker.exe mcp version
+docker.exe mcp profile ls
+timeout 8s docker.exe mcp gateway run
+```
+
+El runtime `npx -y @0xshariq/docker-mcp-server` queda como legacy descartado:
+imprime ayuda y termina, por lo que Cursor lo interpreta como conexión cerrada.
 
 **gitnexus CLI** se actualiza por separado: `npm install -g --prefix=~/.npm-global gitnexus@latest`
 

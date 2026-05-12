@@ -52,8 +52,8 @@ AUTH_METHOD = "NONE"
 # MCP: Docker
 # ─────────────────────────────────────────────
 [mcp_servers.docker]
-command = "npx"
-args = ["-y", "@0xshariq/docker-mcp-server"]
+command = "docker.exe"
+args = ["mcp", "gateway", "run"]
 enabled = true
 
 # ─────────────────────────────────────────────

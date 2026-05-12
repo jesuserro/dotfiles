@@ -81,31 +81,38 @@ _sum() {
 	[[ -f "${BUILD_MCPS}/drift-report.json" ]]
 }
 
-@test "rendered Docker MCP uses npx, not the legacy local node_modules path" {
+@test "rendered Docker MCP uses Docker Desktop Gateway via docker.exe" {
 	if ! python3 -c "import yaml" 2>/dev/null; then
 		skip "PyYAML not installed"
 	fi
 	run make -C "${DOTFILES_DIR}" ai-mcp-render
 	[[ "${status}" -eq 0 ]]
-	# Cursor template: npx in the docker command, no .codex/mcp/docker/node_modules path.
-	grep -q '"@0xshariq/docker-mcp-server"' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
+	grep -q '"command": "docker.exe"' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
+	grep -q '"mcp"' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
+	grep -q '"gateway"' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
+	grep -q '"run"' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
+	run ! grep -q '@0xshariq/docker-mcp-server' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
 	run ! grep -q '\.codex/mcp/docker/node_modules' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
-	# Codex fragment + OpenCode JSON: same invariants.
-	grep -q '@0xshariq/docker-mcp-server' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
+	grep -q 'command = "docker.exe"' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
+	grep -q 'args = \["mcp", "gateway", "run"\]' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
+	run ! grep -q '@0xshariq/docker-mcp-server' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
 	run ! grep -q '\.codex/mcp/docker/node_modules' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
-	grep -q '@0xshariq/docker-mcp-server' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
+	grep -q '"docker.exe"' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
+	grep -q '"gateway"' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
+	run ! grep -q '@0xshariq/docker-mcp-server' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
 	run ! grep -q '\.codex/mcp/docker/node_modules' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
 }
 
-@test "productive Chezmoi templates also use npx for Docker MCP" {
-	# Guard against regressions where the recipe is updated but the productive
-	# templates drift back to the legacy path.
+@test "productive Chezmoi templates also use Docker Desktop Gateway via docker.exe" {
 	run ! grep -q '\.codex/mcp/docker/node_modules' "${TMPL_CURSOR}"
 	run ! grep -q '\.codex/mcp/docker/node_modules' "${TMPL_CODEX}"
 	run ! grep -q '\.codex/mcp/docker/node_modules' "${TMPL_OPENCODE}"
-	grep -q '@0xshariq/docker-mcp-server' "${TMPL_CURSOR}"
-	grep -q '@0xshariq/docker-mcp-server' "${TMPL_CODEX}"
-	grep -q '@0xshariq/docker-mcp-server' "${TMPL_OPENCODE}"
+	run ! grep -q '@0xshariq/docker-mcp-server' "${TMPL_CURSOR}"
+	run ! grep -q '@0xshariq/docker-mcp-server' "${TMPL_CODEX}"
+	run ! grep -q '@0xshariq/docker-mcp-server' "${TMPL_OPENCODE}"
+	grep -q '"command": "docker.exe"' "${TMPL_CURSOR}"
+	grep -q 'command = "docker.exe"' "${TMPL_CODEX}"
+	grep -q '"docker.exe"' "${TMPL_OPENCODE}"
 }
 
 @test "make ai-mcp-generate without APPLY does not modify productive templates" {

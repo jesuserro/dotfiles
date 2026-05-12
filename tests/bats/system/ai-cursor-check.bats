@@ -94,3 +94,39 @@ JSON
 	# Should also mention the secrets file boundary without reading it.
 	[[ "${output}" == *"codex.env"* ]]
 }
+
+@test "ai-cursor-check validates Docker MCP through docker.exe stub" {
+	local fake_home stub_path
+	fake_home="$(mktemp -d)"
+	stub_path="$(mktemp -d)"
+	mkdir -p "${fake_home}/.cursor"
+	cat > "${fake_home}/.cursor/mcp.json" <<'JSON'
+{
+  "mcpServers": {
+    "docker": {
+      "command": "docker.exe",
+      "args": ["mcp", "gateway", "run"],
+      "env": {}
+    }
+  }
+}
+JSON
+	cat > "${stub_path}/docker.exe" <<'SH'
+#!/usr/bin/env bash
+if [[ "$*" == "mcp version" ]]; then
+	echo "v0.42.0"
+	exit 0
+fi
+if [[ "$*" == "mcp profile ls" ]]; then
+	echo "No profiles"
+	exit 0
+fi
+exit 1
+SH
+	chmod +x "${stub_path}/docker.exe"
+	run env HOME="${fake_home}" PATH="${stub_path}:${PATH}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}" "${stub_path}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"Docker MCP Toolkit responds via docker.exe"* ]]
+	[[ "${output}" == *"Docker MCP Gateway available via docker.exe; no Docker MCP profile/server enabled yet"* ]]
+}

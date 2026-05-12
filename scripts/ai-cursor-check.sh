@@ -302,6 +302,43 @@ if [[ -f "${CURSOR_MCP}" ]] && python3 -c "import json; d=json.load(open('${CURS
 	fi
 fi
 
+# Docker Desktop MCP Toolkit works from WSL through docker.exe. The Linux
+# docker CLI can still talk to Engine while reporting "Docker Desktop is not
+# running" for `docker mcp ...`, so validate the configured command directly.
+if [[ -f "${CURSOR_MCP}" ]] && python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); s=d.get('mcpServers',{}).get('docker',{}); exit(0 if isinstance(s,dict) and s.get('command') == 'docker.exe' else 1)" 2>/dev/null; then
+	if command -v docker.exe >/dev/null 2>&1; then
+		line OK "Docker MCP command available (docker.exe in PATH)"
+		set +e
+		docker_mcp_version="$(docker.exe mcp version 2>&1)"
+		docker_mcp_status=$?
+		set -e
+		if [[ ${docker_mcp_status} -eq 0 ]]; then
+			line OK "Docker MCP Toolkit responds via docker.exe (${docker_mcp_version})"
+			set +e
+			docker_mcp_profiles="$(docker.exe mcp profile ls 2>&1)"
+			docker_mcp_profiles_status=$?
+			set -e
+			if [[ ${docker_mcp_profiles_status} -eq 0 ]]; then
+				if printf '%s\n' "${docker_mcp_profiles}" | grep -Eiq 'no profiles|no profile|empty|0 servers|no servers'; then
+					line_info "Docker MCP Gateway available via docker.exe; no Docker MCP profile/server enabled yet"
+				else
+					line_info "Docker MCP profile list responds via docker.exe"
+				fi
+			else
+				line WARN "docker.exe mcp profile ls failed (gateway may still start with internal tools): ${docker_mcp_profiles}"
+			fi
+		elif printf '%s\n' "${docker_mcp_version}" | grep -q "Docker Desktop is not running"; then
+			line WARN "docker.exe mcp version reports Docker Desktop is not running"
+		else
+			line WARN "docker.exe mcp version failed: ${docker_mcp_version}"
+		fi
+	else
+		line WARN "Docker MCP uses docker.exe but docker.exe is not in PATH"
+	fi
+elif [[ -f "${CURSOR_MCP}" ]] && python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); exit(0 if 'docker' in d.get('mcpServers',{}) else 1)" 2>/dev/null; then
+	line WARN "Docker MCP is present but is not configured as docker.exe mcp gateway run"
+fi
+
 echo ""
 echo "==> 2. Skills (repo + validate-skills-structure)"
 if [[ -d "${SKILLS_SRC}" ]]; then

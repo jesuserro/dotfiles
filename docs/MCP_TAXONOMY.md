@@ -50,7 +50,7 @@ These MCPs require explicit installation or update via `ups`:
 | gitnexus CLI | `npm install -g --prefix=~/.npm-global gitnexus@latest` |
 | excalidraw | `git pull` + `pnpm install` + `pnpm run build` |
 | fetch | `uv tool install mcp-server-fetch` |
-| docker | `npx -y @0xshariq/docker-mcp-server` (latest at runtime) |
+| docker | Docker Desktop MCP Gateway: `docker.exe mcp gateway run` from WSL |
 | postgres | `npm update` in `~/.config/mcp/servers/*/` (only if present) |
 | Python MCPs | `pip install -r requirements.txt -U` in venv |
 
@@ -65,6 +65,24 @@ These MCPs use `npx -y` or `uvx` and get latest version automatically:
 | sequential-thinking | `npx -y @modelcontextprotocol/server-sequential-thinking` |
 | obsidian | `npx -y @bitbonsai/mcpvault` + vault path from Chezmoi `ai.obsidian_vault_path` (see [CHEZMOI.md](./CHEZMOI.md)) |
 | git | `uvx mcp-server-git` |
+
+### Docker Desktop MCP Gateway on WSL
+
+Docker MCP uses the official Docker Desktop MCP Gateway, launched as
+`docker.exe mcp gateway run`. From WSL, prefer `docker.exe` because the Linux
+`docker mcp gateway run` command can report `Docker Desktop is not running`
+even when `docker ps` and the Docker Engine work through Docker Desktop.
+
+Manual validation:
+
+```bash
+docker.exe mcp version
+docker.exe mcp profile ls
+timeout 8s docker.exe mcp gateway run
+```
+
+The legacy `npx -y @0xshariq/docker-mcp-server` runtime is discarded here
+because it behaves like a CLI in Cursor, prints help, and exits.
 
 ### Launcher-Managed
 

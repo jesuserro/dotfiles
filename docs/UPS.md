@@ -40,7 +40,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 |--------------|--------|
 | **gitnexus** | `npm install -g --prefix=~/.npm-global gitnexus@latest` (CLI, separado del MCP) |
 | **excalidraw** | `~/mcp-servers/excalidraw-mcp` — si el repo fija un `packageManager` antiguo, `ups` lo sincroniza con el `pnpm` activo; después ejecuta `git pull --rebase --autostash` + `pnpm install` + `pnpm run build` |
-| **docker** | `npx -y @0xshariq/docker-mcp-server` (resolución al ejecutar; no hay materialización local) |
+| **docker** | Docker Desktop MCP Gateway oficial: `docker.exe mcp gateway run` desde WSL; se actualiza con Docker Desktop |
 | **postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` (solo si existe) |
 | **fetch** | `uv tool install mcp-server-fetch` |
 | **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
