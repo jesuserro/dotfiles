@@ -254,6 +254,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/install-mcp-github.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-mcp-excalidraw.bats)
 	@$(call run_bats,$(BATS_DIR)/system/dry-run-guard.bats)
+	@$(call run_bats,$(BATS_DIR)/system/azure-tools.bats)
 	@$(call run_bats,$(BATS_DIR)/system/ai-cursor-check.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-manifest.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-render-drift.bats)

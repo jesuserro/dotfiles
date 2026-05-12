@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-12 09:05:56
+**Generated:** 2026-05-12 12:45:57
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -206,6 +206,7 @@
 │   │   │   └── 🖼️ architecture-overview.svg
 │   │   └── 📝 PROJECT_DATA.md
 │   ├── 📁 ops
+│   │   ├── 📝 azure-tooling.md
 │   │   └── 📝 dotfiles-install.md
 │   ├── 📁 plans
 │   │   └── 📝 PLAN_000009.md
@@ -284,6 +285,7 @@
 │   │   ├── 🔧 prompt-vault-common.sh
 │   │   └── 🐍 system_deps.py
 │   ├── 🔧 ai-cursor-check.sh
+│   ├── 🔧 check-azure-tools.sh
 │   ├── 🔧 check-system-deps.sh
 │   ├── 🔧 generate-commands.sh
 │   ├── 🐍 generate-mcp-configs.py
@@ -366,6 +368,7 @@
 │   │   │   └── 📄 prompt-launchers.bats
 │   │   ├── 📁 system
 │   │   │   ├── 📄 ai-cursor-check.bats
+│   │   │   ├── 📄 azure-tools.bats
 │   │   │   ├── 📄 dry-run-guard.bats
 │   │   │   ├── 📄 install-chezmoi.bats
 │   │   │   ├── 📄 install-dotfiles.bats
@@ -401,6 +404,7 @@
 │   ├── 🔧 20-omz.zsh
 │   ├── 🔧 30-python.zsh
 │   ├── 🔧 50-aliases-dotfiles.zsh
+│   ├── 🔧 55-aliases-azure.zsh
 │   └── 🔧 90-local.zsh
 ├── ⚙️ .chezmoi.toml
 ├── 📄 .chezmoiignore
