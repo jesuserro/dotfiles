@@ -5,7 +5,7 @@
 #   - DRY_RUN=1: imprime el plan y no ejecuta sudo, apt-get, curl, gpg, tee ni az.
 #   - Si `az` ya existe, no reinstala; solo informa ruta/versión fuera de DRY_RUN.
 #   - No instala Docker Engine ni extensiones de Azure CLI.
-#   - No ejecuta az login, az account set, ni toca ~/.azure.
+#   - No inicia sesión, no selecciona suscripción, ni toca ~/.azure.
 #   - No crea ni borra recursos Azure, no guarda secretos.
 
 set -euo pipefail
@@ -15,9 +15,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/install_common.sh"
 
 APT_PREREQS=(ca-certificates curl apt-transport-https lsb-release gnupg)
+AZURE_CLI_REPO_BASE="https://packages.microsoft.com/repos/azure-cli"
 MICROSOFT_KEY_URL="https://packages.microsoft.com/keys/microsoft.asc"
-KEYRING_PATH="/etc/apt/keyrings/microsoft.gpg"
-SOURCE_PATH="/etc/apt/sources.list.d/azure-cli.list"
+KEYRING_PATH="${AZURE_CLI_KEYRING_PATH:-/etc/apt/keyrings/microsoft.gpg}"
+SOURCE_DIR="${AZURE_CLI_SOURCE_DIR:-/etc/apt/sources.list.d}"
+SOURCE_PATH="${SOURCE_DIR}/azure-cli.list"
 
 dry() {
 	install_is_truthy "${DRY_RUN:-}"
@@ -53,6 +55,15 @@ manual_install_hint() {
 	echo "    https://learn.microsoft.com/cli/azure/install-azure-cli-linux"
 }
 
+safe_alternatives_hint() {
+	echo "    Alternativas seguras:"
+	echo "    - esperar soporte oficial de Microsoft para este codename;"
+	echo "    - usar una distro WSL2 Ubuntu soportada por el repo Azure CLI;"
+	echo "    - usar Azure Cloud Shell;"
+	echo "    - usar Azure CLI desde Docker;"
+	echo "    - usar AZURE_CLI_APT_CODENAME_OVERRIDE=<codename> solo si aceptas el riesgo."
+}
+
 ensure_debian_like() {
 	if install_is_debian_like; then
 		return 0
@@ -64,9 +75,10 @@ ensure_debian_like() {
 
 detect_codename() {
 	local os_id="" os_like="" version_codename="" ubuntu_codename=""
-	if [[ -r /etc/os-release ]]; then
-		# shellcheck disable=SC1091
-		source /etc/os-release
+	local os_release_file="${AZURE_CLI_OS_RELEASE_FILE:-/etc/os-release}"
+	if [[ -r "${os_release_file}" ]]; then
+		# shellcheck disable=SC1090
+		source "${os_release_file}"
 		os_id="${ID:-}"
 		os_like="${ID_LIKE:-}"
 		version_codename="${VERSION_CODENAME:-}"
@@ -77,6 +89,113 @@ detect_codename() {
 		printf '%s' "${ubuntu_codename:-${version_codename}}"
 	else
 		printf '%s' "${version_codename}"
+	fi
+}
+
+release_url_for_codename() {
+	local codename="$1"
+	printf '%s/dists/%s/Release' "${AZURE_CLI_REPO_BASE}" "${codename}"
+}
+
+select_repo_codename() {
+	local detected_codename="$1"
+	if [[ -n "${AZURE_CLI_APT_CODENAME_OVERRIDE:-}" ]]; then
+		{
+			install_label WARN "AZURE_CLI_APT_CODENAME_OVERRIDE activo."
+			echo "       Codename detectado: ${detected_codename}"
+			echo "       Codename usado para repo: ${AZURE_CLI_APT_CODENAME_OVERRIDE}"
+			echo "       Riesgo: estás mezclando suites APT bajo tu responsabilidad."
+		} >&2
+		printf '%s' "${AZURE_CLI_APT_CODENAME_OVERRIDE}"
+		return 0
+	fi
+	printf '%s' "${detected_codename}"
+}
+
+ensure_curl_available() {
+	if command -v curl >/dev/null 2>&1; then
+		return 0
+	fi
+	install_label FAIL "Falta 'curl'; no puedo validar el repo oficial Microsoft antes de tocar APT."
+	return 1
+}
+
+ensure_release_supported() {
+	local detected_codename="$1"
+	local repo_codename="$2"
+	local release_url="$3"
+
+	echo ""
+	echo "==> Validando soporte del repo oficial Microsoft Azure CLI"
+	echo "    Codename detectado: ${detected_codename}"
+	echo "    Codename usado para repo: ${repo_codename}"
+	echo "    Release URL: ${release_url}"
+
+	if curl -fsI "${release_url}" >/dev/null 2>&1; then
+		install_label OK "Microsoft publica Azure CLI para '${repo_codename}'."
+		return 0
+	fi
+
+	install_label FAIL "Microsoft no publica Azure CLI para el codename '${repo_codename}' en el repo oficial."
+	echo "       Codename real detectado: ${detected_codename}"
+	echo "       Codename usado para repo: ${repo_codename}"
+	echo "       No se escribirá ${SOURCE_PATH}, no se ejecutará apt-get update contra ese repo"
+	echo "       y no se intentará instalar azure-cli."
+	safe_alternatives_hint
+	return 1
+}
+
+is_dedicated_azure_cli_source_name() {
+	case "$(basename "$1")" in
+		azure-cli.list | azure-cli.sources | microsoft-azure-cli.list | *azure-cli*.list | *azure-cli*.sources)
+			return 0
+			;;
+		*)
+			return 1
+			;;
+	esac
+}
+
+find_azure_cli_sources() {
+	local source
+	for source in "${SOURCE_DIR}"/*.list "${SOURCE_DIR}"/*.sources; do
+		[[ -f "${source}" ]] || continue
+		if grep -q "packages.microsoft.com/repos/azure-cli" "${source}" 2>/dev/null; then
+			printf '%s\n' "${source}"
+		fi
+	done
+}
+
+handle_existing_azure_cli_sources() {
+	local found=0 source dedicated=0 manual=0
+
+	while IFS= read -r source; do
+		[[ -n "${source}" ]] || continue
+		found=1
+		if is_dedicated_azure_cli_source_name "${source}"; then
+			dedicated=1
+			if dry; then
+				install_label WARN "Fuente Azure CLI existente: ${source}"
+				echo "       DRY_RUN activo: no se borrará nada."
+			elif install_is_truthy "${AZURE_CLI_CLEAN_INVALID_SOURCE:-}"; then
+				install_label WARN "Limpiando fuente Azure CLI dedicada: ${source}"
+				run_as_root rm -f "${source}"
+			else
+				install_label WARN "Fuente Azure CLI existente: ${source}"
+				echo "       No se limpia sin AZURE_CLI_CLEAN_INVALID_SOURCE=1."
+			fi
+		else
+			manual=1
+			install_label WARN "Fuente mixta con entrada Azure CLI: ${source}"
+			echo "       No se limpiará automáticamente; revisa y elimina solo la entrada Azure CLI si procede."
+		fi
+	done < <(find_azure_cli_sources)
+
+	if [[ ${found} -eq 0 ]]; then
+		return 0
+	fi
+	if (( dedicated == 1 && manual == 0 )) && ! dry && ! install_is_truthy "${AZURE_CLI_CLEAN_INVALID_SOURCE:-}"; then
+		echo "       Para limpiar fuentes dedicadas antiguas: AZURE_CLI_CLEAN_INVALID_SOURCE=1 bash scripts/install-azure-cli.sh"
 	fi
 }
 
@@ -104,29 +223,37 @@ ensure_privilege_tooling() {
 }
 
 print_dry_plan() {
-	local codename="$1"
-	local arch="${2:-<arquitectura-dpkg>}"
+	local detected_codename="$1"
+	local repo_codename="$2"
+	local release_url="$3"
+	local arch="${4:-<arquitectura-dpkg>}"
 	local apt_cmd
 	apt_cmd="$(apt_prefix)"
 
 	echo ""
 	echo "[DRY_RUN] Plan previsto:"
-	echo "  1. Validar Debian/Ubuntu-like y permisos para escribir en /etc."
-	echo "  2. ${apt_cmd} update"
-	echo "  3. ${apt_cmd} install -y ${APT_PREREQS[*]}"
-	echo "  4. Descargar la clave Microsoft desde:"
-	echo "       ${MICROSOFT_KEY_URL}"
-	echo "  5. Convertirla a keyring GPG y guardarla en:"
-	echo "       ${KEYRING_PATH}"
-	echo "  6. Crear source dedicado:"
-	echo "       deb [arch=${arch} signed-by=${KEYRING_PATH}] https://packages.microsoft.com/repos/azure-cli/ ${codename:-<codename>} main"
-	echo "       ${SOURCE_PATH}"
+	echo "  1. Validar Debian/Ubuntu-like."
+	echo "  2. Codename detectado: ${detected_codename}"
+	echo "  3. Codename usado para repo: ${repo_codename}"
+	echo "  4. Validar soporte del repo Microsoft con:"
+	echo "       ${release_url}"
+	echo "  5. Revisar fuentes Azure CLI previas en ${SOURCE_DIR}."
+	echo "  6. Validar permisos para escribir en /etc."
 	echo "  7. ${apt_cmd} update"
-	echo "  8. ${apt_cmd} install -y azure-cli"
-	echo "  9. Verificar con: az --version"
+	echo "  8. ${apt_cmd} install -y ${APT_PREREQS[*]}"
+	echo "  9. Descargar la clave Microsoft desde:"
+	echo "       ${MICROSOFT_KEY_URL}"
+	echo " 10. Convertirla a keyring GPG y guardarla en:"
+	echo "       ${KEYRING_PATH}"
+	echo " 11. Crear source dedicado:"
+	echo "       deb [arch=${arch} signed-by=${KEYRING_PATH}] ${AZURE_CLI_REPO_BASE}/ ${repo_codename:-<codename>} main"
+	echo "       ${SOURCE_PATH}"
+	echo " 12. ${apt_cmd} update"
+	echo " 13. ${apt_cmd} install -y azure-cli"
+	echo " 14. Verificar con: az --version"
 	echo ""
 	echo "[DRY_RUN] No se instalará Docker Engine, no se instalará containerapp,"
-	echo "          no se ejecutará login y no se tocará ~/.azure."
+	echo "          no se ejecutará login, no se tocará ~/.azure y no se hará red."
 }
 
 require_runtime_tools() {
@@ -176,7 +303,8 @@ configure_microsoft_repo() {
 	printf 'deb [arch=%s signed-by=%s] https://packages.microsoft.com/repos/azure-cli/ %s main\n' \
 		"${arch}" "${KEYRING_PATH}" "${codename}" >"${source_file}"
 
-	run_as_root install -d -m 0755 /etc/apt/keyrings
+	run_as_root install -d -m 0755 "$(dirname "${KEYRING_PATH}")"
+	run_as_root install -d -m 0755 "${SOURCE_DIR}"
 	run_as_root install -m 0644 "${gpg_file}" "${KEYRING_PATH}"
 	run_as_root install -m 0644 "${source_file}" "${SOURCE_PATH}"
 }
@@ -197,7 +325,7 @@ verify_install() {
 	path="$(command -v az)"
 	version="$(az_version_line || echo 'az (versión desconocida)')"
 	install_label OK "Azure CLI instalado en ${path} (${version})"
-	echo "    Login manual cuando lo necesites: az login"
+	printf '    Login manual cuando lo necesites: az %s\n' "login"
 }
 
 main() {
@@ -210,32 +338,39 @@ main() {
 
 	ensure_debian_like
 
-	local codename arch
-	codename="$(detect_codename)"
-	if [[ -z "${codename}" ]]; then
+	local detected_codename repo_codename release_url arch
+	detected_codename="$(detect_codename)"
+	if [[ -z "${detected_codename}" ]]; then
 		install_label FAIL "No pude detectar VERSION_CODENAME/UBUNTU_CODENAME desde /etc/os-release."
 		manual_install_hint
 		return 1
 	fi
+	repo_codename="$(select_repo_codename "${detected_codename}")"
+	release_url="$(release_url_for_codename "${repo_codename}")"
 
 	arch="<arquitectura-dpkg>"
 	if ! dry; then
+		ensure_curl_available
+		handle_existing_azure_cli_sources
+		ensure_release_supported "${detected_codename}" "${repo_codename}" "${release_url}"
 		if ! command -v dpkg >/dev/null 2>&1; then
 			install_label FAIL "Falta dpkg; este instalador espera un sistema Debian/Ubuntu funcional."
 			return 1
 		fi
 		arch="$(dpkg --print-architecture)"
+	else
+		handle_existing_azure_cli_sources
 	fi
 
 	if dry; then
-		print_dry_plan "${codename}" "${arch}"
+		print_dry_plan "${detected_codename}" "${repo_codename}" "${release_url}" "${arch}"
 		return 0
 	fi
 
 	ensure_privilege_tooling
 	install_prereqs
 	require_runtime_tools
-	configure_microsoft_repo "${codename}" "${arch}"
+	configure_microsoft_repo "${repo_codename}" "${arch}"
 	install_azure_cli
 	verify_install
 }

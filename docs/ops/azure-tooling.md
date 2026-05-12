@@ -23,6 +23,40 @@ El instalador usa el repo oficial de Microsoft para Debian/Ubuntu/WSL, pero no
 ejecuta login, no selecciona suscripciones, no instala Docker Engine, no instala
 extensiones y no toca `~/.azure`.
 
+Antes de configurar APT, el instalador valida que Microsoft publique el canal
+para el codename detectado en:
+
+```bash
+https://packages.microsoft.com/repos/azure-cli/dists/<codename>/Release
+```
+
+Codenames nuevos de Ubuntu, como `resolute`, pueden no estar publicados todavía.
+En ese caso el instalador debe parar sin escribir fuentes APT ni romper
+`apt-get update`. Opciones seguras:
+
+- esperar soporte oficial;
+- usar WSL2 con una distro Ubuntu soportada;
+- usar Azure Cloud Shell;
+- usar Azure CLI desde Docker.
+
+Solo si aceptas el riesgo de mezclar suites APT, puedes forzar manualmente el
+codename del repo:
+
+```bash
+AZURE_CLI_APT_CODENAME_OVERRIDE=noble make install-azure-cli
+```
+
+Si una prueba anterior dejó una fuente inválida dedicada a Azure CLI, la limpieza
+también es opt-in:
+
+```bash
+DRY_RUN=1 AZURE_CLI_CLEAN_INVALID_SOURCE=1 make install-azure-cli
+AZURE_CLI_CLEAN_INVALID_SOURCE=1 make install-azure-cli
+```
+
+La limpieza se limita a fuentes dedicadas de Azure CLI y no borra keyrings
+Microsoft por defecto.
+
 Azure CLI está declarado como herramienta externa opcional en el inventario de
 dependencias (`system/packages/tooling.yaml`). Esto permite recomendar
 `make install-azure-cli` sin convertir `az` en dependencia base de Dotfiles ni

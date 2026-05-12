@@ -192,7 +192,8 @@ Reglas de la Fase 1C:
 - `make install`, `make install-check`, `make install-verify`, `make deps-check`
   y `scripts/check-system-deps.sh` no deben fallar porque falte `az`.
 - `make install-azure-cli` y `scripts/install-azure-cli.sh` son manuales y
-  opt-in; soportan `DRY_RUN=1`.
+  opt-in; soportan `DRY_RUN=1` y validan que el canal Microsoft exista para el
+  codename antes de configurar APT, sin fallback automático.
 - `bash scripts/check-azure-tools.sh` puede fallar si falta `az`, porque es el
   check explícito de readiness Azure.
 - `az login`, selección de suscripción, extensiones como `containerapp` y
