@@ -4,24 +4,23 @@
 
 ## Estado actual
 
-- **Chezmoi** gestiona: MCPs (Cursor/Codex), secretos, config Codex.
-- **RCM (rcup)** gestiona: zsh, tmux, vim, git, aliases, etc.
-- **Roadmap:** Chezmoi sustituirá a rcup como único gestor de dotfiles.
+- **Chezmoi** es el único gestor activo de dotfiles relevantes: MCPs (Cursor/Codex), secretos, config Codex, AI runtime y los RC files de la **zsh stack** (`~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`).
+- **`make install-zsh-stack`** instala únicamente runtime: Oh My Zsh + Powerlevel10k + plugins. No toca ningún RC file.
+- **RCM (`rcup`)** queda fuera del flujo activo. Sus referencias históricas se conservan solo como contexto. No hay paso `rcup` en el bootstrap; tampoco se requiere instalar `rcm`.
 
 ---
 
-## Cuándo usar rcup, source y chezmoi
+## Cuándo usar source y chezmoi
 
-En este proyecto conviven tres mecanismos para aplicar cambios. Resumen:
+En este proyecto conviven dos mecanismos para aplicar cambios. Resumen:
 
 | Mecanismo | Qué hace | Cuándo usarlo |
 |-----------|----------|----------------|
-| **`rcup -v`** | Crea o actualiza symlinks desde el repo hacia `$HOME` para los archivos que RCM gestiona (zsh, tmux, vim, aliases, etc.). | Cuando has modificado en el repo esos archivos (p. ej. `aliases`, `zshrc`, `tmux.conf`) y quieres que tu HOME refleje los cambios. |
-| **`source ~/.zshrc`** | Recarga en la **sesión actual** de la terminal el contenido de `~/.zshrc`: aliases, funciones (como `ups`), PATH, etc. No escribe archivos. | Después de `rcup` para que la shell use los nuevos aliases/funciones. También después de `ups`: con eso basta para que la sesión vea binarios actualizados (pnpm, etc.); **no** hace falta chezmoi solo por haber ejecutado `ups`. |
-| **`chezmoi --source=$HOME/dotfiles apply`** | Aplica las plantillas y archivos que Chezmoi gestiona desde el repo a tu HOME: `~/.cursor/mcp.json`, `~/.codex/config.toml`, `~/.config/ai/`, secretos generados, etc. | Cuando **tú** has editado en el repo lo que Chezmoi controla (p. ej. `dot_cursor/mcp.json.tmpl`, `dot_codex/config.toml.tmpl`, `ai/runtime/mcp/`, secretos). No es necesario ejecutarlo solo por haber corrido `ups` (que solo actualiza código/deps de los servidores MCP). |
+| **`chezmoi --source=$HOME/dotfiles apply`** (alias: `make install-dotfiles DOTFILES_APPLY=1`) | Aplica las plantillas, archivos y symlinks que Chezmoi gestiona desde el repo a tu HOME: `~/.cursor/mcp.json`, `~/.codex/config.toml`, `~/.config/ai/`, secretos generados, y los symlinks `~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`. | Cuando has editado en el repo lo que Chezmoi controla. No hace falta ejecutarlo solo por haber corrido `ups` (que solo actualiza código/deps de los servidores MCP). |
+| **`source ~/.zshrc`** | Recarga en la **sesión actual** de la terminal el contenido de `~/.zshrc`: aliases, funciones (como `ups`), PATH, etc. No escribe archivos. | Después de `chezmoi apply` o de `ups` para que la shell use los nuevos aliases/funciones. |
 | **`chezmoi --source=$HOME/dotfiles apply ~/.cursor/mcp.json ~/.config/opencode/opencode.json ~/.codex/config.toml`** | Propaga solo las configs MCP renderizadas de Cursor, OpenCode y Codex. | Úsalo tras cambios de plantillas MCP como el launcher de GitNexus. Mantiene el arranque estable con binarios/launchers locales en vez de `npx ...@latest` en runtime. |
 
-Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si hay cambios en lo que Chezmoi gestiona), `rcup -v` (si hay cambios en lo que RCM gestiona), y `source ~/.zshrc` para la sesión actual.
+Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si hay cambios en lo que Chezmoi gestiona) y `source ~/.zshrc` para la sesión actual.
 
 ---
 
@@ -35,6 +34,19 @@ Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si ha
 | `~/.secrets/codex.env` | Symlink → `~/.config/mcp-secrets.env` (legacy, mantener por compatibilidad) |
 | `~/.config/ai/runtime/` | Runtime (venv) — ver `ai/README.md` |
 | `~/.local/share/chezmoi/bin/mcp-*-launcher` | `dot_local/share/chezmoi/bin/executable_mcp-*-launcher.tmpl` (`filesystem`, `git`, `gitnexus`, `postgres`) |
+| `~/.zshrc` | `symlink_dot_zshrc.tmpl` → `$HOME/dotfiles/zshrc` |
+| `~/.p10k.zsh` | `symlink_dot_p10k.zsh.tmpl` → `$HOME/dotfiles/powerlevel10k/p10k.zsh` |
+| `~/.aliases` | `symlink_dot_aliases.tmpl` → `$HOME/dotfiles/aliases` (carga la función `ups`) |
+
+### Backup seguro de RC files
+
+El hook `.chezmoiscripts/run_before_00_backup_rc_files.sh.tmpl` se ejecuta antes de `chezmoi apply` y aplica esta política sobre `~/.zshrc`, `~/.p10k.zsh` y `~/.aliases`:
+
+- Si el target no existe o ya es un symlink correcto: no-op (idempotente).
+- Si es un symlink al destino equivocado o un fichero **trivial** (vacío, solo whitespace, o exactamente `. "$HOME/.local/bin/env"` — el stub que escribe el instalador oficial de `uv`): se mueve a `~/<name>.backup.YYYYMMDD-HHMMSS` y Chezmoi crea el symlink limpio.
+- Si es un fichero regular con **contenido custom**: el hook aborta con mensaje accionable, salvo que se pase `ZSH_RC_APPLY=1`. Con el flag, se hace backup con timestamp y se reemplaza.
+
+Nunca se borra sin backup; nunca se usa `sudo`.
 
 ---
 
@@ -56,9 +68,9 @@ Tras cambiar el dato: **`chezmoi apply`** (o `make install-dotfiles DOTFILES_APP
 
 ## Requisitos
 
-- **Chezmoi:** [releases](https://github.com/twpayne/chezmoi/releases) o `~/dotfiles/bin/chezmoi`
+- **Chezmoi:** `make install-chezmoi` (preferido, opt-in, idempotente, sin sudo, deja el binario en `~/.local/bin/chezmoi`). Fallback: `sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"` o [releases](https://github.com/twpayne/chezmoi/releases).
 - **Age:** `sudo apt install age` o [releases](https://github.com/FiloSottile/age/releases)
-- **SOPS:** [releases](https://github.com/getsops/sops/releases)
+- **SOPS:** `make install-sops` (opt-in, idempotente, sin sudo) o [releases](https://github.com/getsops/sops/releases)
 - **yq** o **python3 + PyYAML** para el script de generación de secretos
 
 ---
@@ -89,17 +101,28 @@ chezmoi apply
 
 ## Configuración de Age + SOPS (una vez)
 
-### 1. Generar clave Age
+### 1. Validar o restaurar la clave Age
 
 ```bash
 mkdir -p ~/.config/sops/age
-age-keygen -o ~/.config/sops/age/keys.txt
-grep "public key:" ~/.config/sops/age/keys.txt
+test -f ~/.config/sops/age/keys.txt
+age-keygen -y ~/.config/sops/age/keys.txt
 ```
 
-### 2. Editar `.sops.yaml` en el repo
+Si `secrets.sops.yaml` ya existe cifrado, no generes una clave nueva a ciegas: restaura/importa primero la clave privada que corresponde al recipient de `.sops.yaml`. La clave privada vive en `~/.config/sops/age/keys.txt` y nunca se versiona.
 
-Reemplazar `AGE_PUBLIC_KEY_AQUI` por la public key obtenida. El archivo define qué rutas cifrar:
+Para rotar a una clave nueva:
+
+```bash
+age-keygen -o ~/.config/sops/age/keys.txt.new
+age-keygen -y ~/.config/sops/age/keys.txt.new
+# Actualiza .sops.yaml con la nueva public key y re-encripta:
+sops updatekeys secrets.sops.yaml
+```
+
+### 2. Revisar `.sops.yaml` en el repo
+
+El archivo define qué rutas cifrar y qué recipient Age puede descifrarlas:
 
 ```yaml
 creation_rules:
@@ -107,22 +130,22 @@ creation_rules:
     age: age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-### 3. Cifrar secretos
+### 3. Editar secretos
 
 ```bash
 cd ~/dotfiles
 sops secrets.sops.yaml
 ```
 
-Rellenar los valores reales en el YAML y guardar (SOPS cifra al salir).
+Rellenar los valores reales en el editor abierto por SOPS y guardar. No pegues tokens en chat ni uses `sops -d` en terminal como flujo normal.
 
 ### 4. Aplicar
 
 ```bash
-chezmoi --source=$HOME/dotfiles apply
+make install-dotfiles DOTFILES_APPLY=1
 ```
 
-Se genera `~/.config/mcp-secrets.env` desde `secrets.sops.yaml` y el symlink `~/.secrets/codex.env` apunta a ese archivo (compatibilidad).
+Se genera `~/.config/mcp-secrets.env` desde `secrets.sops.yaml`; `~/.secrets/codex.env` queda como compatibilidad apuntando a ese archivo.
 
 ---
 
@@ -131,8 +154,9 @@ Se genera `~/.config/mcp-secrets.env` desde `secrets.sops.yaml` y el symlink `~/
 | Archivo | Descripción |
 |---------|-------------|
 | `secrets.sops.yaml` | En repo, cifrado. Contiene `mcp.github_personal_access_token`, `mcp.postgres_dsn`, `mcp.minio_access_key`, `mcp.minio_secret_key`. |
-| `~/.config/mcp-secrets.env` | Generado por Chezmoi al hacer `apply`. Nombre neutro para MCPs. No versionar. |
-| `~/.secrets/codex.env` | Symlink legacy a `~/.config/mcp-secrets.env` (mantener por compatibilidad). |
+| `~/.config/mcp-secrets.env` | Canonico generado por Chezmoi al hacer `apply`. Nombre neutro para MCPs. No versionar. |
+| `~/.secrets/codex.env` | Adaptador de compatibilidad a `~/.config/mcp-secrets.env`. No versionar. |
+| `~/.config/store-etl/secrets.env` | Copia legacy para consumidores antiguos. No usar como fuente principal ni versionar. |
 
 ---
 
@@ -142,8 +166,8 @@ El script `.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl` se ejecuta tras `ap
 
 1. Desencripta `secrets.sops.yaml` con SOPS.
 2. Genera `~/.config/mcp-secrets.env` (variables export, nombre neutro).
-3. Copia a `~/.config/mcp-secrets.env` y crea symlink legacy `~/.secrets/codex.env`.
-4. Crea archivos de compatibilidad para docker-compose en `~/.secrets/store-etl/`.
+3. Crea `~/.secrets/codex.env` como adaptador legacy hacia `~/.config/mcp-secrets.env`.
+4. Mantiene `~/.config/store-etl/secrets.env` y archivos de MinIO solo como compatibilidad legacy.
 
 Requiere: `sops`, `yq` o `python3` con PyYAML.
 
@@ -167,8 +191,8 @@ Requiere: `sops`, `yq` o `python3` con PyYAML.
 
 ## No hacer
 
-- No eliminar rcup (aún gestiona el resto de dotfiles).
-- No tocar zsh, tmux, vim por ahora.
+- No reintroducir RCM/rcup en el flujo activo (ni en docs de máquina nueva, ni en targets, ni en inventario APT). Chezmoi es el único gestor activo.
+- No depender de `rcup` para que `~/.zshrc`, Powerlevel10k o `ups` funcionen.
 - Postgres: npx. Trino: `~/.config/ai/runtime/.venv` (trino-mcp). Docker: aún en `~/.codex/mcp/docker` si existe.
 
 ---

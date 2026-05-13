@@ -22,8 +22,10 @@
     "docker": {
       "type": "local",
       "command": [
-        "/usr/bin/node",
-        "{{ .chezmoi.homeDir }}/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"
+        "docker.exe",
+        "mcp",
+        "gateway",
+        "run"
       ],
       "enabled": true
     },

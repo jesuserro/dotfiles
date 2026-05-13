@@ -36,7 +36,12 @@ mcps:
     secrets: []
     paths_probe:
       - ~/mcp-servers/excalidraw-mcp/dist/index.js
-    notes: Codex template sets cwd to the excalidraw repo; same bundle path for all surfaces.
+    notes: >
+      Codex template sets cwd to the excalidraw repo; same bundle path for all
+      surfaces. Materialize the local checkout with `make install-mcp-excalidraw`
+      (opt-in, idempotent, no sudo). Upstream defaults to
+      https://github.com/yctimlin/mcp_excalidraw; override with
+      EXCALIDRAW_MCP_REPO_URL when running the script.
 
   - id: context7
     display_name: Context7
@@ -55,19 +60,21 @@ mcps:
 
   - id: docker
     display_name: Docker MCP
-    description: Docker operations via Node MCP server
+    description: Docker Desktop MCP Gateway official stdio server
     layer: core
     category: containers
-    runtime: node
+    runtime: docker
     surfaces:
       cursor: { enabled: true }
       codex: { enabled: true }
       opencode: { enabled: true }
-    requires: [node, docker]
+    requires: [docker.exe]
     secrets: []
-    paths_probe:
-      - ~/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js
-    notes: Server path matches current dotfiles templates (not @docker/mcp-servers).
+    paths_probe: []
+    notes: >
+      Use the official Docker Desktop MCP Gateway via `docker.exe mcp gateway
+      run`. Use docker.exe from WSL because Linux docker CLI reports "Docker
+      Desktop is not running" for MCP Toolkit, while Docker Engine still works.
 
   - id: grafana
     display_name: Grafana MCP
@@ -114,10 +121,14 @@ mcps:
     requires: [bash]
     secrets:
       - path: ~/.secrets/codex.env
-        keys_hint: [GITHUB_TOKEN]
+        keys_hint: [GITHUB_PERSONAL_ACCESS_TOKEN, GITHUB_TOKEN]
     paths_probe:
       - ~/.local/bin/codex-mcp-github
-    notes: Wrapper sources codex.env; never store token values in this manifest.
+    notes: >
+      Wrapper sources codex.env and execs `npx -y
+      @modelcontextprotocol/server-github`. Materialize the wrapper with
+      `make install-mcp-github` (opt-in, idempotent, no sudo). Never store
+      token values in this manifest.
 
   - id: fetch
     display_name: MCP Fetch

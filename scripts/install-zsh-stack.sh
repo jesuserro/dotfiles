@@ -2,10 +2,13 @@
 # Idempotent install of the user-level zsh stack: Oh My Zsh + Powerlevel10k + custom plugins.
 #
 # Contract:
-#   - Never edits ~/.zshrc, ~/.p10k.zsh or any chezmoi/RCM-managed file.
+#   - Installs only runtime: Oh My Zsh, Powerlevel10k and the custom OMZ plugins.
+#   - Never edits ~/.zshrc, ~/.p10k.zsh, ~/.aliases or any rc file directly:
+#     those symlinks are created by Chezmoi via `make install-dotfiles DOTFILES_APPLY=1`.
 #   - Only clones repos under $HOME if the target directory does not already exist.
 #   - DRY_RUN=1: prints what would be cloned without touching disk or network.
 #   - Re-runnable: existing checkouts are left untouched (no auto git pull).
+#   - RCM/rcup is NOT part of the active flow; this script does not call rcup.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -91,10 +94,11 @@ done
 
 echo ""
 echo "==> Notes"
-install_label OK "~/.zshrc, ~/.p10k.zsh and any chezmoi/RCM-managed files were NOT touched."
 install_label OK "Re-running this script is safe: existing checkouts are left as-is."
-if [[ ! -f "${HOME}/.p10k.zsh" ]]; then
-	install_label WARN "~/.p10k.zsh not found yet — first interactive zsh session will offer the p10k wizard, or the bundled config at \$HOME/dotfiles/powerlevel10k/p10k.zsh will load via zshrc."
+install_label OK "RC files (~/.zshrc, ~/.p10k.zsh, ~/.aliases) are managed by Chezmoi via 'make install-dotfiles DOTFILES_APPLY=1'."
+install_label OK "If those files contain custom content, use 'ZSH_RC_APPLY=1 make install-dotfiles DOTFILES_APPLY=1' to allow backup + replacement."
+if [[ ! -L "${HOME}/.zshrc" || ! -L "${HOME}/.p10k.zsh" || ! -L "${HOME}/.aliases" ]]; then
+	install_label WARN "RC symlinks are not yet in place — finish the bootstrap with: make install-dotfiles DOTFILES_APPLY=1"
 fi
 
 if [[ ${fail} -gt 0 ]]; then

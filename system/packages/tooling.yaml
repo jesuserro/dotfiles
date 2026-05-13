@@ -7,7 +7,13 @@ packages:
     required: true
     capability: bootstrap
     install_method: manual
-    note: Required to apply the managed dotfiles into HOME.
+    note: Required to apply managed dotfiles. Install via 'make install-chezmoi' (opt-in, idempotent, no sudo) or upstream get.chezmoi.io.
+  - package: sops
+    command: sops
+    required: true
+    capability: secrets
+    install_method: manual
+    note: SOPS+Age secrets manager. Not in Ubuntu APT repos; install via 'make install-sops' (opt-in, idempotent) or from https://github.com/getsops/sops/releases.
   - package: uv
     command: uv
     required: false
@@ -19,13 +25,13 @@ packages:
     required: false
     capability: js-toolchain
     install_method: manual
-    note: Base JavaScript runtime; required de facto on workstation use (codex, gitnexus, MCPs) but not a uv dependency. Stays optional so headless/CI machines do not fail.
+    note: Base JavaScript runtime; required de facto on workstation use (codex, gitnexus, npx-based MCPs) but not a uv dependency. Install with 'make install-node-stack' (opt-in, APT-only) or your distro's package manager. Stays optional so headless/CI machines do not fail.
   - package: npm
     command: npm
     required: false
     capability: js-toolchain
     install_method: manual
-    note: Required de facto on workstation use (codex, gitnexus, corepack); ships with Node. Independent of the uv-first Python policy.
+    note: Required de facto on workstation use (codex, gitnexus, corepack, npx-based MCPs); ships with Node. Install with 'make install-node-stack' (opt-in, APT-only). Independent of the uv-first Python policy.
   - package: corepack
     command: corepack
     required: false
@@ -68,3 +74,9 @@ packages:
     capability: containers
     install_method: manual
     note: Used by local aliases and WSL workstation container workflows.
+  - package: azure-cli
+    command: az
+    required: false
+    capability: azure
+    install_method: manual
+    note: Azure CLI is opt-in for Azure workstations; install manually with 'make install-azure-cli'. Not part of 'make install', and login remains manual with 'az login'.

@@ -61,11 +61,12 @@ WRAP
 	rm -rf "${fake_root}"
 }
 
-@test "install-zsh-stack DRY_RUN never clones and is idempotent" {
+@test "install-zsh-stack DRY_RUN never clones and points to chezmoi for RC files" {
 	run env DRY_RUN=1 bash "${DOTFILES_DIR}/scripts/install-zsh-stack.sh"
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" == *"DRY_RUN"* || "${output}" == *"already present"* ]]
-	[[ "${output}" == *"never touches"* || "${output}" == *"NOT touched"* ]]
+	[[ "${output}" == *"managed by Chezmoi"* ]]
+	[[ "${output}" == *"make install-dotfiles DOTFILES_APPLY=1"* ]]
 }
 
 @test "install-external surfaces zsh stack detection" {

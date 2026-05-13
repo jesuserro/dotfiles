@@ -10,7 +10,7 @@ Guía para desarrollar y extender el alias `ups` de actualización integral del 
 ## Ubicación y carga
 
 - **Definición:** `~/dotfiles/aliases` (función `ups()` y helpers `_ups_*`)
-- **Carga:** Via `~/.zshrc` → `~/.config/rcm/rcrc` (RCM)
+- **Carga:** Via `~/.zshrc` (symlink Chezmoi → `~/dotfiles/zshrc`) → `zsh/90-local.zsh` → `~/.aliases` (symlink Chezmoi → `~/dotfiles/aliases`)
 - **Documentación:** [docs/UPS.md](../../../docs/UPS.md)
 
 ## Estructura de la función ups()

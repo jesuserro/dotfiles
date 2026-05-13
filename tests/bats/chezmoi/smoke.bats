@@ -181,6 +181,22 @@ tomllib.loads(content)
     grep -q "mcp-secrets.env" "$DOTFILES_DIR/.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl"
 }
 
+@test "codex secrets symlink points to canonical mcp-secrets env" {
+    [[ "$(cat "$DOTFILES_DIR/symlink_dot_secrets_codex.env")" == ".config/mcp-secrets.env" ]]
+}
+
+@test "secrets script keeps codex.env as adapter to canonical mcp-secrets env" {
+    local tmpl="$DOTFILES_DIR/.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl"
+    grep -q 'OUT="${HOME}/.config/mcp-secrets.env"' "$tmpl"
+    grep -q 'LEGACY_OUT="${HOME}/.config/store-etl/secrets.env"' "$tmpl"
+    grep -q 'ln -sf "${HOME}/.config/mcp-secrets.env" "${HOME}/.secrets/codex.env"' "$tmpl"
+}
+
+@test "docs do not present store-etl secrets as canonical" {
+    ! grep -Rni "Secreto can[oó]nico:.*store-etl/secrets.env" \
+        "$DOTFILES_DIR/docs" "$DOTFILES_DIR/codex" 2>/dev/null
+}
+
 @test "ai runtime script uses venv" {
     grep -q "venv" "$DOTFILES_DIR/.chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl"
 }

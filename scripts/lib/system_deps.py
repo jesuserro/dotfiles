@@ -34,9 +34,20 @@ def _action_for_package(package):
 
     by_command = {
         "chezmoi": {
-            "kind": "manual",
-            "summary": "Install chezmoi from the official release flow or the upstream Go module.",
-            "command": "go install github.com/twpayne/chezmoi/v2@latest",
+            "kind": "installer",
+            "summary": (
+                "Install chezmoi (dotfiles engine) with the repo's idempotent installer. "
+                "Fallback for direct use: 'sh -c \"$(curl -fsLS get.chezmoi.io)\" -- -b \"$HOME/.local/bin\"'."
+            ),
+            "command": "make install-chezmoi",
+        },
+        "sops": {
+            "kind": "installer",
+            "summary": (
+                "Install sops (SOPS+Age secrets) with the repo's idempotent installer. "
+                "Direct fallback: download the pinned binary from https://github.com/getsops/sops/releases."
+            ),
+            "command": "make install-sops",
         },
         "uv": {
             "kind": "installer",
@@ -95,6 +106,16 @@ def _action_for_package(package):
             "kind": "manual",
             "summary": "GitHub CLI is optional; install via your approved channel (upstream .deb, package manager, or corporate catalog).",
             "command": "See https://cli.github.com/ and your org policy for gh installation.",
+        },
+        "az": {
+            "kind": "installer",
+            "summary": "Azure CLI is optional and opt-in for Azure workstations; login remains manual after install.",
+            "command": "make install-azure-cli",
+        },
+        "azure-cli": {
+            "kind": "installer",
+            "summary": "Azure CLI is optional and opt-in for Azure workstations; login remains manual after install.",
+            "command": "make install-azure-cli",
         },
         "wslpath": {
             "kind": "environment",

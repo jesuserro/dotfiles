@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+# Backup seguro de RC files antes de que Chezmoi cree los symlinks gestionados:
+#   ~/.zshrc        -> $HOME/dotfiles/zshrc
+#   ~/.p10k.zsh     -> $HOME/dotfiles/powerlevel10k/p10k.zsh
+#   ~/.aliases      -> $HOME/dotfiles/aliases
+#
+# Política:
+#   - No-op si el target no existe o ya es symlink correcto.
+#   - Si es symlink incorrecto o fichero regular trivial (vacío / solo whitespace
+#     / exactamente `. "$HOME/.local/bin/env"`): backup con timestamp y dejar
+#     libre la ruta para que `chezmoi apply` cree el symlink limpio.
+#   - Si es fichero regular con contenido custom no reconocido: abortar con
+#     mensaje accionable, salvo que el usuario haya pasado ZSH_RC_APPLY=1.
+#   - Nunca borra sin backup. Sin sudo. Solo toca los tres ficheros del scope.
+#
+# RCM/rcup queda fuera del flujo activo: este hook no lo invoca ni asume.
+set -euo pipefail
+
+ZSH_RC_APPLY="{{ env "ZSH_RC_APPLY" }}"
+
+is_truthy() {
+	case "${1:-}" in
+	1 | true | TRUE | yes | YES | on | ON) return 0 ;;
+	*) return 1 ;;
+	esac
+}
+
+timestamp() {
+	date +%Y%m%d-%H%M%S
+}
+
+is_trivial_content() {
+	local file="$1"
+	[[ -f "${file}" ]] || return 1
+	if [[ ! -s "${file}" ]]; then
+		return 0
+	fi
+	local sanitized
+	sanitized="$(awk 'NF' "${file}")"
+	if [[ -z "${sanitized}" ]]; then
+		return 0
+	fi
+	local trivial_uv='. "$HOME/.local/bin/env"'
+	if [[ "${sanitized}" == "${trivial_uv}" ]]; then
+		return 0
+	fi
+	return 1
+}
+
+backup_path() {
+	local target="$1"
+	echo "${target}.backup.$(timestamp)"
+}
+
+handle_target() {
+	local target="$1"
+	local expected="$2"
+
+	if [[ ! -e "${target}" && ! -L "${target}" ]]; then
+		return 0
+	fi
+
+	if [[ -L "${target}" ]]; then
+		local current
+		current="$(readlink "${target}")"
+		if [[ "${current}" == "${expected}" ]]; then
+			return 0
+		fi
+		local bk
+		bk="$(backup_path "${target}")"
+		mv "${target}" "${bk}"
+		echo "[run_before_00_backup_rc_files] Stale symlink ${target} -> ${current} backed up to ${bk}"
+		return 0
+	fi
+
+	if [[ -f "${target}" ]] && is_trivial_content "${target}"; then
+		local bk
+		bk="$(backup_path "${target}")"
+		mv "${target}" "${bk}"
+		echo "[run_before_00_backup_rc_files] Trivial ${target} backed up to ${bk}"
+		return 0
+	fi
+
+	if is_truthy "${ZSH_RC_APPLY}"; then
+		local bk
+		bk="$(backup_path "${target}")"
+		mv "${target}" "${bk}"
+		echo "[run_before_00_backup_rc_files] Custom ${target} backed up to ${bk} (ZSH_RC_APPLY=1)"
+		return 0
+	fi
+
+	cat >&2 <<EOF
+[run_before_00_backup_rc_files] ABORT: ${target} already exists with custom content.
+  - Expected target: ${expected}
+  - To allow backup + replacement, re-run with:
+        ZSH_RC_APPLY=1 make install-dotfiles DOTFILES_APPLY=1
+  - To keep your file as-is, move/rename it manually before running apply.
+  - This hook never deletes without backup. Aborting safely.
+EOF
+	return 1
+}
+
+HOME_DIR="${HOME}"
+DOTFILES_DIR="${HOME_DIR}/dotfiles"
+
+handle_target "${HOME_DIR}/.zshrc" "${DOTFILES_DIR}/zshrc"
+handle_target "${HOME_DIR}/.p10k.zsh" "${DOTFILES_DIR}/powerlevel10k/p10k.zsh"
+handle_target "${HOME_DIR}/.aliases" "${DOTFILES_DIR}/aliases"
+
+exit 0
