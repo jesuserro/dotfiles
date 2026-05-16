@@ -52,14 +52,31 @@ version_or_warn() {
 	fi
 }
 
-echo "==> Version checks"
+# Opt-in installers (not part of `make install`). WARN when missing; never FAIL.
+version_or_warn_optin() {
+	local bin="$1"
+	local make_target="$2"
+	if command -v "${bin}" >/dev/null 2>&1; then
+		local full o
+		full="$("${bin}" --version 2>&1)" || full=""
+		o="${full%%$'\n'*}"
+		ver_line PASS "${bin}: ${o}"
+	else
+		ver_line WARN "${bin}: not installed (optional; run ${make_target})"
+	fi
+}
+
+echo "==> Version checks (bootstrap base)"
 
 version_or_fail zsh
 version_or_fail git
-version_or_fail chezmoi
-version_or_fail sops
 version_or_fail age
 version_or_fail rg
+
+echo ""
+echo "==> Opt-in dotfiles tooling (WARN when missing)"
+version_or_warn_optin chezmoi "make install-chezmoi"
+version_or_warn_optin sops "make install-sops"
 
 echo ""
 echo "==> External / preferred user tooling (WARN-only when missing)"

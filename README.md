@@ -95,7 +95,7 @@ make install SKIP_EXTERNAL=1
 | `make set-default-shell-zsh` | **Opt-in**, fuera de `make install`. Por defecto sólo informa. `APPLY=1` ejecuta `chsh -s "$(command -v zsh)"`. `ZSH_BASHRC_FALLBACK=1` añade un bloque idempotente a `~/.bashrc` con backup (fallback WSL). Soporta `DRY_RUN=1`. Nunca usa `sudo`. |
 | `make install-uv` | Instala **uv** (herramienta Python preferida) con el instalador oficial de Astral. Idempotente, opt-in, **fuera** de `make install`. No edita `~/.zshrc` ni `~/.bashrc`. |
 | `make install-dotfiles` | Plan chezmoi. **No ejecuta `apply`** salvo `DOTFILES_APPLY=1`. |
-| `make install-verify` | Versiones de zsh/git/chezmoi/sops/age/rg/docker. `STRICT=1` hace fallar si hay `FAIL` real. |
+| `make install-verify` | Versiones de zsh/git/age/rg (FAIL si faltan); chezmoi/sops/uv/node/npm/docker solo WARN (opt-in: `make install-chezmoi`, `make install-sops`). `STRICT=1` falla solo ante `FAIL` reales. |
 | `make ai-mcp-validate` | Valida [ai/assets/mcps/MANIFEST.yaml](ai/assets/mcps/MANIFEST.yaml): intención canónica de MCPs por agente (Cursor/Codex/OpenCode). Requiere PyYAML. No muta; no sustituye aún a las plantillas Chezmoi. |
 | `make ai-mcp-render` | Genera evidencia bajo `build/mcps/` (JSON Cursor, fragmento TOML `mcp_servers`, JSON OpenCode) desde el manifiesto + recetas Python. No muta `dot_cursor/`, `dot_codex/`, `dot_config/`. |
 | `make ai-mcp-drift` | Compara ese render con las plantillas actuales; `exit 0` si solo hay `INTENTIONAL_PENDING_PARITY`, `exit 1` si hay `UNEXPECTED_DRIFT`. Escribe `build/mcps/drift-report.json`. |

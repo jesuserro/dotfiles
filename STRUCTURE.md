@@ -425,7 +425,6 @@
 ├── 📄 gitignore
 ├── 📄 gitmessage
 ├── 🔨 install.mk
-├── 📄 rcrc
 ├── ⚙️ secrets.sops.yaml
 ├── 📄 secrets.sops.yaml.new
 ├── 📄 secrets.sops.yaml.old-age1mq3-unreadable

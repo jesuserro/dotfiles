@@ -64,6 +64,13 @@ make ai-cursor-check
 > funcione sin pasos adicionales en una máquina nueva. Un preflight
 > (`make test-deps-check`, integrado en `test-fast` / `test-bats` / `test`)
 > falla rápido con mensaje accionable si alguna falta.
+>
+> **`make install-verify`.** Tras `make install`, comprueba versiones sin mutar.
+> `zsh`, `git`, `age` y `rg` son requisitos base (`FAIL` si faltan).
+> `chezmoi` y `sops` son opt-in: si no están instalados, el script emite `WARN`
+> con el target correspondiente (`make install-chezmoi`, `make install-sops`)
+> y no cuenta como `FAIL`. `STRICT=1` solo hace fallar el paso ante `FAIL`
+> reales, no por herramientas opt-in ausentes.
 
 ---
 

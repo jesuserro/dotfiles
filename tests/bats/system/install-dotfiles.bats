@@ -23,6 +23,13 @@ setup() {
 	[[ "${status}" -eq 1 ]]
 }
 
+@test "install-verify treats chezmoi and sops as opt-in (WARN, not FAIL)" {
+	run grep -E 'version_or_fail (chezmoi|sops)' "${DOTFILES_DIR}/scripts/install-verify.sh"
+	[[ "${status}" -eq 1 ]]
+	run grep -q 'version_or_warn_optin chezmoi' "${DOTFILES_DIR}/scripts/install-verify.sh"
+	run grep -q 'version_or_warn_optin sops' "${DOTFILES_DIR}/scripts/install-verify.sh"
+}
+
 @test "install-check normal mode does not fatal-fail on declarative missing items" {
 	# Force a fake inventory by pointing at a tmp YAML with a missing required cmd.
 	local fake_root
