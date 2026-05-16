@@ -36,6 +36,19 @@ Canonical knowledge for “how we build” lives in the **project repo** and **v
 
 If several apply, follow the pipeline order in section 7 unless the user narrows scope.
 
+### Dotfiles operations (this repo)
+
+When the task is **installing**, **updating**, or **troubleshooting** this dotfiles repository (Chezmoi, SOPS, `ups`, MCPs in HOME), use these global skills — not project-local skills:
+
+| Intent | Skill |
+|--------|-------|
+| Day-to-day: `git pull`, `chezmoi apply`, secrets, `source` vs `apply`, MCP readiness | `dotfiles-operations` |
+| New machine bootstrap: `make install*` | `dotfiles-install` |
+| MCP manifest, templates, governance chain | `mcp-governance` |
+| Extend or debug the `ups` alias (APT, npm, builds) | `system-updates` |
+
+Human SSOT: [docs/OPERATIONS.md](../docs/OPERATIONS.md). **Do not** recommend `rcup`/RCM (legacy).
+
 ## 4. Project-specific delegation
 
 - **Always inspect the active repository** when work touches implementation, tests, issue workflow, or project-local CLIs.

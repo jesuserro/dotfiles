@@ -35,11 +35,15 @@ Todos los targets están diseñados para ejecutarse más de una vez:
 
 ## Documentación relacionada
 
+- Operación diaria (SSOT humano): [OPERATIONS.md](../OPERATIONS.md)
 - Instalación general y secretos: [INSTALL.md](../INSTALL.md)
 - Inventario APT / externos: [SYSTEM_DEPENDENCIES.md](../SYSTEM_DEPENDENCIES.md)
-- Mantenimiento periódico (no es install): [UPS.md](../UPS.md)
+- Mantenimiento periódico (no es install; no sustituye `chezmoi apply`): [UPS.md](../UPS.md)
 - Chezmoi + SOPS + Age: [CHEZMOI.md](../CHEZMOI.md)
 
-## Skill para agentes
+## Skills para agentes
 
-- [Dotfiles bootstrap install](../../ai/assets/skills/ops/dotfiles-install/SKILL.md)
+| Skill | Cuándo |
+|-------|--------|
+| [dotfiles-install](../../ai/assets/skills/ops/dotfiles-install/SKILL.md) | Bootstrap `make install*` en máquina nueva |
+| [dotfiles-operations](../../ai/assets/skills/ops/dotfiles-operations/SKILL.md) | Operación diaria: apply, secretos, ups vs Chezmoi |
