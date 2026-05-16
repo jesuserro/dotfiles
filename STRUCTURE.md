@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-16 18:02:45
+**Generated:** 2026-05-16 20:36:45
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -677,6 +677,8 @@
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 dotfiles-install
 │   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 dotfiles-operations
+│   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 dotfiles-skill-registration
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 grill-plan
@@ -787,13 +789,13 @@
 │   ├── 📝 GIT_WORKFLOW.md
 │   ├── 📝 GUIA_MCP_AI.md
 │   ├── 📝 INSTALL.md
-│   ├── 📝 OPERATIONS.md
 │   ├── 📝 MCP_OBSIDIAN_PROPOSAL.md
 │   ├── 📝 MCP_QUICKREF.md
 │   ├── 📝 MCP_TAXONOMY.md
 │   ├── 📝 MIGRATION_MCP_CHEZMOI.md
 │   ├── 📝 MIGRATION_MCP_ITER3.md
 │   ├── 📝 OPENCODE.md
+│   ├── 📝 OPERATIONS.md
 │   ├── 📝 PROMPT_LAUNCHERS.md
 │   ├── 📝 README.md
 │   ├── 📝 SECRETS_EXAMPLES.md
