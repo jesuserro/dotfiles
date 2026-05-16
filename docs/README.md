@@ -1,8 +1,12 @@
 # Documentación dotfiles
 
+## Operaciones
+
+- **[OPERATIONS.md](OPERATIONS.md)** — Guía operativa principal: modelo mental (bootstrap / Chezmoi / ups), máquina nueva o existente, secretos, MCPs, validaciones y chuleta de comandos.
+
 ## Instalación
 
-- **[INSTALL.md](INSTALL.md)** — Instalación paso a paso (clonar, Age, SOPS, apply).
+- **[INSTALL.md](INSTALL.md)** — Bootstrap e instalación inicial (clonar, Age, SOPS, `DOTFILES_APPLY=1`). No duplica toda la guía operativa; enlaza a OPERATIONS.
 
 ## Comandos
 

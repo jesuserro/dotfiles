@@ -1,6 +1,8 @@
 # Instalación
 
-Guía paso a paso para configurar estos dotfiles en una máquina nueva.
+Guía paso a paso para **bootstrap** en una máquina nueva. Para operación diaria (secretos, MCPs, `ups`, troubleshooting), ver **[OPERATIONS.md](OPERATIONS.md)**.
+
+> **`make install` ≠ `chezmoi apply`.** El Makefile instala paquetes y orquesta el plan; la materialización en HOME (MCPs, symlinks RC, `mcp-secrets.env`) requiere **`make install-dotfiles DOTFILES_APPLY=1`** o `chezmoi --source=$HOME/dotfiles apply`.
 
 ---
 
@@ -195,3 +197,11 @@ chezmoi --source=$HOME/dotfiles status
 ```
 
 Ver [GUIA_MCP_AI.md](GUIA_MCP_AI.md) para más comandos.
+
+## Relacionado
+
+| Doc | Uso |
+|-----|-----|
+| [OPERATIONS.md](OPERATIONS.md) | Flujos completos tras el bootstrap |
+| [CHEZMOI.md](CHEZMOI.md) | Chezmoi, scripts, `ZSH_RC_APPLY` |
+| [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md) | Dar de alta secretos |

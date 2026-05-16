@@ -97,6 +97,49 @@ chezmoi status
 chezmoi apply
 ```
 
+Equivalente explícito del Makefile:
+
+```bash
+make install-dotfiles              # solo plan
+make install-dotfiles DOTFILES_APPLY=1   # ejecuta apply
+```
+
+Variable de entorno equivalente: `DOTFILES_APPLY=1`.
+
+---
+
+## Scripts `run_before` / `run_after`
+
+Chezmoi ejecuta hooks bajo `.chezmoiscripts/` en el repo:
+
+| Script | Momento | Rol |
+|--------|---------|-----|
+| `run_before_00_backup_rc_files.sh.tmpl` | Antes de apply | Backup / política sobre `~/.zshrc`, `~/.aliases`, `~/.p10k.zsh` |
+| `run_after_00_gen_secrets.sh.tmpl` | Tras apply | Genera `~/.config/mcp-secrets.env` desde `secrets.sops.yaml` |
+| `run_after_10`–`14` | Tras apply | Runtime AI, launchers MCP, etc. |
+
+Regenerar solo secretos sin apply completo:
+
+```bash
+chezmoi --source="$HOME/dotfiles" apply -i scripts
+```
+
+---
+
+## Configuración local (`~/.config/chezmoi/chezmoi.toml`)
+
+Archivo **no versionado** que Chezmoi fusiona con `.chezmoi.toml` del repo. Usos habituales:
+
+- `[source] path` — ruta del repo si no quieres pasar `--source` cada vez.
+- `[data.ai] obsidian_vault_path` — ruta del vault en esta máquina.
+- **`[status] exclude` / `[diff] exclude`** — opcional; por ejemplo `exclude = ["scripts"]` oculta en `chezmoi status` entradas fantasma de scripts renombrados en el estado local (nombres viejos `00_*` / `10_*`). **No es requisito global del repo**; es comodidad por máquina.
+
+Para auditar scripts de verdad:
+
+```bash
+chezmoi status -i scripts -x ''
+```
+
 ---
 
 ## Configuración de Age + SOPS (una vez)

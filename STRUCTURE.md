@@ -787,6 +787,7 @@
 │   ├── 📝 GIT_WORKFLOW.md
 │   ├── 📝 GUIA_MCP_AI.md
 │   ├── 📝 INSTALL.md
+│   ├── 📝 OPERATIONS.md
 │   ├── 📝 MCP_OBSIDIAN_PROPOSAL.md
 │   ├── 📝 MCP_QUICKREF.md
 │   ├── 📝 MCP_TAXONOMY.md

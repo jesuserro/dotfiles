@@ -156,6 +156,15 @@ timeout 8s docker.exe mcp gateway run
 El runtime `npx -y @0xshariq/docker-mcp-server` queda como legacy descartado:
 imprime ayuda y termina, por lo que Cursor lo interpreta como conexión cerrada.
 
+**Requisito operativo:** Docker Desktop en Windows debe estar **en ejecución**. `ups` actualiza otros MCPs pero no sustituye tener Desktop abierto.
+
+### Postgres MCP
+
+- Lee `POSTGRES_DSN` desde `~/.config/mcp-secrets.env` (generado por Chezmoi desde SOPS).
+- Si Cursor muestra **`POSTGRES_DSN not set`**, suele ser `mcp.postgres_dsn` **vacío** en `secrets.sops.yaml`, no Postgres caído.
+- Verificar sin imprimir el valor: `grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env`
+- Flujo: `sops secrets.sops.yaml` → `chezmoi apply -i scripts`. No editar el `.env` a mano.
+
 **gitnexus CLI** se actualiza por separado: `npm install -g --prefix=~/.npm-global gitnexus@latest`
 
 Tras ejecutar `ups`, aplica los cambios del shell con: `source ~/.zshrc`

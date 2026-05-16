@@ -78,7 +78,27 @@ mcp:
    make install-dotfiles DOTFILES_APPLY=1
    ```
 
-5. **Verificar sin mostrar valores:** `grep -q '^export POSTGRES_DSN=' ~/.config/mcp-secrets.env`.
+5. **Verificar sin mostrar valores** (la línea debe tener contenido tras `=`):
+
+   ```bash
+   grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env && echo OK
+   ```
+
+   `grep -q '^export POSTGRES_DSN='` solo comprueba que existe la clave; **no** detecta DSN vacío.
+
+---
+
+## Valores vacíos en YAML
+
+Si una clave en `secrets.sops.yaml` está vacía o ausente, el script post-apply genera igualmente la variable:
+
+```bash
+export POSTGRES_DSN=""
+```
+
+- **Postgres MCP:** con DSN vacío, Cursor/Codex reportan `POSTGRES_DSN not set` — es secreto vacío, no contenedor apagado.
+- **No edites** `~/.config/mcp-secrets.env` a mano; siempre `sops` + `chezmoi apply -i scripts`.
+- **No uses** `sops -d secrets.sops.yaml` en terminal (imprime secretos). Usa `sops secrets.sops.yaml`.
 
 ---
 
@@ -124,7 +144,9 @@ Si quieres un secreto nuevo que el script aún no procesa:
 |--------|---------|
 | Editar secretos | `sops secrets.sops.yaml` |
 | Aplicar tras editar | `make install-dotfiles DOTFILES_APPLY=1` |
-| Validar sin mostrar valores | `grep -q '^export GITHUB_PERSONAL_ACCESS_TOKEN=' ~/.config/mcp-secrets.env` |
+| Validar sin mostrar valores | `grep -E '^export GITHUB_PERSONAL_ACCESS_TOKEN=.' ~/.config/mcp-secrets.env` |
+| Validar Postgres (no vacío) | `grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env` |
+| Listar solo nombres de vars | `cut -d= -f1 ~/.config/mcp-secrets.env \| sort` |
 
 ---
 

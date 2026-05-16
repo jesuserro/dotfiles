@@ -111,9 +111,24 @@ This MCP is from the official MCP repository. It provides cognitive support for 
 
 These are complementary, not interchangeable. Enable both for full Obsidian integration.
 
+## Docker MCP (WSL)
+
+- **Requires:** Docker Desktop **running** on Windows; invoke via `docker.exe mcp gateway run` from WSL.
+- **`ups` does not fix** a closed Desktop — open Docker Desktop first.
+- Smoke: `docker.exe mcp version` · `docker.exe mcp gateway run --dry-run --verbose`
+
+## Postgres MCP
+
+- **Requires:** non-empty `mcp.postgres_dsn` in `secrets.sops.yaml` → `export POSTGRES_DSN=...` in `~/.config/mcp-secrets.env` (generated; do not edit by hand).
+- **`POSTGRES_DSN not set` in Cursor** usually means empty/missing secret, not a stopped container.
+- Verify without printing value: `grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env`
+- Fix: `sops secrets.sops.yaml` → `chezmoi apply -i scripts`
+
 ## Anti-Patterns
 
 - ❌ Hardcoded production secrets in repo files or in `MANIFEST.yaml` (only paths / `keys_hint`)
+- ❌ Editing `~/.config/mcp-secrets.env` manually
+- ❌ `sops -d` to stdout
 - ❌ Silently omitting an MCP from a surface without a documented `reason`
 - ❌ Client-named secrets for new work (prefer neutral `mcp-secrets.env` / documented paths)
 

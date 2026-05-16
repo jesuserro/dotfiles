@@ -4,185 +4,107 @@
 ![SOPS](https://img.shields.io/badge/SOPS-secrets-00b0ff?style=flat-square)
 ![Age](https://img.shields.io/badge/Age-encryption-00b0ff?style=flat-square)
 ![Zsh](https://img.shields.io/badge/Zsh-shell-00b0ff?style=flat-square)
-![TMUX](https://img.shields.io/badge/TMUX-terminal-00b0ff?style=flat-square)
-![Neovim](https://img.shields.io/badge/Neovim-editor-00b0ff?style=flat-square)
 ![MCP](https://img.shields.io/badge/MCP-Cursor%20%7C%20Codex%20%7C%20OpenCode-00b0ff?style=flat-square)
 
-> **Aviso:** Este es un proyecto personal. No experimentes con estos dotfiles si no tienes un mínimo de experiencia con Linux y la terminal: podrías sobrescribir o romper configuraciones en tu sistema.
+> **Aviso:** Proyecto personal. Requiere experiencia con Linux/WSL: `chezmoi apply` puede sobrescribir configuración en HOME.
 
-## Qué es este repositorio
+Capa de configuración de usuario para **Ubuntu LTS / WSL2** (Windows 11 Pro): shell, MCPs para agentes IA, secretos cifrados y mantenimiento del sistema.
 
-`dotfiles` es una **capa de configuración de usuario para Linux y WSL2 Ubuntu**. Prepara el entorno personal de desarrollo y operación instalando herramientas a nivel de usuario, configurando shell/CLI/dotfiles y exponiendo skills y comandos útiles para agentes IA.
+> **Legacy:** RCM (`rcup`, `.rcrc`) fue el gestor histórico de symlinks. **No es operativo.** El flujo canónico es **Chezmoi** + **SOPS/age**.
 
-Actúa como:
+---
 
-- **Bootstrap** de máquina nueva (`make install*`).
-- **Configuración de usuario** Linux/WSL (zsh, Oh My Zsh, Powerlevel10k, tmux, Neovim, aliases).
-- **Capa CLI de mantenimiento** (`ups`, `deps-*`).
-- **Base de skills y comandos** para agentes IA (Cursor, Codex, OpenCode) gestionada con Chezmoi + SOPS + Age.
-- **Puente transversal** para trabajar en proyectos que viven **fuera** del repo, por ejemplo:
-  - `~/proyectos/`
-  - `~/store-etl/`
-  - `/mnt/c/Users/<user>/Documents/vault_trabajo/` (MCP Obsidian/Filesystem: dato Chezmoi `ai.obsidian_vault_path`; ver [docs/CHEZMOI.md](docs/CHEZMOI.md))
+## Arquitectura en tres capas
 
-Esos proyectos **no viven dentro** de `dotfiles`; este repo solo prepara el entorno para que trabajar con ellos sea más rápido, más seguro y reproducible.
-
-### Idempotencia
-
-Todos los flujos (`make install*`, `ups`, `make deps-*`) están diseñados para **ejecutarse más de una vez** sin romper el entorno ni duplicar instalaciones innecesarias. `DRY_RUN=1` permite previsualizar cualquier paso de bootstrap antes de aplicarlo.
-
-## Arquitectura
+| Capa | Herramientas | Rol |
+|------|--------------|-----|
+| **Bootstrap** | `make install*`, `make deps-*` | APT, diagnóstico, opt-in (`install-chezmoi`, `install-sops`, `install-zsh-stack`) |
+| **Materialización** | `chezmoi status` / `diff` / `apply` | Symlinks RC, MCPs, `~/.config/mcp-secrets.env` generado, runtime AI |
+| **Mantenimiento** | `ups`, `make ai-cursor-check`, `make ai-mcp-governance` | Sistema y herramientas — **no** sustituye `chezmoi apply` |
 
 ```mermaid
-flowchart TB
-    subgraph repo [dotfiles repo]
-        direction LR
-        ai["AI<br/>(MCPs + Skills)"] --- cursor[dot_cursor/] --- codex[dot_codex/] --- secrets[secrets.sops.yaml]
-    end
-
-    subgraph home [HOME ~/]
-        direction LR
-        config_ai[.config/ai/] --- dot_cursor[.cursor/] --- dot_codex[.codex/] --- dot_secrets[.secrets/]
-    end
-
-    repo -->|chezmoi apply| home
+flowchart LR
+    bootstrap["make install*"] --> chezmoi["chezmoi apply"]
+    chezmoi --> home["HOME ~/.cursor, ~/.zshrc, mcp-secrets.env"]
+    ups["ups"] --> tools["APT, npm, MCP builds"]
 ```
 
-| Sistema | Gestiona | Doc |
-|---------|----------|-----|
-| **`make install*`** | Bootstrap inicial: APT, externos, chezmoi, verificación | [docs/ops/dotfiles-install.md](docs/ops/dotfiles-install.md) |
-| **Chezmoi + SOPS + Age** | MCPs, secretos, AI Workstation y zsh stack RC files (`.zshrc`, `.p10k.zsh`, `.aliases`) | [docs/CHEZMOI.md](docs/CHEZMOI.md) |
-| **`ups`** | Mantenimiento periódico (APT + npm + MCP + OMZ) | [docs/UPS.md](docs/UPS.md) |
-| **`make deps-*`** | Inventario declarativo de dependencias | [docs/SYSTEM_DEPENDENCIES.md](docs/SYSTEM_DEPENDENCIES.md) |
+---
 
-> Legacy: RCM (`rcup`) gestionaba históricamente `~/.zshrc`/`~/.aliases`/`~/.p10k.zsh`. Se ha retirado del flujo activo. Hoy esos symlinks los crea Chezmoi en `make install-dotfiles DOTFILES_APPLY=1`.
+## Qué comando usar cuándo
 
-## Instalación / Bootstrap
+| Situación | Comando |
+|-----------|---------|
+| Máquina nueva, instalar paquetes base | `make install-check` → `make install` (ver [INSTALL.md](docs/INSTALL.md)) |
+| Publicar plantillas y secretos a HOME | `chezmoi --source=$HOME/dotfiles apply` o `make install-dotfiles DOTFILES_APPLY=1` |
+| Solo recargar aliases/PATH en la sesión | `source ~/.zshrc` |
+| Editar token GitHub, DSN Postgres, MinIO | `sops secrets.sops.yaml` → `chezmoi apply -i scripts` |
+| Actualizar APT, npm, OMZ, builds MCP | `ups` |
+| Validar Cursor/MCP/skills en HOME | `make ai-cursor-check` |
+| Validar MANIFEST ↔ plantillas en repo | `make ai-mcp-governance` |
+| Regenerar plantillas MCP desde MANIFEST | `make ai-mcp-generate APPLY=1` → `chezmoi apply` |
 
-> Bootstrap inicial idempotente para Ubuntu nativo o **WSL2 Ubuntu** (PC corporativo Windows 11 Pro). La lógica vive en `scripts/install-*.sh`; el Makefile sólo orquesta.
+`make install` **no** ejecuta `chezmoi apply` por defecto. Son pasos distintos.
 
-### Comandos recomendados
+---
 
-```bash
-make install-check              # diagnóstico (no muta)
-make ai-mcp-validate            # valida el manifiesto canónico MCP (PyYAML; no muta)
-make ai-mcp-render              # render dry-run MCP a build/mcps/ (no toca plantillas Chezmoi)
-make ai-mcp-drift               # informe de drift manifiesto+recetas vs plantillas (exit 1 si hay drift inesperado)
-make ai-mcp-governance          # valida+render+drift en un paso (no muta; mismo contrato que los tres anteriores)
-make ai-mcp-generate            # plan: no escribe; con APPLY=1 valida+render+drift y actualiza plantillas MCP Chezmoi
-make ai-cursor-check            # readiness Cursor/MCP/skills (no muta; ver docs/MCP_QUICKREF.md)
-make install DRY_RUN=1          # plan completo sin tocar el sistema
-make install                    # bootstrap real (no aplica chezmoi por defecto)
-make install-zsh-stack          # Oh My Zsh + Powerlevel10k + plugins (idempotente)
-make install-uv                 # uv (preferido para Python) — opt-in, fuera de make install
-make install-dotfiles DOTFILES_APPLY=1   # activación explícita de chezmoi apply
-```
-
-Variante prudente para entornos corporativos:
+## Máquina nueva (resumen)
 
 ```bash
-make install SKIP_EXTERNAL=1
-```
-
-### Targets disponibles
-
-| Target | Rol |
-|--------|-----|
-| `make install-check` | Preflight de bootstrap. Modo normal: `MISSING/WARN` no bloquean. `STRICT=1`: requeridos declarativos = `FAIL`. |
-| `make install-apt` | Instala paquetes APT desde [`system/packages/*.yaml`](system/packages/) (mismo backend que `make deps-install`). |
-| `make install-external` | Solo recomendaciones (`make deps-actions`); detecta Docker, `wt.exe`, `winget.exe`, zsh stack — **nunca** instala host-side ni Docker Desktop. |
-| `make install-zsh-stack` | Clona Oh My Zsh, Powerlevel10k y plugins custom solo si faltan. **No** edita `~/.zshrc`: ese symlink lo crea Chezmoi en `make install-dotfiles DOTFILES_APPLY=1`. |
-| `make set-default-shell-zsh` | **Opt-in**, fuera de `make install`. Por defecto sólo informa. `APPLY=1` ejecuta `chsh -s "$(command -v zsh)"`. `ZSH_BASHRC_FALLBACK=1` añade un bloque idempotente a `~/.bashrc` con backup (fallback WSL). Soporta `DRY_RUN=1`. Nunca usa `sudo`. |
-| `make install-uv` | Instala **uv** (herramienta Python preferida) con el instalador oficial de Astral. Idempotente, opt-in, **fuera** de `make install`. No edita `~/.zshrc` ni `~/.bashrc`. |
-| `make install-dotfiles` | Plan chezmoi. **No ejecuta `apply`** salvo `DOTFILES_APPLY=1`. |
-| `make install-verify` | Versiones de zsh/git/age/rg (FAIL si faltan); chezmoi/sops/uv/node/npm/docker solo WARN (opt-in: `make install-chezmoi`, `make install-sops`). `STRICT=1` falla solo ante `FAIL` reales. |
-| `make ai-mcp-validate` | Valida [ai/assets/mcps/MANIFEST.yaml](ai/assets/mcps/MANIFEST.yaml): intención canónica de MCPs por agente (Cursor/Codex/OpenCode). Requiere PyYAML. No muta; no sustituye aún a las plantillas Chezmoi. |
-| `make ai-mcp-render` | Genera evidencia bajo `build/mcps/` (JSON Cursor, fragmento TOML `mcp_servers`, JSON OpenCode) desde el manifiesto + recetas Python. No muta `dot_cursor/`, `dot_codex/`, `dot_config/`. |
-| `make ai-mcp-drift` | Compara ese render con las plantillas actuales; `exit 0` si solo hay `INTENTIONAL_PENDING_PARITY`, `exit 1` si hay `UNEXPECTED_DRIFT`. Escribe `build/mcps/drift-report.json`. |
-| `make ai-mcp-governance` | Encadena **`ai-mcp-validate`**, **`ai-mcp-render`** y **`ai-mcp-drift`** vía [`bin/validate-mcp-governance`](bin/validate-mcp-governance). No muta. Propaga códigos de salida (p. ej. `2` si falta PyYAML). No sustituye a **`make ai-cursor-check`** (readiness en HOME). |
-| `make ai-mcp-generate` | Sin `APPLY=1`: solo plan (no muta). Con **`APPLY=1`**: ejecuta validación + render + drift; si hay `UNEXPECTED_DRIFT` no escribe; si no, actualiza `dot_cursor/mcp.json.tmpl`, `dot_codex/config.toml.tmpl` (solo bloque `mcp_servers`, conserva preámbulo y `[plugins.*]`), `dot_config/opencode/opencode.json.tmpl`. Copias de respaldo bajo `build/mcps/backups/`. Luego hace falta **chezmoi apply** para HOME. |
-| `make ai-cursor-check` | Comprueba sin mutar si `~/.cursor/mcp.json`, skills enlazados y comandos AI están alineados con los templates del repo. No instala ni ejecuta Cursor ni MCPs. `STRICT=1` endurece (p. ej. falta `~/.cursor/mcp.json`). |
-| `make install` | Encadena: check → apt → external → dotfiles → verify. |
-
-Variables soportadas: `DRY_RUN=1`, `STRICT=1`, `SKIP_EXTERNAL=1`, `SKIP_DOCKER=1`, `DOTFILES_APPLY=1`.
-
-**Skill para agentes:** [`Dotfiles bootstrap install`](ai/assets/skills/ops/dotfiles-install/SKILL.md).
-
-## Cuándo usar qué: source y chezmoi
-
-| Acción | Cuándo usarla |
-|--------|----------------|
-| **`chezmoi --source=$HOME/dotfiles apply`** (o `make install-dotfiles DOTFILES_APPLY=1`) | Cambias en el repo cualquier fichero gestionado por Chezmoi (MCPs, plantillas en `dot_cursor/`, `dot_codex/`, secretos, runtime AI, `~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`). |
-| **`source ~/.zshrc`** | Después de `chezmoi apply` o de `ups`: recarga aliases/funciones/PATH en la sesión actual. |
-
-**Detalle:** [docs/CHEZMOI.md](docs/CHEZMOI.md).
-
-## Update / Mantenimiento periódico
-
-```bash
-cd ~/dotfiles
-git pull
-chezmoi --source=$HOME/dotfiles apply
+git clone https://github.com/jesuserro/dotfiles.git ~/dotfiles && cd ~/dotfiles
+make install-check && make install SKIP_EXTERNAL=1
+make install-chezmoi && make install-sops && make install-zsh-stack
+# Restaurar ~/.config/sops/age/keys.txt (manual)
+sops secrets.sops.yaml
+make install-dotfiles DOTFILES_APPLY=1
 source ~/.zshrc
 ```
 
-Actualización integral del sistema: `ups` (APT, npm, Oh My Zsh, MCPs). Ver [docs/UPS.md](docs/UPS.md).
+Detalle: [docs/INSTALL.md](docs/INSTALL.md) · operación diaria: [docs/OPERATIONS.md](docs/OPERATIONS.md).
 
-## Guías rápidas
+---
 
-| Tarea | Doc |
-|-------|-----|
-| Bootstrap inicial detallado | [docs/INSTALL.md](docs/INSTALL.md) |
-| Inventario declarativo de dependencias | [docs/SYSTEM_DEPENDENCIES.md](docs/SYSTEM_DEPENDENCIES.md) |
-| CLI `make install*` | [docs/ops/dotfiles-install.md](docs/ops/dotfiles-install.md) |
-| Mantenimiento periódico | [docs/UPS.md](docs/UPS.md) |
-| Chezmoi + SOPS + Age | [docs/CHEZMOI.md](docs/CHEZMOI.md) |
-| MCPs, skills, comandos AI | [docs/GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md) |
-| Añadir un secreto | [docs/SECRETS_EXAMPLES.md](docs/SECRETS_EXAMPLES.md) |
-| Cambiar token GitHub | [docs/CAMBIAR_TOKEN_GITHUB.md](docs/CAMBIAR_TOKEN_GITHUB.md) |
-| Git workflow (feat, rel, changelog) | [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md) |
-| AI Workstation Framework | [ai/README.md](ai/README.md) |
-| Índice general | [docs/README.md](docs/README.md) |
+## Máquina existente (resumen)
 
-## Estructura del repo
+```bash
+cd ~/dotfiles && git pull
+chezmoi --source="$HOME/dotfiles" status
+chezmoi --source="$HOME/dotfiles" apply
+source ~/.zshrc
+# opcional: ups
+```
+
+---
+
+## Documentación
+
+| Doc | Contenido |
+|-----|-----------|
+| **[docs/OPERATIONS.md](docs/OPERATIONS.md)** | Guía operativa principal (flujos, secretos, MCPs, riesgos, chuleta) |
+| [docs/INSTALL.md](docs/INSTALL.md) | Bootstrap e instalación inicial |
+| [docs/CHEZMOI.md](docs/CHEZMOI.md) | Chezmoi, SOPS, symlinks RC, scripts, `ZSH_RC_APPLY` |
+| [docs/SECRETS_EXAMPLES.md](docs/SECRETS_EXAMPLES.md) | Ejemplos de secretos (GitHub, Postgres, MinIO) |
+| [docs/UPS.md](docs/UPS.md) | Comando `ups` (mantenimiento; no aplica Chezmoi) |
+| [docs/GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md) | MCPs, skills, comandos AI |
+| [docs/MCP_QUICKREF.md](docs/MCP_QUICKREF.md) | Referencia rápida para agentes |
+| [docs/README.md](docs/README.md) | Índice completo |
+
+## Estructura y testing
 
 ```
 dotfiles/
-├── ai/                 # AI Workstation (MCPs, skills, prompts, runtime)
-├── dot_cursor/         # Templates MCP Cursor
-├── dot_codex/          # Templates Codex
-├── docs/               # Documentación
-├── install.mk          # Targets make install*
-├── scripts/            # Scripts versionados (install-*, deps-*, git-*, ...)
-├── system/packages/    # Inventario YAML declarativo (APT/external/env)
-├── zsh, tmux, vim/     # Shell, terminal, editor
-└── secrets.sops.yaml   # Secretos cifrados
+├── ai/                 # MCPs, skills, MANIFEST
+├── dot_cursor/         # Plantillas MCP Cursor
+├── docs/               # Documentación humana
+├── secrets.sops.yaml   # Secretos cifrados (SOPS)
+└── zshrc, aliases/     # RC gestionados por symlinks Chezmoi
 ```
-
-## Customizations
-
-Override por host opcional en `~/.zshrc.local` (cargado por `zsh/90-local.zsh`) y, para Chezmoi, en `~/.config/chezmoi/chezmoi.toml` (fusionado con `.chezmoi.toml` del repo).
-
-## Testing
 
 ```bash
-make test           # All tests
-make test-fast      # Lint + bats (más rápido)
-make bats-system    # Solo tests del área install / deps
-make test-install   # Instala dependencias de test (shellcheck, shfmt, bats)
+make test-fast
 ```
 
-Ver [docs/TESTING.md](docs/TESTING.md) para más detalle.
-
-## Resources
-
-| Recurso | Enlace |
-|---------|--------|
-| Chezmoi | [chezmoi.io](https://www.chezmoi.io/) |
-| SOPS | [github.com/getsops/sops](https://github.com/getsops/sops) |
-| Age | [github.com/FiloSottile/age](https://github.com/FiloSottile/age) |
-| Oh My Zsh | [ohmyz.sh](https://ohmyz.sh/) |
-| Powerlevel10k | [github.com/romkatv/powerlevel10k](https://github.com/romkatv/powerlevel10k) |
+Ver [docs/TESTING.md](docs/TESTING.md) · árbol: [STRUCTURE.md](STRUCTURE.md).
 
 ## License
 
