@@ -10,10 +10,60 @@ Para el inventario declarativo de paquetes base del sistema y su chequeo/instala
 
 | Herramienta | Instalación |
 |-------------|-------------|
-| **Chezmoi** | [Releases](https://github.com/twpayne/chezmoi/releases) o `go install github.com/twpayne/chezmoi/v2@latest` |
-| **Age** | `sudo apt install age` o [releases](https://github.com/FiloSottile/age/releases) |
-| **SOPS** | [Releases](https://github.com/getsops/sops/releases) |
-| **RCM** | `sudo apt install rcm` (para zsh, tmux, vim) |
+| **Chezmoi** | `make install-chezmoi` (opt-in, idempotente, sin sudo) o fallback `sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"` / [releases](https://github.com/twpayne/chezmoi/releases) |
+| **Age** | `sudo apt install age` (en APT en Ubuntu/Debian) o [releases](https://github.com/FiloSottile/age/releases) |
+| **SOPS** | `make install-sops` (opt-in, idempotente, sin sudo) o [releases](https://github.com/getsops/sops/releases). No está en APT de Ubuntu. |
+
+> Chezmoi es el único gestor activo de dotfiles. RCM (`rcup`) ya no forma parte del bootstrap y no se instala desde aquí; las referencias históricas se conservan únicamente como contexto en `docs/CHEZMOI.md`.
+
+---
+
+## Secuencia recomendada (máquina nueva / PC empresa)
+
+Flujo seguro y opt-in, sin sorpresas en máquinas corporativas:
+
+```bash
+# 1. Diagnóstico no-destructivo (puede salir PASS_WITH_WARNINGS, es normal)
+make install-check
+
+# 2. Dry-run del bootstrap completo (sin sudo, sin apt-get)
+make install DRY_RUN=1
+
+# 3. Bootstrap APT-only, sin dependencias externas
+make install SKIP_EXTERNAL=1
+
+# 4. Instaladores opt-in (uno por uno, idempotentes, soportan DRY_RUN=1)
+make install-chezmoi # chezmoi (twpayne/chezmoi) en ~/.local/bin (sin Go, sin sudo)
+make install-sops    # descarga sops oficial (getsops/sops v3.9.4) a ~/.local/bin
+make install-uv      # uv (Astral) en ~/.local/bin
+make install-zsh-stack   # Oh My Zsh + Powerlevel10k + plugins (no toca ~/.zshrc)
+
+# 5. Configurar la ruta real del vault de Obsidian (no se fuerza por defecto)
+#    Editar ~/.config/chezmoi/chezmoi.toml:
+#        [data.ai]
+#            obsidian_vault_path = "/ruta/real/del/vault"
+
+# 6. Publicar dotfiles (chezmoi apply) — opt-in con DOTFILES_APPLY=1
+#    Crea/actualiza también los symlinks ~/.zshrc, ~/.p10k.zsh y ~/.aliases.
+#    Si esos ficheros existen con contenido custom, añade ZSH_RC_APPLY=1
+#    para permitir backup con timestamp + reemplazo. Si solo hay un stub
+#    trivial (vacío o `. "$HOME/.local/bin/env"`) el backup es automático.
+make install-dotfiles DOTFILES_APPLY=1
+
+# 7. Validar Cursor/MCPs/skills/commands (no-mutante)
+make ai-cursor-check
+```
+
+> **DRY_RUN convention.** Usa `DRY_RUN=1` (con guion bajo). El instalador
+> aborta fast con mensaje claro si pasas `DRY-RUN=1`, `dry-run=1`,
+> `Dry-Run=1` o `DRYRUN=1`, para evitar instalaciones reales accidentales en
+> bootstrap de máquina nueva.
+>
+> **Test/lint tooling.** `make install` instala también las herramientas de
+> validación (`bats`, `shellcheck`, `shfmt`) vía APT para que `make test-fast`
+> funcione sin pasos adicionales en una máquina nueva. Un preflight
+> (`make test-deps-check`, integrado en `test-fast` / `test-bats` / `test`)
+> falla rápido con mensaje accionable si alguna falta.
 
 ---
 
@@ -30,11 +80,13 @@ cd ~/dotfiles
 
 ```bash
 mkdir -p ~/.config/sops/age
-age-keygen -o ~/.config/sops/age/keys.txt
-grep "public key:" ~/.config/sops/age/keys.txt
+test -f ~/.config/sops/age/keys.txt
+age-keygen -y ~/.config/sops/age/keys.txt
 ```
 
-Copiar la public key y editar `~/.config/sops/age/keys.txt` en `.sops.yaml` del repo (reemplazar `AGE_PUBLIC_KEY_AQUI`).
+Si `secrets.sops.yaml` ya viene cifrado en el repo, restaura/importa la clave privada Age correspondiente al recipient de `.sops.yaml`; no generes una clave nueva esperando descifrar el archivo actual. La clave privada queda en `~/.config/sops/age/keys.txt` y nunca se versiona.
+
+Para rotar a otra clave, genera una nueva clave, actualiza `.sops.yaml` con su public key y re-encripta con `sops updatekeys secrets.sops.yaml`.
 
 ### 3. Crear secretos (opcional)
 
@@ -50,15 +102,65 @@ Añadir valores bajo `mcp:`. Ver [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
 ### 4. Aplicar dotfiles
 
 ```bash
-chezmoi --source=$HOME/dotfiles apply
+make install-dotfiles DOTFILES_APPLY=1
 ```
 
-### 5. Aplicar RCM (zsh, tmux, vim)
+Esto crea/actualiza también los symlinks `~/.zshrc`, `~/.p10k.zsh` y `~/.aliases` apuntando al repo. Si ya existen con contenido custom, ejecuta:
 
 ```bash
-rcup -v
+ZSH_RC_APPLY=1 make install-dotfiles DOTFILES_APPLY=1
+```
+
+para permitir backup con timestamp (`~/.zshrc.backup.YYYYMMDD-HHMMSS`) + reemplazo. Stubs triviales (vacíos o solo `. "$HOME/.local/bin/env"`) se respaldan automáticamente sin necesidad del flag.
+
+### 5. Recargar la sesión
+
+```bash
+exec zsh -l
+# o, en la sesión actual:
 source ~/.zshrc
 ```
+
+> El paso histórico `rcup -v` (RCM) ha sido retirado del flujo activo: Chezmoi gestiona ahora los RC files de la zsh stack.
+
+### 6. (Opcional) Convertir zsh en la shell por defecto
+
+`make install` y `make install-zsh-stack` no cambian la shell de login: esa es una decisión personal (cambia el comportamiento de Bash/WSL). Hay dos caminos, ambos opt-in:
+
+**Camino preferido — `chsh` (persistente, vale para cualquier terminal):**
+
+```bash
+chsh -s "$(command -v zsh)"
+# cierra y reabre la terminal
+echo "$SHELL"          # debe imprimir .../zsh
+ps -p $$ -o comm=      # debe imprimir zsh
+```
+
+Si `chsh` rechaza la shell con "non-standard", añade primero la ruta a `/etc/shells`:
+
+```bash
+echo "$(command -v zsh)" | sudo tee -a /etc/shells
+```
+
+**Fallback WSL — bloque idempotente en `~/.bashrc`** (sin `sudo`, útil cuando la terminal no respeta `/etc/passwd` o no quieres tocar `chsh`):
+
+```bash
+# >>> dotfiles zsh-fallback >>>
+if [ -t 1 ] && [ -z "${ZSH_VERSION:-}" ] && command -v zsh >/dev/null 2>&1; then
+    exec zsh -l
+fi
+# <<< dotfiles zsh-fallback <<<
+```
+
+**Helper opt-in del repo** que orquesta lo anterior con backups (no se ejecuta dentro de `make install`):
+
+```bash
+make set-default-shell-zsh                          # sólo informa, no muta
+APPLY=1 make set-default-shell-zsh                  # ejecuta `chsh -s`
+ZSH_BASHRC_FALLBACK=1 make set-default-shell-zsh    # añade el bloque a ~/.bashrc con backup
+```
+
+Soporta `DRY_RUN=1`, es idempotente y nunca usa `sudo`.
 
 ---
 
@@ -67,11 +169,11 @@ source ~/.zshrc
 ```bash
 git clone https://github.com/jesuserro/dotfiles.git ~/dotfiles && \
 cd ~/dotfiles && \
-chezmoi --source=$HOME/dotfiles apply && \
-rcup -v && source ~/.zshrc
+make install-dotfiles DOTFILES_APPLY=1 && \
+exec zsh -l
 ```
 
-*(Requiere Age, SOPS y Chezmoi instalados previamente.)*
+*(Requiere Age, SOPS, Chezmoi y la zsh stack — `make install-zsh-stack` — instalados previamente.)*
 
 ---
 

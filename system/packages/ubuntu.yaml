@@ -32,11 +32,6 @@ packages:
     required: true
     capability: secrets
     note: Used for SOPS age key management in this repo.
-  - package: sops
-    command: sops
-    required: true
-    capability: secrets
-    note: Used to edit and manage encrypted secrets files.
   - package: fd-find
     command: fdfind
     required: true
@@ -49,11 +44,16 @@ packages:
     note: Used by scripts/treegen.sh to regenerate STRUCTURE.md.
   - package: shellcheck
     command: shellcheck
-    required: false
-    capability: testing
-    note: Optional shell linting dependency used by make test-lint.
+    required: true
+    capability: linting
+    note: Required by shell lint / make test-fast (make test-lint -> lint-shellcheck).
   - package: shfmt
     command: shfmt
-    required: false
+    required: true
+    capability: linting
+    note: Required by shell format check / make test-fast (make test-lint -> lint-shfmt, make fmt-shell).
+  - package: bats
+    command: bats
+    required: true
     capability: testing
-    note: Optional shell formatter used by make fmt-shell and test-lint.
+    note: Bats test runner required to validate the repo via make test-fast / make test-bats. Available in Ubuntu APT (pulls parallel + sysstat as deps).

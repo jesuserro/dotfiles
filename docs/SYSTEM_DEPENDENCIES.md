@@ -121,15 +121,28 @@ make deps-install DEPS_INSTALL_ARGS="--dry-run --include-optional"
 
 ## Current operational examples
 
-- APT baseline: `git`, `zsh`, `tmux`, `python3`, `python3-pip`, `bubblewrap`, `ripgrep`, `fd-find`.
-- Non-APT tooling: `chezmoi`, `uv`, `node`, `npm`, `corepack`, `pnpm`, `codex`, `gitnexus`, `opencode`, `docker`.
+- APT baseline: `git`, `zsh`, `tmux`, `python3`, `python3-pip`, `bubblewrap`, `ripgrep`, `fd-find`, `age`.
+- APT test/lint tooling: `bats`, `shellcheck`, `shfmt` (required: true, see "Test/lint dependencies" below).
+- Non-APT tooling: `chezmoi`, `sops`, `uv`, `node`, `npm`, `corepack`, `pnpm`, `codex`, `gitnexus`, `opencode`, `docker`.
 - WSL/Windows-side: `wslpath`, `powershell.exe`, `wt.exe`.
+
+## Test/lint dependencies (APT)
+
+`make test-fast` and `make test-lint` rely on three small CLIs that are intentionally part of the required APT baseline so a fresh machine can validate the repo without extra steps:
+
+- `bats` — Bats test runner (Ubuntu APT pulls `parallel` and `sysstat` as transitive deps).
+- `shellcheck` — shell linter used by `lint-shellcheck`.
+- `shfmt` — shell formatter used by `lint-shfmt` / `fmt-shell`.
+
+A fail-fast preflight (`make test-deps-check`, also wired into `test-fast` / `test-bats` / `test`) verifies these three are in `PATH` before running anything, and prints `Run: make install SKIP_EXTERNAL=1` if any is missing. This avoids silent hangs or partial runs on fresh machines.
 
 ## Canonical external guidance
 
-- `chezmoi`: install from the official release flow or `go install github.com/twpayne/chezmoi/v2@latest`
+- `chezmoi`: `make install-chezmoi` (preferred, idempotent, no sudo, drops the binary at `~/.local/bin/chezmoi`). Direct fallback: `sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"` or download from https://github.com/twpayne/chezmoi/releases.
+- `sops`: `make install-sops` (preferred, idempotent, no sudo, sha256-verified, pinned version). Direct fallback: download the matching `sops-vX.Y.Z.linux.<arch>` binary from https://github.com/getsops/sops/releases and drop it at `~/.local/bin/sops`. Not in Ubuntu APT repos.
 - `uv`: `make install-uv` (preferred, idempotent, never edits rc files). Direct fallback: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - `node` / `npm`: install together through your preferred WSL/Ubuntu Node distribution
+- `azure-cli`: `make install-azure-cli` (opt-in, Debian/Ubuntu/WSL via Microsoft's official Azure CLI repository). It is not part of `make install`; `az login` remains manual.
 - `corepack`: `corepack enable`
 - `pnpm`: `corepack prepare pnpm@latest --activate`
 - `codex`: `npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest`
@@ -166,6 +179,27 @@ Política transversal del repo para entornos y herramientas Python:
 - **`uv` preferido** (Astral) para venvs, lockfiles, herramientas y ejecución de scripts puntuales.
 - **`pip`/`pipx`** se conservan instalados como base del sistema (`python3-pip`, `pipx` siguen como APT requeridos) y como **fallback / legado vivo**: ningún script existente que use `pip` se modifica para evitar regresiones.
 - **`uv` se queda `required: false`** en el inventario para no romper `STRICT=1 make install-check` en máquinas mínimas. Para instalarlo de forma explícita: `make install-uv`.
+
+## Azure CLI opt-in
+
+`azure-cli` / `az` vive en `system/packages/tooling.yaml` como `external` y
+`required: false`. Esto permite verlo con `deps-check --include-optional` y
+recibir la recomendación `make install-azure-cli` con `deps-actions
+--include-optional`, sin convertir Azure en dependencia base.
+
+Reglas de la Fase 1C:
+
+- `make install`, `make install-check`, `make install-verify`, `make deps-check`
+  y `scripts/check-system-deps.sh` no deben fallar porque falte `az`.
+- `make install-azure-cli` y `scripts/install-azure-cli.sh` son manuales y
+  opt-in; soportan `DRY_RUN=1` y validan que el canal Microsoft exista para el
+  codename antes de configurar APT, sin fallback automático.
+- `bash scripts/check-azure-tools.sh` puede fallar si falta `az`, porque es el
+  check explícito de readiness Azure.
+- `az login`, selección de suscripción, extensiones como `containerapp` y
+  recursos Azure siguen siendo acciones manuales fuera del bootstrap base.
+- `yq` es herramienta recomendada general; su ausencia no bloquea Azure CLI ni
+  la instalación de Dotfiles.
 
 ### Equivalencias canónicas
 

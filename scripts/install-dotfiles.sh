@@ -50,7 +50,7 @@ if command -v chezmoi >/dev/null 2>&1; then
 	chezmoi_bin="$(command -v chezmoi)"
 	install_label OK "chezmoi: ${chezmoi_bin}"
 else
-	install_label MISSING "chezmoi not in PATH — install from https://github.com/twpayne/chezmoi/releases or see docs/INSTALL.md"
+	install_label MISSING "chezmoi not in PATH — run 'make install-chezmoi' (preferred, idempotent, no sudo). Fallback: 'sh -c \"\$(curl -fsLS get.chezmoi.io)\" -- -b \"\$HOME/.local/bin\"' or see docs/INSTALL.md"
 fi
 
 local_src="$(resolve_local_source)"
@@ -100,7 +100,7 @@ if dry; then
 fi
 
 if [[ -z "${chezmoi_bin}" ]]; then
-	install_label FAIL "DOTFILES_APPLY=1 but chezmoi is missing — install chezmoi first"
+	install_label FAIL "DOTFILES_APPLY=1 but chezmoi is missing — run 'make install-chezmoi' first (fallback: 'sh -c \"\$(curl -fsLS get.chezmoi.io)\" -- -b \"\$HOME/.local/bin\"')"
 	exit 1
 fi
 

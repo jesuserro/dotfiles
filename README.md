@@ -51,10 +51,11 @@ flowchart TB
 | Sistema | Gestiona | Doc |
 |---------|----------|-----|
 | **`make install*`** | Bootstrap inicial: APT, externos, chezmoi, verificación | [docs/ops/dotfiles-install.md](docs/ops/dotfiles-install.md) |
-| **Chezmoi + SOPS + Age** | MCPs, secretos, AI Workstation | [docs/CHEZMOI.md](docs/CHEZMOI.md) |
-| **RCM (rcup)** | zsh, tmux, vim, aliases | [RCM](http://thoughtbot.github.io/rcm/) |
+| **Chezmoi + SOPS + Age** | MCPs, secretos, AI Workstation y zsh stack RC files (`.zshrc`, `.p10k.zsh`, `.aliases`) | [docs/CHEZMOI.md](docs/CHEZMOI.md) |
 | **`ups`** | Mantenimiento periódico (APT + npm + MCP + OMZ) | [docs/UPS.md](docs/UPS.md) |
 | **`make deps-*`** | Inventario declarativo de dependencias | [docs/SYSTEM_DEPENDENCIES.md](docs/SYSTEM_DEPENDENCIES.md) |
+
+> Legacy: RCM (`rcup`) gestionaba históricamente `~/.zshrc`/`~/.aliases`/`~/.p10k.zsh`. Se ha retirado del flujo activo. Hoy esos symlinks los crea Chezmoi en `make install-dotfiles DOTFILES_APPLY=1`.
 
 ## Instalación / Bootstrap
 
@@ -90,7 +91,8 @@ make install SKIP_EXTERNAL=1
 | `make install-check` | Preflight de bootstrap. Modo normal: `MISSING/WARN` no bloquean. `STRICT=1`: requeridos declarativos = `FAIL`. |
 | `make install-apt` | Instala paquetes APT desde [`system/packages/*.yaml`](system/packages/) (mismo backend que `make deps-install`). |
 | `make install-external` | Solo recomendaciones (`make deps-actions`); detecta Docker, `wt.exe`, `winget.exe`, zsh stack — **nunca** instala host-side ni Docker Desktop. |
-| `make install-zsh-stack` | Clona Oh My Zsh, Powerlevel10k y plugins custom solo si faltan. **No** edita `~/.zshrc`. |
+| `make install-zsh-stack` | Clona Oh My Zsh, Powerlevel10k y plugins custom solo si faltan. **No** edita `~/.zshrc`: ese symlink lo crea Chezmoi en `make install-dotfiles DOTFILES_APPLY=1`. |
+| `make set-default-shell-zsh` | **Opt-in**, fuera de `make install`. Por defecto sólo informa. `APPLY=1` ejecuta `chsh -s "$(command -v zsh)"`. `ZSH_BASHRC_FALLBACK=1` añade un bloque idempotente a `~/.bashrc` con backup (fallback WSL). Soporta `DRY_RUN=1`. Nunca usa `sudo`. |
 | `make install-uv` | Instala **uv** (herramienta Python preferida) con el instalador oficial de Astral. Idempotente, opt-in, **fuera** de `make install`. No edita `~/.zshrc` ni `~/.bashrc`. |
 | `make install-dotfiles` | Plan chezmoi. **No ejecuta `apply`** salvo `DOTFILES_APPLY=1`. |
 | `make install-verify` | Versiones de zsh/git/chezmoi/sops/age/rg/docker. `STRICT=1` hace fallar si hay `FAIL` real. |
@@ -106,15 +108,14 @@ Variables soportadas: `DRY_RUN=1`, `STRICT=1`, `SKIP_EXTERNAL=1`, `SKIP_DOCKER=1
 
 **Skill para agentes:** [`Dotfiles bootstrap install`](ai/assets/skills/ops/dotfiles-install/SKILL.md).
 
-## Cuándo usar qué: rcup, source y chezmoi
+## Cuándo usar qué: source y chezmoi
 
 | Acción | Cuándo usarla |
 |--------|----------------|
-| **`rcup -v`** | Cambias archivos del repo que RCM gestiona (zsh, tmux, vim, aliases). Crea/actualiza symlinks en tu `$HOME`. |
-| **`source ~/.zshrc`** | Después de `rcup` o de `ups`: recarga aliases/funciones/PATH en la sesión actual. |
-| **`chezmoi --source=$HOME/dotfiles apply`** | Cambias en el repo lo que Chezmoi gestiona (MCPs, plantillas en `dot_cursor/`, `dot_codex/`, secretos, runtime AI). |
+| **`chezmoi --source=$HOME/dotfiles apply`** (o `make install-dotfiles DOTFILES_APPLY=1`) | Cambias en el repo cualquier fichero gestionado por Chezmoi (MCPs, plantillas en `dot_cursor/`, `dot_codex/`, secretos, runtime AI, `~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`). |
+| **`source ~/.zshrc`** | Después de `chezmoi apply` o de `ups`: recarga aliases/funciones/PATH en la sesión actual. |
 
-**Detalle:** [docs/CHEZMOI.md#cuándo-usar-rcup-source-y-chezmoi](docs/CHEZMOI.md#cuándo-usar-rcup-source-y-chezmoi).
+**Detalle:** [docs/CHEZMOI.md](docs/CHEZMOI.md).
 
 ## Update / Mantenimiento periódico
 
@@ -122,7 +123,6 @@ Variables soportadas: `DRY_RUN=1`, `STRICT=1`, `SKIP_EXTERNAL=1`, `SKIP_DOCKER=1
 cd ~/dotfiles
 git pull
 chezmoi --source=$HOME/dotfiles apply
-rcup -v
 source ~/.zshrc
 ```
 
@@ -161,7 +161,7 @@ dotfiles/
 
 ## Customizations
 
-`~/dotfiles-local/*.local` — aliases, gitconfig, tmux, vimrc, zshrc. Ver [RCM](http://thoughtbot.github.io/rcm/).
+Override por host opcional en `~/.zshrc.local` (cargado por `zsh/90-local.zsh`) y, para Chezmoi, en `~/.config/chezmoi/chezmoi.toml` (fusionado con `.chezmoi.toml` del repo).
 
 ## Testing
 
@@ -181,7 +181,6 @@ Ver [docs/TESTING.md](docs/TESTING.md) para más detalle.
 | Chezmoi | [chezmoi.io](https://www.chezmoi.io/) |
 | SOPS | [github.com/getsops/sops](https://github.com/getsops/sops) |
 | Age | [github.com/FiloSottile/age](https://github.com/FiloSottile/age) |
-| RCM | [thoughtbot.github.io/rcm](http://thoughtbot.github.io/rcm/) |
 | Oh My Zsh | [ohmyz.sh](https://ohmyz.sh/) |
 | Powerlevel10k | [github.com/romkatv/powerlevel10k](https://github.com/romkatv/powerlevel10k) |
 

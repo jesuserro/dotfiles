@@ -1,4 +1,5 @@
-# Chezmoi: solo gestionar MCP + secrets (no tocar rcup/zsh/tmux/vim/git)
+# Chezmoi: gestor único activo de dotfiles relevantes (MCP + secrets + zsh stack RC files).
+# RCM/rcup queda fuera del flujo activo de bootstrap (ver docs/CHEZMOI.md).
 # Los patrones se aplican a TARGET paths (~/.cursor, ~/.codex, etc.), no al source.
 *
 !.chezmoi.toml
@@ -24,3 +25,6 @@
 !proyectos/store-etl
 !proyectos/store-etl/.cursor
 !proyectos/store-etl/.cursor/mcp.json
+!.zshrc
+!.p10k.zsh
+!.aliases

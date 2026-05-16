@@ -20,8 +20,8 @@ args = ["-y", "@upstash/context7-mcp"]
 enabled = true
 
 [mcp_servers.docker]
-command = "/usr/bin/node"
-args = ["{{ .chezmoi.homeDir }}/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"]
+command = "docker.exe"
+args = ["mcp", "gateway", "run"]
 enabled = true
 
 [mcp_servers.grafana]

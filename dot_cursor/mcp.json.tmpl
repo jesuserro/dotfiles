@@ -17,9 +17,11 @@
       "env": {}
     },
     "docker": {
-      "command": "/usr/bin/node",
+      "command": "docker.exe",
       "args": [
-        "{{ .chezmoi.homeDir }}/.codex/mcp/docker/node_modules/@0xshariq/docker-mcp-server/dist/index.js"
+        "mcp",
+        "gateway",
+        "run"
       ],
       "env": {}
     },

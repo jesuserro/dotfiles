@@ -71,6 +71,20 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Safety belt: if a hyphen variant slipped through env (script called directly,
+# bypassing the Make-level guard), force dry-run and warn. We never silently
+# normalise DRY-RUN -> DRY_RUN; the goal is defensive safety, not convenience.
+for _bad_var in "DRY-RUN" "dry-run" "Dry-Run" "DRYRUN"; do
+    _bad_val="$(printenv "${_bad_var}" 2>/dev/null || true)"
+    case "${_bad_val}" in
+        1|true|TRUE|yes|YES|on|ON)
+            echo "install-system-packages.sh: detected unsupported env variant '${_bad_var}=${_bad_val}'; forcing --dry-run. Use DRY_RUN=1 next time." >&2
+            dry_run=1
+            ;;
+    esac
+done
+unset _bad_var _bad_val
+
 if ! is_debian_like; then
     echo "install-system-packages.sh: this installer currently supports only Debian/Ubuntu via apt-get" >&2
     exit 1
@@ -126,6 +140,52 @@ if [[ ${dry_run} -eq 1 ]]; then
 	printf ' %q' "${packages[@]}"
 	printf '\n'
 	exit 0
+fi
+
+# Preflight: check which packages have an installation candidate in APT.
+# Avoids the opaque "E: Unable to locate package <x>" failure halfway through
+# the install. system_deps.py 'packages' already returns required-only by
+# default, so any package missing here counts as required and must abort.
+#
+# Parsing is done in pure bash to avoid SIGPIPE (exit 141) under `pipefail`
+# when awk/head would close the pipe early before apt-cache flushes its output.
+if command -v apt-cache >/dev/null 2>&1; then
+    available_pkgs=()
+    missing_pkgs=()
+    for _pkg in "${packages[@]}"; do
+        _policy_out="$(apt-cache policy "${_pkg}" 2>/dev/null || true)"
+        _candidate=""
+        while IFS= read -r _line; do
+            if [[ "${_line}" == *Candidate:* ]]; then
+                # Strip the "  Candidate: " prefix (trim leading whitespace + label).
+                _candidate="${_line#*Candidate:}"
+                _candidate="${_candidate## }"
+                break
+            fi
+        done <<< "${_policy_out}"
+        if [[ -z "${_candidate}" || "${_candidate}" == "(none)" ]]; then
+            missing_pkgs+=("${_pkg}")
+        else
+            available_pkgs+=("${_pkg}")
+        fi
+    done
+    unset _pkg _policy_out _candidate _line
+
+    if [[ ${#missing_pkgs[@]} -gt 0 ]]; then
+        echo "APT preflight: the following required packages have no installation candidate in this distro's APT sources:" >&2
+        printf '  - %s\n' "${missing_pkgs[@]}" >&2
+        echo "" >&2
+        echo "These packages should be classified as external (see system/packages/tooling.yaml)" >&2
+        echo "or installed via a dedicated opt-in installer (e.g. 'make install-sops', 'make install-uv')." >&2
+        echo "Aborting before apt-get install to avoid an opaque failure." >&2
+        exit 2
+    fi
+
+    if [[ ${#available_pkgs[@]} -eq 0 ]]; then
+        echo "APT preflight: no installable packages remain. Nothing to do." >&2
+        exit 2
+    fi
+    packages=("${available_pkgs[@]}")
 fi
 
 "${apt_runner[@]}" update
