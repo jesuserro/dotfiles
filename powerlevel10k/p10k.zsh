@@ -358,10 +358,14 @@
   # typeset -g POWERLEVEL9K_DIR_PREFIX='in '
 
   #######################[ dotfiles: custom prompt segments ]###################################
-  # github_owner / upstream_owner: GitHub owners from remotes (no network).
-  # python_uv: basename of $VIRTUAL_ENV when active (uv/venv workflow).
-  # git_author: .git/ai-author/current (IA) or git config; agent-like uses distinct color + '!'.
+  # Compact labels (nerdfont-v3): icon + value, or short text when icons disabled.
+  # Set _DOTFILES_P10K_USE_ICONS=0 before loading p10k to force text fallbacks.
   # vcs stays the single source for branch, dirty, staged, untracked, ahead/behind.
+
+  typeset -g _DOTFILES_P10K_USE_ICONS=${_DOTFILES_P10K_USE_ICONS:-1}
+  typeset -g _DOTFILES_P10K_ICON_GITHUB=$'\uF408 '
+  typeset -g _DOTFILES_P10K_ICON_USER=$'\uF007 '
+  typeset -g _DOTFILES_P10K_ICON_PYTHON=$'\uE235 '
 
   typeset -gA _DOTFILES_P10K_GH_REMOTE_OWNER _DOTFILES_P10K_UPSTREAM_OWNER
   typeset -gA _DOTFILES_P10K_GIT_AUTHOR _DOTFILES_P10K_GIT_AUTHOR_AGENT
@@ -544,6 +548,21 @@
     [[ -n ${_DOTFILES_P10K_GIT_AUTHOR_AGENT[$root]:-} ]]
   }
 
+  # icon mode: optional -i + value_icon; text mode: value_text (e.g. gh:owner).
+  function _dotfiles_p10k_segment_compact() {
+    emulate -L zsh
+    local fg=$1 bg=$2 icon=$3 value_icon=$4 value_text=$5
+    if (( _DOTFILES_P10K_USE_ICONS )); then
+      if [[ -n $icon ]]; then
+        p10k segment -f $fg -b $bg -i $icon -t "$value_icon"
+      else
+        p10k segment -f $fg -b $bg -t "$value_icon"
+      fi
+    else
+      p10k segment -f $fg -b $bg -t "$value_text"
+    fi
+  }
+
   function prompt_github_owner() {
     local root owner
     _dotfiles_p10k_repo_root || return
@@ -551,9 +570,9 @@
     _dotfiles_p10k_github_owner_for_root "$root" || return
     owner=$REPLY
     [[ -n $owner ]] || return
-    p10k segment -f $POWERLEVEL9K_GITHUB_OWNER_FOREGROUND \
-                 -b $POWERLEVEL9K_GITHUB_OWNER_BACKGROUND \
-                 -t "github:${owner}"
+    _dotfiles_p10k_segment_compact \
+      $POWERLEVEL9K_GITHUB_OWNER_FOREGROUND $POWERLEVEL9K_GITHUB_OWNER_BACKGROUND \
+      "$_DOTFILES_P10K_ICON_GITHUB" "$owner" "gh:${owner}"
   }
 
   function prompt_upstream_owner() {
@@ -563,17 +582,18 @@
     _dotfiles_p10k_upstream_owner_for_root "$root" || return
     owner=$REPLY
     [[ -n $owner ]] || return
-    p10k segment -f $POWERLEVEL9K_UPSTREAM_OWNER_FOREGROUND \
-                 -b $POWERLEVEL9K_UPSTREAM_OWNER_BACKGROUND \
-                 -t "upstream:${owner}"
+    _dotfiles_p10k_segment_compact \
+      $POWERLEVEL9K_UPSTREAM_OWNER_FOREGROUND $POWERLEVEL9K_UPSTREAM_OWNER_BACKGROUND \
+      '' "↑${owner}" "up:${owner}"
   }
 
   function prompt_python_uv() {
-    local venv=${VIRTUAL_ENV:-}
+    local venv=${VIRTUAL_ENV:-} name
     [[ -n $venv ]] || return
-    p10k segment -f $POWERLEVEL9K_PYTHON_UV_FOREGROUND \
-                 -b $POWERLEVEL9K_PYTHON_UV_BACKGROUND \
-                 -t "uv:${venv:t}"
+    name=${venv:t}
+    _dotfiles_p10k_segment_compact \
+      $POWERLEVEL9K_PYTHON_UV_FOREGROUND $POWERLEVEL9K_PYTHON_UV_BACKGROUND \
+      "$_DOTFILES_P10K_ICON_PYTHON" "$name" "py:${name}"
   }
 
   function prompt_git_author() {
@@ -589,9 +609,13 @@
       fg=$POWERLEVEL9K_GIT_AUTHOR_AGENT_FOREGROUND
       suffix='!'
     fi
-    p10k segment -f $fg \
-                 -b $POWERLEVEL9K_GIT_AUTHOR_BACKGROUND \
-                 -t "git-author:${author}${suffix}"
+    if (( _DOTFILES_P10K_USE_ICONS )); then
+      p10k segment -f $fg -b $POWERLEVEL9K_GIT_AUTHOR_BACKGROUND \
+                   -i $_DOTFILES_P10K_ICON_USER -t "${author}${suffix}"
+    else
+      p10k segment -f $fg -b $POWERLEVEL9K_GIT_AUTHOR_BACKGROUND \
+                   -t "author:${author}${suffix}"
+    fi
   }
 
   typeset -g POWERLEVEL9K_GITHUB_OWNER_FOREGROUND=6
@@ -745,10 +769,9 @@
   # Enable counters for staged, unstaged, etc.
   typeset -g POWERLEVEL9K_VCS_{STAGED,UNSTAGED,UNTRACKED,CONFLICTED,COMMITS_AHEAD,COMMITS_BEHIND}_MAX_NUM=-1
 
-  # Custom icon.
-  # typeset -g POWERLEVEL9K_VCS_VISUAL_IDENTIFIER_EXPANSION='⭐'
-  # Custom prefix.
-  typeset -g POWERLEVEL9K_VCS_PREFIX='on '
+  # Keep vcs compact: provider/owner is shown by custom github_owner.
+  typeset -g POWERLEVEL9K_VCS_VISUAL_IDENTIFIER_EXPANSION=
+  typeset -g POWERLEVEL9K_VCS_PREFIX=
 
   # Show status of repositories of these types. You can add svn and/or hg if you are
   # using them. If you do, your prompt may become slow even when your current directory
