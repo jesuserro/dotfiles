@@ -34,7 +34,9 @@
     os_icon                 # os identifier
     dir                     # current directory
     github_owner            # GitHub owner from origin (dotfiles custom)
+    upstream_owner          # GitHub upstream owner when != origin (dotfiles custom)
     vcs                     # git branch/status via gitstatus (keep native dirty indicators)
+    python_uv               # active VIRTUAL_ENV basename (dotfiles custom)
     git_author              # effective git author label (dotfiles custom)
     # prompt_char           # prompt symbol
   )
@@ -355,15 +357,18 @@
   # Custom prefix.
   # typeset -g POWERLEVEL9K_DIR_PREFIX='in '
 
-  #######################[ dotfiles: github_owner + git_author (custom) ]########################
-  # github_owner: GitHub org/user from `origin` (SSH/HTTPS). Hidden outside git or non-GitHub.
-  # git_author: compact label from .git/ai-author/current (IA) or git config (human).
-  # vcs below stays the single source for branch, dirty, staged, untracked, ahead/behind.
+  #######################[ dotfiles: custom prompt segments ]###################################
+  # github_owner / upstream_owner: GitHub owners from remotes (no network).
+  # python_uv: basename of $VIRTUAL_ENV when active (uv/venv workflow).
+  # git_author: .git/ai-author/current (IA) or git config; agent-like uses distinct color + '!'.
+  # vcs stays the single source for branch, dirty, staged, untracked, ahead/behind.
 
-  typeset -gA _DOTFILES_P10K_GITHUB_OWNER _DOTFILES_P10K_GIT_AUTHOR
+  typeset -gA _DOTFILES_P10K_GH_REMOTE_OWNER _DOTFILES_P10K_UPSTREAM_OWNER
+  typeset -gA _DOTFILES_P10K_GIT_AUTHOR _DOTFILES_P10K_GIT_AUTHOR_AGENT
 
   function _dotfiles_p10k_clear_git_prompt_cache() {
-    unset _DOTFILES_P10K_GITHUB_OWNER _DOTFILES_P10K_GIT_AUTHOR
+    unset _DOTFILES_P10K_GH_REMOTE_OWNER _DOTFILES_P10K_UPSTREAM_OWNER
+    unset _DOTFILES_P10K_GIT_AUTHOR _DOTFILES_P10K_GIT_AUTHOR_AGENT
   }
   if [[ -z ${_dotfiles_p10k_chpwd_hook_added:-} ]]; then
     autoload -Uz add-zsh-hook
@@ -402,21 +407,61 @@
     REPLY=$owner
   }
 
-  function _dotfiles_p10k_github_owner_for_root() {
-    local root=$1 url
-    if (( ${+_DOTFILES_P10K_GITHUB_OWNER[$root]} )); then
-      REPLY=${_DOTFILES_P10K_GITHUB_OWNER[$root]}
+  # Cached GitHub owner for a named remote (origin, upstream, …).
+  function _dotfiles_p10k_remote_github_owner() {
+    local root=$1 remote=$2
+    local cache_key="${root}::${remote}"
+    local url
+    if (( ${+_DOTFILES_P10K_GH_REMOTE_OWNER[$cache_key]} )); then
+      REPLY=${_DOTFILES_P10K_GH_REMOTE_OWNER[$cache_key]}
       [[ -n $REPLY ]]
       return
     fi
-    url="$(command git -C "$root" remote get-url origin 2>/dev/null)" || url=
+    url="$(command git -C "$root" remote get-url "$remote" 2>/dev/null)" || url=
     if [[ -n $url ]] && _dotfiles_p10k_parse_github_owner "$url"; then
-      _DOTFILES_P10K_GITHUB_OWNER[$root]=$REPLY
+      _DOTFILES_P10K_GH_REMOTE_OWNER[$cache_key]=$REPLY
+      return 0
+    fi
+    _DOTFILES_P10K_GH_REMOTE_OWNER[$cache_key]=
+    REPLY=
+    return 1
+  }
+
+  function _dotfiles_p10k_github_owner_for_root() {
+    _dotfiles_p10k_remote_github_owner "$1" origin
+  }
+
+  # Upstream owner only when remote exists, is GitHub, and differs from origin.
+  function _dotfiles_p10k_upstream_owner_for_root() {
+    local root=$1 origin_owner upstream_owner
+    if (( ${+_DOTFILES_P10K_UPSTREAM_OWNER[$root]} )); then
+      REPLY=${_DOTFILES_P10K_UPSTREAM_OWNER[$root]}
+      [[ -n $REPLY ]]
+      return
+    fi
+    if _dotfiles_p10k_remote_github_owner "$root" origin; then
+      origin_owner=$REPLY
     else
-      _DOTFILES_P10K_GITHUB_OWNER[$root]=
+      origin_owner=
+    fi
+    _dotfiles_p10k_remote_github_owner "$root" upstream || {
+      _DOTFILES_P10K_UPSTREAM_OWNER[$root]=
+      REPLY=
+      return 1
+    }
+    upstream_owner=$REPLY
+    if [[ -z $upstream_owner || $upstream_owner == $origin_owner ]]; then
+      _DOTFILES_P10K_UPSTREAM_OWNER[$root]=
       REPLY=
       return 1
     fi
+    _DOTFILES_P10K_UPSTREAM_OWNER[$root]=$upstream_owner
+    REPLY=$upstream_owner
+  }
+
+  function _dotfiles_p10k_git_author_is_agent_like() {
+    local author=${(L)1}
+    [[ $author == *(cursor|codex|opencode|claude|ai|agent)* ]]
   }
 
   function _dotfiles_p10k_compact_git_author() {
@@ -448,7 +493,7 @@
   }
 
   function _dotfiles_p10k_git_author_for_root() {
-    local root=$1 ai_file identity name email compact
+    local root=$1 ai_file identity name email compact from_ai=0
     if (( ${+_DOTFILES_P10K_GIT_AUTHOR[$root]} )); then
       REPLY=${_DOTFILES_P10K_GIT_AUTHOR[$root]}
       [[ -n $REPLY ]]
@@ -459,31 +504,44 @@
     if [[ -r $ai_file ]]; then
       identity=$(<"$ai_file")
       if _dotfiles_p10k_compact_git_author "$identity"; then
-        _DOTFILES_P10K_GIT_AUTHOR[$root]=$REPLY
-        return 0
+        compact=$REPLY
+        from_ai=1
       fi
     fi
 
-    email="$(command git -C "$root" config user.email 2>/dev/null)"
-    name="$(command git -C "$root" config user.name 2>/dev/null)"
-    if [[ -n $email && $email == *@* ]]; then
-      compact=${email%%@*}
-      compact=${compact%%+*}
-      compact=${(L)compact%%.*}
-      [[ -n $compact ]] || compact=${(L)${email%%@*}}
-    elif [[ -n $name ]]; then
-      compact=${(L)name%% *}
-      compact=${compact//[^a-z0-9_-]/}
+    if [[ -z $compact ]]; then
+      email="$(command git -C "$root" config user.email 2>/dev/null)"
+      name="$(command git -C "$root" config user.name 2>/dev/null)"
+      if [[ -n $email && $email == *@* ]]; then
+        compact=${email%%@*}
+        compact=${compact%%+*}
+        compact=${(L)compact%%.*}
+        [[ -n $compact ]] || compact=${(L)${email%%@*}}
+      elif [[ -n $name ]]; then
+        compact=${(L)name%% *}
+        compact=${compact//[^a-z0-9_-]/}
+      fi
     fi
 
     if [[ -n $compact ]]; then
       _DOTFILES_P10K_GIT_AUTHOR[$root]=$compact
+      if (( from_ai )) || _dotfiles_p10k_git_author_is_agent_like "$compact"; then
+        _DOTFILES_P10K_GIT_AUTHOR_AGENT[$root]=1
+      else
+        _DOTFILES_P10K_GIT_AUTHOR_AGENT[$root]=
+      fi
       REPLY=$compact
       return 0
     fi
     _DOTFILES_P10K_GIT_AUTHOR[$root]=
+    _DOTFILES_P10K_GIT_AUTHOR_AGENT[$root]=
     REPLY=
     return 1
+  }
+
+  function _dotfiles_p10k_git_author_is_agent() {
+    local root=$1
+    [[ -n ${_DOTFILES_P10K_GIT_AUTHOR_AGENT[$root]:-} ]]
   }
 
   function prompt_github_owner() {
@@ -498,22 +556,53 @@
                  -t "github:${owner}"
   }
 
+  function prompt_upstream_owner() {
+    local root owner
+    _dotfiles_p10k_repo_root || return
+    root=$REPLY
+    _dotfiles_p10k_upstream_owner_for_root "$root" || return
+    owner=$REPLY
+    [[ -n $owner ]] || return
+    p10k segment -f $POWERLEVEL9K_UPSTREAM_OWNER_FOREGROUND \
+                 -b $POWERLEVEL9K_UPSTREAM_OWNER_BACKGROUND \
+                 -t "upstream:${owner}"
+  }
+
+  function prompt_python_uv() {
+    local venv=${VIRTUAL_ENV:-}
+    [[ -n $venv ]] || return
+    p10k segment -f $POWERLEVEL9K_PYTHON_UV_FOREGROUND \
+                 -b $POWERLEVEL9K_PYTHON_UV_BACKGROUND \
+                 -t "uv:${venv:t}"
+  }
+
   function prompt_git_author() {
-    local root author
+    local root author fg suffix
     _dotfiles_p10k_repo_root || return
     root=$REPLY
     _dotfiles_p10k_git_author_for_root "$root" || return
     author=$REPLY
     [[ -n $author ]] || return
-    p10k segment -f $POWERLEVEL9K_GIT_AUTHOR_FOREGROUND \
+    fg=$POWERLEVEL9K_GIT_AUTHOR_FOREGROUND
+    suffix=
+    if _dotfiles_p10k_git_author_is_agent "$root"; then
+      fg=$POWERLEVEL9K_GIT_AUTHOR_AGENT_FOREGROUND
+      suffix='!'
+    fi
+    p10k segment -f $fg \
                  -b $POWERLEVEL9K_GIT_AUTHOR_BACKGROUND \
-                 -t "git-author:${author}"
+                 -t "git-author:${author}${suffix}"
   }
 
   typeset -g POWERLEVEL9K_GITHUB_OWNER_FOREGROUND=6
   typeset -g POWERLEVEL9K_GITHUB_OWNER_BACKGROUND=$POWERLEVEL9K_DIR_BACKGROUND
+  typeset -g POWERLEVEL9K_UPSTREAM_OWNER_FOREGROUND=14
+  typeset -g POWERLEVEL9K_UPSTREAM_OWNER_BACKGROUND=$POWERLEVEL9K_DIR_BACKGROUND
+  typeset -g POWERLEVEL9K_PYTHON_UV_FOREGROUND=2
+  typeset -g POWERLEVEL9K_PYTHON_UV_BACKGROUND=$POWERLEVEL9K_DIR_BACKGROUND
   typeset -g POWERLEVEL9K_GIT_AUTHOR_FOREGROUND=178
   typeset -g POWERLEVEL9K_GIT_AUTHOR_BACKGROUND=$POWERLEVEL9K_DIR_BACKGROUND
+  typeset -g POWERLEVEL9K_GIT_AUTHOR_AGENT_FOREGROUND=213
 
   #####################################[ vcs: git status ]######################################
   # Version control background colors.
