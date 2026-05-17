@@ -33,7 +33,9 @@
   typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
     os_icon                 # os identifier
     dir                     # current directory
-    vcs                     # git status
+    github_owner            # GitHub owner from origin (dotfiles custom)
+    vcs                     # git branch/status via gitstatus (keep native dirty indicators)
+    git_author              # effective git author label (dotfiles custom)
     # prompt_char           # prompt symbol
   )
 
@@ -352,6 +354,166 @@
 
   # Custom prefix.
   # typeset -g POWERLEVEL9K_DIR_PREFIX='in '
+
+  #######################[ dotfiles: github_owner + git_author (custom) ]########################
+  # github_owner: GitHub org/user from `origin` (SSH/HTTPS). Hidden outside git or non-GitHub.
+  # git_author: compact label from .git/ai-author/current (IA) or git config (human).
+  # vcs below stays the single source for branch, dirty, staged, untracked, ahead/behind.
+
+  typeset -gA _DOTFILES_P10K_GITHUB_OWNER _DOTFILES_P10K_GIT_AUTHOR
+
+  function _dotfiles_p10k_clear_git_prompt_cache() {
+    unset _DOTFILES_P10K_GITHUB_OWNER _DOTFILES_P10K_GIT_AUTHOR
+  }
+  if [[ -z ${_dotfiles_p10k_chpwd_hook_added:-} ]]; then
+    autoload -Uz add-zsh-hook
+    add-zsh-hook chpwd _dotfiles_p10k_clear_git_prompt_cache
+    typeset -g _dotfiles_p10k_chpwd_hook_added=1
+  fi
+
+  function _dotfiles_p10k_repo_root() {
+    local top
+    top="$(command git rev-parse --show-toplevel 2>/dev/null)" || return 1
+    REPLY=$top
+  }
+
+  # Parse OWNER from github.com origin URL (no network).
+  function _dotfiles_p10k_parse_github_owner() {
+    local url=$1 owner
+    case $url in
+      git@github.com:*)
+        owner=${url#git@github.com:}
+        owner=${owner%%/*}
+        ;;
+      ssh://git@github.com/*)
+        owner=${url#ssh://git@github.com/}
+        owner=${owner%%/*}
+        ;;
+      https://github.com/*|http://github.com/*)
+        owner=${url#*github.com/}
+        owner=${owner%%/*}
+        owner=${owner%%.git}
+        ;;
+      *)
+        return 1
+        ;;
+    esac
+    [[ -n $owner && $owner != *'/'* && $owner != *':'* ]] || return 1
+    REPLY=$owner
+  }
+
+  function _dotfiles_p10k_github_owner_for_root() {
+    local root=$1 url
+    if (( ${+_DOTFILES_P10K_GITHUB_OWNER[$root]} )); then
+      REPLY=${_DOTFILES_P10K_GITHUB_OWNER[$root]}
+      [[ -n $REPLY ]]
+      return
+    fi
+    url="$(command git -C "$root" remote get-url origin 2>/dev/null)" || url=
+    if [[ -n $url ]] && _dotfiles_p10k_parse_github_owner "$url"; then
+      _DOTFILES_P10K_GITHUB_OWNER[$root]=$REPLY
+    else
+      _DOTFILES_P10K_GITHUB_OWNER[$root]=
+      REPLY=
+      return 1
+    fi
+  }
+
+  function _dotfiles_p10k_compact_git_author() {
+    local identity=$1 name email compact
+    identity=${identity//$'\r'/}
+    identity=${identity//$'\n'/}
+    [[ -n $identity ]] || return 1
+
+    if [[ $identity == *'<'* ]]; then
+      email=${identity#*<}
+      email=${email%>*}
+      case $email in
+        cursor-agent@*) REPLY=cursor; return 0 ;;
+        codex-agent@*)  REPLY=codex;  return 0 ;;
+        opencode-agent@*) REPLY=opencode; return 0 ;;
+      esac
+      name=${identity%%<*}
+      name=${name%%[[:space:]]}
+    else
+      name=$identity
+    fi
+
+    if [[ -n $name ]]; then
+      compact=${(L)name%% *}
+      compact=${compact//[^a-z0-9_-]/}
+      [[ -n $compact ]] && REPLY=$compact && return 0
+    fi
+    return 1
+  }
+
+  function _dotfiles_p10k_git_author_for_root() {
+    local root=$1 ai_file identity name email compact
+    if (( ${+_DOTFILES_P10K_GIT_AUTHOR[$root]} )); then
+      REPLY=${_DOTFILES_P10K_GIT_AUTHOR[$root]}
+      [[ -n $REPLY ]]
+      return
+    fi
+
+    ai_file="$root/.git/ai-author/current"
+    if [[ -r $ai_file ]]; then
+      identity=$(<"$ai_file")
+      if _dotfiles_p10k_compact_git_author "$identity"; then
+        _DOTFILES_P10K_GIT_AUTHOR[$root]=$REPLY
+        return 0
+      fi
+    fi
+
+    email="$(command git -C "$root" config user.email 2>/dev/null)"
+    name="$(command git -C "$root" config user.name 2>/dev/null)"
+    if [[ -n $email && $email == *@* ]]; then
+      compact=${email%%@*}
+      compact=${compact%%+*}
+      compact=${(L)compact%%.*}
+      [[ -n $compact ]] || compact=${(L)${email%%@*}}
+    elif [[ -n $name ]]; then
+      compact=${(L)name%% *}
+      compact=${compact//[^a-z0-9_-]/}
+    fi
+
+    if [[ -n $compact ]]; then
+      _DOTFILES_P10K_GIT_AUTHOR[$root]=$compact
+      REPLY=$compact
+      return 0
+    fi
+    _DOTFILES_P10K_GIT_AUTHOR[$root]=
+    REPLY=
+    return 1
+  }
+
+  function prompt_github_owner() {
+    local root owner
+    _dotfiles_p10k_repo_root || return
+    root=$REPLY
+    _dotfiles_p10k_github_owner_for_root "$root" || return
+    owner=$REPLY
+    [[ -n $owner ]] || return
+    p10k segment -f $POWERLEVEL9K_GITHUB_OWNER_FOREGROUND \
+                 -b $POWERLEVEL9K_GITHUB_OWNER_BACKGROUND \
+                 -t "github:${owner}"
+  }
+
+  function prompt_git_author() {
+    local root author
+    _dotfiles_p10k_repo_root || return
+    root=$REPLY
+    _dotfiles_p10k_git_author_for_root "$root" || return
+    author=$REPLY
+    [[ -n $author ]] || return
+    p10k segment -f $POWERLEVEL9K_GIT_AUTHOR_FOREGROUND \
+                 -b $POWERLEVEL9K_GIT_AUTHOR_BACKGROUND \
+                 -t "git-author:${author}"
+  }
+
+  typeset -g POWERLEVEL9K_GITHUB_OWNER_FOREGROUND=6
+  typeset -g POWERLEVEL9K_GITHUB_OWNER_BACKGROUND=$POWERLEVEL9K_DIR_BACKGROUND
+  typeset -g POWERLEVEL9K_GIT_AUTHOR_FOREGROUND=178
+  typeset -g POWERLEVEL9K_GIT_AUTHOR_BACKGROUND=$POWERLEVEL9K_DIR_BACKGROUND
 
   #####################################[ vcs: git status ]######################################
   # Version control background colors.
