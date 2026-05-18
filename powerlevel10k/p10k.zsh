@@ -371,8 +371,14 @@
   typeset -gA _DOTFILES_P10K_GIT_AUTHOR _DOTFILES_P10K_GIT_AUTHOR_AGENT
 
   function _dotfiles_p10k_clear_git_prompt_cache() {
-    unset _DOTFILES_P10K_GH_REMOTE_OWNER _DOTFILES_P10K_UPSTREAM_OWNER
-    unset _DOTFILES_P10K_GIT_AUTHOR _DOTFILES_P10K_GIT_AUTHOR_AGENT
+    typeset -gA _DOTFILES_P10K_GH_REMOTE_OWNER
+    typeset -gA _DOTFILES_P10K_UPSTREAM_OWNER
+    typeset -gA _DOTFILES_P10K_GIT_AUTHOR
+    typeset -gA _DOTFILES_P10K_GIT_AUTHOR_AGENT
+    _DOTFILES_P10K_GH_REMOTE_OWNER=()
+    _DOTFILES_P10K_UPSTREAM_OWNER=()
+    _DOTFILES_P10K_GIT_AUTHOR=()
+    _DOTFILES_P10K_GIT_AUTHOR_AGENT=()
   }
   if [[ -z ${_dotfiles_p10k_chpwd_hook_added:-} ]]; then
     autoload -Uz add-zsh-hook
@@ -416,7 +422,7 @@
     local root=$1 remote=$2
     local cache_key="${root}::${remote}"
     local url
-    if (( ${+_DOTFILES_P10K_GH_REMOTE_OWNER[$cache_key]} )); then
+    if [[ -n ${_DOTFILES_P10K_GH_REMOTE_OWNER[$cache_key]+x} ]]; then
       REPLY=${_DOTFILES_P10K_GH_REMOTE_OWNER[$cache_key]}
       [[ -n $REPLY ]]
       return
@@ -438,7 +444,7 @@
   # Upstream owner only when remote exists, is GitHub, and differs from origin.
   function _dotfiles_p10k_upstream_owner_for_root() {
     local root=$1 origin_owner upstream_owner
-    if (( ${+_DOTFILES_P10K_UPSTREAM_OWNER[$root]} )); then
+    if [[ -n ${_DOTFILES_P10K_UPSTREAM_OWNER[$root]+x} ]]; then
       REPLY=${_DOTFILES_P10K_UPSTREAM_OWNER[$root]}
       [[ -n $REPLY ]]
       return
@@ -498,7 +504,7 @@
 
   function _dotfiles_p10k_git_author_for_root() {
     local root=$1 ai_file identity name email compact from_ai=0
-    if (( ${+_DOTFILES_P10K_GIT_AUTHOR[$root]} )); then
+    if [[ -n ${_DOTFILES_P10K_GIT_AUTHOR[$root]+x} ]]; then
       REPLY=${_DOTFILES_P10K_GIT_AUTHOR[$root]}
       [[ -n $REPLY ]]
       return

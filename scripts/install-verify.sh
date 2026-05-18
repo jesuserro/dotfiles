@@ -66,6 +66,20 @@ version_or_warn_optin() {
 	fi
 }
 
+have_fontconfig() {
+	command -v fc-match >/dev/null 2>&1 &&
+		command -v fc-list >/dev/null 2>&1 &&
+		command -v fc-cache >/dev/null 2>&1
+}
+
+meslo_available() {
+	local match_out list_out
+	match_out="$(fc-match "MesloLGS NF" 2>/dev/null || true)"
+	list_out="$(fc-list 2>/dev/null || true)"
+
+	[[ "${match_out}" == *"MesloLGS"* && "${list_out}" == *"MesloLGS NF"* ]]
+}
+
 echo "==> Version checks (bootstrap base)"
 
 version_or_fail zsh
@@ -99,6 +113,17 @@ if command -v docker >/dev/null 2>&1; then
 	fi
 else
 	ver_line WARN "docker not in PATH or not installed"
+fi
+
+echo ""
+echo "==> Powerlevel10k fonts (WARN-only)"
+if ! have_fontconfig; then
+	ver_line WARN "fontconfig missing (fc-match/fc-list/fc-cache); run make install-apt"
+elif meslo_available; then
+	match_out="$(fc-match "MesloLGS NF" 2>/dev/null || true)"
+	ver_line PASS "MesloLGS NF available (${match_out%%$'\n'*})"
+else
+	ver_line WARN "MesloLGS NF not available; run make install-fonts"
 fi
 
 echo ""

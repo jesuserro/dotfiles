@@ -27,7 +27,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-uv install-sops install-chezmoi install-node-stack install-azure-cli install-mcp-github install-mcp-excalidraw set-default-shell-zsh ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-fonts install-uv install-sops install-chezmoi install-node-stack install-azure-cli install-mcp-github install-mcp-excalidraw set-default-shell-zsh ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -48,6 +48,12 @@ install-verify:
 
 install-zsh-stack:
 	@bash $(DOTFILES_DIR)/scripts/install-zsh-stack.sh
+
+# Optional, opt-in installer for MesloLGS NF user fonts used by Powerlevel10k.
+# Installs Linux/WSL fonts under XDG_DATA_HOME / ~/.local/share only; it never
+# changes Windows Terminal, shell RC files, or Powerlevel10k configuration.
+install-fonts:
+	@bash $(DOTFILES_DIR)/scripts/install-fonts.sh
 
 # Opt-in helper to make zsh the default login shell. Intentionally NOT part of
 # `make install`: changing the login shell or editing ~/.bashrc is a personal
