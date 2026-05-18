@@ -39,6 +39,7 @@ make install-chezmoi # chezmoi (twpayne/chezmoi) en ~/.local/bin (sin Go, sin su
 make install-sops    # descarga sops oficial (getsops/sops v3.9.4) a ~/.local/bin
 make install-uv      # uv (Astral) en ~/.local/bin
 make install-zsh-stack   # Oh My Zsh + Powerlevel10k + plugins (no toca ~/.zshrc)
+make install-fonts   # MesloLGS NF para Powerlevel10k en Linux/WSL (no configura Windows Terminal)
 
 # 5. Configurar la ruta real del vault de Obsidian (no se fuerza por defecto)
 #    Editar ~/.config/chezmoi/chezmoi.toml:
@@ -73,6 +74,9 @@ make ai-cursor-check
 > con el target correspondiente (`make install-chezmoi`, `make install-sops`)
 > y no cuenta como `FAIL`. `STRICT=1` solo hace fallar el paso ante `FAIL`
 > reales, no por herramientas opt-in ausentes.
+> MesloLGS NF se verifica como `WARN` si falta; instálala con
+> `make install-fonts`. Si los iconos se ven mal en Windows Terminal o VS Code,
+> selecciona `MesloLGS NF` como fuente en la aplicación host.
 
 ---
 
