@@ -155,7 +155,9 @@ EOF
 	[[ -s "${font_dir}/MesloLGS NF Bold.ttf" ]]
 	[[ -s "${font_dir}/MesloLGS NF Italic.ttf" ]]
 	[[ -s "${font_dir}/MesloLGS NF Bold Italic.ttf" ]]
-	[[ ! -e "${font_dir}/MesloLGS NF Bold.ttf.tmp.$$" ]]
+	run find "${font_dir}" -name '*.tmp.*' -print
+	[[ "${status}" -eq 0 ]]
+	[[ -z "${output}" ]]
 	run grep -c '^curl ' "${TEST_TEMP_DIR}/calls.log"
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" -eq 3 ]]

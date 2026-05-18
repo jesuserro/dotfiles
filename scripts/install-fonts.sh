@@ -109,7 +109,10 @@ download_font() {
 		die "Downloaded font is empty: ${file}"
 	fi
 
-	mv -f "${tmp}" "${FONT_DIR}/${file}"
+	if ! mv -f "${tmp}" "${FONT_DIR}/${file}"; then
+		rm -f "${tmp}"
+		die "Failed to move downloaded font into place: ${file}"
+	fi
 	log "Installed ${file}"
 }
 
