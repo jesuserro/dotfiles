@@ -36,3 +36,11 @@ build/mcps/
 # Local installer artifact from get.chezmoi.io when mis-invoked
 /bin/chezmoi
 secrets.sops.yaml.old-age1mq3-unreadable
+# SOPS edit failures / accidental writes (do not ignore secrets.sops.yaml itself)
+secrets.sops.yaml.new
+*.sops.yaml.new
+secrets.sops.yaml.bak
+*.sops.yaml.bak
+
+# Duplicate agent skills (canonical: ai/assets/skills)
+.claude/skills/

@@ -62,10 +62,10 @@ bats_require_minimum_version 1.5.0
 
 @test "script defines allowed roots" {
     grep -q "ALLOWED_ROOTS" "$LAUNCHER"
-    grep -q "/home/jesus/dotfiles" "$LAUNCHER"
-    grep -q "/home/jesus/proyectos" "$LAUNCHER"
-    grep -q "/home/jesus/.config" "$LAUNCHER"
-    grep -q "/mnt/c/Users/jesus/Documents/vault_trabajo" "$LAUNCHER"
+    grep -q '_resolve_dotfiles_root\|MCP_DOTFILES_ROOT' "$LAUNCHER"
+    grep -q '/proyectos' "$LAUNCHER"
+    grep -q '/.config' "$LAUNCHER"
+    grep -q 'MCP_OBSIDIAN_VAULT_PATH\|vault_trabajo' "$LAUNCHER"
 }
 
 @test "chezmoi filesystem launcher template uses ai.obsidian_vault_path" {

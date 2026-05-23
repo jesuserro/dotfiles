@@ -60,7 +60,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 | **docker** | Docker Desktop MCP Gateway oficial: `docker.exe mcp gateway run` desde WSL; se actualiza con Docker Desktop |
 | **postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` (solo si existe) |
 | **fetch** | `uv tool install mcp-server-fetch` |
-| **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
+| **dagster, minio, tempo, loki, prometheus, store_etl_ops** | Runtime Python en `~/.config/ai/runtime/.venv` (sincronizado por Chezmoi con `uv`; ver [CHEZMOI.md](CHEZMOI.md)) |
 
 ### MCPs que se resuelven en runtime (no requieren actualización explícita)
 

@@ -52,3 +52,18 @@ bats_require_minimum_version 1.5.0
 		diff -q "${BIN}/mcp-${name}-launcher" "${TMPL_DIR}/executable_mcp-${name}-launcher.tmpl"
 	done
 }
+
+@test "filesystem template uses portable chezmoi paths not hardcoded dotfiles user" {
+	local f="${TMPL_DIR}/executable_mcp-filesystem-launcher.tmpl"
+	! grep -qE '"/home/jesus/dotfiles"' "$f"
+	grep -q '{{ \.chezmoi\.sourceDir }}' "$f"
+	grep -q '{{ \.chezmoi\.homeDir }}' "$f"
+	grep -q '{{ \.ai\.obsidian_vault_path }}' "$f"
+}
+
+@test "filesystem bin resolves roots without hardcoded dotfiles path" {
+	local f="${BIN}/mcp-filesystem-launcher"
+	! grep -qE '"/home/jesus/dotfiles"' "$f"
+	grep -q 'MCP_DOTFILES_ROOT' "$f"
+	grep -q '_resolve_dotfiles_root' "$f"
+}

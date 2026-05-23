@@ -53,5 +53,6 @@ if [[ -z "${POSTGRES_DSN:-}" ]]; then
     exit 1
 fi
 
-# Execute MCP server with runtime
+# @modelcontextprotocol/server-postgres v0.6.x only accepts the database URL as argv[2]
+# (no env/file alternative). DSN may appear in process listings — see docs/CHEZMOI.md.
 exec npx -y "@modelcontextprotocol/server-postgres" "$POSTGRES_DSN"

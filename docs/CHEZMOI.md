@@ -83,11 +83,11 @@ chezmoi --source=$HOME/dotfiles status
 chezmoi --source=$HOME/dotfiles apply
 ```
 
-O configurar el source por defecto en `~/.config/chezmoi/chezmoi.toml`:
+El repo **no** fija `[source].path` en `.chezmoi.toml` (portabilidad). Configura el clone en `~/.config/chezmoi/chezmoi.toml` si quieres omitir `--source`:
 
 ```toml
 [source]
-    path = "/home/jesus/dotfiles"
+    path = "/home/TU_USUARIO/dotfiles"
 ```
 
 Luego:
@@ -214,21 +214,37 @@ El script `.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl` se ejecuta tras `ap
 
 Requiere: `sops`, `yq` o `python3` con PyYAML.
 
+**Modo estricto (opt-in):** `MCP_SECRETS_STRICT=1 chezmoi apply` falla si existe `secrets.sops.yaml` cifrado pero no se puede generar `~/.config/mcp-secrets.env` (sin `sops`, descifrado fallido o sin `yq`/PyYAML). Por defecto el hook es permisivo para máquinas sin Age/SOPS aún configurados.
+
+**Artefactos SOPS temporales:** no versionar `secrets.sops.yaml.new` ni `*.sops.yaml.bak` (ver `.gitignore`).
+
+---
+
+## Runtime Python MCP (`uv`)
+
+El hook `run_after_10_setup_ai_runtime.sh.tmpl` sincroniza `~/.config/ai/runtime/.venv` con **`uv`** (no `pip install -r` en cada apply). Requiere `uv` en PATH (`make install-uv`). Solo reinstala cuando cambia el hash de `ai/runtime/mcp/requirements.txt`.
+
+---
+
+## PostgreSQL MCP y DSN en argv
+
+El launcher `mcp-postgres-launcher` usa `@modelcontextprotocol/server-postgres` **v0.6.x**, que solo acepta la URL de conexión como **argumento CLI** (sin variable de entorno oficial). El DSN puede aparecer en listados de procesos (`ps`). No hay alternativa soportada sin cambiar de servidor MCP.
+
 ---
 
 ## MCPs globales vs proyecto Store ETL
 
-- **Global** (`~/.cursor/mcp.json`): excalidraw, context7, docker, github, fetch. Cualquier repo solo ve estos.
-- **Store ETL** (`~/.config/store-etl/` o `.cursor/mcp.json`): postgres, trino, dagster, minio, tempo, loki, prometheus, store_etl_ops. Solo al abrir Cursor en ese proyecto.
+- **Global (dotfiles):** `~/.cursor/mcp.json` incluye todos los MCP del `MANIFEST.yaml` (incl. `store_etl_ops` como wrapper operativo del repo dotfiles).
+- **Proyecto store-etl:** la configuración Cursor **`.cursor/mcp.json` del repositorio `store-etl`** es responsabilidad de ese proyecto (no se materializa desde dotfiles; el hook `run_after_10_link_store_etl_mcp` fue retirado). Los secretos legacy `~/.config/store-etl/secrets.env` siguen generándose solo como compatibilidad desde SOPS.
 
 ---
 
 ## Validación
 
 1. `chezmoi --source=$HOME/dotfiles apply`
-2. Abrir Cursor en otro repo → solo MCP global.
-3. Abrir Cursor en store-etl → MCPs específicos del proyecto.
-4. Comprobar: GitHub MCP, Postgres MCP, MinIO MCP, Dagster.
+2. `make ai-cursor-check` (y `MCP_SECRETS_STRICT=1` tras rotación de secretos).
+3. Abrir Cursor en un repo genérico → MCPs globales.
+4. Para stack store-etl: usar el `mcp.json` del proyecto `store-etl`.
 
 ---
 

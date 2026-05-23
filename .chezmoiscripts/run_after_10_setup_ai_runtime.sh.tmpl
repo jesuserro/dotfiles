@@ -1,14 +1,35 @@
 #!/usr/bin/env bash
-# Crea venv en ~/.config/ai/runtime/.venv para MCPs Python.
-# Se ejecuta después de apply. Requiere: python3.
-set -e
+# Sync ~/.config/ai/runtime/.venv for MCPs Python (uv-first, idempotent).
+# Requires: uv in PATH (make install-uv). Skips quietly if uv is missing.
+set -euo pipefail
 
-VENV_DIR="$HOME/.config/ai/runtime/.venv"
+VENV_DIR="${HOME}/.config/ai/runtime/.venv"
 REQUIREMENTS="{{ .chezmoi.sourceDir }}/ai/runtime/mcp/requirements.txt"
+STAMP="${VENV_DIR}/.requirements.sha256"
 
-mkdir -p "$(dirname "$VENV_DIR")"
-if [ ! -d "$VENV_DIR" ]; then
-  python3 -m venv "$VENV_DIR"
-  "$VENV_DIR/bin/pip" install --upgrade pip
+if [[ ! -f "${REQUIREMENTS}" ]]; then
+    echo "WARNING: AI runtime requirements missing: ${REQUIREMENTS}" >&2
+    exit 0
 fi
-"$VENV_DIR/bin/pip" install -r "$REQUIREMENTS"
+
+if ! command -v uv >/dev/null 2>&1; then
+    echo "WARNING: uv not in PATH — skipping AI runtime sync (install: make install-uv)" >&2
+    exit 0
+fi
+
+mkdir -p "$(dirname "${VENV_DIR}")"
+
+REQ_HASH="$(sha256sum "${REQUIREMENTS}" | awk '{print $1}')"
+
+if [[ -d "${VENV_DIR}" && -f "${STAMP}" && "$(cat "${STAMP}")" == "${REQ_HASH}" ]]; then
+    exit 0
+fi
+
+if [[ ! -d "${VENV_DIR}" ]]; then
+    uv venv "${VENV_DIR}"
+fi
+
+uv pip install --python "${VENV_DIR}/bin/python" -r "${REQUIREMENTS}"
+printf '%s\n' "${REQ_HASH}" > "${STAMP}"
+
+exit 0

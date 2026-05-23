@@ -70,25 +70,26 @@ teardown() {
     done
 }
 
-@test "secrets script handles errors gracefully" {
-    # run_after_00_gen_secrets uses || exit 0 pattern instead of set -e
-    grep -q "|| exit 0" "$DOTFILES_DIR/.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl"
+@test "secrets script supports permissive and strict modes" {
+    grep -q 'MCP_SECRETS_STRICT' "$DOTFILES_DIR/.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl"
+    grep -q 'fail_or_skip' "$DOTFILES_DIR/.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl"
 }
 
-@test "run_after_10_setup_ai_runtime uses set -e" {
-    head -10 "$DOTFILES_DIR/.chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl" | grep -q "set -e"
+@test "run_after_10_setup_ai_runtime uses strict shell and uv" {
+    head -10 "$DOTFILES_DIR/.chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl" | grep -q "set -euo pipefail"
+    grep -q 'uv pip install' "$DOTFILES_DIR/.chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl"
 }
 
 @test "run_after_11_link_ai_assets uses set -euo pipefail" {
     head -10 "$DOTFILES_DIR/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl" | grep -q "set -euo pipefail"
 }
 
-@test "secrets script handles missing sops gracefully" {
-    grep -q "|| exit 0" "$DOTFILES_DIR/.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl"
+@test "secrets script handles missing sops in permissive mode" {
+    grep -q 'fail_or_skip' "$DOTFILES_DIR/.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl"
 }
 
-@test "ai runtime script checks for python3" {
-    grep -q "python3" "$DOTFILES_DIR/.chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl"
+@test "ai runtime script documents uv prerequisite" {
+    grep -q 'command -v uv' "$DOTFILES_DIR/.chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl"
 }
 
 @test "ai assets script is idempotent" {

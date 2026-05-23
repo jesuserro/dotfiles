@@ -52,7 +52,7 @@ vim ai/runtime/mcp/requirements.txt
 
 **MCP global (Cursor):** editar `dot_cursor/mcp.json.tmpl`
 
-**MCP store-etl (Cursor):** editar `private_dot_config/store-etl/store-etl.mcp.json.tmpl`
+**MCP store-etl (Cursor):** gestionar `.cursor/mcp.json` en el repositorio **store-etl** (no en dotfiles). Dotfiles publica MCPs globales y `store_etl_ops`; ver [CHEZMOI.md](CHEZMOI.md).
 
 **Codex:** editar `dot_codex/config.toml.tmpl`
 
@@ -135,7 +135,7 @@ El alias `ups` incluye una sección que actualiza los servidores MCP:
 | **git** | `uvx mcp-server-git` — se actualiza al ejecutarse |
 | **sequential-thinking** | `npx -y @modelcontextprotocol/server-sequential-thinking` (obtiene latest al ejecutar) |
 | **obsidian** | `npx -y @bitbonsai/mcpvault` + ruta del vault desde Chezmoi `ai.obsidian_vault_path` (ver [CHEZMOI.md](./CHEZMOI.md); plantillas vía `make ai-mcp-generate APPLY=1`) |
-| **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
+| **dagster, minio, tempo, loki, prometheus, store_etl_ops** | Venv `~/.config/ai/runtime/.venv` (Chezmoi + `uv`; `make install-uv`) |
 | **context7, github, gitnexus (MCP)** | Usan `npx` — obtienen la última versión al ejecutarse |
 
 ### Docker MCP en WSL

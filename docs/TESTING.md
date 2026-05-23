@@ -36,7 +36,7 @@ make test-install
 make test
 ```
 
-### Fast tests (excludes chezmoi smoke tests)
+### Fast tests (excludes chezmoi/* bats and MCP template JSON checks)
 ```bash
 make test-fast
 ```
@@ -65,11 +65,12 @@ make fmt-shell
 
 | Target | Description |
 |--------|-------------|
-| `make test` | Full test suite |
-| `make test-fast` | Lint + bats (no chezmoi smoke) |
+| `make test` | Preflight + lint + all bats + MCP template JSON validation |
+| `make test-fast` | Preflight + lint + bats without `chezmoi/*` tests |
 | `make test-lint` | shellcheck + shfmt |
-| `make test-bats` | All bats tests |
-| `make test-chezmoi` | Chezmoi smoke tests |
+| `make test-bats` | All bats tests (includes chezmoi hooks) |
+| `make test-chezmoi` | Chezmoi bats + `chezmoi-templates` |
+| `make test-ci` | Lint + CI bats subset + chezmoi (GitHub Actions) |
 | `make test-install` | Install dependencies |
 | `make fmt-shell` | Format shell scripts |
 | `make test-ci` | Full suite with JUnit/XML output (for CI) |
@@ -137,9 +138,12 @@ Lint reports findings but does not fail. Use `make fmt-shell` to auto-format.
 3. **Fast by default** — expensive tests are optional
 4. **Clear failures** — actionable error messages
 
+## CI
+
+Pull requests ejecutan [`.github/workflows/test.yml`](../.github/workflows/test.yml): `make ai-mcp-governance` y `make test-ci` (lint, MCP/launchers, chezmoi hooks, skills canónicos).
+
 ## Next candidates
 
 - Tests for `scripts/*.sh` (git workflow, install scripts)
-- CI integration (GitHub Actions or similar)
 - Deeper chezmoi tests (`chezmoi apply --dry-run` in temp HOME)
 - Integration tests with actual MCP servers

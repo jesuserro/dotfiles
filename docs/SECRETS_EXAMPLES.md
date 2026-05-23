@@ -157,3 +157,7 @@ Si quieres un secreto nuevo que el script aún no procesa:
 - Ver [CHEZMOI.md](CHEZMOI.md) para la configuración inicial.
 
 No pegues tokens en chat y evita `sops -d secrets.sops.yaml` en terminal como flujo normal; usa `sops secrets.sops.yaml`, que abre el editor y vuelve a cifrar al guardar.
+
+**Artefactos temporales:** no versiones `secrets.sops.yaml.new` ni `*.sops.yaml.bak` (patrones en `.gitignore`).
+
+**Apply estricto:** `MCP_SECRETS_STRICT=1 make install-dotfiles DOTFILES_APPLY=1` falla si el archivo cifrado existe pero no se genera `~/.config/mcp-secrets.env`.

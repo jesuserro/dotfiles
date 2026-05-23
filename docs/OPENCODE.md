@@ -75,7 +75,7 @@ Connection profile: env vars, ~/.config/mcp-secrets.env, project-local overrides
 | Launcher/Runtime | `mcp-postgres-launcher` (Chezmoi materialized path) | `~/.config/ai/runtime/.venv/bin/python -m trino_mcp` |
 | Connection config | `~/.config/mcp-secrets.env` (via `MCP_POSTGRES_SECRETS`) | `env` block in template (override locally if needed) |
 
-**Project-specific stacking:** `dot_config/store-etl/store-etl.mcp.json.tmpl` can add stack-focused MCP wiring without changing the global intent file in git.
+**Project-specific stacking:** el repositorio **store-etl** mantiene su propio `.cursor/mcp.json`; dotfiles no materializa esa configuración (ver [CHEZMOI.md](CHEZMOI.md)).
 
 This separation ensures:
 - No duplicated runtime installation
