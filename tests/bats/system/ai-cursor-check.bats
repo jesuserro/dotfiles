@@ -122,6 +122,38 @@ JSON
 	[[ "${output}" == *"OpenCode HOME Excalidraw MCP 'excalidraw_canvas' uses Docker runtime with scoped workspace mount"* ]]
 }
 
+@test "ai-cursor-check treats valid Docker bind mount as host path only" {
+	local fake_home
+	fake_home="$(mktemp -d)"
+	mkdir -p "${fake_home}/.cursor"
+	mkdir -p /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
+{"mcpServers":{"excalidraw_canvas":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","-e","EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw","-v","/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
+JSON
+	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"MCP path exists: /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw"* ]]
+	[[ "${output}" != *"MCP path not found (WSL/host path?): /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw"* ]]
+	[[ "${output}" != *"MCP path missing on disk: /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw"* ]]
+}
+
+@test "ai-cursor-check warns on missing Docker bind mount host path only" {
+	local fake_home missing_host
+	fake_home="$(mktemp -d)"
+	missing_host="/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw-missing-for-test"
+	mkdir -p "${fake_home}/.cursor"
+	rm -rf "${missing_host}"
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
+{"mcpServers":{"probe":{"command":"docker","args":["run","--rm","-v","/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw-missing-for-test:/workspace/probe","alpine:3.20"],"env":{}}}}
+JSON
+	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"MCP path not found (WSL/host path?): /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw-missing-for-test"* ]]
+	[[ "${output}" != *"MCP path not found (WSL/host path?): /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw-missing-for-test:/workspace/probe"* ]]
+}
+
 @test "ai-cursor-check flags legacy Excalidraw canvas port 3000" {
 	local fake_home
 	fake_home="$(mktemp -d)"

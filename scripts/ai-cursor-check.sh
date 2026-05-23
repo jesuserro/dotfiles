@@ -301,29 +301,40 @@ def count_opencode_enabled(text: str) -> int:
 
 def collect_paths_from_mcp_json(data, home: str):
     out = []
+
+    def add_path_token(token: str):
+        if token.startswith("/usr"):
+            return
+        if token.startswith("/mnt/") and ":/" in token:
+            token = token.split(":", 1)[0]
+        if token.startswith("/") and token not in out:
+            out.append(token)
+
     servers = (data or {}).get("mcpServers") or {}
     for _name, cfg in servers.items():
         if not isinstance(cfg, dict):
             continue
         cmd = cfg.get("command")
         if isinstance(cmd, str) and cmd.startswith("/"):
-            out.append(cmd)
+            add_path_token(cmd)
         for a in cfg.get("args") or []:
-            if isinstance(a, str) and a.startswith("/") and not a.startswith("/usr"):
-                out.append(a)
-            elif isinstance(a, str) and a.startswith(home + "/"):
-                out.append(a)
-            elif isinstance(a, str) and a.startswith("/mnt/"):
-                out.append(a)
-            elif isinstance(a, str) and a.startswith("/home/"):
-                out.append(a)
+            if not isinstance(a, str):
+                continue
+            if a.startswith("/") and not a.startswith("/usr"):
+                add_path_token(a)
+            elif a.startswith(home + "/"):
+                add_path_token(a)
+            elif a.startswith("/mnt/"):
+                add_path_token(a)
+            elif a.startswith("/home/"):
+                add_path_token(a)
         # Heuristic: -lc string may contain exec /path
         for a in cfg.get("args") or []:
             if isinstance(a, str) and "exec " in a:
                 for m in re.finditer(r"exec\s+(\S+)", a):
                     p = m.group(1)
                     if p.startswith("/"):
-                        out.append(p)
+                        add_path_token(p)
     return out
 
 
@@ -750,6 +761,8 @@ seen = set()
 
 def add(p: str):
     p = p.strip()
+    if p.startswith("/mnt/") and ":/" in p:
+        p = p.split(":", 1)[0]
     if p.startswith("/") and p not in seen:
         seen.add(p)
 
