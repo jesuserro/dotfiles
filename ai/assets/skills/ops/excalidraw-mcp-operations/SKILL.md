@@ -16,7 +16,10 @@ Use this skill when an agent needs to start, stop, update, diagnose, or configur
 - Canvas image: `ghcr.io/yctimlin/mcp_excalidraw-canvas:latest`
 - MCP image: `ghcr.io/yctimlin/mcp_excalidraw:latest`
 - MCP clients launch the server ephemerally with `docker run -i --rm`
-- The MCP container connects to the canvas through `EXPRESS_SERVER_URL=http://host.docker.internal:3000`
+- The canvas uses stable host URL `http://127.0.0.1:3210`
+- Docker maps host `3210` to the container's internal `3000` port (`3210:3000`)
+- The MCP container connects to the canvas through `EXPRESS_SERVER_URL=http://host.docker.internal:3210`
+- Host port `3000` is reserved for Store ETL/Dagster
 - `ENABLE_CANVAS_SYNC=true` is enabled in MCP configs
 
 Do not clone, `npm install`, `pnpm install`, Bun install, Vite build, TypeScript build, or depend on `~/mcp-servers/excalidraw-mcp/dist/index.js` for normal operation.

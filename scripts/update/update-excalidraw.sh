@@ -29,7 +29,7 @@ done
 CANVAS_IMAGE="${EXCALIDRAW_CANVAS_IMAGE:-ghcr.io/yctimlin/mcp_excalidraw-canvas:latest}"
 MCP_IMAGE="${EXCALIDRAW_MCP_IMAGE:-ghcr.io/yctimlin/mcp_excalidraw:latest}"
 CANVAS_NAME="${EXCALIDRAW_CANVAS_NAME:-mcp-excalidraw-canvas}"
-CANVAS_PORT="${EXCALIDRAW_CANVAS_PORT:-3000}"
+CANVAS_PORT="${EXCALIDRAW_CANVAS_PORT:-3210}"
 CANVAS_URL="${EXCALIDRAW_CANVAS_URL:-http://127.0.0.1:${CANVAS_PORT}}"
 
 docker_cmd() {
@@ -56,6 +56,39 @@ canvas_running() {
 	"$d" ps --filter "name=^/${CANVAS_NAME}$" --filter "status=running" --format '{{.Names}}' 2>/dev/null | grep -Fxq "$CANVAS_NAME"
 }
 
+canvas_port_mapping() {
+	local d
+	d="$(docker_cmd)" || return 1
+	local mapping
+	mapping="$("$d" port "$CANVAS_NAME" 3000/tcp 2>/dev/null || true)"
+	if [[ -n "$mapping" ]]; then
+		printf '%s\n' "$mapping"
+		return 0
+	fi
+	"$d" inspect "$CANVAS_NAME" --format '{{json .HostConfig.PortBindings}}' 2>/dev/null || true
+}
+
+mapping_is_expected() {
+	local mapping="$1"
+	[[ -n "$mapping" && ("$mapping" == *":${CANVAS_PORT}" || "$mapping" == *"\"HostPort\":\"${CANVAS_PORT}\""*) ]]
+}
+
+port_in_use() {
+	case "${EXCALIDRAW_SKIP_PORT_CHECK:-}" in
+	1 | true | TRUE | yes | YES | on | ON) return 1 ;;
+	esac
+	if command -v ss >/dev/null 2>&1 && ss -ltn "( sport = :${CANVAS_PORT} )" 2>/dev/null | grep -q ":${CANVAS_PORT}"; then
+		return 0
+	fi
+	if command -v lsof >/dev/null 2>&1 && lsof -iTCP:"${CANVAS_PORT}" -sTCP:LISTEN -P -n >/dev/null 2>&1; then
+		return 0
+	fi
+	if command -v timeout >/dev/null 2>&1 && timeout 1 bash -c "</dev/tcp/127.0.0.1/${CANVAS_PORT}" >/dev/null 2>&1; then
+		return 0
+	fi
+	return 1
+}
+
 case "$ACTION" in
 start)
 	d="$(docker_cmd)" || {
@@ -63,13 +96,34 @@ start)
 		exit 1
 	}
 	if canvas_running; then
+		mapping="$(canvas_port_mapping)"
+		if ! mapping_is_expected "$mapping"; then
+			echo "WARN   Excalidraw canvas is running with unexpected port mapping: ${mapping}"
+			echo "       Expected host port ${CANVAS_PORT} -> container port 3000. Stop/remove the stale container, then run: make excalidraw-start"
+			exit 1
+		fi
 		echo "Excalidraw canvas already running: ${CANVAS_URL}"
 		exit 0
 	fi
 	if "$d" ps -a --filter "name=^/${CANVAS_NAME}$" --format '{{.Names}}' 2>/dev/null | grep -Fxq "$CANVAS_NAME"; then
+		mapping="$(canvas_port_mapping)"
+		if ! mapping_is_expected "$mapping"; then
+			echo "WARN   Existing Excalidraw canvas container uses unexpected port mapping: ${mapping}"
+			echo "       Expected host port ${CANVAS_PORT} -> container port 3000. Remove/recreate the stale container or run: docker rm ${CANVAS_NAME}"
+			exit 1
+		fi
 		"$d" start "$CANVAS_NAME" >/dev/null
 	else
-		"$d" run -d -p "${CANVAS_PORT}:3000" --name "$CANVAS_NAME" "$CANVAS_IMAGE" >/dev/null
+		if port_in_use; then
+			echo "WARN   Port ${CANVAS_PORT} is already in use. Excalidraw canvas is reserved for ${CANVAS_URL}."
+			echo "       Stop the process using ${CANVAS_PORT}, then run: make excalidraw-start"
+			exit 1
+		fi
+		if ! "$d" run -d -p "${CANVAS_PORT}:3000" --name "$CANVAS_NAME" "$CANVAS_IMAGE" >/dev/null; then
+			echo "WARN   Could not start Excalidraw canvas on ${CANVAS_URL} (Docker port mapping ${CANVAS_PORT}:3000)."
+			echo "       Check whether port ${CANVAS_PORT} is occupied, then run: make excalidraw-status"
+			exit 1
+		fi
 	fi
 	echo "Excalidraw canvas running: ${CANVAS_URL}"
 	;;
@@ -97,9 +151,15 @@ status)
 		echo "WARN   Docker does not respond; open Docker Desktop"
 	fi
 	if canvas_running; then
-		echo "OK     Canvas running: ${CANVAS_URL}"
+		mapping="$(canvas_port_mapping)"
+		if mapping_is_expected "$mapping"; then
+			echo "OK     Canvas running: ${CANVAS_URL}"
+		else
+			echo "WARN   Canvas running with unexpected port mapping: ${mapping}"
+			echo "INFO   Expected URL: ${CANVAS_URL} (Docker mapping ${CANVAS_PORT}:3000)"
+		fi
 	else
-		echo "INFO   Canvas not running. Start with: make excalidraw-start"
+		echo "INFO   Canvas not running. Start with: make excalidraw-start (${CANVAS_URL})"
 	fi
 	;;
 update)

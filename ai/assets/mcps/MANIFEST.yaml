@@ -41,9 +41,11 @@ mcps:
       separately on demand with `make excalidraw-start` using
       ghcr.io/yctimlin/mcp_excalidraw-canvas:latest; clients use
       ghcr.io/yctimlin/mcp_excalidraw:latest with
-      EXPRESS_SERVER_URL=http://host.docker.internal:3000 and
-      ENABLE_CANVAS_SYNC=true. Do not clone, npm install, pnpm install, or
-      build a local dist/index.js for normal operation.
+      EXPRESS_SERVER_URL=http://host.docker.internal:3210 and
+      ENABLE_CANVAS_SYNC=true. The canvas host port is reserved as 3210
+      (`3210:3000` Docker mapping) so Store ETL/Dagster can keep localhost:3000.
+      Do not clone, npm install, pnpm install, or build a local dist/index.js
+      for normal operation.
 
   - id: context7
     display_name: Context7

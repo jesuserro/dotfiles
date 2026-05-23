@@ -48,7 +48,9 @@ Excalidraw ya no usa checkout local ni `dist/index.js`. La modalidad canónica e
 - Canvas: `ghcr.io/yctimlin/mcp_excalidraw-canvas:latest`
 - MCP stdio: `ghcr.io/yctimlin/mcp_excalidraw:latest`
 
-El canvas se arranca solo bajo demanda con `make excalidraw-start`. `make update` puede descargar imágenes con `make excalidraw-update`, pero nunca deja el canvas arrancado.
+El canvas se arranca solo bajo demanda con `make excalidraw-start` y se abre en `http://127.0.0.1:3210`. Docker publica el puerto estable `3210:3000`: `3210` queda reservado en el host para Excalidraw, mientras el contenedor mantiene su puerto interno `3000`. El puerto host `3000` queda libre para Store ETL/Dagster.
+
+Los clientes MCP Docker conectan con el canvas mediante `EXPRESS_SERVER_URL=http://host.docker.internal:3210`. `make update` puede descargar imágenes con `make excalidraw-update`, pero nunca deja el canvas arrancado.
 
 Los diagramas maestros viven como `.excalidraw` en los vaults de Obsidian. SVG es la salida recomendada para Markdown/PDF técnico; PNG queda para compatibilidad.
 

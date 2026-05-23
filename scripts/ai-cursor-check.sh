@@ -30,6 +30,7 @@ REGISTRY="${DOTFILES_ROOT}/ai/assets/commands/registry.yaml"
 VALIDATE_SKILLS="${DOTFILES_ROOT}/scripts/validate-skills-structure.sh"
 EXCALIDRAW_MCP_IMAGE="ghcr.io/yctimlin/mcp_excalidraw:latest"
 EXCALIDRAW_CANVAS_IMAGE="ghcr.io/yctimlin/mcp_excalidraw-canvas:latest"
+EXCALIDRAW_EXPRESS_SERVER_URL="http://host.docker.internal:3210"
 
 strict_mode=0
 if install_is_truthy "${STRICT:-}"; then
@@ -92,60 +93,67 @@ check_excalidraw_surface() {
 	fi
 	local status
 	status="$(
-		python3 - "$path" "$kind" "$EXCALIDRAW_MCP_IMAGE" <<'PY' 2>/dev/null || true
-import json
-import sys
+		python3 - "$path" "$kind" "$EXCALIDRAW_MCP_IMAGE" "$EXCALIDRAW_EXPRESS_SERVER_URL" <<-'PY' 2>/dev/null || true
+			import json
+			import sys
 
-path, kind, image = sys.argv[1:4]
+			path, kind, image, express_url = sys.argv[1:5]
 
-def fail(msg):
-    print("FAIL\t" + msg)
-    raise SystemExit(0)
+			def fail(msg):
+			    print("FAIL\t" + msg)
+			    raise SystemExit(0)
 
-def ok():
-    print("OK")
-    raise SystemExit(0)
+			def ok():
+			    print("OK")
+			    raise SystemExit(0)
 
-text = open(path, "rb").read()
-if b"dist/index.js" in text or b"mcp-servers/excalidraw-mcp" in text:
-    fail("uses legacy Excalidraw local checkout")
+			text = open(path, "rb").read()
+			if b"dist/index.js" in text or b"mcp-servers/excalidraw-mcp" in text:
+			    fail("uses legacy Excalidraw local checkout")
 
-if kind in ("cursor", "opencode"):
-    data = json.loads(text.decode("utf-8"))
-    if kind == "cursor":
-        entry = data.get("mcpServers", {}).get("excalidraw")
-        if not isinstance(entry, dict):
-            print("MISSING")
-            raise SystemExit(0)
-        command = entry.get("command")
-        args = entry.get("args", [])
-    else:
-        entry = data.get("mcp", {}).get("excalidraw")
-        if not isinstance(entry, dict):
-            print("MISSING")
-            raise SystemExit(0)
-        command_list = entry.get("command", [])
-        command = command_list[0] if command_list else None
-        args = command_list[1:]
-    if command == "docker" and image in args and "run" in args and "-i" in args and "--rm" in args:
-        ok()
-    fail("Excalidraw is present but not configured for ephemeral Docker runtime")
+			expected_env = f"EXPRESS_SERVER_URL={express_url}"
+			legacy_env = "EXPRESS_SERVER_URL=http://host.docker.internal:3000"
 
-if kind == "codex":
-    import tomllib
-    data = tomllib.loads(text.decode("utf-8"))
-    entry = data.get("mcp_servers", {}).get("excalidraw")
-    if not isinstance(entry, dict):
-        print("MISSING")
-        raise SystemExit(0)
-    command = entry.get("command")
-    args = entry.get("args", [])
-    if command == "docker" and image in args and "run" in args and "-i" in args and "--rm" in args:
-        ok()
-    fail("Excalidraw is present but not configured for ephemeral Docker runtime")
+			if kind in ("cursor", "opencode"):
+			    data = json.loads(text.decode("utf-8"))
+			    if kind == "cursor":
+			        entry = data.get("mcpServers", {}).get("excalidraw")
+			        if not isinstance(entry, dict):
+			            print("MISSING")
+			            raise SystemExit(0)
+			        command = entry.get("command")
+			        args = entry.get("args", [])
+			    else:
+			        entry = data.get("mcp", {}).get("excalidraw")
+			        if not isinstance(entry, dict):
+			            print("MISSING")
+			            raise SystemExit(0)
+			        command_list = entry.get("command", [])
+			        command = command_list[0] if command_list else None
+			        args = command_list[1:]
+			    if legacy_env in args:
+			        fail("Excalidraw MCP points to legacy canvas port 3000; expected host port 3210")
+			    if command == "docker" and image in args and "run" in args and "-i" in args and "--rm" in args and expected_env in args:
+			        ok()
+			    fail("Excalidraw is present but not configured for ephemeral Docker runtime on host.docker.internal:3210")
 
-fail("unknown config kind")
-PY
+			if kind == "codex":
+			    import tomllib
+			    data = tomllib.loads(text.decode("utf-8"))
+			    entry = data.get("mcp_servers", {}).get("excalidraw")
+			    if not isinstance(entry, dict):
+			        print("MISSING")
+			        raise SystemExit(0)
+			    command = entry.get("command")
+			    args = entry.get("args", [])
+			    if legacy_env in args:
+			        fail("Excalidraw MCP points to legacy canvas port 3000; expected host port 3210")
+			    if command == "docker" and image in args and "run" in args and "-i" in args and "--rm" in args and expected_env in args:
+			        ok()
+			    fail("Excalidraw is present but not configured for ephemeral Docker runtime on host.docker.internal:3210")
+
+			fail("unknown config kind")
+		PY
 	)"
 	case "$status" in
 	OK)
