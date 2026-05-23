@@ -2,40 +2,136 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.05.09_2340] - 2026-05-09
+## [v2026.05.23_1001] - 2026-05-23
 
 ## Changes
 ### Added
-- 2026-05-09 23:32 [220534e](https://github.com/jesuserro/dotfiles/commit/220534e) feat(chezmoi): enhance Obsidian MCP integration and configuration management (Cursor Agent)
-  - Added `obsidian_vault_path` to `.chezmoi.toml` for dynamic vault path management, allowing overrides in user-specific configurations.
-  - Updated various documentation files, including `README.md`, `CHEZMOI.md`, and `MCP_QUICKREF.md`, to reflect the new vault path configuration and its usage in MCP templates.
-  - Modified MCP templates to utilize the new `ai.obsidian_vault_path` variable, ensuring consistent path management across different environments.
-- 2026-05-09 23:17 [bcb8d5f](https://github.com/jesuserro/dotfiles/commit/bcb8d5f) feat(install): introduce ai-mcp-governance target for comprehensive MCP validation (Cursor Agent)
-  - Added `ai-mcp-governance` target in `install.mk` to orchestrate non-mutating checks for MCP governance, combining validation, rendering, and drift reporting in a single command.
-  - Updated `README.md`, `MCP_QUICKREF.md`, and `MCP_TAXONOMY.md` with instructions on using the new governance target, emphasizing its role in ensuring repository coherence.
-  - Enhanced `bin/validate-mcp-governance` script to perform the governance checks, ensuring alignment with the canonical MCP manifest.
-- 2026-05-09 23:11 [7c3338c](https://github.com/jesuserro/dotfiles/commit/7c3338c) feat(install): add ai-mcp-generate target for productive MCP template management (Cursor Agent)
-  - Introduced `ai-mcp-generate` target in `install.mk` to facilitate planning and productive generation of MCP templates, allowing for validation, rendering, and drift checks before applying changes.
-  - Updated `README.md`, `MCP_QUICKREF.md`, and `MCP_TAXONOMY.md` with detailed instructions on using the new target, emphasizing its role in managing MCP configurations.
-  - Enhanced `generate-mcp-configs.py` to support both dry-run and productive template generation, including backup functionality.
-- 2026-05-09 23:04 [5645380](https://github.com/jesuserro/dotfiles/commit/5645380) feat(install): add ai-mcp-render and ai-mcp-drift targets for MCP configuration management (Cursor Agent)
-  - Introduced `ai-mcp-render` target in `install.mk` to perform a dry-run rendering of MCP configurations, writing outputs to `build/mcps/` without modifying existing templates.
-  - Added `ai-mcp-drift` target to compare rendered configurations against current templates, generating a drift report and indicating unexpected changes.
-  - Updated `README.md` and `MCP_QUICKREF.md` with usage instructions for the new targets, emphasizing their roles in validating MCP configurations.
-- 2026-05-09 22:54 [9f0ccbb](https://github.com/jesuserro/dotfiles/commit/9f0ccbb) feat(install): add ai-mcp-validate target for MCP manifest validation (Cursor Agent)
-  - Introduced `ai-mcp-validate` target in `install.mk` to validate the canonical MCP manifest located at `ai/assets/mcps/MANIFEST.yaml` using a Python script.
-  - Updated `README.md` and `MCP_QUICKREF.md` to include instructions for the new validation target and its significance in ensuring MCP configuration integrity.
-  - Enhanced documentation in `MCP_TAXONOMY.md` and `adr/0001-mcp-governance.md` to reflect the new canonical intent for MCPs and the validation process.
-- 2026-05-09 22:45 [a3d356c](https://github.com/jesuserro/dotfiles/commit/a3d356c) feat(install): add ai-cursor-check target for non-mutating readiness check (Cursor Agent)
-  - Introduced `ai-cursor-check` target in `install.mk` to verify the alignment of Cursor MCPs, skills, and AI commands with repository templates without making system modifications.
-  - Updated `README.md` to include usage instructions for the new target and its purpose in ensuring system readiness.
-  - Enhanced `MCP_QUICKREF.md` with details on how to perform the readiness check and its implications for the installation process.
+- 2026-05-18 09:46 [01f679e](https://github.com/jesuserro/dotfiles/commit/01f679e) feat(fonts): add MesloLGS NF font installation and verification (Jesús Erro)
+  - Introduced a new `install-fonts` target to install MesloLGS NF fonts for Powerlevel10k on Linux/WSL.
+  - Updated `install.mk` to include the new target and added relevant documentation in `INSTALL.md` and `dotfiles-install.md`.
+  - Enhanced `install-verify.sh` to check for the availability of MesloLGS NF and provide warnings if not installed.
+- 2026-05-17 10:46 [4630ec9](https://github.com/jesuserro/dotfiles/commit/4630ec9) feat(powerlevel10k): introduce compact prompt segments with icon support (Cursor Agent)
+  - Added a new function to create compact prompt segments that utilize icons or fallback to text.
+  - Updated existing prompt functions for GitHub owner, upstream owner, and Python virtual environment to leverage the new compact segment functionality.
+  - Enhanced the git author prompt to conditionally display an icon based on user preference for a more visually appealing terminal experience.
+- 2026-05-17 10:28 [f783985](https://github.com/jesuserro/dotfiles/commit/f783985) feat(powerlevel10k): enhance prompt with upstream owner and Python virtual environment support (Cursor Agent)
+  - Added new prompt segments for displaying the upstream GitHub owner and the active Python virtual environment.
+  - Refactored functions to cache and retrieve GitHub owner information from both origin and upstream remotes.
+  - Improved the git author prompt to differentiate between agent-like authors and standard authors, enhancing visibility in the terminal.
+- 2026-05-17 10:20 [b4ef759](https://github.com/jesuserro/dotfiles/commit/b4ef759) feat(powerlevel10k): add GitHub owner and author prompts to configuration (Cursor Agent)
+  - Introduced new prompt elements for displaying the GitHub owner and effective git author in the Powerlevel10k configuration.
+  - Implemented functions to parse and cache GitHub owner from the repository's origin URL and to compactly display the git author's identity.
+  - Enhanced the prompt with additional segments for better visibility of GitHub-related information in the terminal.
+- 2026-05-16 18:02 [3de5f38](https://github.com/jesuserro/dotfiles/commit/3de5f38) feat(powerlevel10k): regenerate configuration with updated prompt elements (Cursor Agent)
+  - Generated a new Powerlevel10k configuration using the configuration wizard, enhancing the prompt with a comprehensive list of segments for both left and right prompts.
+  - Removed outdated comments and added instructions for customization and usage.
+  - Improved compatibility checks for Zsh versions and streamlined the configuration process.
+- 2026-05-12 15:34 [32d31b7](https://github.com/jesuserro/dotfiles/commit/32d31b7) feat(azure): enhance Azure CLI installation documentation and validation process (Jesús Erro)
+  - Updated `SYSTEM_DEPENDENCIES.md` and `azure-tooling.md` to clarify the validation of the Microsoft repository before installation, including handling of unsupported Ubuntu codenames.
+  - Improved `install-azure-cli.sh` to validate the existence of the Microsoft channel for the detected codename and added options for manual codename overrides.
+  - Expanded test coverage for the Azure CLI installation script to ensure proper handling of supported and unsupported codenames, as well as the opt-in nature of source cleanup.
+- 2026-05-12 15:05 [f222fbd](https://github.com/jesuserro/dotfiles/commit/f222fbd) feat(azure): add opt-in Azure CLI installation and documentation (Jesús Erro)
+  - Introduced `install-azure-cli` target in `install.mk` for an optional, idempotent installation of Azure CLI, using Microsoft's official repository.
+  - Updated documentation in `SYSTEM_DEPENDENCIES.md`, `azure-tooling.md`, and `tooling.yaml` to reflect the new Azure CLI installation process and its opt-in nature.
+  - Added tests for the Azure CLI installation script to ensure proper functionality and validate the installation process.
+- 2026-05-12 12:46 [c1890bc](https://github.com/jesuserro/dotfiles/commit/c1890bc) feat(zshrc, tests): add Azure aliases and update test suite (Jesús Erro)
+  - Included a new aliases file for Azure in the zsh configuration to enhance command availability.
+  - Updated the test suite to include a new test for Azure tools, ensuring comprehensive coverage of the new functionality.
+- 2026-05-11 14:17 [8652abc](https://github.com/jesuserro/dotfiles/commit/8652abc) feat(install): add Node.js stack and MCP wrappers for Excalidraw and GitHub (Jesus)
+  - Introduced `install-node-stack` target in `install.mk` for an opt-in, idempotent installation of Node.js and npm, addressing runtime requirements for several MCPs.
+  - Added `install-mcp-excalidraw` and `install-mcp-github` scripts for explicit materialization of the Excalidraw MCP and GitHub MCP wrapper, respectively, ensuring no sudo is required.
+  - Updated documentation in `STRUCTURE.md`, `MCP_TAXONOMY.md`, and `UPS.md` to reflect new installation options and clarify usage.
+- 2026-05-11 12:44 [44cb406](https://github.com/jesuserro/dotfiles/commit/44cb406) feat(aliases, install): enhance MCP server handling and add zsh default shell setup (Jesus)
+  - Updated the aliases file to utilize zsh's nullglob qualifier for the MCP servers loop, preventing errors when the directory is empty or missing.
+  - Introduced a new `set-default-shell-zsh` target in `install.mk` for an opt-in, idempotent setup of zsh as the default login shell, including a fallback for WSL users.
+  - Enhanced documentation in `README.md` and `INSTALL.md` to guide users on setting zsh as their default shell and the new installation target.
+- 2026-05-11 11:31 [8fdeb0d](https://github.com/jesuserro/dotfiles/commit/8fdeb0d) feat(install): enhance chezmoi installation script and add idempotency checks (Jesus)
+  - Updated the `install-chezmoi.sh` script to detect if `chezmoi` is installed on disk even when not in the current PATH, providing appropriate output messages.
+  - Modified the dry-run plan to ensure the correct invocation of the installer without the '--' separator, preventing issues with argument parsing.
+  - Added tests to validate the new behavior of the installation script, ensuring it correctly identifies existing installations and handles dry-run scenarios.
+- 2026-05-11 11:21 [5c66a29](https://github.com/jesuserro/dotfiles/commit/5c66a29) feat(install): add chezmoi installation target and update documentation (Jesus)
+  - Introduced `install-chezmoi` target in `install.mk` for an opt-in, idempotent installation of the chezmoi dotfiles engine, ensuring no sudo is required.
+  - Updated documentation in `INSTALL.md`, `SYSTEM_DEPENDENCIES.md`, and `CHEZMOI.md` to reflect the new installation method and provide fallback options.
+  - Enhanced output messages in `install-dotfiles.sh` to guide users on installing chezmoi if not found in PATH.
+- 2026-05-11 10:58 [ace0a97](https://github.com/jesuserro/dotfiles/commit/ace0a97) feat(install): enhance test/lint tooling installation and validation (Jesus)
+  - Updated `INSTALL.md` to clarify that `make install` now includes installation of `bats`, `shellcheck`, and `shfmt` for seamless testing on new machines.
+  - Revised `SYSTEM_DEPENDENCIES.md` to categorize `bats`, `shellcheck`, and `shfmt` as required APT packages for testing and linting.
+  - Modified `ubuntu.yaml` to reflect the mandatory status of `shellcheck` and `shfmt` for testing capabilities.
+- 2026-05-11 10:54 [5b468f1](https://github.com/jesuserro/dotfiles/commit/5b468f1) feat(install): include Bats test runner in installation and documentation updates (Jesus)
+  - Updated `INSTALL.md` to clarify that `make install` now installs the Bats test runner if not already present, ensuring `make test-fast` functions without additional setup on new machines.
+  - Revised `SYSTEM_DEPENDENCIES.md` to include `bats` in the APT baseline, emphasizing its necessity for validating the repository.
+  - Modified `ubuntu.yaml` to mark `bats` as a required package for testing capabilities, detailing its role in the testing process.
+- 2026-05-11 10:40 [0ed51db](https://github.com/jesuserro/dotfiles/commit/0ed51db) feat(install): implement SOPS installation and dry-run safety measures (Jesus)
+  - Introduced `install-sops` target in `install.mk` for idempotent installation of the SOPS secrets editor, ensuring no modifications to shell configuration files and supporting a dry-run mode.
+  - Added a safety guard in `install.mk` to reject hyphenated DRY-RUN variants, preventing accidental installations during dry runs.
+  - Updated documentation in `INSTALL.md`, `SYSTEM_DEPENDENCIES.md`, and `tooling.yaml` to include instructions for installing SOPS and its significance in managing secrets.
 
 ### Fixed
-- 2026-05-09 23:40 [e12e21b](https://github.com/jesuserro/dotfiles/commit/e12e21b) fix(mcps): update CHEZMOI.md and tests for MCP launcher templates (Cursor Agent)
-  - Revised the entry for MCP launcher paths in `CHEZMOI.md` to reflect the new wildcard format for launcher templates.
-  - Added a new test target `bats-chezmoi-mcp-launchers` in `Makefile.tests` to validate the functionality of chezmoi MCP launcher templates.
-  - Updated the `test-bats-ci` target to include the new chezmoi launcher tests, ensuring comprehensive test coverage.
+- 2026-05-18 10:17 [005d294](https://github.com/jesuserro/dotfiles/commit/005d294) fix(powerlevel10k): optimize cache key handling and improve prompt functions (Jesús Erro)
+  - Refactored the cache key handling in the `_dotfiles_p10k_clear_git_prompt_cache` function to initialize arrays instead of unsetting them, enhancing clarity and performance.
+  - Updated conditional checks for cache keys to use a more readable syntax, improving code maintainability.
+  - Added a new test for Powerlevel10k cache key functionality to ensure proper behavior.
+- 2026-05-18 09:51 [7629be2](https://github.com/jesuserro/dotfiles/commit/7629be2) fix(install-fonts): improve error handling during font installation (Jesús Erro)
+  - Enhanced the `download_font` function to include error handling when moving the downloaded font file, ensuring temporary files are removed on failure.
+  - Updated tests to verify that no temporary font files remain after installation attempts, improving the robustness of the font installation process.
+- 2026-05-11 11:02 [f0251d0](https://github.com/jesuserro/dotfiles/commit/f0251d0) fix(install): improve package availability checks and output clarity (Jesus)
+  - Enhanced `install-system-packages.sh` to use pure bash for parsing `apt-cache policy`, avoiding potential SIGPIPE issues.
+  - Updated the logic for determining package candidates, ensuring more reliable detection of missing packages.
+  - Simplified output messages in `Makefile.tests` for missing test dependencies, removing color codes for clearer visibility.
+
+### Documentation
+- 2026-05-16 20:36 [9074471](https://github.com/jesuserro/dotfiles/commit/9074471) docs(STRUCTURE.md): update generated timestamp and add dotfiles-operations section (Cursor Agent)
+  - Updated the generated timestamp in STRUCTURE.md to reflect the latest changes.
+  - Added a new section for `dotfiles-operations`, including a reference to its corresponding SKILL.md file for improved documentation structure.
+- 2026-05-16 20:25 [9c9b200](https://github.com/jesuserro/dotfiles/commit/9c9b200) docs(dotfiles): enhance dotfiles operations documentation and clarify installation processes (Cursor Agent)
+  - Added a new section on dotfiles operations in AGENT_WORKFLOW_FOR_AGENTS.md, detailing skills for installing, updating, and troubleshooting the dotfiles repository.
+  - Updated README.md to include the new `dotfiles-operations` skill and its purpose.
+  - Clarified the distinction between `make install` and `chezmoi apply` in the context of dotfiles management.
+- 2026-05-16 20:23 [b6d5c9c](https://github.com/jesuserro/dotfiles/commit/b6d5c9c) docs(guideline): add OPERATIONS.md for operational guidance and update related documentation (Cursor Agent)
+  - Introduced OPERATIONS.md to provide comprehensive operational guidance post-bootstrap, covering secrets management, MCPs, and troubleshooting.
+  - Updated INSTALL.md to reference OPERATIONS.md for daily operations and clarified the distinction between `make install` and `chezmoi apply`.
+  - Enhanced README.md to include a section on operations, linking to OPERATIONS.md for better navigation.
+- 2026-05-13 08:58 [58eb1ed](https://github.com/jesuserro/dotfiles/commit/58eb1ed) docs(releases): clarify Azure CLI installation process and update related documentation (Jesús Erro)
+  - Revised documentation in `SYSTEM_DEPENDENCIES.md` and `azure-tooling.md` to enhance clarity on the Azure CLI installation process, including validation steps and handling of unsupported Ubuntu codenames.
+  - Updated `install-azure-cli.sh` to improve validation for the Microsoft repository and added options for manual codename overrides.
+  - Expanded test coverage for the Azure CLI installation script to ensure proper handling of supported and unsupported codenames.
+- 2026-05-13 08:57 [1811db7](https://github.com/jesuserro/dotfiles/commit/1811db7) docs(STRUCTURE.md): refresh generated timestamp for file tree documentation (Jesús Erro)
+- 2026-05-12 15:11 [312e45a](https://github.com/jesuserro/dotfiles/commit/312e45a) docs(azure): update GitNexus indexing information and Azure tooling documentation (Jesús Erro)
+  - Revised symbol and relationship counts in the GitNexus indexing description for consistency across AGENTS.md and CLAUDE.md.
+  - Enhanced Azure tooling documentation to clarify the optional nature of Azure CLI installation and updated related TODOs for future improvements.
+- 2026-05-12 13:45 [66e0346](https://github.com/jesuserro/dotfiles/commit/66e0346) docs(azure): update GitNexus indexing information in documentation (Jesús Erro)
+  - Revised the symbol and relationship counts in the GitNexus indexing description across multiple documentation files to reflect the latest analysis results.
+  - Added a note in the Azure tooling documentation regarding the `azsetsub` command to clarify its function and usage context.
+
+### Refactored
+- 2026-05-16 17:37 [1dcc3e6](https://github.com/jesuserro/dotfiles/commit/1dcc3e6) refactor(rc): remove rcrc file and update documentation for install-verify (Cursor Agent)
+  - Deleted the `rcrc` file as it is no longer needed.
+  - Updated `README.md` and `INSTALL.md` to clarify the behavior of `make install-verify`, specifying that `chezmoi` and `sops` are treated as optional installations, emitting warnings instead of failures if missing.
+  - Modified `install-verify.sh` to implement opt-in checks for `chezmoi` and `sops`, ensuring they do not block the installation process.
+- 2026-05-12 09:06 [ee76a78](https://github.com/jesuserro/dotfiles/commit/ee76a78) refactor(mcp): transition Docker MCP to use official Docker Desktop Gateway (Jesus)
+  - Updated Docker MCP configuration to utilize `docker.exe mcp gateway run` instead of the legacy `npx` command.
+  - Revised documentation across multiple files to reflect the new command structure and usage instructions for Docker MCP.
+  - Enhanced validation scripts to check for the correct Docker MCP command and ensure compatibility with WSL.
+- 2026-05-11 14:30 [8d07d84](https://github.com/jesuserro/dotfiles/commit/8d07d84) refactor(secrets): update secrets management and symlink handling (Jesus)
+  - Changed the canonical secrets file from `~/.config/store-etl/secrets.env` to `~/.config/mcp-secrets.env`, ensuring a unified approach for managing secrets.
+  - Updated the symlink `~/.secrets/codex.env` to point to the new canonical file, maintaining compatibility for legacy consumers.
+  - Revised documentation across multiple files to reflect the new secrets structure and usage instructions.
+- 2026-05-11 12:17 [07710db](https://github.com/jesuserro/dotfiles/commit/07710db) refactor(chezmoi): consolidate dotfiles management and update documentation (Jesus)
+  - Updated `.chezmoi.toml` and `.chezmoiignore` to reflect Chezmoi as the sole active manager for relevant dotfiles, including zsh stack RC files.
+  - Revised documentation in `README.md`, `CHEZMOI.md`, and `INSTALL.md` to clarify the removal of RCM/rcup from the active flow and the management of symlinks for `~/.zshrc`, `~/.p10k.zsh`, and `~/.aliases`.
+  - Enhanced the installation process to ensure that symlinks are created by Chezmoi, with appropriate backup policies for existing files.
+
+### Chores
+- 2026-05-16 18:23 [1b8c4ee](https://github.com/jesuserro/dotfiles/commit/1b8c4ee) chore(secrets): update PostgreSQL DSN and metadata in secrets.sops.yaml (Cursor Agent)
+  - Added encrypted PostgreSQL DSN to the secrets configuration.
+  - Updated last modified timestamp and MAC value for the SOPS configuration.
+  - Bumped version from 3.9.4 to 3.12.1.
+- 2026-05-12 08:39 [01744e8](https://github.com/jesuserro/dotfiles/commit/01744e8) chore(secrets): update secrets management and configuration (Jesus)
+  - Added a new entry to `.gitignore` for the old unreadable secrets file.
+  - Updated `.sops.yaml` to include an additional age recipient for enhanced encryption.
+  - Revised `secrets.sops.yaml` to clear sensitive values and restructure the secrets format, ensuring compatibility with the new age encryption method.
+- 2026-05-11 11:31 [be05557](https://github.com/jesuserro/dotfiles/commit/be05557) chore: remove chezmoi binary from the repository (Jesus)
+  - Deleted the `chezmoi` binary file from the `bin` directory as part of the cleanup process. This change reflects the recent updates to the installation process and ensures that outdated binaries are not included in the repository.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
