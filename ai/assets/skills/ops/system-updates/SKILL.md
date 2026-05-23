@@ -7,6 +7,23 @@ description: Guides development and extension of the ups system update alias. Us
 
 Guía para desarrollar y extender el alias `ups` de actualización integral del sistema.
 
+## `ups` vs Chezmoi (agentes)
+
+| `ups` sí | `ups` no |
+|----------|----------|
+| APT, npm global, OMZ, builds excalidraw, pip en venv AI, `npm update` en `~/.config/mcp/servers/*` | `chezmoi apply` |
+| Mantener herramientas del sistema | Regenerar `~/.config/mcp-secrets.env` |
+| | Aplicar plantillas MCP/skills del repo a HOME |
+
+Tras **`git pull`** con cambios en **`dot_*`**, **`secrets.sops.yaml`**, **`MANIFEST.yaml`** o plantillas MCP: el agente debe recomendar **`chezmoi --source=$HOME/dotfiles apply`** (o `make install-dotfiles DOTFILES_APPLY=1`), no solo `ups`.
+
+Operación canónica completa: skill **`dotfiles-operations`**.
+
+### MCP troubleshooting (no arreglar solo con `ups`)
+
+- **Docker MCP:** requiere **Docker Desktop abierto** en Windows; gateway vía `docker.exe mcp gateway run`. Si Desktop está cerrado, `npm update` no ayuda.
+- **Postgres MCP:** error **`POSTGRES_DSN not set`** → `mcp.postgres_dsn` vacío en `secrets.sops.yaml`; flujo `sops` + `chezmoi apply -i scripts`. No editar `~/.config/mcp-secrets.env` a mano.
+
 ## Ubicación y carga
 
 - **Definición:** `~/dotfiles/aliases` (función `ups()` y helpers `_ups_*`)
@@ -62,7 +79,8 @@ fi
 | Origen | Ruta / Comando |
 |--------|----------------|
 | excalidraw | `~/mcp-servers/excalidraw-mcp` — git pull + pnpm install + build |
-| docker, postgres | `~/.config/mcp/servers/*/` — npm update |
+| docker | Docker Desktop MCP Gateway — se actualiza con Docker Desktop, no solo npm |
+| postgres (npm dirs) | `~/.config/mcp/servers/*/` — `npm update` (no sustituye DSN vacío en SOPS) |
 | fetch | `uv tool install mcp-server-fetch` |
 | Python (dagster, minio, etc.) | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` (legado vivo: el venv runtime AI sigue intencionalmente con `pip` — no migrar sin tarea explícita) |
 | context7, github | npx — no requieren actualización |

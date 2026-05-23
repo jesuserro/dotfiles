@@ -13,6 +13,26 @@ Guía para mantener la arquitectura de MCPs según la convención de capas y el 
 - **Coherencia repo** (manifiesto + recetas Python + plantillas Chezmoi): **`make ai-mcp-governance`** o **`bin/validate-mcp-governance`** (encadena validate + render + drift).
 - **Readiness en máquina** (HOME, Cursor, secretos, binarios): **`make ai-cursor-check`** — no lo sustituye governance.
 
+## Cadena canónica (repo → HOME)
+
+```text
+MANIFEST.yaml
+  → make ai-mcp-governance
+  → make ai-mcp-generate APPLY=1    # solo cuando toque regenerar plantillas
+  → chezmoi --source=$HOME/dotfiles apply   # publicar ~/.cursor/mcp.json, etc.
+  → make ai-cursor-check
+```
+
+**`ups` no sustituye** `chezmoi apply` ni regenera secretos. Operación general: skill **`dotfiles-operations`**.
+
+### Troubleshooting breve
+
+| Síntoma | Causa habitual | Acción agente |
+|---------|----------------|---------------|
+| Docker MCP / `Docker Desktop is not running` | Desktop cerrado en Windows | Abrir Docker Desktop; validar `docker.exe mcp version` — no solo `npm update` |
+| Postgres: `POSTGRES_DSN not set` | `mcp.postgres_dsn` vacío en SOPS | `sops secrets.sops.yaml` → `chezmoi apply -i scripts`; verificar `grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env` |
+| Drift plantillas | MANIFEST ≠ `dot_cursor/` | `make ai-mcp-governance` → `make ai-mcp-generate APPLY=1` si procede |
+
 ## Referencia rápida (capas = rol, no segunda política de `enabled`)
 
 | Capa | Scope | Manifest default (superficies globales) | Ejemplos |
@@ -49,7 +69,7 @@ Declara **`surfaces.cursor`**, **`codex`**, **`opencode`**. Usa **`enabled: fals
 | Qué | Dónde |
 |-----|--------|
 | Forma de secretos (paths, `keys_hint`) | Entrada **`secrets`** en **`MANIFEST.yaml`** |
-| Valores sensibles | `~/.config/mcp-secrets.env`, `~/.secrets/codex.env`, etc. (fuera de git) |
+| Valores sensibles | `secrets.sops.yaml` (cifrado) → **`~/.config/mcp-secrets.env` generado** por Chezmoi (no editar a mano) |
 | Overrides por stack | Plantillas bajo `dot_config/<proyecto>/` cuando haga falta |
 
 ### Paso 5: Recetas y plantillas
@@ -102,4 +122,5 @@ No uses `cat` de archivos de secretos en logs compartidos.
 - [ ] Entrada en **`MANIFEST.yaml`** con las tres superficies (o excepción documentada)
 - [ ] Recetas en **`generate-mcp-configs.py`** si aplica
 - [ ] `make ai-mcp-validate` y `make ai-mcp-governance` en verde
-- [ ] Tras tocar plantillas: `make ai-mcp-generate APPLY=1` cuando corresponda, luego publicar HOME y `make ai-cursor-check`
+- [ ] Tras tocar plantillas: `make ai-mcp-generate APPLY=1` cuando corresponda → **`chezmoi apply`** → `make ai-cursor-check`
+- [ ] No usar `sops -d` ni imprimir secretos en logs

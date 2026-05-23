@@ -1,0 +1,262 @@
+# Operaciones diarias (dotfiles)
+
+Guía humana principal para operar este repositorio en Ubuntu/WSL2. Para instalación inicial paso a paso, ver [INSTALL.md](INSTALL.md). Para Chezmoi y secretos en profundidad, ver [CHEZMOI.md](CHEZMOI.md) y [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
+
+> **Legacy:** RCM (`rcup`) fue el gestor histórico de symlinks. **No es operativo.** El flujo canónico es **Chezmoi** + **SOPS/age**.
+
+---
+
+## Modelo mental: tres capas
+
+| Capa | Herramientas | Qué materializa |
+|------|--------------|-----------------|
+| **1. Bootstrap** | `make install*`, `make deps-*` | Paquetes APT, diagnóstico, opt-in (chezmoi, sops, zsh stack runtime) |
+| **2. Materialización** | `chezmoi status` / `diff` / `apply` | MCPs, symlinks RC, secretos generados, launchers, AI runtime |
+| **3. Mantenimiento** | `ups`, checks | APT, npm, OMZ, builds MCP, venv Python — **no** plantillas Chezmoi |
+
+### Regla de oro: `source` vs `chezmoi apply`
+
+| Cambiaste… | Acción |
+|------------|--------|
+| `~/dotfiles/zshrc`, `aliases`, módulos en `zsh/` | Editar en el repo → **`source ~/.zshrc`** (symlinks ya apuntan al repo) |
+| Plantillas `dot_*`, `secrets.sops.yaml`, skills/commands en repo gestionados por Chezmoi | **`chezmoi --source=$HOME/dotfiles apply`** |
+| Secretos cifrados | **`sops secrets.sops.yaml`** → regenerar env (apply o `apply -i scripts`) |
+| Herramientas del sistema (APT, npm global, OMZ, builds) | **`ups`** (no sustituye Chezmoi) |
+
+**No edites a mano:** `~/.config/mcp-secrets.env` (se regenera). **No uses** `sops -d` a stdout.
+
+---
+
+## Máquina nueva (flujo recomendado)
+
+```bash
+git clone https://github.com/jesuserro/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+
+make install-check
+make install DRY_RUN=1
+make install SKIP_EXTERNAL=1
+
+make install-chezmoi
+make install-sops
+make install-zsh-stack          # OMZ + p10k runtime; no toca RC files
+
+# Clave age: restaurar/importar ~/.config/sops/age/keys.txt (ver INSTALL.md)
+sops secrets.sops.yaml        # rellenar mcp.* (GitHub, postgres_dsn, MinIO…)
+
+# Si la ruta del vault Obsidian difiere del repo:
+#   ~/.config/chezmoi/chezmoi.toml → [data.ai] obsidian_vault_path
+
+make install-dotfiles DOTFILES_APPLY=1
+
+make install-verify
+make ai-cursor-check
+make ai-mcp-governance
+make test-fast
+source ~/.zshrc
+```
+
+Detalle de bootstrap: [INSTALL.md](INSTALL.md).
+
+---
+
+## Máquina existente (actualizar dotfiles)
+
+```bash
+cd ~/dotfiles
+git pull
+
+chezmoi --source="$HOME/dotfiles" status
+chezmoi --source="$HOME/dotfiles" diff    # si hay dudas
+
+chezmoi --source="$HOME/dotfiles" apply
+source ~/.zshrc
+
+make ai-cursor-check
+make ai-mcp-governance    # si tocaste MANIFEST o plantillas MCP
+```
+
+`ups` es opcional y separado: actualiza sistema/herramientas, no aplica cambios de plantillas en HOME.
+
+---
+
+## Cambios de zsh / aliases
+
+Los RC files en HOME son **symlinks** al repo:
+
+| HOME | Repo |
+|------|------|
+| `~/.zshrc` | `~/dotfiles/zshrc` |
+| `~/.aliases` | `~/dotfiles/aliases` (`ups` vive aquí) |
+| `~/.p10k.zsh` | `~/dotfiles/powerlevel10k/p10k.zsh` |
+
+- **Editar:** ficheros bajo `~/dotfiles/`, no `~/.zshrc` directamente.
+- **Recargar sesión:** `source ~/.zshrc` o `exec zsh -l`.
+- **No usar `rcup`.**
+
+Si `chezmoi apply` encuentra un RC que no es symlink (contenido custom), el hook `run_before_00_backup_rc_files` **aborta** salvo que aceptes reemplazo con backup:
+
+```bash
+ZSH_RC_APPLY=1 chezmoi --source="$HOME/dotfiles" apply ~/.zshrc ~/.aliases ~/.p10k.zsh
+```
+
+---
+
+## Cambios de secretos
+
+1. Editar canónico: `sops ~/dotfiles/secrets.sops.yaml`
+2. Regenerar (no editar el env a mano):
+
+   ```bash
+   chezmoi --source="$HOME/dotfiles" apply -i scripts
+   # o: make install-dotfiles DOTFILES_APPLY=1
+   ```
+
+3. Validar sin imprimir valores:
+
+   ```bash
+   grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env && echo OK
+   cut -d= -f1 ~/.config/mcp-secrets.env | sort
+   ```
+
+**Postgres MCP:** si `postgres_dsn` está vacío en YAML, el env tendrá `export POSTGRES_DSN=""` y Cursor mostrará `POSTGRES_DSN not set` — no es el contenedor apagado; es secreto vacío. Ver [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
+
+---
+
+## Cambios de MCPs
+
+Flujo en el **repo** (plantillas):
+
+```bash
+cd ~/dotfiles
+# 1. Editar ai/assets/mcps/MANIFEST.yaml (+ recetas si aplica)
+make ai-mcp-governance
+make ai-mcp-generate APPLY=1    # escribe dot_cursor/, dot_codex/, dot_config/
+```
+
+Flujo en **HOME** (Cursor/Codex/OpenCode):
+
+```bash
+chezmoi --source="$HOME/dotfiles" apply
+# o parcial:
+# chezmoi apply ~/.cursor/mcp.json ~/.codex/config.toml ~/.config/opencode/opencode.json
+
+make ai-cursor-check
+```
+
+Reinicia Cursor/Codex tras cambios en `mcp.json`.
+
+### Docker MCP
+
+- Config: `docker.exe` + `mcp gateway run` (Docker Desktop MCP Gateway).
+- **Docker Desktop debe estar abierto** en Windows; desde WSL usa `docker.exe`.
+- Si falla con `Docker Desktop is not running`, abre Docker Desktop — `ups` no lo arregla.
+
+```bash
+docker.exe mcp version
+docker.exe mcp gateway run --dry-run --verbose
+```
+
+### Postgres MCP
+
+- Lee `POSTGRES_DSN` de `~/.config/mcp-secrets.env` (generado desde SOPS).
+- Requiere `mcp.postgres_dsn` **no vacío** en `secrets.sops.yaml`.
+- El launcher es `~/.local/share/chezmoi/bin/mcp-postgres-launcher`.
+
+---
+
+## Uso de `ups`
+
+`ups` actualiza: winget (WSL), APT, npm global, OMZ, uv, builds excalidraw, pip en venv AI, etc.
+
+**No hace:**
+
+- `chezmoi apply`
+- Aplicar plantillas MCP a HOME
+- Regenerar `mcp-secrets.env`
+- Arreglar Docker MCP con Desktop cerrado
+- Rellenar `POSTGRES_DSN` vacío
+
+Tras `ups`, recarga la shell: `source ~/.zshrc`. Si cambiaste plantillas o secretos en el repo, usa `chezmoi apply` aparte.
+
+Ver [UPS.md](UPS.md).
+
+---
+
+## Chezmoi: comandos y configuración local
+
+```bash
+chezmoi --source="$HOME/dotfiles" status
+chezmoi --source="$HOME/dotfiles" diff
+chezmoi --source="$HOME/dotfiles" apply
+```
+
+Wrapper: `make install-dotfiles DOTFILES_APPLY=1`.
+
+**Config local** (`~/.config/chezmoi/chezmoi.toml`, no versionada): fusiona datos como `obsidian_vault_path`. Opcionalmente, para ocultar ruido de scripts antiguos en el estado Chezmoi:
+
+```toml
+[status]
+    exclude = ["scripts"]
+
+[diff]
+    exclude = ["scripts"]
+```
+
+Los scripts reales del repo usan prefijos `run_before_*` / `run_after_*`. Entradas `R` de nombres viejos en status son fantasmas del estado local, no targets aplicables.
+
+Auditar scripts explícitamente: `chezmoi status -i scripts -x ''`.
+
+Detalle: [CHEZMOI.md](CHEZMOI.md).
+
+---
+
+## Validaciones habituales
+
+| Comando | Mutación | Uso |
+|---------|----------|-----|
+| `make install-check` | No | Diagnóstico bootstrap |
+| `make deps-check` | No | Inventario APT |
+| `make ai-cursor-check` | No | Readiness HOME / Cursor |
+| `make ai-mcp-governance` | No | Coherencia MANIFEST ↔ plantillas |
+| `make test-fast` | No | Lint + bats |
+| `chezmoi diff` | No | Ver drift HOME |
+
+---
+
+## Riesgos y comandos que requieren cuidado
+
+| Comando | Riesgo |
+|---------|--------|
+| `make install` / `make install-apt` | sudo + APT |
+| `chezmoi apply` | Sobrescribe MCPs, RC, regenera secretos |
+| `ZSH_RC_APPLY=1 chezmoi apply` | Backup y reemplazo de RC custom |
+| `make ai-mcp-generate APPLY=1` | Reescribe plantillas MCP en el repo |
+| `ups` | sudo, upgrade APT, npm global |
+| `sops -d secrets.sops.yaml` | Imprime secretos en stdout — evitar |
+
+---
+
+## Chuleta (≤20 comandos)
+
+```bash
+cd ~/dotfiles && git pull
+chezmoi --source="$HOME/dotfiles" status
+chezmoi --source="$HOME/dotfiles" apply
+source ~/.zshrc
+sops secrets.sops.yaml
+chezmoi --source="$HOME/dotfiles" apply -i scripts
+make ai-cursor-check
+make ai-mcp-governance
+make ai-mcp-generate APPLY=1
+make install-check
+make deps-check
+make test-fast
+ups
+docker.exe mcp version
+grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env
+make install-dotfiles DOTFILES_APPLY=1
+ZSH_RC_APPLY=1 chezmoi apply ~/.p10k.zsh
+chezmoi status -i scripts -x ''
+make install-verify
+```

@@ -1,6 +1,8 @@
 # Instalación
 
-Guía paso a paso para configurar estos dotfiles en una máquina nueva.
+Guía paso a paso para **bootstrap** en una máquina nueva. Para operación diaria (secretos, MCPs, `ups`, troubleshooting), ver **[OPERATIONS.md](OPERATIONS.md)**.
+
+> **`make install` ≠ `chezmoi apply`.** El Makefile instala paquetes y orquesta el plan; la materialización en HOME (MCPs, symlinks RC, `mcp-secrets.env`) requiere **`make install-dotfiles DOTFILES_APPLY=1`** o `chezmoi --source=$HOME/dotfiles apply`.
 
 ---
 
@@ -37,6 +39,7 @@ make install-chezmoi # chezmoi (twpayne/chezmoi) en ~/.local/bin (sin Go, sin su
 make install-sops    # descarga sops oficial (getsops/sops v3.9.4) a ~/.local/bin
 make install-uv      # uv (Astral) en ~/.local/bin
 make install-zsh-stack   # Oh My Zsh + Powerlevel10k + plugins (no toca ~/.zshrc)
+make install-fonts   # MesloLGS NF para Powerlevel10k en Linux/WSL (no configura Windows Terminal)
 
 # 5. Configurar la ruta real del vault de Obsidian (no se fuerza por defecto)
 #    Editar ~/.config/chezmoi/chezmoi.toml:
@@ -64,6 +67,16 @@ make ai-cursor-check
 > funcione sin pasos adicionales en una máquina nueva. Un preflight
 > (`make test-deps-check`, integrado en `test-fast` / `test-bats` / `test`)
 > falla rápido con mensaje accionable si alguna falta.
+>
+> **`make install-verify`.** Tras `make install`, comprueba versiones sin mutar.
+> `zsh`, `git`, `age` y `rg` son requisitos base (`FAIL` si faltan).
+> `chezmoi` y `sops` son opt-in: si no están instalados, el script emite `WARN`
+> con el target correspondiente (`make install-chezmoi`, `make install-sops`)
+> y no cuenta como `FAIL`. `STRICT=1` solo hace fallar el paso ante `FAIL`
+> reales, no por herramientas opt-in ausentes.
+> MesloLGS NF se verifica como `WARN` si falta; instálala con
+> `make install-fonts`. Si los iconos se ven mal en Windows Terminal o VS Code,
+> selecciona `MesloLGS NF` como fuente en la aplicación host.
 
 ---
 
@@ -188,3 +201,11 @@ chezmoi --source=$HOME/dotfiles status
 ```
 
 Ver [GUIA_MCP_AI.md](GUIA_MCP_AI.md) para más comandos.
+
+## Relacionado
+
+| Doc | Uso |
+|-----|-----|
+| [OPERATIONS.md](OPERATIONS.md) | Flujos completos tras el bootstrap |
+| [CHEZMOI.md](CHEZMOI.md) | Chezmoi, scripts, `ZSH_RC_APPLY` |
+| [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md) | Dar de alta secretos |

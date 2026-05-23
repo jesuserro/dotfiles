@@ -4,6 +4,23 @@ Actualización integral del sistema: Windows/winget en WSL, paquetes APT, npm, O
 
 **Definición:** `aliases` (cargado por `~/.aliases`, symlink gestionado por Chezmoi).
 
+## Qué hace y qué no hace
+
+| `ups` sí | `ups` no |
+|----------|----------|
+| APT, npm global, OMZ, builds excalidraw, pip en venv AI | `chezmoi apply` |
+| Actualizar paquetes npm en `~/.config/mcp/servers/*` | Regenerar `~/.config/mcp-secrets.env` |
+| `uv tool install mcp-server-fetch` | Aplicar plantillas MCP del repo a HOME |
+
+Tras cambiar **plantillas Chezmoi**, **secretos SOPS** o **MANIFEST MCP** en el repo, usa **`chezmoi --source=$HOME/dotfiles apply`** (o `make install-dotfiles DOTFILES_APPLY=1`), no solo `ups`.
+
+**Troubleshooting MCP (no se arregla con `ups`):**
+
+- **Docker MCP:** Docker Desktop debe estar **abierto** en Windows; el gateway usa `docker.exe mcp gateway run`. Si Desktop está cerrado, `npm update` no ayuda.
+- **Postgres MCP:** error `POSTGRES_DSN not set` → `mcp.postgres_dsn` vacío en `secrets.sops.yaml`; edita con `sops` y `chezmoi apply -i scripts`. Ver [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
+
+Guía operativa completa: [OPERATIONS.md](OPERATIONS.md).
+
 ---
 
 ## Uso
@@ -91,5 +108,6 @@ Estos MCPs usan `npx -y` o `uvx` y obtienen la última versión automáticamente
 | [MCP_TAXONOMY.md](MCP_TAXONOMY.md) | Taxonomía de MCPs (capas y políticas) |
 | [GUIA_MCP_AI.md](GUIA_MCP_AI.md#7-actualización-de-mcps-con-ups) | Actualización MCP con ups |
 | [INSTALL.md](INSTALL.md) | Instalación inicial |
+| [OPERATIONS.md](OPERATIONS.md) | Guía operativa (Chezmoi vs ups) |
 | [README.md](README.md) | Índice de documentación |
 | Skill `dotfiles-ups-workflow` | Guía para extender ups (`ai/assets/skills/ops/system-updates/`) |

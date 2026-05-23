@@ -79,6 +79,7 @@ Visible skill names follow semantic origin, not just repository location:
 ### Ops
 
 - `ops/ai-prompt-consumer/` - `Vault AI Prompt Consumer`
+- `ops/dotfiles-operations/` - `Dotfiles operations` (Chezmoi, secrets, ups vs apply; daily ops)
 - `ops/dotfiles-install/` - `Dotfiles bootstrap install`
 - `ops/dotfiles-skill-registration/` - `Dotfiles Skill Registration`
 - `ops/vault-development-acceleration/` - `Vault Development Acceleration`

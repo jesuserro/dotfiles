@@ -52,14 +52,45 @@ version_or_warn() {
 	fi
 }
 
-echo "==> Version checks"
+# Opt-in installers (not part of `make install`). WARN when missing; never FAIL.
+version_or_warn_optin() {
+	local bin="$1"
+	local make_target="$2"
+	if command -v "${bin}" >/dev/null 2>&1; then
+		local full o
+		full="$("${bin}" --version 2>&1)" || full=""
+		o="${full%%$'\n'*}"
+		ver_line PASS "${bin}: ${o}"
+	else
+		ver_line WARN "${bin}: not installed (optional; run ${make_target})"
+	fi
+}
+
+have_fontconfig() {
+	command -v fc-match >/dev/null 2>&1 &&
+		command -v fc-list >/dev/null 2>&1 &&
+		command -v fc-cache >/dev/null 2>&1
+}
+
+meslo_available() {
+	local match_out list_out
+	match_out="$(fc-match "MesloLGS NF" 2>/dev/null || true)"
+	list_out="$(fc-list 2>/dev/null || true)"
+
+	[[ "${match_out}" == *"MesloLGS"* && "${list_out}" == *"MesloLGS NF"* ]]
+}
+
+echo "==> Version checks (bootstrap base)"
 
 version_or_fail zsh
 version_or_fail git
-version_or_fail chezmoi
-version_or_fail sops
 version_or_fail age
 version_or_fail rg
+
+echo ""
+echo "==> Opt-in dotfiles tooling (WARN when missing)"
+version_or_warn_optin chezmoi "make install-chezmoi"
+version_or_warn_optin sops "make install-sops"
 
 echo ""
 echo "==> External / preferred user tooling (WARN-only when missing)"
@@ -82,6 +113,17 @@ if command -v docker >/dev/null 2>&1; then
 	fi
 else
 	ver_line WARN "docker not in PATH or not installed"
+fi
+
+echo ""
+echo "==> Powerlevel10k fonts (WARN-only)"
+if ! have_fontconfig; then
+	ver_line WARN "fontconfig missing (fc-match/fc-list/fc-cache); run make install-apt"
+elif meslo_available; then
+	match_out="$(fc-match "MesloLGS NF" 2>/dev/null || true)"
+	ver_line PASS "MesloLGS NF available (${match_out%%$'\n'*})"
+else
+	ver_line WARN "MesloLGS NF not available; run make install-fonts"
 fi
 
 echo ""

@@ -22,6 +22,11 @@ packages:
     required: true
     capability: shell
     note: Primary interactive shell managed by these dotfiles.
+  - package: fontconfig
+    command: fc-match
+    required: true
+    capability: fonts
+    note: Provides fc-match, fc-list and fc-cache for user font verification and MesloLGS NF setup.
   - package: tmux
     command: tmux
     required: true
