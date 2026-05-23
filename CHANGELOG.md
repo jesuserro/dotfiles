@@ -2,32 +2,62 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.05.23_1249] - 2026-05-23
+## [v2026.05.24_0042] - 2026-05-24
 
 ## Changes
 ### Added
-- 2026-05-23 12:43 [e692234](https://github.com/jesuserro/dotfiles/commit/e692234) feat(tooling): add agent validation and security tooling installation (Cursor Agent)
-  - Introduced new scripts for installing agent validation and security tools, including `@ast-grep/cli`, `actionlint`, and `osv-scanner`, with checksum verification for GitHub releases.
-  - Updated `install.mk` to include a new target for installing agent tools.
-  - Enhanced documentation in `SYSTEM_DEPENDENCIES.md` and `UPS.md` to reflect the new installation process and tools.
+- 2026-05-24 00:23 [5b8ebf1](https://github.com/jesuserro/dotfiles/commit/5b8ebf1) feat(excalidraw): enhance Docker configuration and path handling for Excalidraw MCP (Cursor Agent)
+  - Updated Docker run commands to include the `EXCALIDRAW_EXPORT_DIR` environment variable and bind mount for scoped workspace access.
+  - Modified documentation and skills to specify the use of internal container paths for file operations, avoiding WSL paths.
+  - Enhanced validation scripts to ensure proper configuration of the Excalidraw MCP, including checks for workspace mount and export directory.
+- 2026-05-23 22:09 [244e3e5](https://github.com/jesuserro/dotfiles/commit/244e3e5) feat(update-scripts): enhance Windows update logging and argument handling (Cursor Agent)
+  - Refactored PowerShell script to use native process handling for improved logging and encoding consistency.
+  - Introduced new functions for joining arguments and determining encoding types, enhancing script flexibility.
+  - Updated WSL and WinGet command invocations to utilize the new logging functions, ensuring UTF-8 and Unicode compatibility.
+- 2026-05-23 17:59 [0a35334](https://github.com/jesuserro/dotfiles/commit/0a35334) feat(ai-cursor-check): enhance Excalidraw configuration validation and logging (Cursor Agent)
+  - Introduced a new function to check Excalidraw configurations across Cursor, Codex, and OpenCode environments, ensuring proper Docker runtime setup.
+  - Updated the ai-cursor-check script to log detailed messages for missing or misconfigured Excalidraw entries.
+  - Refactored existing checks to improve clarity and maintainability.
+
+### Fixed
+- 2026-05-24 00:39 [c01521e](https://github.com/jesuserro/dotfiles/commit/c01521e) fix(ai-cursor-check): improve path handling and validation for Docker bind mounts (Cursor Agent)
+  - Introduced a helper function to streamline path token addition, ensuring proper handling of paths starting with "/mnt/" and avoiding duplicates.
+  - Enhanced the collection of paths from MCP JSON configurations to improve validation for Docker bind mounts.
+  - Added tests to verify correct behavior for valid and missing Docker bind mount paths, ensuring accurate output messages for users.
+- 2026-05-23 23:40 [d2b6706](https://github.com/jesuserro/dotfiles/commit/d2b6706) fix(excalidraw): update canvas server configuration to use port 3210 (Cursor Agent)
+  - Changed the canvas server URL from `http://host.docker.internal:3000` to `http://host.docker.internal:3210` across various configuration files and scripts.
+  - Updated Docker run commands to reflect the new port mapping (`3210:3000`), ensuring compatibility with Store ETL/Dagster.
+  - Enhanced validation in the `ai-cursor-check` script to flag legacy port usage and ensure proper configuration for ephemeral Docker runtime.
+- 2026-05-23 22:40 [a944c88](https://github.com/jesuserro/dotfiles/commit/a944c88) fix(update-scripts): enhance Windows update process and argument handling (Cursor Agent)
+  - Added self-test functionality for native arguments in the PowerShell update script, improving validation of argument passing to child processes.
+  - Refactored argument handling to ensure proper serialization and logging, enhancing script robustness.
+  - Implemented cleanup of old update runs in the shell script, optimizing storage management for update directories.
 
 ### Documentation
-- 2026-05-23 12:48 [cdf1964](https://github.com/jesuserro/dotfiles/commit/cdf1964) docs(changelog): added changelog for release streamline agent validation and security tool installation (Cursor Agent)
-  - Refactored installation scripts for agent validation and security tools to improve efficiency and clarity.
-  - Updated `install.mk` to optimize the installation process for agent tools.
-  - Revised documentation in `SYSTEM_DEPENDENCIES.md` and `UPS.md` to ensure accuracy regarding the installation steps.
+- 2026-05-24 00:42 [6b0f3e3](https://github.com/jesuserro/dotfiles/commit/6b0f3e3) docs(changelog): added changelog for refining Docker bind mount validation and path handling (Cursor Agent)
+  - Improved the path validation logic for Docker bind mounts, ensuring accurate handling of paths and preventing duplicates.
+  - Enhanced the collection process for paths from MCP JSON configurations to bolster validation accuracy.
+  - Added comprehensive tests to confirm the correct behavior of the updated validation logic, ensuring users receive clear output messages for both valid and missing paths.
 
 ### Refactored
-- 2026-05-23 11:43 [e074b31](https://github.com/jesuserro/dotfiles/commit/e074b31) refactor(dotfiles): update chezmoi configuration and scripts (Cursor Agent)
-  - Removed hardcoded source path in .chezmoi.toml, allowing for machine-specific configurations.
-  - Updated data paths in .chezmoi.toml for better clarity and consistency.
-  - Cleaned up .chezmoiscripts by deleting obsolete linking script and enhancing error handling in secret generation script.
+- 2026-05-23 23:56 [1f5b716](https://github.com/jesuserro/dotfiles/commit/1f5b716) refactor(excalidraw): rename MCP to excalidraw_canvas for clarity (Cursor Agent)
+  - Updated the MCP identifier from `excalidraw` to `excalidraw_canvas` across all relevant configuration files and documentation.
+  - Enhanced descriptions and usage instructions to specify the advanced editing capabilities of the `excalidraw_canvas` MCP.
+  - Adjusted validation scripts and tests to ensure proper recognition of the new MCP name and prevent ambiguity with simpler integrations.
+- 2026-05-23 17:36 [af09fa0](https://github.com/jesuserro/dotfiles/commit/af09fa0) refactor(install-node-stack): improve error handling and cleanup in NodeSource configuration (Cursor Agent)
+  - Added a cleanup function to remove temporary files created during NodeSource key and repository setup.
+  - Enhanced error handling to ensure temporary files are deleted on failure at various stages of the installation process.
+  - Updated tests to validate the installation process, ensuring proper cleanup and handling of simulated failures for curl, gpg, and apt operations.
+- 2026-05-23 17:14 [3e2c349](https://github.com/jesuserro/dotfiles/commit/3e2c349) refactor(dotfiles): transition from ups to make update for system maintenance (Cursor Agent)
+  - Replaced the `ups` alias with a new `make update` command for improved clarity and consistency in system maintenance tasks.
+  - Updated documentation across various files to reflect the new command structure, including changes in README.md, STRUCTURE.md, and AI skills documentation.
+  - Removed obsolete functions and variables related to the previous `ups` implementation from the aliases file.
 
 ### Chores
-- 2026-05-23 11:58 [4e856a5](https://github.com/jesuserro/dotfiles/commit/4e856a5) chore(dotfiles): update AI runtime and skills linking scripts (Cursor Agent)
-  - Updated the timestamp in STRUCTURE.md to reflect the latest generation time.
-  - Refactored .chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl for improved readability and error handling.
-  - Enhanced .chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl to include new symlink paths for Claude Code skills.
+- 2026-05-23 17:30 [a2182e9](https://github.com/jesuserro/dotfiles/commit/a2182e9) chore(dotfiles): update documentation and scripts for Node.js installation and GitNexus compatibility (Cursor Agent)
+  - Updated STRUCTURE.md with the latest generation timestamp.
+  - Revised MANIFEST.yaml to clarify the usage of Docker images for Excalidraw and the required environment variables for clients.
+  - Enhanced GUIA_MCP_AI.md and MCP_TAXONOMY.md to reflect the new installation method for GitNexus, emphasizing the use of `make update-wsl`.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
