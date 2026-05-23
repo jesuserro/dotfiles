@@ -57,6 +57,7 @@ The existing `run_after_11_link_ai_assets.sh.tmpl` script publishes skills to:
 
 ```
 ~/.config/ai/skills/          # XDG hub (single source)
+~/.claude/skills/             # Agent surface linked to the hub
 ~/.cursor/skills-cursor/      # Agent surface linked to the hub
 ~/.codex/skills/              # Agent surface linked to the hub
 ~/.config/opencode/skills/    # Agent surface linked to the hub

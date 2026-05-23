@@ -8,13 +8,13 @@ REQUIREMENTS="{{ .chezmoi.sourceDir }}/ai/runtime/mcp/requirements.txt"
 STAMP="${VENV_DIR}/.requirements.sha256"
 
 if [[ ! -f "${REQUIREMENTS}" ]]; then
-    echo "WARNING: AI runtime requirements missing: ${REQUIREMENTS}" >&2
-    exit 0
+	echo "WARNING: AI runtime requirements missing: ${REQUIREMENTS}" >&2
+	exit 0
 fi
 
 if ! command -v uv >/dev/null 2>&1; then
-    echo "WARNING: uv not in PATH — skipping AI runtime sync (install: make install-uv)" >&2
-    exit 0
+	echo "WARNING: uv not in PATH — skipping AI runtime sync (install: make install-uv)" >&2
+	exit 0
 fi
 
 mkdir -p "$(dirname "${VENV_DIR}")"
@@ -22,14 +22,18 @@ mkdir -p "$(dirname "${VENV_DIR}")"
 REQ_HASH="$(sha256sum "${REQUIREMENTS}" | awk '{print $1}')"
 
 if [[ -d "${VENV_DIR}" && -f "${STAMP}" && "$(cat "${STAMP}")" == "${REQ_HASH}" ]]; then
-    exit 0
+	if [[ -x "${VENV_DIR}/bin/python" ]]; then
+		exit 0
+	fi
+	echo "WARNING: AI runtime venv is incomplete; recreating ${VENV_DIR}" >&2
+	rm -rf "${VENV_DIR}"
 fi
 
 if [[ ! -d "${VENV_DIR}" ]]; then
-    uv venv "${VENV_DIR}"
+	uv venv "${VENV_DIR}"
 fi
 
 uv pip install --python "${VENV_DIR}/bin/python" -r "${REQUIREMENTS}"
-printf '%s\n' "${REQ_HASH}" > "${STAMP}"
+printf '%s\n' "${REQ_HASH}" >"${STAMP}"
 
 exit 0

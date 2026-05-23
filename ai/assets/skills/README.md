@@ -15,6 +15,7 @@ ai/assets/skills/           <- Source of truth (here)
 ~/.config/ai/skills/        <- Symlinked via chezmoi
 ~/.config/opencode/skills/  <- Surface for OpenCode
 ~/.cursor/skills-cursor/    <- Surface for Cursor
+~/.claude/skills/           <- Surface for Claude Code
 ~/.codex/skills/           <- Surface for Codex
 ```
 

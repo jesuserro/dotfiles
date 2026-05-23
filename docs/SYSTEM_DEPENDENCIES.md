@@ -214,7 +214,7 @@ Reglas de la Fase 1C:
 
 ### Excepciones explícitas
 
-- **Runtime AI** (`~/.config/ai/runtime/.venv`): se mantiene intencionalmente con `python3 -m venv` + `pip install -r requirements.txt` por compatibilidad con `.chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl` y la sección correspondiente de `ups`. Migrarlo a `uv` queda como tarea separada.
+- **Runtime AI** (`~/.config/ai/runtime/.venv`): se sincroniza con `uv` desde `.chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl` usando `uv venv` y `uv pip install -r` solo cuando cambia el hash de `ai/runtime/mcp/requirements.txt` o el venv falta/está incompleto. Si `uv` no está en `PATH`, el hook avisa y no modifica el entorno.
 - **`zsh/30-python.zsh`** (alias `pip='pip3'`, `pyreq()`): no se toca en esta fase para evitar regresiones en sesiones interactivas.
 
 ### Cómo lo trata `ups`

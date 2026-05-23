@@ -84,7 +84,7 @@ Estos MCPs usan `npx -y` o `uvx` y obtienen la última versión automáticamente
 
 ## Notas
 
-- **uv (Python):** `ups` solo intenta `uv self update` cuando `uv` ya está instalado en la ruta canónica del instalador oficial (`$HOME/.local/bin/uv`). Si `uv` falta, no lo instala (eso lo hace `make install-uv`). Si está gestionado por `apt`/`brew`/etc., `ups` lo informa pero deja la actualización a su gestor. El venv runtime AI (`~/.config/ai/runtime/.venv`) sigue intencionalmente con `python3 -m venv` + `pip install -r requirements.txt` por compatibilidad.
+- **uv (Python):** `ups` solo intenta `uv self update` cuando `uv` ya está instalado en la ruta canónica del instalador oficial (`$HOME/.local/bin/uv`). Si `uv` falta, no lo instala (eso lo hace `make install-uv`). Si está gestionado por `apt`/`brew`/etc., `ups` lo informa pero deja la actualización a su gestor. El venv runtime AI (`~/.config/ai/runtime/.venv`) lo sincroniza Chezmoi con `uv` y hash de `ai/runtime/mcp/requirements.txt`.
 - **WSL:** Detecta Ubuntu WSL y lo indica al inicio.
 - **winget en WSL:** Si `wt.exe` y `powershell.exe` están disponibles, `ups` abre una nueva pestaña de Windows Terminal y lanza la actualización de paquetes de Windows en paralelo.
 - **Errores e incidencias:** Si una sección falla, el proceso continúa. El resumen final ya distingue entre errores y warnings/incidencias, para no vender un éxito limpio cuando hubo fallos parciales.

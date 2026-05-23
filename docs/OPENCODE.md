@@ -201,17 +201,15 @@ In this repository, `dot_config/` contains **two fundamentally different types**
 | Path | Type | Scope | Materialization |
 |------|------|-------|-----------------|
 | `dot_config/opencode/` | Global client config | Workstation-wide, all projects | `~/.config/opencode/` |
-| `dot_config/store-etl/` | Project/stack config | Specific to `store-etl` project | `~/.config/store-etl/` |
+| `~/.config/store-etl/` | Legacy compatibility secrets | Compatibility only for older `store-etl` consumers | Generated from SOPS, not a dotfiles MCP template |
 
 **Why this matters:**
 - `dot_config/opencode/` defines MCPs available to **any** project opened with OpenCode
-- `dot_config/store-etl/` defines MCPs specific to the **store-etl** stack (postgres, trino, dagster, etc.)
+- The **store-etl** repository owns its project-specific MCP stack configuration (postgres, trino, dagster, etc.).
 
 ### Historical context: The `private_dot_config/` migration
 
-Previously, project-specific configuration lived in `private_dot_config/store-etl/`. The "private_" prefix provided **semantic separation** from global configs, not security (there were no secrets hardcoded).
-
-This was migrated to `dot_config/store-etl/` to fix a chezmoi inconsistency. However, this **does not** make it a "global" configuration in the functional sense.
+Previously, project-specific configuration lived in dotfiles under `private_dot_config/store-etl/` and later `dot_config/store-etl/`. That ownership has been retired: dotfiles no longer materializes the project MCP file, and keeps only shared workstation launchers plus legacy secret adapters.
 
 ### Key principle
 

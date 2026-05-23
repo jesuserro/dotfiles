@@ -92,7 +92,7 @@ rm -rf ai/assets/skills/nombre-skill/.git
 chezmoi --source=$HOME/dotfiles apply
 ```
 
-El script `run_after_11_link_ai_assets` publica el hub canónico de skills en `~/.config/ai/skills/` y expone ese mismo canon en `~/.cursor/skills-cursor/`, `~/.codex/skills/` y `~/.config/opencode/skills/`.
+El script `run_after_11_link_ai_assets` publica el hub canónico de skills en `~/.config/ai/skills/` y expone ese mismo canon en `~/.claude/skills/`, `~/.cursor/skills-cursor/`, `~/.codex/skills/` y `~/.config/opencode/skills/`.
 
 ---
 
