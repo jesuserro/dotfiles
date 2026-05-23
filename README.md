@@ -20,13 +20,13 @@ Capa de configuración de usuario para **Ubuntu LTS / WSL2** (Windows 11 Pro): s
 |------|--------------|-----|
 | **Bootstrap** | `make install*`, `make deps-*` | APT, diagnóstico, opt-in (`install-chezmoi`, `install-sops`, `install-zsh-stack`) |
 | **Materialización** | `chezmoi status` / `diff` / `apply` | Symlinks RC, MCPs, `~/.config/mcp-secrets.env` generado, runtime AI |
-| **Mantenimiento** | `ups`, `make ai-cursor-check`, `make ai-mcp-governance` | Sistema y herramientas — **no** sustituye `chezmoi apply` |
+| **Mantenimiento** | `make update`, `make ai-cursor-check`, `make ai-mcp-governance` | Sistema y herramientas — **no** sustituye `chezmoi apply` |
 
 ```mermaid
 flowchart LR
     bootstrap["make install*"] --> chezmoi["chezmoi apply"]
     chezmoi --> home["HOME ~/.cursor, ~/.zshrc, mcp-secrets.env"]
-    ups["ups"] --> tools["APT, npm, MCP builds"]
+    update["make update"] --> tools["APT, npm, MCP images"]
 ```
 
 ---
@@ -39,7 +39,7 @@ flowchart LR
 | Publicar plantillas y secretos a HOME | `chezmoi --source=$HOME/dotfiles apply` o `make install-dotfiles DOTFILES_APPLY=1` |
 | Solo recargar aliases/PATH en la sesión | `source ~/.zshrc` |
 | Editar token GitHub, DSN Postgres, MinIO | `sops secrets.sops.yaml` → `chezmoi apply -i scripts` |
-| Actualizar APT, npm, OMZ, builds MCP | `ups` |
+| Actualizar Windows/WSL, APT, npm, OMZ, MCPs | `make update` |
 | Validar Cursor/MCP/skills en HOME | `make ai-cursor-check` |
 | Validar MANIFEST ↔ plantillas en repo | `make ai-mcp-governance` |
 | Regenerar plantillas MCP desde MANIFEST | `make ai-mcp-generate APPLY=1` → `chezmoi apply` |
@@ -71,7 +71,7 @@ cd ~/dotfiles && git pull
 chezmoi --source="$HOME/dotfiles" status
 chezmoi --source="$HOME/dotfiles" apply
 source ~/.zshrc
-# opcional: ups
+# opcional: make update
 ```
 
 ---
@@ -84,7 +84,7 @@ source ~/.zshrc
 | [docs/INSTALL.md](docs/INSTALL.md) | Bootstrap e instalación inicial |
 | [docs/CHEZMOI.md](docs/CHEZMOI.md) | Chezmoi, SOPS, symlinks RC, scripts, `ZSH_RC_APPLY` |
 | [docs/SECRETS_EXAMPLES.md](docs/SECRETS_EXAMPLES.md) | Ejemplos de secretos (GitHub, Postgres, MinIO) |
-| [docs/UPS.md](docs/UPS.md) | Comando `ups` (mantenimiento; no aplica Chezmoi) |
+| [docs/UPDATE.md](docs/UPDATE.md) | `make update` (mantenimiento; no aplica Chezmoi) |
 | [docs/GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md) | MCPs, skills, comandos AI |
 | [docs/MCP_QUICKREF.md](docs/MCP_QUICKREF.md) | Referencia rápida para agentes |
 | [docs/README.md](docs/README.md) | Índice completo |

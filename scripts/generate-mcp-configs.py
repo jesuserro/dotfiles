@@ -184,20 +184,46 @@ def build_mcp_surface_recipes() -> Dict[str, Dict[str, Dict[str, Any]]]:
     return {
         "excalidraw": _r(
             cursor={
-                "command": "/usr/bin/node",
-                "args": [f"{H}/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"],
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-e",
+                    "EXPRESS_SERVER_URL=http://host.docker.internal:3000",
+                    "-e",
+                    "ENABLE_CANVAS_SYNC=true",
+                    "ghcr.io/yctimlin/mcp_excalidraw:latest",
+                ],
                 "env": {},
             },
             codex={
-                "command": "/usr/bin/node",
-                "args": [f"{H}/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"],
-                "cwd": f"{H}/mcp-servers/excalidraw-mcp",
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-e",
+                    "EXPRESS_SERVER_URL=http://host.docker.internal:3000",
+                    "-e",
+                    "ENABLE_CANVAS_SYNC=true",
+                    "ghcr.io/yctimlin/mcp_excalidraw:latest",
+                ],
                 "env": {},
             },
             opencode={
                 "type": "local",
-                "command": ["/usr/bin/node", f"{H}/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"],
-                "environment": {},
+                "command": [
+                    "docker",
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-e",
+                    "EXPRESS_SERVER_URL=http://host.docker.internal:3000",
+                    "-e",
+                    "ENABLE_CANVAS_SYNC=true",
+                    "ghcr.io/yctimlin/mcp_excalidraw:latest",
+                ],
             },
         ),
         "context7": _r(

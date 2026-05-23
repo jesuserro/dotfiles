@@ -121,13 +121,13 @@ chezmoi --source=$HOME/dotfiles apply
 
 ---
 
-## 7. Actualización de MCPs con `ups`
+## 7. Actualización de MCPs con `make update`
 
-El alias `ups` incluye una sección que actualiza los servidores MCP:
+`make update` incluye una sección que actualiza runtimes MCP sin aplicar plantillas Chezmoi:
 
-| MCP / Origen | Qué hace `ups` |
+| MCP / Origen | Qué hace `make update` |
 |--------------|----------------|
-| **excalidraw** | `~/mcp-servers/excalidraw-mcp` — `git pull` + `pnpm install` + `pnpm run build` |
+| **excalidraw** | `make excalidraw-update` — pull de `ghcr.io/yctimlin/mcp_excalidraw` y canvas; no arranca canvas |
 | **docker** | Docker Desktop MCP Gateway oficial: `docker.exe mcp gateway run` desde WSL |
 | **postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` (solo si existe) |
 | **fetch** | `uv tool install mcp-server-fetch` (instala o actualiza) |
@@ -156,7 +156,7 @@ timeout 8s docker.exe mcp gateway run
 El runtime `npx -y @0xshariq/docker-mcp-server` queda como legacy descartado:
 imprime ayuda y termina, por lo que Cursor lo interpreta como conexión cerrada.
 
-**Requisito operativo:** Docker Desktop en Windows debe estar **en ejecución**. `ups` actualiza otros MCPs pero no sustituye tener Desktop abierto.
+**Requisito operativo:** Docker Desktop en Windows debe estar **en ejecución**. `make update` actualiza otros MCPs pero no sustituye tener Desktop abierto.
 
 ### Postgres MCP
 
@@ -167,4 +167,4 @@ imprime ayuda y termina, por lo que Cursor lo interpreta como conexión cerrada.
 
 **gitnexus CLI** se actualiza por separado: `npm install -g --prefix=~/.npm-global gitnexus@latest`
 
-Tras ejecutar `ups`, aplica los cambios del shell con: `source ~/.zshrc`
+Tras ejecutar `make update`, aplica los cambios del shell con: `source ~/.zshrc` si cambió PATH.

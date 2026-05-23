@@ -246,4 +246,4 @@ Use `make install-uv` from the dotfiles root (idempotent, never edits rc files).
 - `sql-style`: For database code in Python
 - `data-contracts`: For API contracts
 - `dotfiles-bootstrap-install`: For `make install-uv` and the broader install flow
-- `dotfiles-ups-workflow`: For how `ups` updates `uv` prudently
+- `dotfiles-update-workflow`: For how `make update` updates `uv` prudently

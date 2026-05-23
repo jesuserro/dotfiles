@@ -41,7 +41,7 @@ Layers describe *purpose*; default **activation** for global agents follows the 
 ### GitNexus Helpers
 
 ```bash
-ups              # Updates GitNexus CLI
+make update      # Updates GitNexus CLI after validating Node >=22
 gnx-serve        # Start local server
 gnx-analyze-here # Analyze current repo
 gnx-map          # Analyze + serve
@@ -114,7 +114,7 @@ These are complementary, not interchangeable. Enable both for full Obsidian inte
 ## Docker MCP (WSL)
 
 - **Requires:** Docker Desktop **running** on Windows; invoke via `docker.exe mcp gateway run` from WSL.
-- **`ups` does not fix** a closed Desktop — open Docker Desktop first.
+- **`make update` does not fix** a closed Desktop — open Docker Desktop first.
 - Smoke: `docker.exe mcp version` · `docker.exe mcp gateway run --dry-run --verbose`
 
 ## Postgres MCP

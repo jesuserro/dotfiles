@@ -1,6 +1,6 @@
 ---
 name: dotfiles-bootstrap-install
-description: Guía operativa para el bootstrap inicial de dotfiles en Ubuntu/WSL con make install*. Úsala en una máquina nueva (PC corporativo Windows 11 + WSL2 Ubuntu), antes de confiar en ups o en deps-* para mantenimiento.
+description: Guía operativa para el bootstrap inicial de dotfiles en Ubuntu/WSL con make install*. Úsala en una máquina nueva (PC corporativo Windows 11 + WSL2 Ubuntu), antes de confiar en make update o en deps-* para mantenimiento.
 ---
 
 # Dotfiles bootstrap install (`make install*`)
@@ -15,7 +15,7 @@ Orquestar un **bootstrap inicial seguro**: diagnóstico, paquetes APT declarativ
 
 - Primera configuración de una estación con este repo en **WSL2 Ubuntu** o Ubuntu nativo.
 - Cuando un agente necesita el flujo canónico “instalar sin sorpresas” en entorno corporativo.
-- **No** sustituye a `ups` (actualización periódica), **`chezmoi apply`** en máquina ya configurada, ni convierte `deps-*` en instalador silencioso de todo.
+- **No** sustituye a `make update` (actualización periódica), **`chezmoi apply`** en máquina ya configurada, ni convierte `deps-*` en instalador silencioso de todo.
 - **No** recomendar **`rcup`** / RCM (legacy, no operativo).
 
 ## Commands
@@ -45,10 +45,10 @@ Variables de entorno / Make (pasar como `make target VAR=value`):
 
 También: `DEPS_INSTALL_ARGS` se reenvía al instalador APT (igual que `deps-install`).
 
-## install vs ups vs deps-*
+## install vs update vs deps-*
 
 - **`make install*`**: bootstrap de máquina nueva; idempotente donde aplica; chezmoi **no** destructivo sin `DOTFILES_APPLY=1`.
-- **`ups`**: mantenimiento recurrente (APT, npm, MCP, etc.) definido en el alias; **no** modificar desde esta skill.
+- **`make update`**: mantenimiento recurrente (Windows/WSL, APT, npm, MCP, etc.); **no** modificar desde esta skill.
 - **`make deps-check` / `deps-install` / `deps-actions`**: capa declarativa YAML (`system/packages/*.yaml`); `install-apt` y `install-check` la reutilizan.
 
 ## Safety
@@ -94,7 +94,7 @@ Opt-in aparte: `make install-uv`.
 
 ## References
 
-- [dotfiles-operations](../dotfiles-operations/SKILL.md) — operación diaria (apply, secretos, ups vs Chezmoi)
+- [dotfiles-operations](../dotfiles-operations/SKILL.md) — operación diaria (apply, secretos, update vs Chezmoi)
 - [docs/OPERATIONS.md](../../../../docs/OPERATIONS.md)
 - [docs/ops/dotfiles-install.md](../../../../docs/ops/dotfiles-install.md)
 - [docs/INSTALL.md](../../../../docs/INSTALL.md)

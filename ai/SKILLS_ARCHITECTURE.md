@@ -67,7 +67,7 @@ Some `Vault ...` skills are lightweight operational wrappers around canonical pr
 | `etl/` | Data engineering | Data contracts |
 | `git/` | Version control | PR conventions |
 | `gitnexus/` | Code intelligence | GitNexus skills (6 variants) |
-| `ops/` | Infrastructure/ops | Vault AI Prompt Consumer, Dotfiles Skill Registration, Vault Development Acceleration, Vault Review Diff, Vault Detect Errors, Vault Suggest Improvements, Vault Project Wiki, Vault Update Documentation, Vault Write Commit Message, Dotfiles MCP Governance, Dotfiles UPS Workflow, Dotfiles Playwright UI Validation, Dotfiles WSL2 Local Tools, Dotfiles Agent Workflow, Dotfiles Grill Plan, Dotfiles To Spec, Dotfiles To Issues, Dotfiles Test Driven Change, Dotfiles Architecture Review, Dotfiles Vault Issue Bridge |
+| `ops/` | Infrastructure/ops | Vault AI Prompt Consumer, Dotfiles Skill Registration, Vault Development Acceleration, Vault Review Diff, Vault Detect Errors, Vault Suggest Improvements, Vault Project Wiki, Vault Update Documentation, Vault Write Commit Message, Dotfiles MCP Governance, Dotfiles Update Workflow, Dotfiles Excalidraw MCP Operations, Dotfiles Playwright UI Validation, Dotfiles WSL2 Local Tools, Dotfiles Agent Workflow, Dotfiles Grill Plan, Dotfiles To Spec, Dotfiles To Issues, Dotfiles Test Driven Change, Dotfiles Architecture Review, Dotfiles Vault Issue Bridge |
 | `postgres/` | Database | SQL style, schema review |
 | `python/` | Python development | Project structure |
 

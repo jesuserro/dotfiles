@@ -13,13 +13,13 @@ packages:
     required: false
     capability: windows
     install_method: windows
-    note: Used by ups() to launch winget updates from WSL.
+    note: Used by make update to launch Windows updates from WSL.
   - package: wt.exe
     command: wt.exe
     required: false
     capability: windows
     install_method: windows
-    note: Used by ups() to open a Windows Terminal tab for winget.
+    note: Used by make update to open a Windows Terminal tab for WinGet and WSL update.
   - package: winget.exe
     command: winget.exe
     required: false

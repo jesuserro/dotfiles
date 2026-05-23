@@ -1,13 +1,26 @@
 ---
 name: excalidraw-diagram
-description: Create Excalidraw diagram JSON files that make visual arguments. Use when the user wants to visualize workflows, architectures, or concepts.
+description: Create or edit Excalidraw diagrams, preferably through the canonical Docker MCP runtime, while preserving strong visual design rules.
 ---
 
 # Excalidraw Diagram Creator
 
-Generate `.excalidraw` JSON files that **argue visually**, not just display information.
+Create and edit `.excalidraw` diagrams that **argue visually**, not just display information.
 
-**Setup:** If the user asks you to set up this skill (renderer, dependencies, etc.), see `README.md` for instructions.
+**Primary runtime:** use the dotfiles Excalidraw MCP Docker setup. For operations, start/status/update through `make excalidraw-start`, `make excalidraw-status`, and `make excalidraw-update`.
+
+Manual JSON generation is a fallback for environments where the MCP/canvas is unavailable.
+
+## Editing Existing `.excalidraw` Files
+
+1. Locate the source `.excalidraw` file in the vault or repo.
+2. Run `make excalidraw-status`; start the canvas with `make excalidraw-start` if interactive editing is needed.
+3. Import the scene through the MCP/canvas workflow.
+4. Describe the current layout before changing it.
+5. Modify elements incrementally: positions, boxes, arrows, colors, labels.
+6. Inspect the result visually before export.
+7. Export SVG by default; PNG only when compatibility requires it.
+8. Do not overwrite important originals without an explicit instruction or a preserved version.
 
 ## Customization
 

@@ -1,6 +1,6 @@
 # Instalación
 
-Guía paso a paso para **bootstrap** en una máquina nueva. Para operación diaria (secretos, MCPs, `ups`, troubleshooting), ver **[OPERATIONS.md](OPERATIONS.md)**.
+Guía paso a paso para **bootstrap** en una máquina nueva. Para operación diaria (secretos, MCPs, `make update`, troubleshooting), ver **[OPERATIONS.md](OPERATIONS.md)**.
 
 > **`make install` ≠ `chezmoi apply`.** El Makefile instala paquetes y orquesta el plan; la materialización en HOME (MCPs, symlinks RC, `mcp-secrets.env`) requiere **`make install-dotfiles DOTFILES_APPLY=1`** o `chezmoi --source=$HOME/dotfiles apply`.
 

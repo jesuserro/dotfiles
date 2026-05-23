@@ -24,24 +24,23 @@ profiles:
 mcps:
   - id: excalidraw
     display_name: Excalidraw MCP
-    description: Diagrams and Excalidraw assets via local stdio server
+    description: Diagrams and Excalidraw assets via upstream Docker stdio server
     layer: core
     category: diagrams
-    runtime: node
+    runtime: docker
     surfaces:
       cursor: { enabled: true }
       codex: { enabled: true }
       opencode: { enabled: true }
-    requires: [node]
+    requires: [docker]
     secrets: []
-    paths_probe:
-      - ~/mcp-servers/excalidraw-mcp/dist/index.js
+    paths_probe: []
     notes: >
-      Codex template sets cwd to the excalidraw repo; same bundle path for all
-      surfaces. Materialize the local checkout with `make install-mcp-excalidraw`
-      (opt-in, idempotent, no sudo). Upstream defaults to
-      https://github.com/yctimlin/mcp_excalidraw; override with
-      EXCALIDRAW_MCP_REPO_URL when running the script.
+      Canonical runtime is yctimlin/mcp_excalidraw via Docker, launched
+      ephemerally with `docker run -i --rm` by MCP clients. The canvas runs
+      separately on demand with `make excalidraw-start` using
+      ghcr.io/yctimlin/mcp_excalidraw-canvas:latest. Do not clone, npm install,
+      pnpm install, or build a local dist/index.js for normal operation.
 
   - id: context7
     display_name: Context7

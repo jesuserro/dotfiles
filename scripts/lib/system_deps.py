@@ -114,7 +114,7 @@ def _action_for_package(package):
         },
         "opencode": {
             "kind": "installer",
-            "summary": "Install or refresh OpenCode with the official installer used by ups().",
+            "summary": "Install or refresh OpenCode with the official installer used by make update.",
             "command": "curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path",
         },
         "docker": {
@@ -144,12 +144,12 @@ def _action_for_package(package):
         },
         "powershell.exe": {
             "kind": "windows",
-            "summary": "Optional Windows-side capability used by ups() for winget from WSL.",
+            "summary": "Optional Windows-side capability used by make update for WinGet from WSL.",
             "command": "Install or repair PowerShell on the Windows host if you need that flow.",
         },
         "wt.exe": {
             "kind": "windows",
-            "summary": "Optional Windows-side capability used by ups() to open a winget tab.",
+            "summary": "Optional Windows-side capability used by make update to open a Windows update tab.",
             "command": "Install or repair Windows Terminal on the Windows host if you need that flow.",
         },
     }

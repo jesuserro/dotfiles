@@ -66,16 +66,16 @@ setup() {
 	[[ "${output}" == *"make install-node-stack"* ]]
 }
 
-@test "ai-cursor-check reports Excalidraw and GitHub hints when both MCPs are present in mcp.json" {
+@test "ai-cursor-check reports Docker Excalidraw and GitHub hints when both MCPs are present in mcp.json" {
 	local fake_home
 	fake_home="$(mktemp -d)"
 	mkdir -p "${fake_home}/.cursor"
-	cat > "${fake_home}/.cursor/mcp.json" <<'JSON'
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
 {
   "mcpServers": {
     "excalidraw": {
-      "command": "/usr/bin/node",
-      "args": ["/home/dummy/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"],
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "EXPRESS_SERVER_URL=http://host.docker.internal:3000", "-e", "ENABLE_CANVAS_SYNC=true", "ghcr.io/yctimlin/mcp_excalidraw:latest"],
       "env": {}
     },
     "github": {
@@ -89,7 +89,7 @@ JSON
 	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
 	rm -rf "${fake_home}"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"make install-mcp-excalidraw"* ]]
+	[[ "${output}" == *"Excalidraw MCP configured for ephemeral Docker runtime"* ]]
 	[[ "${output}" == *"make install-mcp-github"* ]]
 	# Should also mention the secrets file boundary without reading it.
 	[[ "${output}" == *"codex.env"* ]]
@@ -100,7 +100,7 @@ JSON
 	fake_home="$(mktemp -d)"
 	stub_path="$(mktemp -d)"
 	mkdir -p "${fake_home}/.cursor"
-	cat > "${fake_home}/.cursor/mcp.json" <<'JSON'
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
 {
   "mcpServers": {
     "docker": {
@@ -111,7 +111,7 @@ JSON
   }
 }
 JSON
-	cat > "${stub_path}/docker.exe" <<'SH'
+	cat >"${stub_path}/docker.exe" <<'SH'
 #!/usr/bin/env bash
 if [[ "$*" == "mcp version" ]]; then
 	echo "v0.42.0"

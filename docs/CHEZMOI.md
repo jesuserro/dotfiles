@@ -16,8 +16,8 @@ En este proyecto conviven dos mecanismos para aplicar cambios. Resumen:
 
 | Mecanismo | Qué hace | Cuándo usarlo |
 |-----------|----------|----------------|
-| **`chezmoi --source=$HOME/dotfiles apply`** (alias: `make install-dotfiles DOTFILES_APPLY=1`) | Aplica las plantillas, archivos y symlinks que Chezmoi gestiona desde el repo a tu HOME: `~/.cursor/mcp.json`, `~/.codex/config.toml`, `~/.config/ai/`, secretos generados, y los symlinks `~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`. | Cuando has editado en el repo lo que Chezmoi controla. No hace falta ejecutarlo solo por haber corrido `ups` (que solo actualiza código/deps de los servidores MCP). |
-| **`source ~/.zshrc`** | Recarga en la **sesión actual** de la terminal el contenido de `~/.zshrc`: aliases, funciones (como `ups`), PATH, etc. No escribe archivos. | Después de `chezmoi apply` o de `ups` para que la shell use los nuevos aliases/funciones. |
+| **`chezmoi --source=$HOME/dotfiles apply`** (alias: `make install-dotfiles DOTFILES_APPLY=1`) | Aplica las plantillas, archivos y symlinks que Chezmoi gestiona desde el repo a tu HOME: `~/.cursor/mcp.json`, `~/.codex/config.toml`, `~/.config/ai/`, secretos generados, y los symlinks `~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`. | Cuando has editado en el repo lo que Chezmoi controla. No hace falta ejecutarlo solo por haber corrido `make update` (que actualiza sistema/deps/imágenes). |
+| **`source ~/.zshrc`** | Recarga en la **sesión actual** de la terminal el contenido de `~/.zshrc`: aliases, PATH, etc. No escribe archivos. | Después de `chezmoi apply` o de `make update` si cambió PATH. |
 | **`chezmoi --source=$HOME/dotfiles apply ~/.cursor/mcp.json ~/.config/opencode/opencode.json ~/.codex/config.toml`** | Propaga solo las configs MCP renderizadas de Cursor, OpenCode y Codex. | Úsalo tras cambios de plantillas MCP como el launcher de GitNexus. Mantiene el arranque estable con binarios/launchers locales en vez de `npx ...@latest` en runtime. |
 
 Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si hay cambios en lo que Chezmoi gestiona) y `source ~/.zshrc` para la sesión actual.
@@ -36,7 +36,7 @@ Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si ha
 | `~/.local/share/chezmoi/bin/mcp-*-launcher` | `dot_local/share/chezmoi/bin/executable_mcp-*-launcher.tmpl` (`filesystem`, `git`, `gitnexus`, `postgres`) |
 | `~/.zshrc` | `symlink_dot_zshrc.tmpl` → `$HOME/dotfiles/zshrc` |
 | `~/.p10k.zsh` | `symlink_dot_p10k.zsh.tmpl` → `$HOME/dotfiles/powerlevel10k/p10k.zsh` |
-| `~/.aliases` | `symlink_dot_aliases.tmpl` → `$HOME/dotfiles/aliases` (carga la función `ups`) |
+| `~/.aliases` | `symlink_dot_aliases.tmpl` → `$HOME/dotfiles/aliases` |
 
 ### Backup seguro de RC files
 
@@ -251,7 +251,7 @@ El launcher `mcp-postgres-launcher` usa `@modelcontextprotocol/server-postgres` 
 ## No hacer
 
 - No reintroducir RCM/rcup en el flujo activo (ni en docs de máquina nueva, ni en targets, ni en inventario APT). Chezmoi es el único gestor activo.
-- No depender de `rcup` para que `~/.zshrc`, Powerlevel10k o `ups` funcionen.
+- No depender de `rcup` para que `~/.zshrc` o Powerlevel10k funcionen.
 - Postgres: npx. Trino: `~/.config/ai/runtime/.venv` (trino-mcp). Docker: aún en `~/.codex/mcp/docker` si existe.
 
 ---

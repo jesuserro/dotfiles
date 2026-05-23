@@ -6,13 +6,13 @@
 #
 # Resolution order:
 #   1. MCP_GITNEXUS_BIN override, if set
-#   2. ~/.local/bin/gitnexus (managed by ups / install-gitnexus.sh)
+#   2. ~/.local/bin/gitnexus (managed by make update / install-gitnexus.sh)
 #   3. gitnexus from PATH
 
 set -euo pipefail
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-    cat <<'EOF'
+	cat <<'EOF'
 MCP GitNexus Launcher
 
 Usage: mcp-gitnexus-launcher
@@ -24,7 +24,7 @@ Resolution order:
   2. ~/.local/bin/gitnexus
   3. gitnexus from PATH
 EOF
-    exit 0
+	exit 0
 fi
 
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin:${PATH:-}"
@@ -32,23 +32,23 @@ export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin:${PATH:-}"
 GITNEXUS_BIN="${MCP_GITNEXUS_BIN:-}"
 
 if [[ -z "$GITNEXUS_BIN" && -x "$HOME/.local/bin/gitnexus" ]]; then
-    GITNEXUS_BIN="$HOME/.local/bin/gitnexus"
+	GITNEXUS_BIN="$HOME/.local/bin/gitnexus"
 fi
 
 if [[ -z "$GITNEXUS_BIN" ]]; then
-    GITNEXUS_BIN="$(command -v gitnexus 2>/dev/null || true)"
+	GITNEXUS_BIN="$(command -v gitnexus 2>/dev/null || true)"
 fi
 
 if [[ -z "$GITNEXUS_BIN" ]]; then
-    echo "ERROR: gitnexus executable not found." >&2
-    echo "       Expected ~/.local/bin/gitnexus or gitnexus on PATH." >&2
-    echo "       Install/update it with: $HOME/dotfiles/scripts/install-gitnexus.sh" >&2
-    exit 1
+	echo "ERROR: gitnexus executable not found." >&2
+	echo "       Expected ~/.local/bin/gitnexus or gitnexus on PATH." >&2
+	echo "       Install/update it with: $HOME/dotfiles/scripts/install-gitnexus.sh" >&2
+	exit 1
 fi
 
 if [[ ! -x "$GITNEXUS_BIN" ]]; then
-    echo "ERROR: gitnexus path is not executable: $GITNEXUS_BIN" >&2
-    exit 1
+	echo "ERROR: gitnexus path is not executable: $GITNEXUS_BIN" >&2
+	exit 1
 fi
 
 echo "Using GitNexus binary: $GITNEXUS_BIN" >&2

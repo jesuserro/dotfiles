@@ -23,7 +23,7 @@ MANIFEST.yaml
   → make ai-cursor-check
 ```
 
-**`ups` no sustituye** `chezmoi apply` ni regenera secretos. Operación general: skill **`dotfiles-operations`**.
+**`make update` no sustituye** `chezmoi apply` ni regenera secretos. Operación general: skill **`dotfiles-operations`**.
 
 ### Troubleshooting breve
 

@@ -4,9 +4,15 @@
     "excalidraw": {
       "type": "local",
       "command": [
-        "/usr/bin/node",
-        "{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp/dist/index.js",
-        "--stdio"
+        "docker",
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "EXPRESS_SERVER_URL=http://host.docker.internal:3000",
+        "-e",
+        "ENABLE_CANVAS_SYNC=true",
+        "ghcr.io/yctimlin/mcp_excalidraw:latest"
       ],
       "enabled": true
     },

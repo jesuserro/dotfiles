@@ -14,7 +14,7 @@ It does not try to export every package installed on a machine, and it avoids ca
 
 - `system/packages/common.yaml`: base Ubuntu/WSL packages installed through `apt`.
 - `system/packages/ubuntu.yaml`: Ubuntu/Debian-specific `apt` additions.
-- `system/packages/tooling.yaml`: important non-APT CLIs used by the repo or by `ups()`.
+- `system/packages/tooling.yaml`: important non-APT CLIs used by the repo or by `make update`.
 - `system/packages/wsl.yaml`: WSL-specific interop and Windows-side commands invoked from WSL.
 
 Each entry is intentionally small:
@@ -188,7 +188,7 @@ policy:
 - GitHub Release tools resolve the latest official release at install/update
   time and verify the release checksum before installing (`actionlint`,
   `osv-scanner`).
-- `ups` uses the same policy to refresh them.
+- `make update` uses the same policy to refresh them.
 
 The inventory records the install channel, not a pinned version. A fully pinned
 external-tool lock would require a broader inventory schema change, so it stays
@@ -260,6 +260,6 @@ Reglas de la Fase 1C:
 - **Runtime AI** (`~/.config/ai/runtime/.venv`): se sincroniza con `uv` desde `.chezmoiscripts/run_after_10_setup_ai_runtime.sh.tmpl` usando `uv venv` y `uv pip install -r` solo cuando cambia el hash de `ai/runtime/mcp/requirements.txt` o el venv falta/está incompleto. Si `uv` no está en `PATH`, el hook avisa y no modifica el entorno.
 - **`zsh/30-python.zsh`** (alias `pip='pip3'`, `pyreq()`): no se toca en esta fase para evitar regresiones en sesiones interactivas.
 
-### Cómo lo trata `ups`
+### Cómo lo trata `make update`
 
-`ups` actualiza `uv` con `uv self update` **solo si ya existe** y vive en `$HOME/.local/bin/uv` (instalación oficial). Si falta, sólo informa y sugiere `make install-uv`. Si está en otra ruta (`apt`, `brew`...), informa para que lo actualice su gestor. Nunca lo instala desde `ups`.
+`make update` actualiza `uv` con `uv self update` **solo si ya existe** y vive en `$HOME/.local/bin/uv` (instalación oficial). Si falta, sólo informa y sugiere `make install-uv`. Si está en otra ruta (`apt`, `brew`...), informa para que lo actualice su gestor. Nunca lo instala desde `make update`.

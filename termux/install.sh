@@ -16,9 +16,9 @@ export SHELL=$(which zsh)
 # exec zsh
 
 # Añadir alias al .zshrc
-cat << 'EOF' >> ~/.zshrc
+cat <<'EOF' >>~/.zshrc
 alias ll="lsd -la"
-alias ups="pkg update -y && pkg upgrade -y && omz update && upgrade_oh_my_zsh_custom"
+alias termux-update="pkg update -y && pkg upgrade -y && omz update && upgrade_oh_my_zsh_custom"
 alias git-update="git fetch --all --prune && git pull"
 alias git-save="git add -A && git commit -m 'chore: commit save point' && git push origin HEAD"
 EOF

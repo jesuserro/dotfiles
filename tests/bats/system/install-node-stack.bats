@@ -29,7 +29,8 @@ teardown() {
 	run env DRY_RUN=1 PATH="${stub_path}" "${bash_abs}" "${INSTALL_NODE}"
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" == *"DRY_RUN"* ]]
-	[[ "${output}" == *"apt-get install -y nodejs npm"* ]]
+	[[ "${output}" == *"NodeSource"* ]]
+	[[ "${output}" == *"apt-get install -y nodejs"* ]]
 	[[ "${output}" == *"Plan:"* ]]
 	# Must not claim to have run apt-get.
 	[[ "${output}" != *"==> Installing"* ]]
@@ -38,11 +39,11 @@ teardown() {
 @test "install-node-stack skips when node and npm are already present" {
 	local stub_dir="${TEST_TEMP_DIR}/bin"
 	mkdir -p "${stub_dir}"
-	cat > "${stub_dir}/node" <<'EOF'
+	cat >"${stub_dir}/node" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in --version) echo "v22.99.0";; *) exit 0;; esac
 EOF
-	cat > "${stub_dir}/npm" <<'EOF'
+	cat >"${stub_dir}/npm" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in --version) echo "10.99.0";; *) exit 0;; esac
 EOF
@@ -60,11 +61,11 @@ EOF
 @test "install-node-stack DRY_RUN with node+npm present still skips the install branch" {
 	local stub_dir="${TEST_TEMP_DIR}/bin"
 	mkdir -p "${stub_dir}"
-	cat > "${stub_dir}/node" <<'EOF'
+	cat >"${stub_dir}/node" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in --version) echo "v22.99.0";; *) exit 0;; esac
 EOF
-	cat > "${stub_dir}/npm" <<'EOF'
+	cat >"${stub_dir}/npm" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in --version) echo "10.99.0";; *) exit 0;; esac
 EOF
@@ -76,10 +77,10 @@ EOF
 	[[ "${output}" != *"Plan:"* ]]
 }
 
-@test "install-node-stack target exists in install.mk and is NOT part of 'install:'" {
+@test "install-node-stack target exists in install.mk and is part of 'install:'" {
 	run grep -E "^install-node-stack:" "${DOTFILES_DIR}/install.mk"
 	[[ "${status}" -eq 0 ]]
 	run grep -E "^install:" "${DOTFILES_DIR}/install.mk"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" != *"install-node-stack"* ]]
+	[[ "${output}" == *"install-node-stack"* ]]
 }

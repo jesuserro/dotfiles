@@ -65,9 +65,10 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 
 | Categoría | Skill | Descripción |
 |-----------|-------|-------------|
-| `diagrams/` | `excalidraw/` | Generador de diagramas Excalidraw |
+| `diagrams/` | `excalidraw/` | Creación/edición de diagramas Excalidraw vía MCP Docker |
 | `diagrams/` | `conventions/` | Convenciones de diagramación |
 | `docs/` | `adr-writer/` | `Dotfiles ADR Writer` |
+| `docs/` | `excalidraw-publishing/` | `Dotfiles Excalidraw Publishing` |
 | `docs/` | `plans-and-notepads-naming/` | `Dotfiles Plans and Notepads Naming` |
 | `etl/` | `data-contracts/` | Contratos de datos transversales |
 | `git/` | `pr-conventions/` | Convenciones de PR y commits |
@@ -83,7 +84,8 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 | `ops/` | `vault-write-commit-message/` | `Vault Write Commit Message` |
 | `ops/` | `mcp-governance/` | `Dotfiles MCP Governance` |
 | `ops/` | `playwright-ui-validation/` | `Dotfiles Playwright UI Validation` |
-| `ops/` | `system-updates/` | `Dotfiles UPS Workflow` |
+| `ops/` | `system-updates/` | `Dotfiles Update Workflow` |
+| `ops/` | `excalidraw-mcp-operations/` | `Dotfiles Excalidraw MCP Operations` |
 | `ops/` | `wsl2-local-tools/` | `Dotfiles WSL2 Local Tools` |
 | `ops/` | `agent-workflow/` | `Dotfiles Agent Workflow` (mapa de familia) |
 | `ops/` | `grill-plan/` | `Dotfiles Grill Plan` |

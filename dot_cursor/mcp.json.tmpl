@@ -1,10 +1,16 @@
 {
   "mcpServers": {
     "excalidraw": {
-      "command": "/usr/bin/node",
+      "command": "docker",
       "args": [
-        "{{ .chezmoi.homeDir }}/mcp-servers/excalidraw-mcp/dist/index.js",
-        "--stdio"
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "EXPRESS_SERVER_URL=http://host.docker.internal:3000",
+        "-e",
+        "ENABLE_CANVAS_SYNC=true",
+        "ghcr.io/yctimlin/mcp_excalidraw:latest"
       ],
       "env": {}
     },

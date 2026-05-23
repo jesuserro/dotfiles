@@ -26,7 +26,8 @@ OPENCODE_TMPL="${DOTFILES_ROOT}/dot_config/opencode/opencode.json.tmpl"
 SKILLS_SRC="${DOTFILES_ROOT}/ai/assets/skills"
 REGISTRY="${DOTFILES_ROOT}/ai/assets/commands/registry.yaml"
 VALIDATE_SKILLS="${DOTFILES_ROOT}/scripts/validate-skills-structure.sh"
-EXCALIDRAW_REL="mcp-servers/excalidraw-mcp/dist/index.js"
+EXCALIDRAW_MCP_IMAGE="ghcr.io/yctimlin/mcp_excalidraw:latest"
+EXCALIDRAW_CANVAS_IMAGE="ghcr.io/yctimlin/mcp_excalidraw-canvas:latest"
 
 strict_mode=0
 if install_is_truthy "${STRICT:-}"; then
@@ -267,19 +268,36 @@ probe_cmd_warn "uvx (uv tool runner)" "uvx"
 probe_cmd_missing_strict "node (used by several Cursor MCPs)" "node"
 probe_cmd_missing_strict "npx (used by several Cursor MCPs)" "npx"
 
-excal_path="${HOME_ROOT}/${EXCALIDRAW_REL}"
 if [[ -f "${CURSOR_MCP}" ]]; then
 	if python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); exit(0 if 'excalidraw' in d.get('mcpServers',{}) else 1)" 2>/dev/null; then
-		if [[ -f "${excal_path}" ]]; then
-			line OK "Excalidraw MCP bundle present (${excal_path})"
+		if python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); s=d.get('mcpServers',{}).get('excalidraw',{}); args=s.get('args',[]); exit(0 if s.get('command') == 'docker' and 'ghcr.io/yctimlin/mcp_excalidraw:latest' in args else 1)" 2>/dev/null; then
+			line OK "Excalidraw MCP configured for ephemeral Docker runtime (${EXCALIDRAW_MCP_IMAGE})"
 		else
-			line MISSING "Excalidraw MCP bundle missing (${excal_path}) but excalidraw is in ~/.cursor/mcp.json — run 'make install-mcp-excalidraw' to clone + build (opt-in, idempotent)"
+			line MISSING "Excalidraw MCP is present but not configured for Docker; regenerate/apply MCP templates"
 		fi
 	else
 		line_info "Excalidraw entry not in ~/.cursor/mcp.json — skipping excalidraw path check"
 	fi
 else
 	line_info "No ~/.cursor/mcp.json — skipping excalidraw path check"
+fi
+
+if [[ -f "${CURSOR_MCP}" ]] && python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); exit(0 if 'excalidraw' in d.get('mcpServers',{}) else 1)" 2>/dev/null; then
+	if command -v docker >/dev/null 2>&1; then
+		line OK "Docker CLI available for Excalidraw MCP"
+		if docker image inspect "${EXCALIDRAW_MCP_IMAGE}" >/dev/null 2>&1; then
+			line OK "Excalidraw MCP Docker image present (${EXCALIDRAW_MCP_IMAGE})"
+		else
+			line WARN "Excalidraw MCP Docker image not present locally; run 'make excalidraw-update'"
+		fi
+		if docker image inspect "${EXCALIDRAW_CANVAS_IMAGE}" >/dev/null 2>&1; then
+			line OK "Excalidraw canvas Docker image present (${EXCALIDRAW_CANVAS_IMAGE})"
+		else
+			line WARN "Excalidraw canvas Docker image not present locally; run 'make excalidraw-update'"
+		fi
+	else
+		line WARN "Docker CLI not available; Excalidraw MCP Docker runtime requires Docker Desktop"
+	fi
 fi
 
 # --- GitHub MCP wrapper: separate wrapper-missing vs token-missing ---
@@ -529,7 +547,8 @@ else
 		INFO) line_info "${ob_msg}" ;;
 		*) line_info "${ob_st}|${ob_msg}" ;;
 		esac
-	done < <(python3 - "${CURSOR_MCP}" <<'PY'
+	done < <(
+		python3 - "${CURSOR_MCP}" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -581,7 +600,8 @@ if [[ -f "${CURSOR_MCP}" ]] && python3 -c "import json; json.load(open('${CURSOR
 		else
 			line MISSING "MCP path missing on disk: ${p}"
 		fi
-	done < <(python3 - "${CURSOR_MCP}" "${HOME_ROOT}" <<'PY'
+	done < <(
+		python3 - "${CURSOR_MCP}" "${HOME_ROOT}" <<'PY'
 import json
 import re
 import sys

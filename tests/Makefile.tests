@@ -343,7 +343,8 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/install-node-stack.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-azure-cli.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-mcp-github.bats)
-	@$(call run_bats,$(BATS_DIR)/system/install-mcp-excalidraw.bats)
+	@$(call run_bats,$(BATS_DIR)/system/update-workflow.bats)
+	@$(call run_bats,$(BATS_DIR)/system/excalidraw-docker.bats)
 	@$(call run_bats,$(BATS_DIR)/system/dry-run-guard.bats)
 	@$(call run_bats,$(BATS_DIR)/system/azure-tools.bats)
 	@$(call run_bats,$(BATS_DIR)/system/ai-cursor-check.bats)
@@ -353,8 +354,6 @@ bats-system: bats-zsh
 bats-zsh:
 	@echo "$(BLUE)==>$NC Running zsh stack RC symlink tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/rc_symlinks.bats)
-	@echo "$(BLUE)==>$NC Running ups MCP glob regression tests..."
-	@$(call run_bats,$(BATS_DIR)/zsh/ups_mcp_glob.bats)
 	@echo "$(BLUE)==>$NC Running Powerlevel10k cache key tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/p10k_cache_keys.bats)
 
