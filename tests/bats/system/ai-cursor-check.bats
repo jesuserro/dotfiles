@@ -73,7 +73,7 @@ setup() {
 	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
 {
   "mcpServers": {
-    "excalidraw": {
+    "excalidraw_canvas": {
       "command": "docker",
       "args": ["run", "-i", "--rm", "-e", "EXPRESS_SERVER_URL=http://host.docker.internal:3210", "-e", "ENABLE_CANVAS_SYNC=true", "ghcr.io/yctimlin/mcp_excalidraw:latest"],
       "env": {}
@@ -89,7 +89,7 @@ JSON
 	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
 	rm -rf "${fake_home}"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Cursor HOME Excalidraw MCP uses Docker runtime"* ]]
+	[[ "${output}" == *"Cursor HOME Excalidraw MCP 'excalidraw_canvas' uses Docker runtime"* ]]
 	[[ "${output}" == *"make install-mcp-github"* ]]
 	# Should also mention the secrets file boundary without reading it.
 	[[ "${output}" == *"codex.env"* ]]
@@ -100,23 +100,23 @@ JSON
 	fake_home="$(mktemp -d)"
 	mkdir -p "${fake_home}/.cursor" "${fake_home}/.codex" "${fake_home}/.config/opencode"
 	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
-{"mcpServers":{"excalidraw":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
+{"mcpServers":{"excalidraw_canvas":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
 JSON
 	cat >"${fake_home}/.codex/config.toml" <<'TOML'
-[mcp_servers.excalidraw]
+[mcp_servers.excalidraw_canvas]
 command = "docker"
 args = ["run", "-i", "--rm", "-e", "EXPRESS_SERVER_URL=http://host.docker.internal:3210", "-e", "ENABLE_CANVAS_SYNC=true", "ghcr.io/yctimlin/mcp_excalidraw:latest"]
 enabled = true
 TOML
 	cat >"${fake_home}/.config/opencode/opencode.json" <<'JSON'
-{"mcp":{"excalidraw":{"type":"local","command":["docker","run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","ghcr.io/yctimlin/mcp_excalidraw:latest"],"enabled":true}}}
+{"mcp":{"excalidraw_canvas":{"type":"local","command":["docker","run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","ghcr.io/yctimlin/mcp_excalidraw:latest"],"enabled":true}}}
 JSON
 	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
 	rm -rf "${fake_home}"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Cursor HOME Excalidraw MCP uses Docker runtime"* ]]
-	[[ "${output}" == *"Codex HOME Excalidraw MCP uses Docker runtime"* ]]
-	[[ "${output}" == *"OpenCode HOME Excalidraw MCP uses Docker runtime"* ]]
+	[[ "${output}" == *"Cursor HOME Excalidraw MCP 'excalidraw_canvas' uses Docker runtime"* ]]
+	[[ "${output}" == *"Codex HOME Excalidraw MCP 'excalidraw_canvas' uses Docker runtime"* ]]
+	[[ "${output}" == *"OpenCode HOME Excalidraw MCP 'excalidraw_canvas' uses Docker runtime"* ]]
 }
 
 @test "ai-cursor-check flags legacy Excalidraw canvas port 3000" {
@@ -124,7 +124,7 @@ JSON
 	fake_home="$(mktemp -d)"
 	mkdir -p "${fake_home}/.cursor"
 	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
-{"mcpServers":{"excalidraw":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3000","-e","ENABLE_CANVAS_SYNC=true","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
+{"mcpServers":{"excalidraw_canvas":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3000","-e","ENABLE_CANVAS_SYNC=true","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
 JSON
 	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
 	rm -rf "${fake_home}"
@@ -133,21 +133,35 @@ JSON
 	[[ "${output}" == *"expected host port 3210"* ]]
 }
 
+@test "ai-cursor-check flags ambiguous legacy Excalidraw MCP name" {
+	local fake_home
+	fake_home="$(mktemp -d)"
+	mkdir -p "${fake_home}/.cursor"
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
+{"mcpServers":{"excalidraw":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
+JSON
+	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"ambiguous legacy name 'excalidraw'"* ]]
+	[[ "${output}" == *"expected 'excalidraw_canvas'"* ]]
+}
+
 @test "ai-cursor-check flags legacy Excalidraw local checkout in effective HOME configs" {
 	local fake_home
 	fake_home="$(mktemp -d)"
 	mkdir -p "${fake_home}/.cursor" "${fake_home}/.codex" "${fake_home}/.config/opencode"
 	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
-{"mcpServers":{"excalidraw":{"command":"node","args":["/home/test/mcp-servers/excalidraw-mcp/dist/index.js"],"env":{}}}}
+{"mcpServers":{"excalidraw_canvas":{"command":"node","args":["/home/test/mcp-servers/excalidraw-mcp/dist/index.js"],"env":{}}}}
 JSON
 	cat >"${fake_home}/.codex/config.toml" <<'TOML'
-[mcp_servers.excalidraw]
+[mcp_servers.excalidraw_canvas]
 command = "node"
 args = ["/home/test/mcp-servers/excalidraw-mcp/dist/index.js"]
 enabled = true
 TOML
 	cat >"${fake_home}/.config/opencode/opencode.json" <<'JSON'
-{"mcp":{"excalidraw":{"type":"local","command":["node","/home/test/mcp-servers/excalidraw-mcp/dist/index.js"],"enabled":true}}}
+{"mcp":{"excalidraw_canvas":{"type":"local","command":["node","/home/test/mcp-servers/excalidraw-mcp/dist/index.js"],"enabled":true}}}
 JSON
 	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
 	rm -rf "${fake_home}"

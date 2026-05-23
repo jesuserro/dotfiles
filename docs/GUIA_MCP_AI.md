@@ -127,7 +127,7 @@ chezmoi --source=$HOME/dotfiles apply
 
 | MCP / Origen | Qué hace `make update` |
 |--------------|----------------|
-| **excalidraw** | `make excalidraw-update` — pull de `ghcr.io/yctimlin/mcp_excalidraw` y canvas; no arranca canvas |
+| **excalidraw_canvas** | `make excalidraw-update` — pull de `ghcr.io/yctimlin/mcp_excalidraw` y canvas; no arranca canvas |
 | **docker** | Docker Desktop MCP Gateway oficial: `docker.exe mcp gateway run` desde WSL |
 | **postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` (solo si existe) |
 | **fetch** | `uv tool install mcp-server-fetch` (instala o actualiza) |

@@ -20,7 +20,7 @@ Layers describe *purpose*; default **activation** for global agents follows the 
 
 | Layer | Scope | Examples |
 |-------|-------|----------|
-| Core | All projects | docker, github, fetch, context7, excalidraw, playwright, filesystem, git, sequential-thinking |
+| Core | All projects | docker, github, fetch, context7, excalidraw_canvas, playwright, filesystem, git, sequential-thinking |
 | Knowledge/Semantic | All projects | gitnexus |
 | Domain | Optional vault path | obsidian |
 | Platform | Local services | dagster, loki, minio, prometheus, tempo, store_etl_ops |

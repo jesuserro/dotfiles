@@ -22,9 +22,9 @@ profiles:
   project-local: {}
 
 mcps:
-  - id: excalidraw
-    display_name: Excalidraw MCP
-    description: Diagrams and Excalidraw assets via upstream Docker stdio server
+  - id: excalidraw_canvas
+    display_name: Excalidraw Canvas MCP
+    description: Advanced Excalidraw canvas editing via upstream Docker stdio server
     layer: core
     category: diagrams
     runtime: docker
@@ -37,8 +37,10 @@ mcps:
     paths_probe: []
     notes: >
       Canonical runtime is yctimlin/mcp_excalidraw via Docker, launched
-      ephemerally with `docker run -i --rm` by MCP clients. The canvas runs
-      separately on demand with `make excalidraw-start` using
+      ephemerally as the `excalidraw_canvas` MCP with `docker run -i --rm` by
+      MCP clients. This intentionally avoids the generic `excalidraw` name,
+      which some clients may reserve for simpler render-only integrations.
+      The canvas runs separately on demand with `make excalidraw-start` using
       ghcr.io/yctimlin/mcp_excalidraw-canvas:latest; clients use
       ghcr.io/yctimlin/mcp_excalidraw:latest with
       EXPRESS_SERVER_URL=http://host.docker.internal:3210 and

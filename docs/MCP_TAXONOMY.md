@@ -48,7 +48,7 @@ These MCPs require explicit installation or update via `make update` or a dedica
 | MCP | Update Method |
 |-----|--------------|
 | gitnexus CLI | `make update-wsl` / `scripts/install-gitnexus.sh` after Node `>=22` (`make install-node-stack`) |
-| excalidraw | `make excalidraw-update` pulls Docker images; MCP clients run `docker run -i --rm` |
+| excalidraw_canvas | `make excalidraw-update` pulls Docker images; MCP clients run `docker run -i --rm`; use this name for advanced Excalidraw scene import/export |
 | fetch | `uv tool install mcp-server-fetch` |
 | docker | Docker Desktop MCP Gateway: `docker.exe mcp gateway run` from WSL |
 | postgres | `npm update` in `~/.config/mcp/servers/*/` (only if present) |

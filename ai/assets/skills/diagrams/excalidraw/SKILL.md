@@ -7,7 +7,11 @@ description: Create or edit Excalidraw diagrams, preferably through the canonica
 
 Create and edit `.excalidraw` diagrams that **argue visually**, not just display information.
 
-**Primary runtime:** use the dotfiles Excalidraw MCP Docker setup. For operations, start/status/update through `make excalidraw-start`, `make excalidraw-status`, and `make excalidraw-update`.
+**Primary runtime:** use the dotfiles Excalidraw MCP Docker setup through the MCP named `excalidraw_canvas`. For operations, start/status/update through `make excalidraw-start`, `make excalidraw-status`, and `make excalidraw-update`.
+
+Use `excalidraw_canvas` exclusively for advanced editing, scene import/export, and `.excalidraw` work. A generic MCP named `excalidraw` may be a simpler render-only surface; do not use it for advanced file editing unless explicitly instructed.
+
+Abort without modifying files if `import_scene`, `describe_scene`, `update_element`, and `export_scene` are not available under `excalidraw_canvas`.
 
 Manual JSON generation is a fallback for environments where the MCP/canvas is unavailable.
 
@@ -15,7 +19,7 @@ Manual JSON generation is a fallback for environments where the MCP/canvas is un
 
 1. Locate the source `.excalidraw` file in the vault or repo.
 2. Run `make excalidraw-status`; start the canvas with `make excalidraw-start` if interactive editing is needed.
-3. Import the scene through the MCP/canvas workflow.
+3. Import the scene through `excalidraw_canvas`.
 4. Describe the current layout before changing it.
 5. Modify elements incrementally: positions, boxes, arrows, colors, labels.
 6. Inspect the result visually before export.

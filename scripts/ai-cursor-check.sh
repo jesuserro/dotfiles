@@ -31,6 +31,7 @@ VALIDATE_SKILLS="${DOTFILES_ROOT}/scripts/validate-skills-structure.sh"
 EXCALIDRAW_MCP_IMAGE="ghcr.io/yctimlin/mcp_excalidraw:latest"
 EXCALIDRAW_CANVAS_IMAGE="ghcr.io/yctimlin/mcp_excalidraw-canvas:latest"
 EXCALIDRAW_EXPRESS_SERVER_URL="http://host.docker.internal:3210"
+EXCALIDRAW_MCP_NAME="excalidraw_canvas"
 
 strict_mode=0
 if install_is_truthy "${STRICT:-}"; then
@@ -93,11 +94,11 @@ check_excalidraw_surface() {
 	fi
 	local status
 	status="$(
-		python3 - "$path" "$kind" "$EXCALIDRAW_MCP_IMAGE" "$EXCALIDRAW_EXPRESS_SERVER_URL" <<-'PY' 2>/dev/null || true
+		python3 - "$path" "$kind" "$EXCALIDRAW_MCP_IMAGE" "$EXCALIDRAW_EXPRESS_SERVER_URL" "$EXCALIDRAW_MCP_NAME" <<-'PY' 2>/dev/null || true
 			import json
 			import sys
 
-			path, kind, image, express_url = sys.argv[1:5]
+			path, kind, image, express_url, mcp_name = sys.argv[1:6]
 
 			def fail(msg):
 			    print("FAIL\t" + msg)
@@ -114,17 +115,48 @@ check_excalidraw_surface() {
 			expected_env = f"EXPRESS_SERVER_URL={express_url}"
 			legacy_env = "EXPRESS_SERVER_URL=http://host.docker.internal:3000"
 
+			def entry_tokens(entry):
+			    if not isinstance(entry, dict):
+			        return []
+			    vals = []
+			    if isinstance(entry.get("command"), str):
+			        vals.append(entry["command"])
+			    elif isinstance(entry.get("command"), list):
+			        vals.extend(str(v) for v in entry["command"])
+			    if isinstance(entry.get("args"), list):
+			        vals.extend(str(v) for v in entry["args"])
+			    return vals
+
+			def looks_like_dotfiles_excalidraw(entry):
+			    tokens = entry_tokens(entry)
+			    joined = "\n".join(tokens)
+			    return (
+			        image in tokens
+			        or expected_env in tokens
+			        or legacy_env in tokens
+			        or "mcp-servers/excalidraw-mcp" in joined
+			        or "dist/index.js" in joined
+			    )
+
 			if kind in ("cursor", "opencode"):
 			    data = json.loads(text.decode("utf-8"))
 			    if kind == "cursor":
-			        entry = data.get("mcpServers", {}).get("excalidraw")
+			        servers = data.get("mcpServers", {})
+			        legacy_entry = servers.get("excalidraw")
+			        entry = servers.get(mcp_name)
+			        if looks_like_dotfiles_excalidraw(legacy_entry):
+			            fail("Dotfiles-managed Excalidraw MCP uses ambiguous legacy name 'excalidraw'; expected 'excalidraw_canvas'")
 			        if not isinstance(entry, dict):
 			            print("MISSING")
 			            raise SystemExit(0)
 			        command = entry.get("command")
 			        args = entry.get("args", [])
 			    else:
-			        entry = data.get("mcp", {}).get("excalidraw")
+			        servers = data.get("mcp", {})
+			        legacy_entry = servers.get("excalidraw")
+			        entry = servers.get(mcp_name)
+			        if looks_like_dotfiles_excalidraw(legacy_entry):
+			            fail("Dotfiles-managed Excalidraw MCP uses ambiguous legacy name 'excalidraw'; expected 'excalidraw_canvas'")
 			        if not isinstance(entry, dict):
 			            print("MISSING")
 			            raise SystemExit(0)
@@ -140,7 +172,11 @@ check_excalidraw_surface() {
 			if kind == "codex":
 			    import tomllib
 			    data = tomllib.loads(text.decode("utf-8"))
-			    entry = data.get("mcp_servers", {}).get("excalidraw")
+			    servers = data.get("mcp_servers", {})
+			    legacy_entry = servers.get("excalidraw")
+			    entry = servers.get(mcp_name)
+			    if looks_like_dotfiles_excalidraw(legacy_entry):
+			        fail("Dotfiles-managed Excalidraw MCP uses ambiguous legacy name 'excalidraw'; expected 'excalidraw_canvas'")
 			    if not isinstance(entry, dict):
 			        print("MISSING")
 			        raise SystemExit(0)
@@ -157,10 +193,10 @@ check_excalidraw_surface() {
 	)"
 	case "$status" in
 	OK)
-		line OK "${label} Excalidraw MCP uses Docker runtime"
+		line OK "${label} Excalidraw MCP '${EXCALIDRAW_MCP_NAME}' uses Docker runtime"
 		;;
 	MISSING)
-		line_info "${label} Excalidraw MCP entry not present"
+		line_info "${label} Excalidraw MCP '${EXCALIDRAW_MCP_NAME}' entry not present"
 		;;
 	FAIL$'\t'*)
 		line MISSING "${label} ${status#FAIL	}; regenerate/apply MCP templates"
@@ -363,7 +399,7 @@ check_excalidraw_surface "Cursor HOME" "${CURSOR_MCP}" "cursor"
 check_excalidraw_surface "Codex HOME" "${CODEX_CONFIG}" "codex"
 check_excalidraw_surface "OpenCode HOME" "${OPENCODE_CONFIG}" "opencode"
 
-if [[ -f "${CURSOR_MCP}" ]] && python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); exit(0 if 'excalidraw' in d.get('mcpServers',{}) else 1)" 2>/dev/null; then
+if [[ -f "${CURSOR_MCP}" ]] && python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); exit(0 if 'excalidraw_canvas' in d.get('mcpServers',{}) else 1)" 2>/dev/null; then
 	if command -v docker >/dev/null 2>&1; then
 		line OK "Docker CLI available for Excalidraw MCP"
 		if docker image inspect "${EXCALIDRAW_MCP_IMAGE}" >/dev/null 2>&1; then

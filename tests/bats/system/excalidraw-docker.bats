@@ -132,6 +132,13 @@ EOF
 }
 
 @test "MCP templates use ephemeral Docker, not local dist/index.js" {
+	grep -q '"excalidraw_canvas"' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
+	grep -q '\[mcp_servers.excalidraw_canvas\]' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
+	grep -q '"excalidraw_canvas"' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
+	run grep -q '"excalidraw"' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
+	[[ "${status}" -ne 0 ]]
+	run grep -q '\[mcp_servers.excalidraw\]' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
+	[[ "${status}" -ne 0 ]]
 	grep -q 'ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
 	grep -q 'ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
 	grep -q 'ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
@@ -170,6 +177,9 @@ EOF
 }
 
 @test "Excalidraw manifest uses Docker image and no local checkout" {
+	grep -q 'id: excalidraw_canvas' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
+	run grep -q 'id: excalidraw$' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
+	[[ "${status}" -ne 0 ]]
 	grep -q 'ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	grep -q 'EXPRESS_SERVER_URL=http://host.docker.internal:3210' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	grep -q '3210:3000' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
@@ -192,8 +202,14 @@ EOF
 	local ops_skill="${DOTFILES_DIR}/ai/assets/skills/ops/excalidraw-mcp-operations/SKILL.md"
 	local publish_skill="${DOTFILES_DIR}/ai/assets/skills/docs/excalidraw-publishing/SKILL.md"
 	grep -q 'make excalidraw-start' "$ops_skill"
+	grep -q 'excalidraw_canvas' "$ops_skill"
 	grep -q 'Docker' "$ops_skill"
 	grep -qi 'do not clone' "$ops_skill"
+	grep -q 'excalidraw_canvas' "$diagram_skill"
+	grep -q 'import_scene' "$diagram_skill"
+	grep -q 'describe_scene' "$diagram_skill"
+	grep -q 'update_element' "$diagram_skill"
+	grep -q 'export_scene' "$diagram_skill"
 	grep -q '.excalidraw' "$diagram_skill"
 	grep -q 'import' "$diagram_skill"
 	grep -Eq 'backup|snapshot|copy' "$diagram_skill"

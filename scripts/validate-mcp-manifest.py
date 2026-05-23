@@ -17,7 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MANIFEST = REPO_ROOT / "ai" / "assets" / "mcps" / "MANIFEST.yaml"
 
 EXPECTED_IDS: Set[str] = {
-    "excalidraw",
+    "excalidraw_canvas",
     "context7",
     "docker",
     "grafana",

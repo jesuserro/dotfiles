@@ -182,7 +182,7 @@ def build_mcp_surface_recipes() -> Dict[str, Dict[str, Dict[str, Any]]]:
     py = f"{H}/.config/ai/runtime/.venv/bin/python"
     df = f"{H}/dotfiles/ai/runtime/mcp/servers"
     return {
-        "excalidraw": _r(
+        "excalidraw_canvas": _r(
             cursor={
                 "command": "docker",
                 "args": [

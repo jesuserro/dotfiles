@@ -7,6 +7,8 @@ description: Publish Excalidraw diagrams from editable .excalidraw masters to SV
 
 Use `.excalidraw` as the editable master format and export derivatives for documents.
 
+For agent-driven import/export, use the advanced Docker MCP named `excalidraw_canvas`. Do not use a generic `excalidraw` surface for publishing workflows unless the user explicitly requests it.
+
 ## When to Use
 
 Use this skill when preparing Excalidraw diagrams for Markdown notes, technical PDFs, or external delivery.
