@@ -166,9 +166,9 @@ Chezmoi templates are not passed raw to `shellcheck` or `shfmt`; those tools do 
 - `chezmoi`: `make install-chezmoi` (preferred, idempotent, no sudo, drops the binary at `~/.local/bin/chezmoi`). Direct fallback: `sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"` or download from https://github.com/twpayne/chezmoi/releases.
 - `sops`: `make install-sops` (preferred, idempotent, no sudo, sha256-verified, pinned version). Direct fallback: download the matching `sops-vX.Y.Z.linux.<arch>` binary from https://github.com/getsops/sops/releases and drop it at `~/.local/bin/sops`. Not in Ubuntu APT repos.
 - `uv`: `make install-uv` (preferred, idempotent, never edits rc files). Direct fallback: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- `node` / `npm`: install together through your preferred WSL/Ubuntu Node distribution
+- `node` / `npm`: install together with `make install-node-stack` (NodeSource 24.x, Node `>=22` for GitNexus)
 - `azure-cli`: `make install-azure-cli` (opt-in, Debian/Ubuntu/WSL via Microsoft's official Azure CLI repository). It is not part of `make install`; `az login` remains manual.
-- `corepack`: `corepack enable`
+- `corepack`: ships with the Node stack; validate with `corepack --version`
 - `pnpm`: `corepack prepare pnpm@latest --activate`
 - `codex`: `npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest`
 - `gitnexus`: `npm install -g --prefix="$HOME/.npm-global" gitnexus@latest`

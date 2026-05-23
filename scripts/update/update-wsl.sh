@@ -48,7 +48,7 @@ ensure_node_runtime() {
 	version="$(node --version 2>/dev/null || true)"
 	major="$(node_major "$version")"
 	if [[ -z "$major" || "$major" -lt 22 ]]; then
-		result_incident "WSL" "Node" "Node ${version:-unknown} is below required >=22; run make install-node-stack"
+		result_incident "WSL" "Node" "Node ${version:-unknown} is below required >=22; GitNexus update skipped; run make install-node-stack"
 		return 1
 	fi
 	result_ok "WSL" "Node" "runtime ${version} satisfies >=22"
@@ -62,6 +62,7 @@ run_tools() {
 	mkdir -p "$npm_prefix/bin" "$npm_prefix/lib/node_modules"
 
 	if ! ensure_node_runtime; then
+		result_warn "WSL" "GitNexus" "skipped because Node runtime is incompatible; run make install-node-stack"
 		return 0
 	fi
 	if is_truthy "${DOTFILES_UPDATE_MOCK:-}"; then

@@ -30,7 +30,29 @@ launch_windows_update() {
 		return 0
 	fi
 	if is_truthy "${DOTFILES_UPDATE_MOCK:-}"; then
-		printf 'WARN\tWindows\tWinGet\tmocked winget warning\nOK\tWindows\tWSL update\tmocked wsl --update\n' >"$WINDOWS_RESULTS"
+		case "${DOTFILES_UPDATE_MOCK_WINDOWS_RESULT:-winget-failure}" in
+		ok)
+			printf 'OK\tWindows\tWinGet\tmocked winget success\nOK\tWindows\tWSL update\tmocked wsl --update\n' >"$WINDOWS_RESULTS"
+			;;
+		winget-failure)
+			printf 'WARN\tWindows\tWinGet\tPandoc failed with installer exit code 1603\nOK\tWindows\tWSL update\tmocked wsl --update\n' >"$WINDOWS_RESULTS"
+			;;
+		wsl-failure)
+			printf 'OK\tWindows\tWinGet\tmocked winget success\nWARN\tWindows\tWSL update\twsl --update failed with exit 1\n' >"$WINDOWS_RESULTS"
+			;;
+		multi-failure)
+			printf 'WARN\tWindows\tWinGet\tPandoc failed with installer exit code 1603\nWARN\tWindows\tWSL update\twsl --update failed with exit 1\n' >"$WINDOWS_RESULTS"
+			;;
+		empty)
+			: >"$WINDOWS_RESULTS"
+			;;
+		missing)
+			rm -f "$WINDOWS_RESULTS"
+			;;
+		*)
+			printf 'WARN\tWindows\tWindows mock\tunknown DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=%s\n' "${DOTFILES_UPDATE_MOCK_WINDOWS_RESULT}" >"$WINDOWS_RESULTS"
+			;;
+		esac
 		: >"$WINDOWS_DONE"
 		result_ok "Windows" "Windows tab" "mocked result written"
 		return 0
@@ -66,8 +88,8 @@ if [[ ! -f "$WINDOWS_DONE" ]] && is_wsl && ! is_truthy "${DOTFILES_UPDATE_SKIP_W
 		sleep 2
 	done
 fi
-if [[ ! -f "$WINDOWS_RESULTS" ]]; then
-	printf 'WARN\tWindows\tWindows result\tNo structured Windows result was produced\n' >"$WINDOWS_RESULTS"
+if [[ ! -s "$WINDOWS_RESULTS" ]]; then
+	printf 'WARN\tWindows\tWindows result\tNo structured Windows result was produced before timeout (%ss); run dir: %s\n' "${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-7200}" "$RUN_DIR" >"$WINDOWS_RESULTS"
 fi
 
 section "Consolidated summary"

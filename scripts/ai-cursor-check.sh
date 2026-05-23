@@ -71,7 +71,7 @@ probe_cmd_missing_strict() {
 	if command -v "${cmd}" >/dev/null 2>&1; then
 		line OK "${label} (${cmd} in PATH)"
 	else
-		local hint="install the Node.js stack: 'make install-node-stack' (opt-in, APT-only) or 'sudo apt-get install -y nodejs npm'"
+		local hint="install the Node.js stack: 'make install-node-stack' (NodeSource 24.x, Node >=22 policy)"
 		if [[ ${strict_mode} -eq 1 ]]; then
 			line MISSING "${label} (${cmd} not in PATH; needed for several Cursor MCPs) — ${hint}"
 		else

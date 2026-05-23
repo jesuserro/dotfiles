@@ -34,6 +34,7 @@ teardown() {
 	[[ "${status}" -eq 0 ]]
 	grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw-canvas:latest' "${DOCKER_LOG}"
 	grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOCKER_LOG}"
+	! grep -q 'run -d' "${DOCKER_LOG}"
 }
 
 @test "excalidraw start uses canvas container and is idempotent-compatible" {
@@ -47,4 +48,49 @@ teardown() {
 	grep -q 'ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
 	grep -q 'ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
 	! grep -R 'mcp-servers/excalidraw-mcp/dist/index.js' "${DOTFILES_DIR}/dot_cursor" "${DOTFILES_DIR}/dot_codex" "${DOTFILES_DIR}/dot_config/opencode"
+}
+
+@test "excalidraw status tolerates missing Docker without fatal error" {
+	local empty_path="${TEST_TEMP_DIR}/empty-path"
+	mkdir -p "$empty_path"
+	ln -s "$(command -v dirname)" "${empty_path}/dirname"
+	local bash_abs
+	bash_abs="$(command -v bash)"
+	run env PATH="$empty_path" "$bash_abs" "${DOTFILES_DIR}/scripts/update/update-excalidraw.sh" status
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"Docker CLI not found"* ]]
+}
+
+@test "excalidraw stop is tolerant when canvas is already stopped" {
+	run env PATH="${FAKE_BIN}:/usr/bin:/bin" bash "${DOTFILES_DIR}/scripts/update/update-excalidraw.sh" stop
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"already stopped"* ]]
+}
+
+@test "update-wsl MCP section updates Excalidraw images without starting canvas" {
+	run env PATH="${FAKE_BIN}:/usr/bin:/bin" DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-mcp" bash "${DOTFILES_DIR}/scripts/update/update-wsl.sh" --section mcp
+	[[ "${status}" -eq 0 ]]
+	grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw-canvas:latest' "${DOCKER_LOG}"
+	grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOCKER_LOG}"
+	! grep -q 'run -d' "${DOCKER_LOG}"
+}
+
+@test "Excalidraw manifest uses Docker image and no local checkout" {
+	grep -q 'ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
+	grep -q 'EXPRESS_SERVER_URL=http://host.docker.internal:3000' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
+	! grep -q 'mcp-servers/excalidraw-mcp/dist/index.js' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
+}
+
+@test "Excalidraw skills keep Docker, editable source, export, and safety rules" {
+	local diagram_skill="${DOTFILES_DIR}/ai/assets/skills/diagrams/excalidraw/SKILL.md"
+	local ops_skill="${DOTFILES_DIR}/ai/assets/skills/ops/excalidraw-mcp-operations/SKILL.md"
+	local publish_skill="${DOTFILES_DIR}/ai/assets/skills/docs/excalidraw-publishing/SKILL.md"
+	grep -q 'make excalidraw-start' "$ops_skill"
+	grep -q 'Docker' "$ops_skill"
+	grep -qi 'do not clone' "$ops_skill"
+	grep -q '.excalidraw' "$diagram_skill"
+	grep -q 'import' "$diagram_skill"
+	grep -Eq 'backup|snapshot|copy' "$diagram_skill"
+	grep -q 'SVG' "$publish_skill"
+	grep -q '.excalidraw' "$publish_skill"
 }

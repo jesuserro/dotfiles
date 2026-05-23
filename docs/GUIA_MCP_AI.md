@@ -136,7 +136,8 @@ chezmoi --source=$HOME/dotfiles apply
 | **sequential-thinking** | `npx -y @modelcontextprotocol/server-sequential-thinking` (obtiene latest al ejecutar) |
 | **obsidian** | `npx -y @bitbonsai/mcpvault` + ruta del vault desde Chezmoi `ai.obsidian_vault_path` (ver [CHEZMOI.md](./CHEZMOI.md); plantillas vía `make ai-mcp-generate APPLY=1`) |
 | **dagster, minio, tempo, loki, prometheus, store_etl_ops** | Venv `~/.config/ai/runtime/.venv` (Chezmoi + `uv`; `make install-uv`) |
-| **context7, github, gitnexus (MCP)** | Usan `npx` — obtienen la última versión al ejecutarse |
+| **context7, sequential-thinking, obsidian** | Usan `npx` — obtienen la última versión al ejecutarse |
+| **gitnexus (MCP)** | Usa `mcp-gitnexus-launcher`; el CLI se mantiene con Node `>=22` durante `make update-wsl` |
 
 ### Docker MCP en WSL
 
@@ -165,6 +166,6 @@ imprime ayuda y termina, por lo que Cursor lo interpreta como conexión cerrada.
 - Verificar sin imprimir el valor: `grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env`
 - Flujo: `sops secrets.sops.yaml` → `chezmoi apply -i scripts`. No editar el `.env` a mano.
 
-**gitnexus CLI** se actualiza por separado: `npm install -g --prefix=~/.npm-global gitnexus@latest`
+**gitnexus CLI** se actualiza dentro de `make update-wsl`, siempre que Node cumpla `>=22`. Si `make update-check` avisa de Node incompatible, ejecuta primero `make install-node-stack`.
 
 Tras ejecutar `make update`, aplica los cambios del shell con: `source ~/.zshrc` si cambió PATH.

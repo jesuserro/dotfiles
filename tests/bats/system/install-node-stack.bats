@@ -58,6 +58,56 @@ EOF
 	[[ "${output}" != *"apt-get update"* ]]
 }
 
+@test "install-node-stack accepts Node 24 as compatible" {
+	local stub_dir="${TEST_TEMP_DIR}/bin"
+	mkdir -p "${stub_dir}"
+	cat >"${stub_dir}/node" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "v24.11.1";; *) exit 0;; esac
+EOF
+	cat >"${stub_dir}/npm" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "11.6.2";; *) exit 0;; esac
+EOF
+	cat >"${stub_dir}/npx" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "11.6.2";; *) exit 0;; esac
+EOF
+	cat >"${stub_dir}/corepack" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "0.34.0";; *) exit 0;; esac
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm" "${stub_dir}/npx" "${stub_dir}/corepack"
+
+	run env PATH="${stub_dir}:/usr/bin:/bin" bash "${INSTALL_NODE}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"v24.11.1"* ]]
+	[[ "${output}" == *"satisfies >=22"* ]]
+	[[ "${output}" == *"corepack in PATH"* ]]
+	[[ "${output}" != *"==> Installing"* ]]
+}
+
+@test "install-node-stack treats Node 20 as incompatible and points to NodeSource plan in dry-run" {
+	local stub_dir="${TEST_TEMP_DIR}/bin"
+	mkdir -p "${stub_dir}"
+	cat >"${stub_dir}/node" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "v20.18.2";; *) exit 0;; esac
+EOF
+	cat >"${stub_dir}/npm" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "11.0.0";; *) exit 0;; esac
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm"
+
+	run env DRY_RUN=1 PATH="${stub_dir}:/usr/bin:/bin" bash "${INSTALL_NODE}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"below required >=22"* ]]
+	[[ "${output}" == *"signed-by=/etc/apt/keyrings/nodesource.gpg"* ]]
+	[[ "${output}" == *"NodeSource is an external APT package source"* ]]
+	[[ "${output}" == *"Plan:"* ]]
+}
+
 @test "install-node-stack DRY_RUN with node+npm present still skips the install branch" {
 	local stub_dir="${TEST_TEMP_DIR}/bin"
 	mkdir -p "${stub_dir}"

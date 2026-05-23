@@ -37,7 +37,7 @@ PowerShell escribe logs y un resultado TSV parseable. Al final, WSL espera ese r
 
 ## Node y GitNexus
 
-La política del repo exige Node `>=22`. `make install-node-stack` instala NodeSource `24.x`, que es la línea LTS moderna verificada para este ciclo. Esto evita depender de `nvm`/`fnm` en shells no interactivos y mantiene `node`, `npm` y `npx` disponibles para Make, MCPs y GitNexus.
+La política del repo exige Node `>=22`. `make install-node-stack` instala NodeSource `24.x`, una fuente externa de paquetes APT firmada y configurada con `signed-by`. Esto evita depender de `nvm`/`fnm` en shells no interactivos y mantiene `node`, `npm` y `npx` disponibles para Make, MCPs y GitNexus.
 
 `make update-wsl` valida la versión de Node antes de actualizar GitNexus. Si el runtime no cumple el engine, el resumen muestra una incidencia visible.
 
@@ -68,8 +68,12 @@ make ai-cursor-check
 Si las plantillas MCP cambian, ejecuta:
 
 ```bash
+make ai-mcp-governance
 make ai-mcp-generate APPLY=1
-chezmoi --source="$HOME/dotfiles" apply
+chezmoi --source="$HOME/dotfiles" diff ~/.cursor/mcp.json ~/.codex/config.toml ~/.config/opencode/opencode.json
+chezmoi --source="$HOME/dotfiles" apply ~/.cursor/mcp.json ~/.codex/config.toml ~/.config/opencode/opencode.json
 ```
+
+La secuencia anterior publica solo las superficies MCP globales gestionadas por Chezmoi. Para materializar otros cambios de dotfiles no relacionados con MCPs, revisa el diff de Chezmoi antes de aplicar un `chezmoi apply` general.
 
 Un checkout histórico en `~/mcp-servers/excalidraw-mcp` queda obsoleto. No se borra automáticamente; puedes retirarlo manualmente cuando hayas validado la migración Docker.

@@ -28,6 +28,10 @@ source "${SCRIPT_DIR}/lib/install_common.sh"
 NODE_MAJOR_REQUIRED="${NODE_MAJOR_REQUIRED:-22}"
 NODE_MAJOR_TARGET="${NODE_MAJOR_TARGET:-24}"
 APT_PACKAGES=(nodejs)
+NODESOURCE_KEY_URL="${NODESOURCE_KEY_URL:-https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key}"
+NODESOURCE_KEYRING="${NODESOURCE_KEYRING:-/etc/apt/keyrings/nodesource.gpg}"
+NODESOURCE_LIST="${NODESOURCE_LIST:-/etc/apt/sources.list.d/nodesource.list}"
+NODESOURCE_REPO="https://deb.nodesource.com/node_${NODE_MAJOR_TARGET}.x"
 
 dry() {
 	install_is_truthy "${DRY_RUN:-}"
@@ -62,21 +66,31 @@ print_already_present() {
 	else
 		install_label WARN "npx not in PATH despite node+npm being present (unusual; check 'apt list --installed npm')"
 	fi
+	if command -v corepack >/dev/null 2>&1; then
+		install_label OK "corepack in PATH at $(command -v corepack)"
+	else
+		install_label WARN "corepack not in PATH; pnpm updates will be skipped until corepack is available"
+	fi
 }
 
 print_dry_plan() {
 	echo ""
 	echo "[DRY_RUN] Plan:"
-	echo "  1. install NodeSource signing key and apt source for ${NODE_MAJOR_TARGET}.x"
-	echo "  2. sudo apt-get update"
-	echo "  3. sudo apt-get install -y ${APT_PACKAGES[*]}"
-	echo "  4. Verify with:"
+	echo "  1. verify sudo, apt-get, curl and gpg are available"
+	echo "  2. install/update prerequisite packages: ca-certificates curl gnupg"
+	echo "  3. install NodeSource signing key: ${NODESOURCE_KEY_URL}"
+	echo "  4. write apt source with signed-by=${NODESOURCE_KEYRING}"
+	echo "  5. sudo apt-get update"
+	echo "  6. sudo apt-get install -y ${APT_PACKAGES[*]}"
+	echo "  7. Verify with:"
 	echo "       node --version"
 	echo "       npm --version"
 	echo "       npx --version"
+	echo "       corepack --version"
 	echo ""
 	echo "[DRY_RUN] Notes:"
 	echo "  - This script uses NodeSource because Ubuntu's stock Node may lag below GitNexus engines."
+	echo "  - NodeSource is an external APT package source; packages are pinned through its signed repository file."
 	echo "  - No nvm/fnm shell initialization is required."
 }
 
@@ -88,18 +102,54 @@ ensure_debian_like() {
 	fi
 }
 
+require_command() {
+	local cmd="$1"
+	if ! command -v "$cmd" >/dev/null 2>&1; then
+		install_label FAIL "$cmd is required for install-node-stack"
+		return 1
+	fi
+}
+
+configure_nodesource_repo() {
+	local tmp_key tmp_ring repo_line
+	tmp_key="$(mktemp)"
+	tmp_ring="$(mktemp)"
+	repo_line="deb [signed-by=${NODESOURCE_KEYRING}] ${NODESOURCE_REPO} nodistro main"
+	trap 'rm -f "$tmp_key" "$tmp_ring"' RETURN
+
+	if ! curl -fsSL "$NODESOURCE_KEY_URL" -o "$tmp_key"; then
+		install_label FAIL "could not download NodeSource signing key from ${NODESOURCE_KEY_URL}"
+		return 1
+	fi
+	if ! gpg --dearmor --yes -o "$tmp_ring" "$tmp_key"; then
+		install_label FAIL "could not convert NodeSource signing key to keyring format"
+		return 1
+	fi
+	if ! sudo install -d -m 0755 "$(dirname "$NODESOURCE_KEYRING")"; then
+		install_label FAIL "could not create $(dirname "$NODESOURCE_KEYRING")"
+		return 1
+	fi
+	if ! sudo install -m 0644 "$tmp_ring" "$NODESOURCE_KEYRING"; then
+		install_label FAIL "could not install NodeSource keyring at ${NODESOURCE_KEYRING}"
+		return 1
+	fi
+	if ! printf '%s\n' "$repo_line" | sudo tee "$NODESOURCE_LIST" >/dev/null; then
+		install_label FAIL "could not write NodeSource apt source at ${NODESOURCE_LIST}"
+		return 1
+	fi
+	install_label OK "NodeSource ${NODE_MAJOR_TARGET}.x repository configured with signed-by keyring"
+}
+
 apt_install() {
 	echo ""
 	echo "==> Installing ${APT_PACKAGES[*]} via NodeSource ${NODE_MAJOR_TARGET}.x APT"
-	if ! command -v sudo >/dev/null 2>&1; then
-		install_label FAIL "sudo is required to run 'apt-get install'."
-		return 1
-	fi
+	require_command sudo
+	require_command apt-get
 	sudo apt-get update
 	sudo apt-get install -y ca-certificates curl gnupg
-	sudo install -d -m 0755 /etc/apt/keyrings
-	curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-	echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR_TARGET}.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list >/dev/null
+	require_command curl
+	require_command gpg
+	configure_nodesource_repo
 	sudo apt-get update
 	sudo apt-get install -y "${APT_PACKAGES[@]}"
 }
@@ -120,6 +170,11 @@ post_install_report() {
 			install_label OK "node ${node_v}, npm $(npm --version 2>/dev/null), npx $(npx --version 2>/dev/null) — runtime ready for GitNexus and npx-based MCPs."
 		else
 			install_label WARN "node ${node_v:-unknown} is still below required >=${NODE_MAJOR_REQUIRED}; check NodeSource apt priority."
+		fi
+		if command -v corepack >/dev/null 2>&1; then
+			install_label OK "corepack $(corepack --version 2>/dev/null || echo version unknown) available for pnpm management"
+		else
+			install_label WARN "corepack not found after Node install; pnpm updates will be skipped"
 		fi
 		return 0
 	fi

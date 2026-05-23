@@ -58,19 +58,19 @@ def _action_for_package(package):
             "command": "make install-uv",
         },
         "node": {
-            "kind": "manual",
-            "summary": "Install Node.js with your preferred WSL/Ubuntu method so that node and npm are both available.",
-            "command": "Use your preferred Node installer for WSL/Ubuntu (for example nvm or NodeSource).",
+            "kind": "installer",
+            "summary": "Install Node.js >=22 for GitNexus and AI tooling through the repo's NodeSource 24.x helper.",
+            "command": "make install-node-stack",
         },
         "npm": {
-            "kind": "manual",
-            "summary": "npm should arrive with Node.js; reconcile Node first if npm is missing.",
-            "command": "Use your preferred Node installer for WSL/Ubuntu (for example nvm or NodeSource).",
+            "kind": "installer",
+            "summary": "npm should arrive with Node.js; reconcile Node first through the repo's NodeSource 24.x helper.",
+            "command": "make install-node-stack",
         },
         "corepack": {
-            "kind": "manual",
-            "summary": "Enable Corepack after Node.js is installed.",
-            "command": "corepack enable",
+            "kind": "installer",
+            "summary": "Corepack should arrive with the Node.js stack; validate after running the Node installer.",
+            "command": "make install-node-stack && corepack --version",
         },
         "pnpm": {
             "kind": "manual",

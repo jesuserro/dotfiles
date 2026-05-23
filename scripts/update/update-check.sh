@@ -28,10 +28,10 @@ if command -v node >/dev/null 2>&1; then
 	if [[ -n "$major" && "$major" -ge 22 ]]; then
 		status OK "Node ${version} satisfies >=22"
 	else
-		status WARN "Node ${version:-unknown} is below required >=22; run make install-node-stack"
+		status WARN "Node ${version:-unknown} is below required >=22 for GitNexus. Ejecuta: make install-node-stack"
 	fi
 else
-	status WARN "node missing; run make install-node-stack"
+	status WARN "node missing for GitNexus. Ejecuta: make install-node-stack"
 fi
 if command -v docker >/dev/null 2>&1 || command -v docker.exe >/dev/null 2>&1; then
 	status OK "Docker CLI available for Excalidraw image operations"

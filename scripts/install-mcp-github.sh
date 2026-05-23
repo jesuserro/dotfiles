@@ -82,7 +82,7 @@ export GITHUB_PERSONAL_ACCESS_TOKEN="${token}"
 
 if ! command -v npx >/dev/null 2>&1; then
 	echo "codex-mcp-github: npx not in PATH. Install the Node.js stack first:" >&2
-	echo "                  make install-node-stack   # or: sudo apt-get install -y nodejs npm" >&2
+	echo "                  make install-node-stack   # NodeSource 24.x, Node >=22 policy" >&2
 	exit 127
 fi
 

@@ -39,8 +39,11 @@ mcps:
       Canonical runtime is yctimlin/mcp_excalidraw via Docker, launched
       ephemerally with `docker run -i --rm` by MCP clients. The canvas runs
       separately on demand with `make excalidraw-start` using
-      ghcr.io/yctimlin/mcp_excalidraw-canvas:latest. Do not clone, npm install,
-      pnpm install, or build a local dist/index.js for normal operation.
+      ghcr.io/yctimlin/mcp_excalidraw-canvas:latest; clients use
+      ghcr.io/yctimlin/mcp_excalidraw:latest with
+      EXPRESS_SERVER_URL=http://host.docker.internal:3000 and
+      ENABLE_CANVAS_SYNC=true. Do not clone, npm install, pnpm install, or
+      build a local dist/index.js for normal operation.
 
   - id: context7
     display_name: Context7

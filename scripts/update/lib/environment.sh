@@ -10,6 +10,9 @@ is_truthy() {
 }
 
 is_wsl() {
+	if is_truthy "${DOTFILES_FORCE_WSL:-}"; then
+		return 0
+	fi
 	[[ -r /proc/version ]] && grep -qi microsoft /proc/version
 }
 
