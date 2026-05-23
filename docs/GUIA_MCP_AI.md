@@ -121,13 +121,13 @@ chezmoi --source=$HOME/dotfiles apply
 
 ---
 
-## 7. Actualización de MCPs con `ups`
+## 7. Actualización de MCPs con `make update`
 
-El alias `ups` incluye una sección que actualiza los servidores MCP:
+`make update` incluye una sección que actualiza runtimes MCP sin aplicar plantillas Chezmoi:
 
-| MCP / Origen | Qué hace `ups` |
+| MCP / Origen | Qué hace `make update` |
 |--------------|----------------|
-| **excalidraw** | `~/mcp-servers/excalidraw-mcp` — `git pull` + `pnpm install` + `pnpm run build` |
+| **excalidraw_canvas** | `make excalidraw-update` — pull de `ghcr.io/yctimlin/mcp_excalidraw` y canvas; no arranca canvas |
 | **docker** | Docker Desktop MCP Gateway oficial: `docker.exe mcp gateway run` desde WSL |
 | **postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` (solo si existe) |
 | **fetch** | `uv tool install mcp-server-fetch` (instala o actualiza) |
@@ -136,7 +136,8 @@ El alias `ups` incluye una sección que actualiza los servidores MCP:
 | **sequential-thinking** | `npx -y @modelcontextprotocol/server-sequential-thinking` (obtiene latest al ejecutar) |
 | **obsidian** | `npx -y @bitbonsai/mcpvault` + ruta del vault desde Chezmoi `ai.obsidian_vault_path` (ver [CHEZMOI.md](./CHEZMOI.md); plantillas vía `make ai-mcp-generate APPLY=1`) |
 | **dagster, minio, tempo, loki, prometheus, store_etl_ops** | Venv `~/.config/ai/runtime/.venv` (Chezmoi + `uv`; `make install-uv`) |
-| **context7, github, gitnexus (MCP)** | Usan `npx` — obtienen la última versión al ejecutarse |
+| **context7, sequential-thinking, obsidian** | Usan `npx` — obtienen la última versión al ejecutarse |
+| **gitnexus (MCP)** | Usa `mcp-gitnexus-launcher`; el CLI se mantiene con Node `>=22` durante `make update-wsl` |
 
 ### Docker MCP en WSL
 
@@ -156,7 +157,7 @@ timeout 8s docker.exe mcp gateway run
 El runtime `npx -y @0xshariq/docker-mcp-server` queda como legacy descartado:
 imprime ayuda y termina, por lo que Cursor lo interpreta como conexión cerrada.
 
-**Requisito operativo:** Docker Desktop en Windows debe estar **en ejecución**. `ups` actualiza otros MCPs pero no sustituye tener Desktop abierto.
+**Requisito operativo:** Docker Desktop en Windows debe estar **en ejecución**. `make update` actualiza otros MCPs pero no sustituye tener Desktop abierto.
 
 ### Postgres MCP
 
@@ -165,6 +166,31 @@ imprime ayuda y termina, por lo que Cursor lo interpreta como conexión cerrada.
 - Verificar sin imprimir el valor: `grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env`
 - Flujo: `sops secrets.sops.yaml` → `chezmoi apply -i scripts`. No editar el `.env` a mano.
 
-**gitnexus CLI** se actualiza por separado: `npm install -g --prefix=~/.npm-global gitnexus@latest`
+**gitnexus CLI** se actualiza dentro de `make update-wsl`, siempre que Node cumpla `>=22`. Si `make update-check` avisa de Node incompatible, ejecuta primero `make install-node-stack`.
 
-Tras ejecutar `ups`, aplica los cambios del shell con: `source ~/.zshrc`
+Tras ejecutar `make update`, aplica los cambios del shell con: `source ~/.zshrc` si cambió PATH.
+
+### Excalidraw: rutas y formatos para agentes
+
+| Propósito | Formato |
+|-----------|---------|
+| Dibujo nativo Obsidian | `.excalidraw.md` |
+| Sidecar interoperable para agentes | `.excalidraw` |
+| Salida documental preferida | `.svg` |
+
+El MCP `excalidraw_canvas` monta solo `/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw` dentro del contenedor como `/workspace/excalidraw` y publica `EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw`.
+
+No llames `import_scene`, `export_scene` ni `export_to_image` con rutas WSL `/mnt/c/...`. Usa rutas internas del contenedor, por ejemplo:
+
+```text
+/workspace/excalidraw/mcp-test/drawing-input.excalidraw
+/workspace/excalidraw/mcp-test/drawing-canvas-modified.excalidraw
+/workspace/excalidraw/mcp-test/drawing-canvas-modified.svg
+```
+
+Reglas de seguridad:
+
+- Importa el sidecar `.excalidraw`, no el `.excalidraw.md`.
+- Exporta primero a un archivo nuevo salvo petición expresa de sobrescritura.
+- No modifiques archivos fuera de `/workspace/excalidraw`.
+- Para SVG o capturas, el canvas debe estar abierto en `http://127.0.0.1:3210`.

@@ -1,115 +1,42 @@
 ---
-name: dotfiles-ups-workflow
-description: Guides development and extension of the ups system update alias. Use when working with the ups command, editing aliases for system updates, adding new MCP servers to the update flow, or extending the dotfiles update workflow.
+name: dotfiles-update-workflow
+description: Guides development and operation of the `make update` maintenance workflow in dotfiles, including Windows/WSL coordination, Node/GitNexus, OpenCode, MCP images, and project separation.
 ---
 
-# Dotfiles UPS Workflow
+# Dotfiles Update Workflow
 
-Guía para desarrollar y extender el alias `ups` de actualización integral del sistema.
+Use this skill when working on or running the dotfiles maintenance flow.
 
-## `ups` vs Chezmoi (agentes)
+## When to Use
 
-| `ups` sí | `ups` no |
-|----------|----------|
-| APT, npm global, OMZ, builds excalidraw, pip en venv AI, `npm update` en `~/.config/mcp/servers/*` | `chezmoi apply` |
-| Mantener herramientas del sistema | Regenerar `~/.config/mcp-secrets.env` |
-| | Aplicar plantillas MCP/skills del repo a HOME |
+Use this skill when changing or diagnosing the dotfiles `make update` workflow, its scripts, or its public Make targets.
 
-Tras **`git pull`** con cambios en **`dot_*`**, **`secrets.sops.yaml`**, **`MANIFEST.yaml`** o plantillas MCP: el agente debe recomendar **`chezmoi --source=$HOME/dotfiles apply`** (o `make install-dotfiles DOTFILES_APPLY=1`), no solo `ups`.
+## Public Interface
 
-Operación canónica completa: skill **`dotfiles-operations`**.
+- `make update` — daily full flow from WSL, with Windows PowerShell tab plus WSL execution and consolidated summary
+- `make update-windows` — WinGet plus safe `wsl --update`
+- `make update-wsl` — APT, Node/AI tools, OpenCode, shell, uv, MCPs, services
+- `make update-projects` — personal repositories such as `jesuserro` and RenderCV
+- `make update-check` — non-mutating readiness check
 
-### MCP troubleshooting (no arreglar solo con `ups`)
+Internal targets such as `update-apt`, `update-tools`, `update-shell`, `update-mcp`, and `update-services` delegate to scripts. Keep logic in `scripts/update/`, not in Make recipes.
 
-- **Docker MCP:** requiere **Docker Desktop abierto** en Windows; gateway vía `docker.exe mcp gateway run`. Si Desktop está cerrado, `npm update` no ayuda.
-- **Postgres MCP:** error **`POSTGRES_DSN not set`** → `mcp.postgres_dsn` vacío en `secrets.sops.yaml`; flujo `sops` + `chezmoi apply -i scripts`. No editar `~/.config/mcp-secrets.env` a mano.
+## Rules
 
-## Ubicación y carga
+- Do not recreate the removed `ups` command or compatibility aliases.
+- Do not run `wsl --shutdown` from the update flow.
+- Keep partial failures non-fatal: record warnings/incidents and continue.
+- Treat orchestration failures as fatal only when the flow cannot actually start.
+- Keep the personal `jesuserro` project and RenderCV under `make update-projects`, never daily `make update`.
+- Preserve OpenCode daily updates through the official installer.
+- Validate Node `>=22` before GitNexus updates; NodeSource `24.x` is the workstation baseline.
 
-- **Definición:** `~/dotfiles/aliases` (función `ups()` y helpers `_ups_*`)
-- **Carga:** Via `~/.zshrc` (symlink Chezmoi → `~/dotfiles/zshrc`) → `zsh/90-local.zsh` → `~/.aliases` (symlink Chezmoi → `~/dotfiles/aliases`)
-- **Documentación:** [docs/UPS.md](../../../docs/UPS.md)
+## Windows/WSL Result Contract
 
-## Estructura de la función ups()
+Each full run creates a run directory with logs and TSV result files. PowerShell writes Windows results; WSL reads them before printing the final summary. WinGet package failures must appear as incidents even if the PowerShell tab launched successfully.
 
-Orden de ejecución (no alterar sin motivo):
+## Excalidraw
 
-1. **🔐 Autenticación sudo** — `sudo -v`
-2. **📦 APT** — `apt-get update`, `apt-get upgrade`, `apt-get autoremove`
-3. **🧹 Limpieza** — (parte de APT)
-4. **📚 NPM** — `npm update -g codex`
-5. **⚡ Oh My Zsh** — `omz update`, `upgrade_oh_my_zsh_custom`
-6. **🐍 uv (Python)** — `uv self update` solo si `uv` ya existe en `$HOME/.local/bin/uv`. Si falta, info y skip; instalar con `make install-uv` (no se hace desde `ups`).
-7. **🔌 MCP** — excalidraw, npm servers, uv fetch, Python venv
-8. **🔄 Servicios** — `restart_apache` (Apache + MySQL)
+Excalidraw updates belong in the MCP block as Docker image pulls only. `make update` may run `make excalidraw-update`, but it must not start the canvas.
 
-## Convenciones de código
-
-### Variables y funciones auxiliares
-
-- Prefijo `_ups_` para todo lo interno (colores, helpers).
-- Colores: `_ups_green`, `_ups_yellow`, `_ups_red`, `_ups_blue`, `_ups_cyan`, `_ups_magenta`, `_ups_bold`, `_ups_nc`.
-- Helpers: `_ups_section()`, `_ups_success()`, `_ups_error()`, `_ups_info()`, `_ups_warning()`, `_ups_progress()`.
-
-### Manejo de errores
-
-- Cada sección usa `if ...; then ... else ... fi`.
-- Errores críticos: `((errors++))` y `error_messages+=("mensaje")`.
-- Fallos no críticos: `_ups_warning()` sin incrementar `errors`.
-- Si una sección falla, el proceso continúa. El resumen final lista todos los errores.
-
-### Patrón para añadir una nueva sección
-
-```bash
-_ups_section "🔌 Título de la sección"
-_ups_progress "Descripción del paso..."
-local mcp_start=$(date +%s)
-if (comando_a_ejecutar); then
-  local mcp_time=$(($(date +%s) - mcp_start))
-  _ups_success "Mensaje de éxito (${mcp_time}s)"
-else
-  _ups_warning "Mensaje de fallo (o _ups_error si es crítico)"
-  ((errors++))
-  error_messages+=("Descripción del error")
-fi
-```
-
-## Servidores MCP actualizados por ups
-
-| Origen | Ruta / Comando |
-|--------|----------------|
-| excalidraw | `~/mcp-servers/excalidraw-mcp` — git pull + pnpm install + build |
-| docker | Docker Desktop MCP Gateway — se actualiza con Docker Desktop, no solo npm |
-| postgres (npm dirs) | `~/.config/mcp/servers/*/` — `npm update` (no sustituye DSN vacío en SOPS) |
-| fetch | `uv tool install mcp-server-fetch` |
-| Python (dagster, minio, etc.) | Chezmoi sincroniza `~/.config/ai/runtime/.venv` con `uv` y hash de `ai/runtime/mcp/requirements.txt` |
-| context7, github | npx — no requieren actualización |
-
-## Política transversal uv first / pip fallback
-
-Cuando añadas/modifiques bloques en `ups` o documentación relacionada:
-
-- **Prefiere `uv`** (`uv venv`, `uv pip install`, `uv tool install`, `uvx`, `uv self update`) para escenarios Python nuevos y para el runtime AI gestionado por Chezmoi.
-- **No migres `pip`/`pipx`/`python3 -m venv`** existentes sin tarea explícita: pueden romper venvs legados.
-- **Runtime AI** (`~/.config/ai/runtime/.venv`) se gestiona con `uv` desde Chezmoi: no volver a `pip` sin tarea explícita.
-- **`zsh/30-python.zsh`** (alias `pip`, `pyreq`) sigue con `pip`: no tocar.
-- **`uv` no se instala desde `ups`**: si falta, sólo info y sugerencia de `make install-uv`.
-
-## Añadir un nuevo MCP a la sección de ups
-
-1. Verificar si el MCP existe en la ruta esperada.
-2. Añadir el bloque siguiendo el patrón de `_ups_section` + `_ups_progress` + condicional.
-3. Actualizar [docs/UPS.md](../../../docs/UPS.md) en la tabla de servidores MCP.
-4. Actualizar [docs/GUIA_MCP_AI.md](../../../docs/GUIA_MCP_AI.md) sección 7 si aplica.
-
-## Termux
-
-En Termux, `ups` es un alias diferente: `pkg update -y && pkg upgrade -y && omz update && upgrade_oh_my_zsh_custom`. Ver `termux/install.sh`.
-
-## Checklist al modificar ups
-
-- [ ] Mantener convenciones `_ups_*`
-- [ ] Usar helpers para output (no `echo` directo con colores)
-- [ ] Errores críticos incrementan `errors` y añaden a `error_messages`
-- [ ] Actualizar docs/UPS.md si cambia la estructura
-- [ ] Probar en entorno real antes de commit
+For Excalidraw operational details, use `ops/excalidraw-mcp-operations/`.

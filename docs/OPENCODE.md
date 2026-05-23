@@ -32,7 +32,7 @@ Available in all projects, enabled by default:
 - `sequential-thinking` - Structured reasoning tool
 
 ### Layer 2: Visual / Architecture
-- `excalidraw` - Diagram creation (enabled by default)
+- `excalidraw_canvas` - Advanced Excalidraw canvas editing via Docker (enabled by default)
 
 ### Layer 3: Knowledge / Semantic
 - `gitnexus` - Code understanding and documentation generation

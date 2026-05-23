@@ -12,7 +12,7 @@ Guía humana principal para operar este repositorio en Ubuntu/WSL2. Para instala
 |------|--------------|-----------------|
 | **1. Bootstrap** | `make install*`, `make deps-*` | Paquetes APT, diagnóstico, opt-in (chezmoi, sops, zsh stack runtime) |
 | **2. Materialización** | `chezmoi status` / `diff` / `apply` | MCPs, symlinks RC, secretos generados, launchers, AI runtime |
-| **3. Mantenimiento** | `ups`, checks | APT, npm, OMZ, builds MCP, venv Python — **no** plantillas Chezmoi |
+| **3. Mantenimiento** | `make update`, checks | Windows/WSL, APT, npm, OMZ, MCPs Docker, venv Python — **no** plantillas Chezmoi |
 
 ### Regla de oro: `source` vs `chezmoi apply`
 
@@ -21,7 +21,7 @@ Guía humana principal para operar este repositorio en Ubuntu/WSL2. Para instala
 | `~/dotfiles/zshrc`, `aliases`, módulos en `zsh/` | Editar en el repo → **`source ~/.zshrc`** (symlinks ya apuntan al repo) |
 | Plantillas `dot_*`, `secrets.sops.yaml`, skills/commands en repo gestionados por Chezmoi | **`chezmoi --source=$HOME/dotfiles apply`** |
 | Secretos cifrados | **`sops secrets.sops.yaml`** → regenerar env (apply o `apply -i scripts`) |
-| Herramientas del sistema (APT, npm global, OMZ, builds) | **`ups`** (no sustituye Chezmoi) |
+| Herramientas del sistema (Windows/WSL, APT, npm global, OMZ, MCPs) | **`make update`** (no sustituye Chezmoi) |
 
 **No edites a mano:** `~/.config/mcp-secrets.env` (se regenera). **No uses** `sops -d` a stdout.
 
@@ -76,7 +76,7 @@ make ai-cursor-check
 make ai-mcp-governance    # si tocaste MANIFEST o plantillas MCP
 ```
 
-`ups` es opcional y separado: actualiza sistema/herramientas, no aplica cambios de plantillas en HOME.
+`make update` es opcional y separado: actualiza sistema/herramientas, no aplica cambios de plantillas en HOME.
 
 ---
 
@@ -87,7 +87,7 @@ Los RC files en HOME son **symlinks** al repo:
 | HOME | Repo |
 |------|------|
 | `~/.zshrc` | `~/dotfiles/zshrc` |
-| `~/.aliases` | `~/dotfiles/aliases` (`ups` vive aquí) |
+| `~/.aliases` | `~/dotfiles/aliases` |
 | `~/.p10k.zsh` | `~/dotfiles/powerlevel10k/p10k.zsh` |
 
 - **Editar:** ficheros bajo `~/dotfiles/`, no `~/.zshrc` directamente.
@@ -150,7 +150,7 @@ Reinicia Cursor/Codex tras cambios en `mcp.json`.
 
 - Config: `docker.exe` + `mcp gateway run` (Docker Desktop MCP Gateway).
 - **Docker Desktop debe estar abierto** en Windows; desde WSL usa `docker.exe`.
-- Si falla con `Docker Desktop is not running`, abre Docker Desktop — `ups` no lo arregla.
+- Si falla con `Docker Desktop is not running`, abre Docker Desktop — `make update` no lo arregla.
 
 ```bash
 docker.exe mcp version
@@ -165,9 +165,9 @@ docker.exe mcp gateway run --dry-run --verbose
 
 ---
 
-## Uso de `ups`
+## Uso de `make update`
 
-`ups` actualiza: winget (WSL), APT, npm global, OMZ, uv, builds excalidraw, pip en venv AI, etc.
+`make update` actualiza: WinGet en PowerShell, WSL con `wsl --update`, APT, npm global, OpenCode, OMZ, uv, imágenes Docker Excalidraw y runtime MCP.
 
 **No hace:**
 
@@ -177,9 +177,9 @@ docker.exe mcp gateway run --dry-run --verbose
 - Arreglar Docker MCP con Desktop cerrado
 - Rellenar `POSTGRES_DSN` vacío
 
-Tras `ups`, recarga la shell: `source ~/.zshrc`. Si cambiaste plantillas o secretos en el repo, usa `chezmoi apply` aparte.
+Tras `make update`, recarga la shell si cambió PATH: `source ~/.zshrc`. Si cambiaste plantillas o secretos en el repo, usa `chezmoi apply` aparte.
 
-Ver [UPS.md](UPS.md).
+Ver [UPDATE.md](UPDATE.md).
 
 ---
 
@@ -232,7 +232,7 @@ Detalle: [CHEZMOI.md](CHEZMOI.md).
 | `chezmoi apply` | Sobrescribe MCPs, RC, regenera secretos |
 | `ZSH_RC_APPLY=1 chezmoi apply` | Backup y reemplazo de RC custom |
 | `make ai-mcp-generate APPLY=1` | Reescribe plantillas MCP en el repo |
-| `ups` | sudo, upgrade APT, npm global |
+| `make update` | PowerShell/WinGet, sudo, upgrade APT, npm global |
 | `sops -d secrets.sops.yaml` | Imprime secretos en stdout — evitar |
 
 ---
@@ -252,7 +252,7 @@ make ai-mcp-generate APPLY=1
 make install-check
 make deps-check
 make test-fast
-ups
+make update
 docker.exe mcp version
 grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env
 make install-dotfiles DOTFILES_APPLY=1

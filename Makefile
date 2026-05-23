@@ -3,6 +3,7 @@
 
 include tests/Makefile.tests
 include install.mk
+include update.mk
 
 .DEFAULT_GOAL := help
 

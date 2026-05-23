@@ -11,7 +11,7 @@ Este documento describe la migración inicial de la gestión de MCPs (Cursor/Cod
 ## Restricciones (alcance original de la migración MCP)
 
 - **Solo** se gestionaban con Chezmoi:
-  - `~/.cursor/mcp.json` (MCPs globales: excalidraw, context7, docker, github, fetch)
+  - `~/.cursor/mcp.json` (MCPs globales: excalidraw_canvas, context7, docker, github, fetch)
   - `~/.codex/config.toml`
   - Symlink `~/.secrets/codex.env` → `~/.config/store-etl/secrets.env`
 - Los servidores MCP Python están en `~/dotfiles/ai/runtime/mcp/servers/**`; runtime en `~/.config/ai/runtime/`.
@@ -27,7 +27,7 @@ Para requisitos, uso de Chezmoi, configuración Age+SOPS y estructura de secreto
 
 ## MCPs globales vs proyecto Store ETL
 
-- **Global** (`~/.cursor/mcp.json`): excalidraw, context7, docker, github, fetch. Cualquier repo solo ve estos.
+- **Global** (`~/.cursor/mcp.json`): excalidraw_canvas, context7, docker, github, fetch. Cualquier repo solo ve estos.
 - **Store ETL** (`/home/jesus/proyectos/store-etl/.cursor/mcp.json`): postgres, trino, dagster, minio, tempo, loki, prometheus, store_etl_ops. Solo al abrir Cursor en ese proyecto.
 
 ---

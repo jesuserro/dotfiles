@@ -10,7 +10,7 @@
 
 This repo integrates multiple MCP (Model Context Protocol) servers across different AI clients (OpenCode, Cursor, Codex). The current implementation includes:
 
-- **Core Workstation MCPs**: `docker`, `github`, `fetch`, `context7`, `excalidraw`, `playwright`, `filesystem`, `git`, `sequential-thinking`
+- **Core Workstation MCPs**: `docker`, `github`, `fetch`, `context7`, `excalidraw_canvas`, `playwright`, `filesystem`, `git`, `sequential-thinking`
 - **Knowledge/Semantic MCPs**: `gitnexus`
 - **Platform Specialized MCPs**: `dagster`, `loki`, `minio`, `prometheus`, `tempo`, `store_etl_ops`
 - **Database MCPs**: `postgres`, `trino`

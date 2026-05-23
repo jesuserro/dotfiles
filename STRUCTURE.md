@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-23 12:42:44
+**Generated:** 2026-05-24 00:39:13
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -13,21 +13,6 @@
 │   ├── 📄 run_after_13_link_git_ai_wrapper.sh.tmpl
 │   ├── 📄 run_after_14_link_prompt_launchers.sh.tmpl
 │   └── 📄 run_before_00_backup_rc_files.sh.tmpl
-├── 📁 .claude
-│   └── 📁 skills
-│       └── 📁 gitnexus
-│           ├── 📁 gitnexus-cli
-│           │   └── 📝 SKILL.md
-│           ├── 📁 gitnexus-debugging
-│           │   └── 📝 SKILL.md
-│           ├── 📁 gitnexus-exploring
-│           │   └── 📝 SKILL.md
-│           ├── 📁 gitnexus-guide
-│           │   └── 📝 SKILL.md
-│           ├── 📁 gitnexus-impact-analysis
-│           │   └── 📝 SKILL.md
-│           └── 📁 gitnexus-refactoring
-│               └── 📝 SKILL.md
 ├── 📁 .cursor
 │   ├── 📁 plans
 │   └── 📁 rules
@@ -650,6 +635,8 @@
 │   │       ├── 📁 docs
 │   │       │   ├── 📁 adr-writer
 │   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 excalidraw-publishing
+│   │       │   │   └── 📝 SKILL.md
 │   │       │   └── 📁 plans-and-notepads-naming
 │   │       │       └── 📝 SKILL.md
 │   │       ├── 📁 etl
@@ -685,6 +672,8 @@
 │   │       │   ├── 📁 dotfiles-operations
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 dotfiles-skill-registration
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   ├── 📁 excalidraw-mcp-operations
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 grill-plan
 │   │       │   │   ├── 📁 templates
@@ -807,7 +796,7 @@
 │   ├── 📝 SYSTEM_DEPENDENCIES.md
 │   ├── 📝 TESTING.md
 │   ├── 📝 TOKEN_GITHUB_GH.md
-│   ├── 📝 UPS.md
+│   ├── 📝 UPDATE.md
 │   ├── 📝 VAULT_PROJECT_WIKI_FLOW.md
 │   └── 📝 VERIFICAR_MCP_STORE_ETL.md
 ├── 📁 dot_codex
@@ -845,6 +834,7 @@
 │   ├── 📝 branch_feature_10-adding-agent-authory.md
 │   ├── 📝 branch_feature_11-adding-prompt-launcher.md
 │   ├── 📝 branch_feature_12-adding-make-install.md
+│   ├── 📝 branch_feature_15-adding-refactors-and-enhancements.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
@@ -906,6 +896,19 @@
 │   │   ├── 🔧 install_common.sh
 │   │   ├── 🔧 prompt-vault-common.sh
 │   │   └── 🐍 system_deps.py
+│   ├── 📁 update
+│   │   ├── 📁 lib
+│   │   │   ├── 🔧 environment.sh
+│   │   │   ├── 🔧 logging.sh
+│   │   │   └── 🔧 results.sh
+│   │   ├── 🐍 parse-winget-log.py
+│   │   ├── 🔧 update-check.sh
+│   │   ├── 🔧 update-excalidraw.sh
+│   │   ├── 🔧 update-projects.sh
+│   │   ├── 🪟 update-windows.ps1
+│   │   ├── 🔧 update-windows.sh
+│   │   ├── 🔧 update-wsl.sh
+│   │   └── 🔧 update.sh
 │   ├── 🔧 agent-validate-changed.sh
 │   ├── 🔧 ai-cursor-check.sh
 │   ├── 🔧 check-azure-tools.sh
@@ -949,7 +952,6 @@
 │   ├── 🔧 install-fonts.sh
 │   ├── 🔧 install-git-ai-wrapper.sh
 │   ├── 🔧 install-gitnexus.sh
-│   ├── 🔧 install-mcp-excalidraw.sh
 │   ├── 🔧 install-mcp-github.sh
 │   ├── 🔧 install-node-stack.sh
 │   ├── 🔧 install-sops.sh
@@ -1002,22 +1004,22 @@
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
 │   │   │   ├── 📄 dry-run-guard.bats
+│   │   │   ├── 📄 excalidraw-docker.bats
 │   │   │   ├── 📄 install-azure-cli.bats
 │   │   │   ├── 📄 install-chezmoi.bats
 │   │   │   ├── 📄 install-dotfiles.bats
 │   │   │   ├── 📄 install-fonts.bats
-│   │   │   ├── 📄 install-mcp-excalidraw.bats
 │   │   │   ├── 📄 install-mcp-github.bats
 │   │   │   ├── 📄 install-node-stack.bats
 │   │   │   ├── 📄 install-sops.bats
 │   │   │   ├── 📄 install-uv.bats
 │   │   │   ├── 📄 mcp-manifest.bats
 │   │   │   ├── 📄 mcp-render-drift.bats
-│   │   │   └── 📄 system-deps.bats
+│   │   │   ├── 📄 system-deps.bats
+│   │   │   └── 📄 update-workflow.bats
 │   │   ├── 📁 zsh
 │   │   │   ├── 📄 p10k_cache_keys.bats
-│   │   │   ├── 📄 rc_symlinks.bats
-│   │   │   └── 📄 ups_mcp_glob.bats
+│   │   │   └── 📄 rc_symlinks.bats
 │   │   └── 📄 git-ai-author.bats
 │   └── 📄 Makefile.tests
 ├── 📁 tmux
@@ -1068,6 +1070,7 @@
 ├── 📄 symlink_dot_secrets_codex.env
 ├── 📄 symlink_dot_zshrc.tmpl
 ├── 📄 tmux.conf
+├── 🔨 update.mk
 ├── 📄 vimrc
 ├── 📄 vimrc.bundles
 ├── 📄 wsl2tolan

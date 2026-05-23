@@ -25,31 +25,31 @@ packages:
     required: false
     capability: js-toolchain
     install_method: manual
-    note: Base JavaScript runtime; required de facto on workstation use (codex, gitnexus, npx-based MCPs) but not a uv dependency. Install with 'make install-node-stack' (opt-in, APT-only) or your distro's package manager. Stays optional so headless/CI machines do not fail.
+    note: Base JavaScript runtime; required de facto on workstation use (codex, gitnexus, npx-based MCPs) but not a uv dependency. Install/update with 'make install-node-stack' (NodeSource 24.x, Node >=22 policy). Stays optional so headless/CI machines do not fail.
   - package: npm
     command: npm
     required: false
     capability: js-toolchain
     install_method: manual
-    note: Required de facto on workstation use (codex, gitnexus, corepack, npx-based MCPs); ships with Node. Install with 'make install-node-stack' (opt-in, APT-only). Independent of the uv-first Python policy.
+    note: Required de facto on workstation use (codex, gitnexus, corepack, npx-based MCPs); ships with NodeSource Node. Install with 'make install-node-stack'. Independent of the uv-first Python policy.
   - package: corepack
     command: corepack
     required: false
     capability: js-toolchain
     install_method: manual
-    note: Used by ups() to activate and synchronize pnpm.
+    note: Used by make update to activate and synchronize pnpm.
   - package: pnpm
     command: pnpm
     required: false
     capability: js-toolchain
     install_method: corepack
-    note: Used by ups() and auxiliary MCP repos such as excalidraw-mcp.
+    note: Used by make update and JavaScript tooling; Excalidraw MCP no longer builds locally.
   - package: "@openai/codex"
     command: codex
     required: false
     capability: ai-cli
     install_method: npm
-    note: Updated by ups() in the user npm prefix.
+    note: Updated by make update in the user npm prefix.
   - package: gitnexus
     command: gitnexus
     required: false
@@ -61,7 +61,7 @@ packages:
     required: false
     capability: agent-validation
     install_method: npm
-    note: Structured code search for agents; install with 'make install-agent-tools' and update with ups() through the user npm prefix.
+    note: Structured code search for agents; install with 'make install-agent-tools' and update with make update through the user npm prefix.
   - package: actionlint
     command: actionlint
     required: false
@@ -79,7 +79,7 @@ packages:
     required: false
     capability: ai-cli
     install_method: curl
-    note: Updated by ups() through the official install script.
+    note: Updated by make update through the official install script.
   - package: gh
     command: gh
     required: false

@@ -41,14 +41,14 @@ This document establishes the taxonomy for all MCPs integrated in the workstatio
 
 ## Operational Policy
 
-### Ups-Managed (Explicit Updates)
+### Update-Managed (Explicit Updates)
 
-These MCPs require explicit installation or update via `ups`:
+These MCPs require explicit installation or update via `make update` or a dedicated Make target:
 
 | MCP | Update Method |
 |-----|--------------|
-| gitnexus CLI | `npm install -g --prefix=~/.npm-global gitnexus@latest` |
-| excalidraw | `git pull` + `pnpm install` + `pnpm run build` |
+| gitnexus CLI | `make update-wsl` / `scripts/install-gitnexus.sh` after Node `>=22` (`make install-node-stack`) |
+| excalidraw_canvas | `make excalidraw-update` pulls Docker images; MCP clients run `docker run -i --rm`; use this name for advanced Excalidraw scene import/export |
 | fetch | `uv tool install mcp-server-fetch` |
 | docker | Docker Desktop MCP Gateway: `docker.exe mcp gateway run` from WSL |
 | postgres | `npm update` in `~/.config/mcp/servers/*/` (only if present) |
@@ -113,7 +113,7 @@ MCPs using custom launchers (no update needed):
 4. Update execution recipes in `scripts/generate-mcp-configs.py` if `command`/`args`/`env` change; run `make ai-mcp-render` and `make ai-mcp-drift`
 5. When ready, run `make ai-mcp-generate APPLY=1`, then `chezmoi apply` (or `make install-dotfiles DOTFILES_APPLY=1`)
 6. Document in MCP_QUICKREF.md
-7. Update UPS.md if explicit update needed
+7. Update UPDATE.md if explicit update needed
 8. Run `make ai-mcp-governance` (or `bin/validate-mcp-governance`) before commit when MCP intent or templates change
 
 ---
@@ -144,7 +144,7 @@ MCPs using custom launchers (no update needed):
 | `docs/MCP_TAXONOMY.md` | This document - canonical taxonomy |
 | `docs/MCP_QUICKREF.md` | Quick reference for agents |
 | `docs/adr/0001-mcp-governance.md` | Architectural decision record |
-| `docs/UPS.md` | Update management |
+| `docs/UPDATE.md` | Update management |
 | `ai/assets/mcps/MANIFEST.yaml` | Canonical MCP intent per surface |
 | `make ai-mcp-validate` | Manifest structure and policy checks |
 | `make ai-mcp-render` / `make ai-mcp-drift` | Dry-run under `build/mcps/` + drift vs templates |

@@ -58,6 +58,23 @@ _sum() {
 	grep -q '{{ \.chezmoi\.homeDir }}' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
 }
 
+@test "rendered Excalidraw MCP uses scoped workspace mount and export dir" {
+	if ! python3 -c "import yaml" 2>/dev/null; then
+		skip "PyYAML not installed"
+	fi
+	run make -C "${DOTFILES_DIR}" ai-mcp-render
+	[[ "${status}" -eq 0 ]]
+	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
+	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
+	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
+	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
+	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
+	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
+	run ! grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo:/workspace/excalidraw' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
+	run ! grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo:/workspace/excalidraw' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
+	run ! grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo:/workspace/excalidraw' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
+}
+
 @test "rendered MCP configs use Chezmoi ai.obsidian_vault_path for Obsidian" {
 	if ! python3 -c "import yaml" 2>/dev/null; then
 		skip "PyYAML not installed"

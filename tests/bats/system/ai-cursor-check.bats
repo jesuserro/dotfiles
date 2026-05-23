@@ -66,16 +66,17 @@ setup() {
 	[[ "${output}" == *"make install-node-stack"* ]]
 }
 
-@test "ai-cursor-check reports Excalidraw and GitHub hints when both MCPs are present in mcp.json" {
+@test "ai-cursor-check reports Docker Excalidraw and GitHub hints when both MCPs are present in mcp.json" {
 	local fake_home
 	fake_home="$(mktemp -d)"
 	mkdir -p "${fake_home}/.cursor"
-	cat > "${fake_home}/.cursor/mcp.json" <<'JSON'
+	mkdir -p /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
 {
   "mcpServers": {
-    "excalidraw": {
-      "command": "/usr/bin/node",
-      "args": ["/home/dummy/mcp-servers/excalidraw-mcp/dist/index.js", "--stdio"],
+    "excalidraw_canvas": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "EXPRESS_SERVER_URL=http://host.docker.internal:3210", "-e", "ENABLE_CANVAS_SYNC=true", "-e", "EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw", "-v", "/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw", "ghcr.io/yctimlin/mcp_excalidraw:latest"],
       "env": {}
     },
     "github": {
@@ -89,10 +90,146 @@ JSON
 	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
 	rm -rf "${fake_home}"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"make install-mcp-excalidraw"* ]]
+	[[ "${output}" == *"Cursor HOME Excalidraw MCP 'excalidraw_canvas' uses Docker runtime with scoped workspace mount"* ]]
+	[[ "${output}" == *"Excalidraw workspace host path present"* ]]
 	[[ "${output}" == *"make install-mcp-github"* ]]
 	# Should also mention the secrets file boundary without reading it.
 	[[ "${output}" == *"codex.env"* ]]
+}
+
+@test "ai-cursor-check validates Excalidraw Docker runtime in Cursor Codex and OpenCode HOME" {
+	local fake_home
+	fake_home="$(mktemp -d)"
+	mkdir -p "${fake_home}/.cursor" "${fake_home}/.codex" "${fake_home}/.config/opencode"
+	mkdir -p /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
+{"mcpServers":{"excalidraw_canvas":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","-e","EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw","-v","/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
+JSON
+	cat >"${fake_home}/.codex/config.toml" <<'TOML'
+[mcp_servers.excalidraw_canvas]
+command = "docker"
+args = ["run", "-i", "--rm", "-e", "EXPRESS_SERVER_URL=http://host.docker.internal:3210", "-e", "ENABLE_CANVAS_SYNC=true", "-e", "EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw", "-v", "/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw", "ghcr.io/yctimlin/mcp_excalidraw:latest"]
+enabled = true
+TOML
+	cat >"${fake_home}/.config/opencode/opencode.json" <<'JSON'
+{"mcp":{"excalidraw_canvas":{"type":"local","command":["docker","run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","-e","EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw","-v","/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw","ghcr.io/yctimlin/mcp_excalidraw:latest"],"enabled":true}}}
+JSON
+	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"Cursor HOME Excalidraw MCP 'excalidraw_canvas' uses Docker runtime with scoped workspace mount"* ]]
+	[[ "${output}" == *"Codex HOME Excalidraw MCP 'excalidraw_canvas' uses Docker runtime with scoped workspace mount"* ]]
+	[[ "${output}" == *"OpenCode HOME Excalidraw MCP 'excalidraw_canvas' uses Docker runtime with scoped workspace mount"* ]]
+}
+
+@test "ai-cursor-check treats valid Docker bind mount as host path only" {
+	local fake_home
+	fake_home="$(mktemp -d)"
+	mkdir -p "${fake_home}/.cursor"
+	mkdir -p /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
+{"mcpServers":{"excalidraw_canvas":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","-e","EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw","-v","/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
+JSON
+	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"MCP path exists: /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw"* ]]
+	[[ "${output}" != *"MCP path not found (WSL/host path?): /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw"* ]]
+	[[ "${output}" != *"MCP path missing on disk: /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw"* ]]
+}
+
+@test "ai-cursor-check warns on missing Docker bind mount host path only" {
+	local fake_home missing_host
+	fake_home="$(mktemp -d)"
+	missing_host="/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw-missing-for-test"
+	mkdir -p "${fake_home}/.cursor"
+	rm -rf "${missing_host}"
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
+{"mcpServers":{"probe":{"command":"docker","args":["run","--rm","-v","/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw-missing-for-test:/workspace/probe","alpine:3.20"],"env":{}}}}
+JSON
+	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"MCP path not found (WSL/host path?): /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw-missing-for-test"* ]]
+	[[ "${output}" != *"MCP path not found (WSL/host path?): /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw-missing-for-test:/workspace/probe"* ]]
+}
+
+@test "ai-cursor-check flags legacy Excalidraw canvas port 3000" {
+	local fake_home
+	fake_home="$(mktemp -d)"
+	mkdir -p "${fake_home}/.cursor"
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
+{"mcpServers":{"excalidraw_canvas":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3000","-e","ENABLE_CANVAS_SYNC=true","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
+JSON
+	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"legacy canvas port 3000"* ]]
+	[[ "${output}" == *"expected host port 3210"* ]]
+}
+
+@test "ai-cursor-check flags missing Excalidraw workspace env and mount" {
+	local fake_home
+	fake_home="$(mktemp -d)"
+	mkdir -p "${fake_home}/.cursor"
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
+{"mcpServers":{"excalidraw_canvas":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
+JSON
+	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"missing the scoped workspace bind mount"* ]]
+}
+
+@test "ai-cursor-check flags excessive vault mount for Excalidraw" {
+	local fake_home
+	fake_home="$(mktemp -d)"
+	mkdir -p "${fake_home}/.cursor"
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
+{"mcpServers":{"excalidraw_canvas":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","-e","EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw","-v","/mnt/c/Users/jesus/Documents/vault_trabajo:/workspace/excalidraw","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
+JSON
+	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"mounts more than the scoped excalidraw workspace"* ]]
+}
+
+@test "ai-cursor-check flags ambiguous legacy Excalidraw MCP name" {
+	local fake_home
+	fake_home="$(mktemp -d)"
+	mkdir -p "${fake_home}/.cursor"
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
+{"mcpServers":{"excalidraw":{"command":"docker","args":["run","-i","--rm","-e","EXPRESS_SERVER_URL=http://host.docker.internal:3210","-e","ENABLE_CANVAS_SYNC=true","ghcr.io/yctimlin/mcp_excalidraw:latest"],"env":{}}}}
+JSON
+	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"ambiguous legacy name 'excalidraw'"* ]]
+	[[ "${output}" == *"expected 'excalidraw_canvas'"* ]]
+}
+
+@test "ai-cursor-check flags legacy Excalidraw local checkout in effective HOME configs" {
+	local fake_home
+	fake_home="$(mktemp -d)"
+	mkdir -p "${fake_home}/.cursor" "${fake_home}/.codex" "${fake_home}/.config/opencode"
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
+{"mcpServers":{"excalidraw_canvas":{"command":"node","args":["/home/test/mcp-servers/excalidraw-mcp/dist/index.js"],"env":{}}}}
+JSON
+	cat >"${fake_home}/.codex/config.toml" <<'TOML'
+[mcp_servers.excalidraw_canvas]
+command = "node"
+args = ["/home/test/mcp-servers/excalidraw-mcp/dist/index.js"]
+enabled = true
+TOML
+	cat >"${fake_home}/.config/opencode/opencode.json" <<'JSON'
+{"mcp":{"excalidraw_canvas":{"type":"local","command":["node","/home/test/mcp-servers/excalidraw-mcp/dist/index.js"],"enabled":true}}}
+JSON
+	run env HOME="${fake_home}" bash "${AI_CURSOR_CHECK}"
+	rm -rf "${fake_home}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"Cursor HOME uses legacy Excalidraw local checkout"* ]]
+	[[ "${output}" == *"Codex HOME uses legacy Excalidraw local checkout"* ]]
+	[[ "${output}" == *"OpenCode HOME uses legacy Excalidraw local checkout"* ]]
 }
 
 @test "ai-cursor-check validates Docker MCP through docker.exe stub" {
@@ -100,7 +237,7 @@ JSON
 	fake_home="$(mktemp -d)"
 	stub_path="$(mktemp -d)"
 	mkdir -p "${fake_home}/.cursor"
-	cat > "${fake_home}/.cursor/mcp.json" <<'JSON'
+	cat >"${fake_home}/.cursor/mcp.json" <<'JSON'
 {
   "mcpServers": {
     "docker": {
@@ -111,7 +248,7 @@ JSON
   }
 }
 JSON
-	cat > "${stub_path}/docker.exe" <<'SH'
+	cat >"${stub_path}/docker.exe" <<'SH'
 #!/usr/bin/env bash
 if [[ "$*" == "mcp version" ]]; then
 	echo "v0.42.0"

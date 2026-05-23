@@ -28,8 +28,7 @@ setup() {
 	mkdir -p "${TEST_HOME}/dotfiles/powerlevel10k"
 	printf '# fake zshrc\n' >"${TEST_HOME}/dotfiles/zshrc"
 	printf '# fake p10k.zsh\n' >"${TEST_HOME}/dotfiles/powerlevel10k/p10k.zsh"
-	printf 'alias true=:\nups() { echo ups-from-fake-aliases; }\n' \
-		>"${TEST_HOME}/dotfiles/aliases"
+	printf 'alias true=:\nalias cx=codex\n' >"${TEST_HOME}/dotfiles/aliases"
 
 	SRC_DIR="$(mktemp -d)"
 	export SRC_DIR
@@ -176,7 +175,7 @@ count_backups() {
 	[[ "$(count_backups "${TEST_HOME}/.zshrc")" == "1" ]]
 }
 
-@test "~/.aliases symlink loads the ups function in zsh" {
+@test "~/.aliases symlink does not expose the removed ups command" {
 	if ! command -v zsh >/dev/null 2>&1; then
 		skip "zsh not in PATH"
 	fi
@@ -186,9 +185,8 @@ count_backups() {
 
 	# Source ~/.aliases directly; the goal of this test is to validate that
 	# the symlink delivers the function, not the rest of the OMZ stack.
-	run env HOME="${TEST_HOME}" zsh -c 'source "$HOME/.aliases" && whence -v ups'
+	run env HOME="${TEST_HOME}" zsh -c 'source "$HOME/.aliases" && ! whence -w ups'
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"function"* ]]
 }
 
 @test "~/.p10k.zsh symlink resolves to the bundled p10k.zsh" {

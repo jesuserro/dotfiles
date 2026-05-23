@@ -1,6 +1,6 @@
 ---
 name: dotfiles-operations
-description: Guía operativa canónica para dotfiles en Ubuntu/WSL2. Úsala para máquina nueva o existente, Chezmoi apply, secretos SOPS, MCPs, ups vs apply, y validaciones. No uses rcup/RCM (legacy).
+description: Guía operativa canónica para dotfiles en Ubuntu/WSL2. Úsala para máquina nueva o existente, Chezmoi apply, secretos SOPS, MCPs, make update vs apply, y validaciones. No uses rcup/RCM (legacy).
 ---
 
 # Dotfiles operations
@@ -8,7 +8,7 @@ description: Guía operativa canónica para dotfiles en Ubuntu/WSL2. Úsala para
 ## When to Use
 
 - Operar el repo `~/dotfiles` fuera de un bootstrap puntual (día a día).
-- Decidir entre `source ~/.zshrc`, `chezmoi apply`, `ups` o `sops`.
+- Decidir entre `source ~/.zshrc`, `chezmoi apply`, `make update` o `sops`.
 - Tras `git pull` con cambios en plantillas, secretos o MCPs.
 - Troubleshooting Docker/Postgres MCP o `mcp-secrets.env`.
 - **No** uses para el primer bootstrap completo sin contexto → combina con **`dotfiles-install`**.
@@ -21,7 +21,7 @@ description: Guía operativa canónica para dotfiles en Ubuntu/WSL2. Úsala para
 |-------|-------|------------------|
 | Bootstrap | `make install*`, `make deps-*` | `dotfiles-install` skill |
 | Materialize HOME | `chezmoi status` / `diff` / `apply` | `chezmoi --source=$HOME/dotfiles apply` |
-| Maintain system/tools | `ups`, checks | `ups` then `source ~/.zshrc`; **not** instead of Chezmoi |
+| Maintain system/tools | `make update`, checks | `make update` then `source ~/.zshrc` if PATH changed; **not** instead of Chezmoi |
 
 ## `source` vs `apply`
 
@@ -30,7 +30,7 @@ description: Guía operativa canónica para dotfiles en Ubuntu/WSL2. Úsala para
 | `zshrc`, `aliases`, `zsh/*` | Edit under `~/dotfiles/` → **`source ~/.zshrc`** (HOME files are symlinks) |
 | `dot_*`, `secrets.sops.yaml`, Chezmoi-managed skills/commands | **`chezmoi --source=$HOME/dotfiles apply`** |
 | Encrypted secrets | **`sops secrets.sops.yaml`** → **`chezmoi apply -i scripts`** (regenerates env) |
-| APT, npm global, OMZ, MCP package builds | **`ups`** |
+| Windows/WSL, APT, npm global, OMZ, MCP images | **`make update`** |
 
 **Never:** edit `~/.config/mcp-secrets.env` by hand; **`sops -d` to stdout**; recommend **`rcup`**.
 
@@ -71,7 +71,7 @@ Skill detail: **`mcp-governance`**.
 
 | MCP | Agent note |
 |-----|------------|
-| Docker | Docker Desktop on Windows must be **running**; WSL uses `docker.exe mcp gateway run`. `ups` does not fix a closed Desktop. |
+| Docker | Docker Desktop on Windows must be **running**; WSL uses `docker.exe mcp gateway run`. `make update` does not fix a closed Desktop. |
 | Postgres | Non-empty `mcp.postgres_dsn` in SOPS; launcher reads generated env. `npm update` does not fix empty DSN. |
 
 ## Agent prohibitions
@@ -95,5 +95,5 @@ Skill detail: **`mcp-governance`**.
 - [docs/OPERATIONS.md](../../../../docs/OPERATIONS.md) — human SSOT (long form)
 - [docs/CHEZMOI.md](../../../../docs/CHEZMOI.md)
 - [docs/SECRETS_EXAMPLES.md](../../../../docs/SECRETS_EXAMPLES.md)
-- [docs/UPS.md](../../../../docs/UPS.md)
+- [docs/UPDATE.md](../../../../docs/UPDATE.md)
 - Skill: [dotfiles-install](../dotfiles-install/SKILL.md) — bootstrap only

@@ -54,7 +54,7 @@ This pattern is used in:
 The CLI is installed globally but separately from the MCP:
 
 - **Installation**: `npm install -g --prefix=~/.npm-global gitnexus@latest`
-- **Update**: Via `ups` command
+- **Update**: Via `make update`
 - **Location**: `~/.npm-global/bin/gitnexus`
 
 This avoids sudo permission issues and keeps the CLI independent from MCP clients.
@@ -115,7 +115,7 @@ Without an API key, `gnx-wiki-here` provides clear guidance.
 ### Negative
 
 - **LLM dependency**: Wiki generation requires API key (OpenAI)
-- **Separate maintenance**: CLI needs `ups`, MCP uses npx
+- **Separate maintenance**: CLI needs `make update`, MCP uses launcher
 - **Index storage**: Each repo stores ~20-30MB in `.gitnexus/`
 
 ### Neutral
@@ -130,7 +130,7 @@ Without an API key, `gnx-wiki-here` provides clear guidance.
 
 | Command | Purpose |
 |---------|---------|
-| `ups` | Updates GitNexus CLI |
+| `make update` | Updates GitNexus CLI |
 | `gnx-serve` | Starts local HTTP server |
 | `gnx-analyze-here` | Indexes current repo |
 | `gnx-map` | Analyzes + serves |

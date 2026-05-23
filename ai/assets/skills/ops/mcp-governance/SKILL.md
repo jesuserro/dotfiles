@@ -23,7 +23,7 @@ MANIFEST.yaml
   → make ai-cursor-check
 ```
 
-**`ups` no sustituye** `chezmoi apply` ni regenera secretos. Operación general: skill **`dotfiles-operations`**.
+**`make update` no sustituye** `chezmoi apply` ni regenera secretos. Operación general: skill **`dotfiles-operations`**.
 
 ### Troubleshooting breve
 
@@ -37,7 +37,7 @@ MANIFEST.yaml
 
 | Capa | Scope | Manifest default (superficies globales) | Ejemplos |
 |------|-------|----------------------------------------|----------|
-| **Core Workstation** | Todos los proyectos | enabled | docker, github, fetch, context7, excalidraw, playwright, filesystem, git, sequential-thinking |
+| **Core Workstation** | Todos los proyectos | enabled | docker, github, fetch, context7, excalidraw_canvas, playwright, filesystem, git, sequential-thinking |
 | **Platform** | Servicios locales | enabled (readiness si el servicio no está) | dagster, loki, minio, prometheus, tempo, store_etl_ops |
 | **Connection-oriented** | DB / motores | enabled; credenciales fuera del repo | postgres, trino |
 

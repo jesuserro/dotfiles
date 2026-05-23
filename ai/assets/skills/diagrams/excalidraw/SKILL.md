@@ -1,13 +1,33 @@
 ---
 name: excalidraw-diagram
-description: Create Excalidraw diagram JSON files that make visual arguments. Use when the user wants to visualize workflows, architectures, or concepts.
+description: Create or edit Excalidraw diagrams, preferably through the canonical Docker MCP runtime, while preserving strong visual design rules.
 ---
 
 # Excalidraw Diagram Creator
 
-Generate `.excalidraw` JSON files that **argue visually**, not just display information.
+Create and edit `.excalidraw` diagrams that **argue visually**, not just display information.
 
-**Setup:** If the user asks you to set up this skill (renderer, dependencies, etc.), see `README.md` for instructions.
+**Primary runtime:** use the dotfiles Excalidraw MCP Docker setup through the MCP named `excalidraw_canvas`. For operations, start/status/update through `make excalidraw-start`, `make excalidraw-status`, and `make excalidraw-update`.
+
+Use `excalidraw_canvas` exclusively for advanced editing, scene import/export, and `.excalidraw` work. A generic MCP named `excalidraw` may be a simpler render-only surface; do not use it for advanced file editing unless explicitly instructed.
+
+Abort without modifying files if `import_scene`, `describe_scene`, `update_element`, and `export_scene` are not available under `excalidraw_canvas`.
+
+When the MCP runtime is Docker-managed in dotfiles, use container-internal paths under `/workspace/excalidraw/...` for `import_scene`, `export_scene`, and `export_to_image`. Do not pass WSL paths under `/mnt/c/...` to those tools.
+
+Manual JSON generation is a fallback for environments where the MCP/canvas is unavailable.
+
+## Editing Existing `.excalidraw` Files
+
+1. Locate the source `.excalidraw` sidecar in the vault or repo. Do not import an Obsidian `.excalidraw.md` note for MCP editing.
+2. Run `make excalidraw-status`; start the canvas with `make excalidraw-start` if interactive editing is needed.
+3. Import the scene through `excalidraw_canvas` using an internal path like `/workspace/excalidraw/<relative-path>.excalidraw`.
+4. Describe the current layout before changing it.
+5. Modify elements incrementally: positions, boxes, arrows, colors, labels.
+6. Inspect the result visually before export.
+7. Export to a new `.excalidraw` file first unless the user explicitly asks to overwrite the source.
+8. Export SVG by default; PNG only when compatibility requires it.
+9. Do not modify files outside `/workspace/excalidraw`, and remember that SVG export or screenshots require the canvas frontend at `http://127.0.0.1:3210`.
 
 ## Customization
 
