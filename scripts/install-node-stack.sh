@@ -110,33 +110,59 @@ require_command() {
 	fi
 }
 
+cleanup_nodesource_tmp() {
+	local tmp_key="${1:-}" tmp_ring="${2:-}"
+	[[ -n "$tmp_key" ]] && rm -f "$tmp_key"
+	[[ -n "$tmp_ring" ]] && rm -f "$tmp_ring"
+	return 0
+}
+
 configure_nodesource_repo() {
 	local tmp_key tmp_ring repo_line
-	tmp_key="$(mktemp)"
-	tmp_ring="$(mktemp)"
+	tmp_key=""
+	tmp_ring=""
+	if ! tmp_key="$(mktemp)"; then
+		install_label FAIL "could not create temporary file for NodeSource signing key"
+		return 1
+	fi
+	if ! tmp_ring="$(mktemp)"; then
+		install_label FAIL "could not create temporary file for NodeSource keyring"
+		cleanup_nodesource_tmp "$tmp_key" "$tmp_ring"
+		return 1
+	fi
 	repo_line="deb [signed-by=${NODESOURCE_KEYRING}] ${NODESOURCE_REPO} nodistro main"
-	trap 'rm -f "$tmp_key" "$tmp_ring"' RETURN
 
 	if ! curl -fsSL "$NODESOURCE_KEY_URL" -o "$tmp_key"; then
 		install_label FAIL "could not download NodeSource signing key from ${NODESOURCE_KEY_URL}"
+		cleanup_nodesource_tmp "$tmp_key" "$tmp_ring"
 		return 1
 	fi
 	if ! gpg --dearmor --yes -o "$tmp_ring" "$tmp_key"; then
 		install_label FAIL "could not convert NodeSource signing key to keyring format"
+		cleanup_nodesource_tmp "$tmp_key" "$tmp_ring"
 		return 1
 	fi
 	if ! sudo install -d -m 0755 "$(dirname "$NODESOURCE_KEYRING")"; then
 		install_label FAIL "could not create $(dirname "$NODESOURCE_KEYRING")"
+		cleanup_nodesource_tmp "$tmp_key" "$tmp_ring"
 		return 1
 	fi
 	if ! sudo install -m 0644 "$tmp_ring" "$NODESOURCE_KEYRING"; then
 		install_label FAIL "could not install NodeSource keyring at ${NODESOURCE_KEYRING}"
+		cleanup_nodesource_tmp "$tmp_key" "$tmp_ring"
+		return 1
+	fi
+	if ! sudo install -d -m 0755 "$(dirname "$NODESOURCE_LIST")"; then
+		install_label FAIL "could not create $(dirname "$NODESOURCE_LIST")"
+		cleanup_nodesource_tmp "$tmp_key" "$tmp_ring"
 		return 1
 	fi
 	if ! printf '%s\n' "$repo_line" | sudo tee "$NODESOURCE_LIST" >/dev/null; then
 		install_label FAIL "could not write NodeSource apt source at ${NODESOURCE_LIST}"
+		cleanup_nodesource_tmp "$tmp_key" "$tmp_ring"
 		return 1
 	fi
+	cleanup_nodesource_tmp "$tmp_key" "$tmp_ring"
 	install_label OK "NodeSource ${NODE_MAJOR_TARGET}.x repository configured with signed-by keyring"
 }
 
