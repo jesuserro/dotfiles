@@ -10,7 +10,7 @@ DOTFILES_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 if install_is_truthy "${SKIP_EXTERNAL:-}"; then
 	echo "SKIP_EXTERNAL=1 — skipping external recommendations block."
 	echo "Run 'make install-external' (without SKIP_EXTERNAL) to see external guidance."
-	echo "Common opt-in installers: make install-sops, make install-uv."
+	echo "Common opt-in installers: make install-sops, make install-uv, make install-agent-tools."
 	exit 0
 fi
 

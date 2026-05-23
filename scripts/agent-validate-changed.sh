@@ -1,0 +1,249 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+TMP_DIR="$(mktemp -d -t agent-validate-changed.XXXXXX)"
+
+cleanup() {
+	rm -rf "${TMP_DIR}"
+}
+trap cleanup EXIT INT TERM
+
+log() {
+	printf '==> %s\n' "$*"
+}
+
+warn() {
+	printf 'WARN: %s\n' "$*" >&2
+}
+
+require_cmd() {
+	local cmd="$1"
+	local install_hint="$2"
+
+	if ! command -v "${cmd}" >/dev/null 2>&1; then
+		printf 'Missing validation dependency: %s\n' "${cmd}" >&2
+		printf 'Run: %s\n' "${install_hint}" >&2
+		return 1
+	fi
+}
+
+run_yamllint() {
+	if command -v yamllint >/dev/null 2>&1; then
+		yamllint -s "$@"
+	elif command -v uvx >/dev/null 2>&1; then
+		warn "yamllint is not installed; using temporary uvx fallback"
+		uvx --from yamllint yamllint -s "$@"
+	else
+		require_cmd yamllint "make deps-install"
+	fi
+}
+
+ensure_agent_release_tools() {
+	if command -v actionlint >/dev/null 2>&1 && command -v osv-scanner >/dev/null 2>&1; then
+		return 0
+	fi
+
+	warn "actionlint/osv-scanner missing; using temporary install-agent-tools fallback"
+	local temp_home="${TMP_DIR}/agent-tools-home"
+	mkdir -p "${temp_home}"
+	HOME="${temp_home}" bash "${DOTFILES_DIR}/scripts/install-agent-tools.sh" --external-only >/dev/null
+	export PATH="${temp_home}/.local/bin:${PATH}"
+}
+
+install_temp_gitleaks() {
+	local repo="gitleaks/gitleaks"
+	local api_url="https://api.github.com/repos/${repo}/releases/latest"
+	local metadata="${TMP_DIR}/gitleaks-release.json"
+
+	warn "gitleaks is not installed; using temporary official GitHub release fallback"
+	curl -fsSL "${api_url}" -o "${metadata}"
+
+	local version
+	version="$(
+		python3 - "${metadata}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as fh:
+    print(json.load(fh)["tag_name"].lstrip("v"))
+PY
+	)"
+
+	local asset="gitleaks_${version}_linux_x64.tar.gz"
+	local checksums="gitleaks_${version}_checksums.txt"
+	local asset_url
+	local checksums_url
+	asset_url="$(
+		python3 - "${metadata}" "${asset}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as fh:
+    release = json.load(fh)
+for asset in release["assets"]:
+    if asset["name"] == sys.argv[2]:
+        print(asset["browser_download_url"])
+        break
+else:
+    raise SystemExit(f"asset not found: {sys.argv[2]}")
+PY
+	)"
+	checksums_url="$(
+		python3 - "${metadata}" "${checksums}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as fh:
+    release = json.load(fh)
+for asset in release["assets"]:
+    if asset["name"] == sys.argv[2]:
+        print(asset["browser_download_url"])
+        break
+else:
+    raise SystemExit(f"asset not found: {sys.argv[2]}")
+PY
+	)"
+
+	curl -fsSL "${asset_url}" -o "${TMP_DIR}/${asset}"
+	curl -fsSL "${checksums_url}" -o "${TMP_DIR}/${checksums}"
+	grep -E "[[:space:]]${asset}$" "${TMP_DIR}/${checksums}" >"${TMP_DIR}/gitleaks.sha256"
+	(
+		cd "${TMP_DIR}"
+		sha256sum -c gitleaks.sha256 >/dev/null
+		tar -xzf "${asset}" gitleaks
+	)
+	chmod +x "${TMP_DIR}/gitleaks"
+	export PATH="${TMP_DIR}:${PATH}"
+}
+
+ensure_gitleaks() {
+	if command -v gitleaks >/dev/null 2>&1; then
+		return 0
+	fi
+	install_temp_gitleaks
+}
+
+run_security_scan() {
+	ensure_gitleaks
+	ensure_agent_release_tools
+
+	log "gitleaks working-tree scan"
+	gitleaks detect --source "${DOTFILES_DIR}" --no-git --redact --no-banner
+
+	log "osv-scanner repository scan"
+	osv-scanner scan source -r "${DOTFILES_DIR}"
+}
+
+main() {
+	local changed_file_list="${TMP_DIR}/changed-files"
+	local shellcheck_files="${TMP_DIR}/shellcheck-files"
+	local shfmt_files="${TMP_DIR}/shfmt-files"
+	local yaml_files="${TMP_DIR}/yaml-files"
+	local workflow_files="${TMP_DIR}/workflow-files"
+
+	{
+		git -C "${DOTFILES_DIR}" diff --name-only --diff-filter=ACMR HEAD --
+		git -C "${DOTFILES_DIR}" ls-files --others --exclude-standard
+	} | sort -u >"${changed_file_list}"
+
+	if [[ ! -s "${changed_file_list}" ]]; then
+		log "No files changed since HEAD; running security checks only"
+	else
+		log "Changed files"
+		sed 's/^/  - /' "${changed_file_list}"
+	fi
+
+	: >"${shellcheck_files}"
+	: >"${shfmt_files}"
+	: >"${yaml_files}"
+	: >"${workflow_files}"
+
+	while IFS= read -r file; do
+		[[ -n "${file}" && -f "${DOTFILES_DIR}/${file}" ]] || continue
+		case "${file}" in
+		*.tmpl) ;;
+		*.sh | *.bash | *.bats | bin/mcp-*-launcher | local/bin/prompt-*)
+			printf '%s\n' "${DOTFILES_DIR}/${file}" >>"${shellcheck_files}"
+			;;
+		esac
+		case "${file}" in
+		*.tmpl | *.bats) ;;
+		*.sh | *.bash | bin/mcp-*-launcher | local/bin/prompt-*)
+			printf '%s\n' "${DOTFILES_DIR}/${file}" >>"${shfmt_files}"
+			;;
+		esac
+		case "${file}" in
+		*.yaml | *.yml | .yamllint)
+			printf '%s\n' "${DOTFILES_DIR}/${file}" >>"${yaml_files}"
+			;;
+		esac
+		case "${file}" in
+		.github/workflows/*.yaml | .github/workflows/*.yml)
+			printf '%s\n' "${DOTFILES_DIR}/${file}" >>"${workflow_files}"
+			;;
+		esac
+	done <"${changed_file_list}"
+
+	if [[ -s "${shellcheck_files}" ]]; then
+		require_cmd shellcheck "make install SKIP_EXTERNAL=1"
+		log "shellcheck changed shell files"
+		xargs shellcheck -x -S warning <"${shellcheck_files}"
+	else
+		log "shellcheck skipped: no changed shell files"
+	fi
+
+	if [[ -s "${shfmt_files}" ]]; then
+		require_cmd shfmt "make install SKIP_EXTERNAL=1"
+		log "shfmt changed shell scripts"
+		local shfmt_diff
+		shfmt_diff="$(xargs shfmt -d <"${shfmt_files}")"
+		if [[ -n "${shfmt_diff}" ]]; then
+			printf '%s\n' "${shfmt_diff}"
+			printf 'Changed shell scripts are not shfmt-formatted\n' >&2
+			return 1
+		fi
+	else
+		log "shfmt skipped: no changed shell scripts"
+	fi
+
+	if [[ -s "${yaml_files}" ]]; then
+		log "yamllint changed YAML files"
+		while IFS= read -r file; do
+			run_yamllint "${file}"
+		done <"${yaml_files}"
+	else
+		log "yamllint skipped: no changed YAML files"
+	fi
+
+	if [[ -s "${workflow_files}" ]]; then
+		ensure_agent_release_tools
+		log "actionlint GitHub workflows"
+		actionlint -shellcheck= "${DOTFILES_DIR}"/.github/workflows/*.yml
+	else
+		log "actionlint skipped: no changed GitHub workflows"
+	fi
+
+	if grep -Eq '(^|/)(Makefile|[^/]+\.mk)$|^tests/Makefile\.tests$|^install\.mk$' "${changed_file_list}"; then
+		log "make database parse check"
+		make -C "${DOTFILES_DIR}" -pn >/dev/null
+	fi
+
+	if grep -Eq '^(system/packages/|scripts/lib/system_deps\.py|scripts/install-agent-tools\.sh|scripts/install-external\.sh|install\.mk|tests/Makefile\.tests|tests/bats/system/system-deps\.bats)' "${changed_file_list}"; then
+		log "dependency-layer bats"
+		bats "${DOTFILES_DIR}/tests/bats/system/system-deps.bats"
+	fi
+
+	if grep -Eq '^(ai/runtime/mcp/|ai/assets/mcps/|bin/mcp-|tests/bats/mcp/|tests/bats/chezmoi/ai-runtime-uv\.bats|tests/bats/system/mcp-render-drift\.bats)' "${changed_file_list}"; then
+		log "MCP governance and runtime bats"
+		make -C "${DOTFILES_DIR}" ai-mcp-governance
+		bats "${DOTFILES_DIR}/tests/bats/mcp" \
+			"${DOTFILES_DIR}/tests/bats/chezmoi/ai-runtime-uv.bats" \
+			"${DOTFILES_DIR}/tests/bats/system/mcp-render-drift.bats"
+	fi
+
+	run_security_scan
+	log "Changed-file agent validation completed"
+}
+
+main "$@"

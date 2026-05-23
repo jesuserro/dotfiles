@@ -82,16 +82,16 @@ fi
 | docker | Docker Desktop MCP Gateway — se actualiza con Docker Desktop, no solo npm |
 | postgres (npm dirs) | `~/.config/mcp/servers/*/` — `npm update` (no sustituye DSN vacío en SOPS) |
 | fetch | `uv tool install mcp-server-fetch` |
-| Python (dagster, minio, etc.) | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` (legado vivo: el venv runtime AI sigue intencionalmente con `pip` — no migrar sin tarea explícita) |
+| Python (dagster, minio, etc.) | Chezmoi sincroniza `~/.config/ai/runtime/.venv` con `uv` y hash de `ai/runtime/mcp/requirements.txt` |
 | context7, github | npx — no requieren actualización |
 
 ## Política transversal uv first / pip fallback
 
 Cuando añadas/modifiques bloques en `ups` o documentación relacionada:
 
-- **Prefiere `uv`** (`uv venv`, `uv pip install`, `uv tool install`, `uvx`, `uv self update`) para escenarios Python nuevos.
+- **Prefiere `uv`** (`uv venv`, `uv pip install`, `uv tool install`, `uvx`, `uv self update`) para escenarios Python nuevos y para el runtime AI gestionado por Chezmoi.
 - **No migres `pip`/`pipx`/`python3 -m venv`** existentes sin tarea explícita: pueden romper venvs legados.
-- **Runtime AI** (`~/.config/ai/runtime/.venv`) sigue con `pip`: no tocar.
+- **Runtime AI** (`~/.config/ai/runtime/.venv`) se gestiona con `uv` desde Chezmoi: no volver a `pip` sin tarea explícita.
 - **`zsh/30-python.zsh`** (alias `pip`, `pyreq`) sigue con `pip`: no tocar.
 - **`uv` no se instala desde `ups`**: si falta, sólo info y sugerencia de `make install-uv`.
 

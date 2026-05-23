@@ -21,10 +21,6 @@
 !.local/share/chezmoi
 !.local/share/chezmoi/bin
 !.local/share/chezmoi/bin/**
-!proyectos
-!proyectos/store-etl
-!proyectos/store-etl/.cursor
-!proyectos/store-etl/.cursor/mcp.json
 !.zshrc
 !.p10k.zsh
 !.aliases

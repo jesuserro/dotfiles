@@ -52,6 +52,16 @@ packages:
     required: true
     capability: linting
     note: Required by shell format check / make test-fast (make test-lint -> lint-shfmt, make fmt-shell).
+  - package: yamllint
+    command: yamllint
+    required: true
+    capability: linting
+    note: Validates repo YAML inventories, GitHub Actions workflows and SOPS metadata without touching Chezmoi templates.
+  - package: gitleaks
+    command: gitleaks
+    required: true
+    capability: security
+    note: Scans the working tree for accidental plaintext secrets via make security-check.
   - package: bats
     command: bats
     required: true

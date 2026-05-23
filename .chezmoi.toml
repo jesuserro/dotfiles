@@ -1,14 +1,13 @@
 # Chezmoi: gestor único activo de dotfiles relevantes (MCP + SOPS/Age + zsh stack RC files).
 # Ver docs/CHEZMOI.md para el alcance vigente.
-[source]
-    path = "/home/jesus/dotfiles"
+#
+# Do not hardcode [source].path here — use `chezmoi apply --source=<clone>` or
+# set source in ~/.config/chezmoi/chezmoi.toml for machine-specific paths.
 
 [data]
-    # SOPS decrypt at apply time; secrets.sops.yaml must exist and be decrypted by sops/age
-    # Template uses: {{ (sops "mcp.key") }}
-    # Extra data for templates
-    storeEtlDir = "{{ .chezmoi.homeDir }}/proyectos/store-etl"
+    # SOPS decrypt via run_after_00_gen_secrets.sh.tmpl (not Chezmoi sops template func).
+    storeEtlProjectDir = "{{ .chezmoi.homeDir }}/proyectos/store-etl"
 
-# Obsidian / mcpvault + Filesystem MCP whitelist (override in ~/.config/chezmoi/chezmoi.toml when needed)
+# Obsidian / mcpvault + Filesystem MCP whitelist (override in ~/.config/chezmoi/chezmoi.toml)
 [data.ai]
     obsidian_vault_path = "/mnt/c/Users/jesus/Documents/vault_trabajo"

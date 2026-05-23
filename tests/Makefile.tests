@@ -7,15 +7,19 @@ DOTFILES_DIR := $(TESTS_DIR)/..
 BATS_DIR := $(TESTS_DIR)/bats
 BATS_HELPERS := $(BATS_DIR)/helpers/common.bash
 
-# Shell scripts to lint (dotfiles-owned only, excludes third-party/vendor)
+# Shell scripts to lint (dotfiles-owned only, excludes third-party/vendor).
+# Chezmoi templates are deliberately excluded: shellcheck/shfmt do not
+# understand Go template delimiters reliably unless templates are rendered.
 SHELL_SCRIPTS := $(shell find $(DOTFILES_DIR) -name '*.sh' -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/')
 SHELL_LAUNCHERS := $(shell find $(DOTFILES_DIR)/bin -name 'mcp-*-launcher' -type f 2>/dev/null || true)
 PROMPT_LAUNCHERS := $(shell find $(DOTFILES_DIR)/local/bin -name 'prompt-*' -type f 2>/dev/null || true)
-SHELL_CHEZMOI := $(shell find $(DOTFILES_DIR)/.chezmoiscripts -name '*.tmpl' -type f 2>/dev/null || true)
 SHELL_TESTS := $(shell find $(TESTS_DIR) -name '*.bats' -type f | grep -v '/\.git/')
+YAML_FILES := $(shell find $(DOTFILES_DIR) \( -name '*.yaml' -o -name '*.yml' \) -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/' | grep -v '/secrets\.sops\.yaml$$')
+GITHUB_WORKFLOWS := $(shell find $(DOTFILES_DIR)/.github/workflows \( -name '*.yaml' -o -name '*.yml' \) -type f 2>/dev/null || true)
+OSV_INPUTS := $(shell find $(DOTFILES_DIR) \( -name 'package-lock.json' -o -name 'pnpm-lock.yaml' -o -name 'yarn.lock' -o -name 'requirements*.txt' -o -name 'pyproject.toml' -o -name 'uv.lock' -o -name 'go.mod' -o -name 'Cargo.lock' -o -name 'composer.lock' \) -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/')
 
 # All shell files to lint
-SHELL_FILES := $(SHELL_SCRIPTS) $(SHELL_LAUNCHERS) $(PROMPT_LAUNCHERS) $(SHELL_CHEZMOI) $(SHELL_TESTS)
+SHELL_FILES := $(SHELL_SCRIPTS) $(SHELL_LAUNCHERS) $(PROMPT_LAUNCHERS) $(SHELL_TESTS)
 
 # bats tests
 BATS_DIR := $(TESTS_DIR)/bats
@@ -32,17 +36,22 @@ YELLOW := \033[1;33m
 BLUE := \033[0;34m
 NC := \033[0m
 
-.PHONY: test test-fast test-lint test-bats test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts
+.PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts bats-skills
 .PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands
 .PHONY: deps-check deps-install deps-actions bats-system bats-zsh test-deps-check
+.PHONY: quality-check security-check agent-validate agent-validate-changed lint-shellcheck lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
 
 help:
 	@echo "Testing targets for dotfiles"
 	@echo ""
-	@echo "  make test         - Run all tests (preflight + lint + bats + chezmoi)"
-	@echo "  make test-fast    - Run preflight + lint + bats (no chezmoi smoke)"
+	@echo "  make test         - Full suite: preflight + lint + bats + MCP template JSON checks"
+	@echo "  make test-fast    - Preflight + lint + bats without chezmoi/* tests"
 	@echo "  make test-deps-check - Fail-fast check for bats/shellcheck/shfmt in PATH"
-	@echo "  make test-lint    - Run shellcheck and shfmt checks (fail if tool missing)"
+	@echo "  make test-lint    - Run shellcheck, shfmt and yamllint checks (fail if tool missing)"
+	@echo "  make quality-check - Agent quality checks: shellcheck, shfmt, yamllint, actionlint"
+	@echo "  make security-check - Agent security checks: gitleaks + osv-scanner"
+	@echo "  make agent-validate - quality-check + security-check"
+	@echo "  make agent-validate-changed - Practical agent gate for files changed since HEAD + security"
 	@echo "  make test-bats    - Run bats tests only (preflight included)"
 	@echo "  make test-chezmoi - Run chezmoi smoke tests only"
 	@echo "  make test-commands- Run commands tests only"
@@ -51,6 +60,7 @@ help:
 	@echo "  make deps-check   - Check declarative system dependencies"
 	@echo "  make deps-install - Install declarative system dependencies on Ubuntu/Debian"
 	@echo "  make deps-actions - Show recommended actions for missing dependencies"
+	@echo "  make install-agent-tools - Install non-APT agent validation/security CLIs"
 	@echo "  make ai-cursor-check - Cursor/MCP/skills readiness (repo root; target in install.mk; covered by bats-system)"
 	@echo "  make ai-mcp-validate - Validate ai/assets/mcps/MANIFEST.yaml (PyYAML required)"
 	@echo "  make ai-mcp-render   - Dry-run MCP configs to build/mcps/ (PyYAML required)"
@@ -124,9 +134,24 @@ test-deps-check:
 # Linting
 # ============================================
 
-test-lint: lint-shellcheck lint-shfmt
+test-lint: lint-shellcheck lint-shfmt lint-yaml
 	@echo ""
 	@echo "$(GREEN)==>$NC Lint completed"
+
+quality-check: lint-shellcheck lint-shfmt lint-yaml lint-actions
+	@echo ""
+	@echo "$(GREEN)==>$NC Quality checks completed"
+
+security-check: security-gitleaks security-osv
+	@echo ""
+	@echo "$(GREEN)==>$NC Security checks completed"
+
+agent-validate: quality-check security-check
+	@echo ""
+	@echo "$(GREEN)==>$NC Agent validation completed"
+
+agent-validate-changed:
+	@bash $(DOTFILES_DIR)/scripts/agent-validate-changed.sh
 
 lint-shellcheck:
 	@echo "$(BLUE)==>$(NC) Running shellcheck..."
@@ -161,7 +186,8 @@ lint-shfmt:
 	fi
 	@unformatted=0; \
 	for f in $(SHELL_FILES); do \
-		if ! shfmt -l "$$f" >/dev/null 2>&1; then \
+		diff="$$(shfmt -l "$$f" 2>/dev/null || true)"; \
+		if [ -n "$$diff" ]; then \
 			echo "$(YELLOW)  DIFF$(NC) $$f"; \
 			unformatted=$$((unformatted + 1)); \
 		fi; \
@@ -170,6 +196,58 @@ lint-shfmt:
 		echo "$(YELLOW)==>$NC shfmt: $$unformatted file(s) differ. Run: make fmt-shell"; \
 	else \
 		echo "$(GREEN)==>$NC shfmt passed"; \
+	fi
+
+lint-yaml:
+	@echo "$(BLUE)==>$(NC) Running yamllint..."
+	@if ! command -v yamllint >/dev/null 2>&1; then \
+		echo "Missing validation dependency: yamllint"; \
+		echo "Run: make deps-install"; \
+		echo "Or:  sudo apt-get install -y yamllint"; \
+		exit 1; \
+	fi
+	@if [ -z "$(YAML_FILES)" ]; then \
+		echo "$(YELLOW)==>$NC yamllint skipped: no YAML files found"; \
+	else \
+		yamllint -s $(YAML_FILES); \
+		echo "$(GREEN)==>$NC yamllint passed"; \
+	fi
+
+lint-actions:
+	@echo "$(BLUE)==>$(NC) Running actionlint..."
+	@if [ -z "$(GITHUB_WORKFLOWS)" ]; then \
+		echo "$(YELLOW)==>$NC actionlint skipped: no GitHub Actions workflows found"; \
+	elif ! command -v actionlint >/dev/null 2>&1; then \
+		echo "Missing validation dependency: actionlint"; \
+		echo "Run: make install-agent-tools"; \
+		exit 1; \
+	else \
+		actionlint -shellcheck= $(GITHUB_WORKFLOWS); \
+		echo "$(GREEN)==>$NC actionlint passed"; \
+	fi
+
+security-gitleaks:
+	@echo "$(BLUE)==>$(NC) Running gitleaks working-tree scan..."
+	@if ! command -v gitleaks >/dev/null 2>&1; then \
+		echo "Missing security dependency: gitleaks"; \
+		echo "Run: make deps-install"; \
+		echo "Or:  sudo apt-get install -y gitleaks"; \
+		exit 1; \
+	fi
+	@gitleaks detect --source "$(DOTFILES_DIR)" --no-git --redact --no-banner
+	@echo "$(GREEN)==>$NC gitleaks passed"
+
+security-osv:
+	@echo "$(BLUE)==>$(NC) Running osv-scanner..."
+	@if [ -z "$(OSV_INPUTS)" ]; then \
+		echo "$(YELLOW)==>$NC osv-scanner skipped: no supported manifests or lockfiles found"; \
+	elif ! command -v osv-scanner >/dev/null 2>&1; then \
+		echo "Missing security dependency: osv-scanner"; \
+		echo "Run: make install-agent-tools"; \
+		exit 1; \
+	else \
+		osv-scanner scan source -r "$(DOTFILES_DIR)"; \
+		echo "$(GREEN)==>$NC osv-scanner passed"; \
 	fi
 
 fmt-shell:
@@ -196,9 +274,13 @@ fmt-shell:
 # Bats tests (human-readable output)
 # ============================================
 
-test-bats: test-deps-check bats-helpers bats-mcp bats-chezmoi bats-commands bats-git-ai bats-prompts bats-system
+test-bats: test-deps-check bats-helpers bats-mcp bats-chezmoi bats-skills bats-commands bats-git-ai bats-prompts bats-system
 	@echo ""
 	@echo "$(GREEN)==>$NC Bats tests passed"
+
+test-bats-fast: test-deps-check bats-helpers bats-mcp bats-skills bats-commands bats-git-ai bats-prompts bats-system
+	@echo ""
+	@echo "$(GREEN)==>$NC Fast bats tests passed"
 
 bats-helpers:
 	@echo "$(BLUE)==>$NC Checking bats helpers..."
@@ -228,8 +310,16 @@ bats-governance:
 	@$(call run_bats,$(BATS_DIR)/mcp/validate-governance.bats)
 
 bats-chezmoi:
-	@echo "$(BLUE)==>$NC Running chezmoi smoke tests..."
+	@echo "$(BLUE)==>$NC Running chezmoi tests..."
 	@$(call run_bats,$(BATS_DIR)/chezmoi/smoke.bats)
+	@$(call run_bats,$(BATS_DIR)/chezmoi/gen-secrets-strict.bats)
+	@$(call run_bats,$(BATS_DIR)/chezmoi/store-etl-hook-removed.bats)
+	@$(call run_bats,$(BATS_DIR)/chezmoi/ai-runtime-uv.bats)
+	@$(call run_bats,$(BATS_DIR)/chezmoi/ai-assets-warnings.bats)
+
+bats-skills:
+	@echo "$(BLUE)==>$NC Running canonical skills tests..."
+	@$(call run_bats,$(BATS_DIR)/skills/canonical-skills.bats)
 
 bats-commands:
 	@echo "$(BLUE)==>$NC Running commands tests..."
@@ -276,13 +366,13 @@ test-ci: test-lint test-bats-ci test-chezmoi
 	@echo ""
 	@echo "$(GREEN)==>$NC CI tests completed"
 
-test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-git bats-governance bats-chezmoi
+test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-git bats-governance bats-chezmoi bats-skills
 
 # ============================================
 # Combined tests
 # ============================================
 
-test: test-deps-check test-lint test-bats
+test: test-deps-check test-lint test-bats chezmoi-templates
 	@echo ""
 	@echo "$(GREEN)========================================"
 	@echo "All tests passed"
@@ -297,7 +387,7 @@ deps-install:
 deps-actions:
 	@bash $(DOTFILES_DIR)/scripts/show-system-deps-actions.sh $(DEPS_ACTION_ARGS)
 
-test-fast: test-deps-check test-lint test-bats
+test-fast: test-deps-check test-lint test-bats-fast
 	@echo ""
 	@echo "$(GREEN)========================================"
 	@echo "Fast tests passed"

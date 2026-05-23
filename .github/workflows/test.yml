@@ -1,0 +1,25 @@
+name: test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install test tooling
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck shfmt yamllint python3 python3-yaml bats
+
+      - name: MCP governance
+        run: make ai-mcp-governance
+
+      - name: CI test suite
+        run: make test-ci

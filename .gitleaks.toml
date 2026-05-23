@@ -1,0 +1,5 @@
+[allowlist]
+description = "Generated local GitNexus index cache; not a source-of-truth repo artifact."
+paths = [
+  '''^\.gitnexus/''',
+]

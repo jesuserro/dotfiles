@@ -32,7 +32,7 @@ Layers describe *purpose*; default **activation** for global agents follows the 
 |--------|-------|
 | **Type** | Knowledge/Semantic MCP |
 | **Scope** | Global (multi-repo) |
-| **Config Pattern** | `npx -y gitnexus@latest mcp` |
+| **Config Pattern** | `mcp-gitnexus-launcher` → binario local `gitnexus mcp` (sin npx en runtime) |
 | **Index Location** | `~/.gitnexus/` |
 | **CLI** | Installed via npm in `~/.local` |
 | **Wiki Output** | `docs/wiki/` (per project) |

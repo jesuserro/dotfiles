@@ -8,7 +8,7 @@ Actualización integral del sistema: Windows/winget en WSL, paquetes APT, npm, O
 
 | `ups` sí | `ups` no |
 |----------|----------|
-| APT, npm global, OMZ, builds excalidraw, pip en venv AI | `chezmoi apply` |
+| APT, npm global, herramientas externas de validación, OMZ, builds excalidraw, pip en venv AI | `chezmoi apply` |
 | Actualizar paquetes npm en `~/.config/mcp/servers/*` | Regenerar `~/.config/mcp-secrets.env` |
 | `uv tool install mcp-server-fetch` | Aplicar plantillas MCP del repo a HOME |
 
@@ -40,11 +40,12 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 | 🔐 **Autenticación sudo** | Verifica credenciales |
 | 📦 **APT** | `apt-get update`, `apt-get upgrade`, `apt-get autoremove` |
 | 🧹 **Limpieza** | Elimina paquetes no utilizados |
-| 📚 **NPM** | `npm install -g --prefix=~/.npm-global @openai/codex@latest` + `corepack prepare pnpm@latest --activate` |
+| 📚 **NPM** | `npm install -g --prefix=~/.npm-global @openai/codex@latest`, `@ast-grep/cli@latest` + `corepack prepare pnpm@latest --activate` |
 | 📦 **GitNexus** | `npm install -g --prefix=~/.npm-global gitnexus@latest` |
 | 🤖 **OpenCode** | `curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path` |
 | ⚡ **Oh My Zsh** | `omz update`, `upgrade_oh_my_zsh_custom` |
 | 🐍 **uv (Python)** | `uv self update` solo si `uv` existe en `$HOME/.local/bin/uv`. Si falta, info y skip (instalar con `make install-uv`). Si vive en otra ruta (apt/brew), info: actualizar con su gestor. |
+| 🧪 **Validación agentes** | `scripts/install-agent-tools.sh --external-only --upgrade` para `actionlint` y `osv-scanner` desde releases oficiales con checksum |
 | 📄 **RenderCV (jesuserro)** | `~/proyectos/jesuserro` — `git pull --rebase --autostash` + `uv pip install --python .venv/bin/python -U "rendercv[full]==2.7"` |
 | 🔌 **MCP** | excalidraw, docker/postgres, fetch, Python MCPs |
 | 🔄 **Servicios** | Reinicio Apache y MySQL (si están instalados) |
@@ -60,7 +61,7 @@ source ~/.zshrc   # Aplicar cambios en la sesión actual
 | **docker** | Docker Desktop MCP Gateway oficial: `docker.exe mcp gateway run` desde WSL; se actualiza con Docker Desktop |
 | **postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` (solo si existe) |
 | **fetch** | `uv tool install mcp-server-fetch` |
-| **dagster, minio, tempo, loki, prometheus, store_etl_ops** | `pip install -r requirements.txt -U` en `~/.config/ai/runtime/.venv` |
+| **dagster, minio, tempo, loki, prometheus, store_etl_ops** | Runtime Python en `~/.config/ai/runtime/.venv` (sincronizado por Chezmoi con `uv`; ver [CHEZMOI.md](CHEZMOI.md)) |
 
 ### MCPs que se resuelven en runtime (no requieren actualización explícita)
 
@@ -84,13 +85,15 @@ Estos MCPs usan `npx -y` o `uvx` y obtienen la última versión automáticamente
 
 ## Notas
 
-- **uv (Python):** `ups` solo intenta `uv self update` cuando `uv` ya está instalado en la ruta canónica del instalador oficial (`$HOME/.local/bin/uv`). Si `uv` falta, no lo instala (eso lo hace `make install-uv`). Si está gestionado por `apt`/`brew`/etc., `ups` lo informa pero deja la actualización a su gestor. El venv runtime AI (`~/.config/ai/runtime/.venv`) sigue intencionalmente con `python3 -m venv` + `pip install -r requirements.txt` por compatibilidad.
+- **uv (Python):** `ups` solo intenta `uv self update` cuando `uv` ya está instalado en la ruta canónica del instalador oficial (`$HOME/.local/bin/uv`). Si `uv` falta, no lo instala (eso lo hace `make install-uv`). Si está gestionado por `apt`/`brew`/etc., `ups` lo informa pero deja la actualización a su gestor. El venv runtime AI (`~/.config/ai/runtime/.venv`) lo sincroniza Chezmoi con `uv` y hash de `ai/runtime/mcp/requirements.txt`.
 - **WSL:** Detecta Ubuntu WSL y lo indica al inicio.
 - **winget en WSL:** Si `wt.exe` y `powershell.exe` están disponibles, `ups` abre una nueva pestaña de Windows Terminal y lanza la actualización de paquetes de Windows en paralelo.
 - **Errores e incidencias:** Si una sección falla, el proceso continúa. El resumen final ya distingue entre errores y warnings/incidencias, para no vender un éxito limpio cuando hubo fallos parciales.
 - **npm global canónico:** Los CLIs npm globales del repo usan `~/.npm-global` mediante `NPM_CONFIG_PREFIX` publicado desde `zsh/00-env.zsh`; `ups` respeta ese prefijo sin usar `sudo`.
 - **Codex CLI:** `ups` actualiza Codex con `npm install -g --prefix=~/.npm-global @openai/codex@latest`, retira de forma explícita el paquete legacy `codex` solo si detecta ese conflicto en el mismo prefijo, y deja evidencia con `codex --version` cuando la actualización termina bien.
 - **GitNexus CLI:** Si la actualización directa falla sobre una instalación existente en el mismo prefijo, `ups` intenta una reinstalación limpia del paquete `gitnexus` y reporta con honestidad si quedó la versión previa o si no quedó binario usable.
+- **ast-grep:** `ups` instala/actualiza `@ast-grep/cli@latest` en el prefijo npm global de usuario (`~/.npm-global` por defecto). Este paquete publica los binarios `ast-grep` y `sg`.
+- **actionlint / osv-scanner:** `ups` llama al instalador opt-in del repo en modo `--external-only --upgrade`; descarga releases oficiales de GitHub y verifica checksums antes de reemplazar los binarios en `~/.local/bin`.
 - **GitNexus CLI — incidencia conocida para agentes IA:** Por ahora no hay evidencia de corrupción general del prefijo npm global; la causa más probable es fragilidad del update incremental in-place de npm sobre el árbol de `gitnexus`, especialmente por dependencias nativas/vendorizadas como `tree-sitter-proto` y `node-addon-api`. La mitigación aceptada es intentar `npm install -g` y, si falla, hacer `npm uninstall -g` + reinstalación limpia del paquete. No hace falta rediseñar `ups` ni sacar GitNexus del flujo global salvo que empiece a afectar a otros paquetes npm, falle también tras reinstalación limpia, o deje binario/versionado inconsistente.
 - **opencode.ai:** `ups` ejecuta el instalador oficial por `curl` con `--no-modify-path`, para cubrir instalación inicial y actualización sin depender de permisos de `npm -g` en `/usr`.
 - **pnpm:** Si `corepack` está disponible, `ups` intenta activar la última versión estable de `pnpm`. En proyectos que fijan `packageManager` con `pnpm`, `ups` sincroniza ese pin antes de construirlos para evitar quedarse en una versión antigua.

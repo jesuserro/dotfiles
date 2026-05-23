@@ -286,6 +286,26 @@ EOF
     else
       _ups_info "corepack no está instalado, omitiendo actualización de pnpm"
     fi
+
+    _ups_progress "Instalando/actualizando ast-grep CLI en el prefijo npm global de usuario..."
+    local ast_grep_start=$(date +%s)
+    local ast_grep_before=""
+    local ast_grep_after=""
+    ast_grep_before=$(ast-grep --version 2>/dev/null || true)
+    if npm install -g --prefix="$npm_prefix" @ast-grep/cli@latest 2>&1 | tee /tmp/ups_ast_grep.log; then
+      local ast_grep_time=$(($(date +%s) - ast_grep_start))
+      rehash 2>/dev/null || hash -r 2>/dev/null || true
+      ast_grep_after=$(ast-grep --version 2>/dev/null || true)
+      if [ -n "$ast_grep_before" ] && [ -n "$ast_grep_after" ] && [ "$ast_grep_before" != "$ast_grep_after" ]; then
+        _ups_success "ast-grep actualizado (${ast_grep_before} -> ${ast_grep_after}, ${ast_grep_time}s)"
+      elif [ -n "$ast_grep_after" ]; then
+        _ups_success "ast-grep verificado/actualizado (${ast_grep_after}, ${ast_grep_time}s)"
+      else
+        _ups_success "ast-grep instalado/actualizado (${ast_grep_time}s)"
+      fi
+    else
+      _ups_warning "No se pudo instalar/actualizar ast-grep CLI"
+    fi
   else
     _ups_info "npm no está instalado, omitiendo actualización de paquetes npm"
   fi
@@ -427,6 +447,22 @@ EOF
       _ups_info "uv detectado en ${uv_path} (no es la instalación oficial en \$HOME/.local/bin)"
       _ups_info "Actualízalo con su gestor (apt/brew/...) o reinstala con: make install-uv"
     fi
+  fi
+
+  # 🧪 Sección: Actualización de herramientas de validación para agentes
+  _ups_section "🧪 Actualización de herramientas de validación para agentes"
+  local agent_tools_script="$HOME/dotfiles/scripts/install-agent-tools.sh"
+  if [ -x "$agent_tools_script" ]; then
+    _ups_progress "Actualizando actionlint y osv-scanner desde releases oficiales verificadas..."
+    local agent_tools_start=$(date +%s)
+    if "$agent_tools_script" --external-only --upgrade 2>&1 | tee /tmp/ups_agent_tools.log; then
+      local agent_tools_time=$(($(date +%s) - agent_tools_start))
+      _ups_success "Herramientas externas de agentes actualizadas (${agent_tools_time}s)"
+    else
+      _ups_warning "No se pudieron actualizar actionlint/osv-scanner; consulta /tmp/ups_agent_tools.log"
+    fi
+  else
+    _ups_info "No se encontró ${agent_tools_script}; omitiendo actionlint/osv-scanner"
   fi
 
   # 📄 Sección: Actualización de RenderCV en jesuserro
