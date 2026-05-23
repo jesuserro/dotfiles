@@ -19,6 +19,8 @@ CURSOR_SKILLS="${CURSOR_DIR}/skills-cursor"
 CURSOR_COMMANDS="${CURSOR_DIR}/commands"
 CONFIG_AI="${HOME_ROOT}/.config/ai"
 VENV_PY="${CONFIG_AI}/runtime/.venv/bin/python"
+CODEX_CONFIG="${HOME_ROOT}/.codex/config.toml"
+OPENCODE_CONFIG="${HOME_ROOT}/.config/opencode/opencode.json"
 
 CURSOR_TMPL="${DOTFILES_ROOT}/dot_cursor/mcp.json.tmpl"
 CODEX_TMPL="${DOTFILES_ROOT}/dot_codex/config.toml.tmpl"
@@ -78,6 +80,87 @@ probe_cmd_missing_strict() {
 			line WARN "${label} (${cmd} not in PATH) — ${hint}"
 		fi
 	fi
+}
+
+check_excalidraw_surface() {
+	local label="$1"
+	local path="$2"
+	local kind="$3"
+	if [[ ! -f "$path" ]]; then
+		line_info "${label} config not found (${path}) — skipping Excalidraw MCP runtime check"
+		return 0
+	fi
+	local status
+	status="$(
+		python3 - "$path" "$kind" "$EXCALIDRAW_MCP_IMAGE" <<'PY' 2>/dev/null || true
+import json
+import sys
+
+path, kind, image = sys.argv[1:4]
+
+def fail(msg):
+    print("FAIL\t" + msg)
+    raise SystemExit(0)
+
+def ok():
+    print("OK")
+    raise SystemExit(0)
+
+text = open(path, "rb").read()
+if b"dist/index.js" in text or b"mcp-servers/excalidraw-mcp" in text:
+    fail("uses legacy Excalidraw local checkout")
+
+if kind in ("cursor", "opencode"):
+    data = json.loads(text.decode("utf-8"))
+    if kind == "cursor":
+        entry = data.get("mcpServers", {}).get("excalidraw")
+        if not isinstance(entry, dict):
+            print("MISSING")
+            raise SystemExit(0)
+        command = entry.get("command")
+        args = entry.get("args", [])
+    else:
+        entry = data.get("mcp", {}).get("excalidraw")
+        if not isinstance(entry, dict):
+            print("MISSING")
+            raise SystemExit(0)
+        command_list = entry.get("command", [])
+        command = command_list[0] if command_list else None
+        args = command_list[1:]
+    if command == "docker" and image in args and "run" in args and "-i" in args and "--rm" in args:
+        ok()
+    fail("Excalidraw is present but not configured for ephemeral Docker runtime")
+
+if kind == "codex":
+    import tomllib
+    data = tomllib.loads(text.decode("utf-8"))
+    entry = data.get("mcp_servers", {}).get("excalidraw")
+    if not isinstance(entry, dict):
+        print("MISSING")
+        raise SystemExit(0)
+    command = entry.get("command")
+    args = entry.get("args", [])
+    if command == "docker" and image in args and "run" in args and "-i" in args and "--rm" in args:
+        ok()
+    fail("Excalidraw is present but not configured for ephemeral Docker runtime")
+
+fail("unknown config kind")
+PY
+	)"
+	case "$status" in
+	OK)
+		line OK "${label} Excalidraw MCP uses Docker runtime"
+		;;
+	MISSING)
+		line_info "${label} Excalidraw MCP entry not present"
+		;;
+	FAIL$'\t'*)
+		line MISSING "${label} ${status#FAIL	}; regenerate/apply MCP templates"
+		;;
+	*)
+		line WARN "${label} Excalidraw MCP config could not be parsed safely"
+		;;
+	esac
 }
 
 file_perm_line() {
@@ -268,19 +351,9 @@ probe_cmd_warn "uvx (uv tool runner)" "uvx"
 probe_cmd_missing_strict "node (used by several Cursor MCPs)" "node"
 probe_cmd_missing_strict "npx (used by several Cursor MCPs)" "npx"
 
-if [[ -f "${CURSOR_MCP}" ]]; then
-	if python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); exit(0 if 'excalidraw' in d.get('mcpServers',{}) else 1)" 2>/dev/null; then
-		if python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); s=d.get('mcpServers',{}).get('excalidraw',{}); args=s.get('args',[]); exit(0 if s.get('command') == 'docker' and 'ghcr.io/yctimlin/mcp_excalidraw:latest' in args else 1)" 2>/dev/null; then
-			line OK "Excalidraw MCP configured for ephemeral Docker runtime (${EXCALIDRAW_MCP_IMAGE})"
-		else
-			line MISSING "Excalidraw MCP is present but not configured for Docker; regenerate/apply MCP templates"
-		fi
-	else
-		line_info "Excalidraw entry not in ~/.cursor/mcp.json — skipping excalidraw path check"
-	fi
-else
-	line_info "No ~/.cursor/mcp.json — skipping excalidraw path check"
-fi
+check_excalidraw_surface "Cursor HOME" "${CURSOR_MCP}" "cursor"
+check_excalidraw_surface "Codex HOME" "${CODEX_CONFIG}" "codex"
+check_excalidraw_surface "OpenCode HOME" "${OPENCODE_CONFIG}" "opencode"
 
 if [[ -f "${CURSOR_MCP}" ]] && python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); exit(0 if 'excalidraw' in d.get('mcpServers',{}) else 1)" 2>/dev/null; then
 	if command -v docker >/dev/null 2>&1; then

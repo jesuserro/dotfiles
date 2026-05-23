@@ -28,6 +28,106 @@ EOF
 	chmod +x "${dir}/node" "${dir}/npm" "${dir}/gitnexus"
 }
 
+@test "run_step preserves real exit codes and logs stderr for missing commands" {
+	local script="${TEST_TEMP_DIR}/run-step-check.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+source "${DOTFILES_DIR}/scripts/update/lib/logging.sh"
+result_init "${TEST_TEMP_DIR}/results.tsv"
+run_step "Test" "Success" "${TEST_TEMP_DIR}/success.log" bash -c 'echo ok'
+run_step "Test" "Exit 42" "${TEST_TEMP_DIR}/exit42.log" bash -c 'echo bad >&2; exit 42'
+run_step "Test" "Missing command" "${TEST_TEMP_DIR}/missing.log" definitely-not-a-command
+EOF
+	chmod +x "$script"
+	run "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q $'OK\tTest\tSuccess\tcompleted' "${TEST_TEMP_DIR}/results.tsv"
+	grep -q $'INCIDENT\tTest\tExit 42\texit 42' "${TEST_TEMP_DIR}/results.tsv"
+	grep -q $'INCIDENT\tTest\tMissing command\texit 127' "${TEST_TEMP_DIR}/results.tsv"
+	grep -q 'definitely-not-a-command' "${TEST_TEMP_DIR}/missing.log"
+	[[ "$output" != *"failed with exit 0"* ]]
+}
+
+@test "run_npm_step reports npm warnings without failing usable tools" {
+	local script="${TEST_TEMP_DIR}/npm-step-check.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+source "${DOTFILES_DIR}/scripts/update/lib/logging.sh"
+result_init "${TEST_TEMP_DIR}/npm-results.tsv"
+run_npm_step "WSL" "npm clean" "${TEST_TEMP_DIR}/npm-clean.log" bash -c 'echo "changed 1 package"; echo "2 packages are looking for funding"'
+run_npm_step "WSL" "npm warn tool" "${TEST_TEMP_DIR}/npm-warn.log" bash -c 'echo "npm warn deprecated boolean@3.2.0: Package no longer supported" >&2; echo changed'
+run_npm_step "WSL" "npm carriage warn" "${TEST_TEMP_DIR}/npm-cr.log" bash -c 'printf "progress\rnpm WARN deprecated old-package: still visible\r\n" >&2'
+run_npm_step "WSL" "npm fail tool" "${TEST_TEMP_DIR}/npm-fail.log" bash -c 'echo "npm warn before fail" >&2; exit 42'
+EOF
+	chmod +x "$script"
+	run "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q $'OK\tWSL\tnpm clean\tcompleted' "${TEST_TEMP_DIR}/npm-results.tsv"
+	grep -q $'WARN\tWSL\tnpm warn tool\tcompleted with npm warnings' "${TEST_TEMP_DIR}/npm-results.tsv"
+	grep -q $'WARN\tWSL\tnpm carriage warn\tcompleted with npm warnings' "${TEST_TEMP_DIR}/npm-results.tsv"
+	grep -q $'INCIDENT\tWSL\tnpm fail tool\texit 42' "${TEST_TEMP_DIR}/npm-results.tsv"
+	grep -q 'npm warn deprecated boolean@3.2.0: Package no longer supported' "${TEST_TEMP_DIR}/npm-warn.log"
+	grep -q 'npm WARN deprecated old-package: still visible' "${TEST_TEMP_DIR}/npm-cr.log"
+}
+
+@test "update-wsl shell section updates Oh My Zsh through zsh script from Bash" {
+	local fake_home="${TEST_TEMP_DIR}/home"
+	local stub_dir="${TEST_TEMP_DIR}/shell-bin"
+	mkdir -p "${fake_home}/.oh-my-zsh/tools" "${fake_home}/.oh-my-zsh/custom/plugins/zsh-autosuggestions/.git" "$stub_dir"
+	cat >"${fake_home}/.oh-my-zsh/tools/upgrade.sh" <<'EOF'
+#!/usr/bin/env bash
+echo "omz upgraded with ZSH=$ZSH"
+exit 0
+EOF
+	chmod +x "${fake_home}/.oh-my-zsh/tools/upgrade.sh"
+	cat >"${stub_dir}/zsh" <<'EOF'
+#!/usr/bin/env bash
+script="$1"
+shift
+exec bash "$script" "$@"
+EOF
+	cat >"${stub_dir}/git" <<'EOF'
+#!/usr/bin/env bash
+echo "git $*"
+exit 0
+EOF
+	chmod +x "${stub_dir}/zsh" "${stub_dir}/git"
+	run env HOME="$fake_home" ZSH="${fake_home}/.oh-my-zsh" ZSH_CUSTOM="${fake_home}/.oh-my-zsh/custom" PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-shell" "${DOTFILES_DIR}/scripts/update/update-wsl.sh" --section shell
+	[[ "$status" -eq 0 ]]
+	grep -q 'omz upgraded' "${TEST_TEMP_DIR}/run-shell/logs/wsl-omz.log"
+	grep -q $'OK\tWSL\tOh My Zsh\tcompleted' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
+	[[ "$output" != *"failed with exit 0"* ]]
+}
+
+@test "winget parser extracts Spanish package failure and success" {
+	local log="${TEST_TEMP_DIR}/windows-winget-upgrade.log"
+	cat >"$log" <<'EOF'
+(1/2) Encontrado Pandoc [JohnMacFarlane.Pandoc] Versión 3.9.0.2
+Iniciando la desinstalación de paquete...
+Error de desinstalación con el código de salida: 1603
+
+(2/2) Encontrado Microsoft Teams [Microsoft.Teams] Versión 26106.1911.4707.3286
+Iniciando instalación de paquete...
+Se instaló correctamente. Reinicie la aplicación para completar la actualización.
+EOF
+	run python3 "${DOTFILES_DIR}/scripts/update/parse-winget-log.py" "$log"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *$'WARN\tWindows\tWinGet package Pandoc [JohnMacFarlane.Pandoc]\tupgrade failed with code 1603'* ]]
+	[[ "$output" == *$'OK\tWindows\tWinGet package Microsoft Teams [Microsoft.Teams]\tupdated successfully'* ]]
+}
+
+@test "winget parser degrades cleanly for unknown log format" {
+	local log="${TEST_TEMP_DIR}/unknown-winget.log"
+	echo "unrecognized winget output" >"$log"
+	run python3 "${DOTFILES_DIR}/scripts/update/parse-winget-log.py" "$log"
+	[[ "$status" -eq 0 ]]
+	[[ -z "$output" ]]
+}
+
 @test "update scripts pass bash syntax checks" {
 	run bash -n "${DOTFILES_DIR}/scripts/update/update.sh"
 	[[ "${status}" -eq 0 ]]

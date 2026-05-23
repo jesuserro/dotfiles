@@ -74,9 +74,9 @@ run_tools() {
 		return 0
 	fi
 
-	run_step "WSL" "Codex CLI" "${LOG_DIR}/wsl-codex.log" npm install -g --prefix="$npm_prefix" @openai/codex@latest
-	run_step "WSL" "ast-grep CLI" "${LOG_DIR}/wsl-ast-grep.log" npm install -g --prefix="$npm_prefix" @ast-grep/cli@latest
-	run_step "WSL" "GitNexus CLI" "${LOG_DIR}/wsl-gitnexus.log" npm install -g --prefix="$npm_prefix" gitnexus@latest
+	run_npm_step "WSL" "Codex CLI" "${LOG_DIR}/wsl-codex.log" npm install -g --prefix="$npm_prefix" @openai/codex@latest
+	run_npm_step "WSL" "ast-grep CLI" "${LOG_DIR}/wsl-ast-grep.log" npm install -g --prefix="$npm_prefix" @ast-grep/cli@latest
+	run_npm_step "WSL" "GitNexus CLI" "${LOG_DIR}/wsl-gitnexus.log" npm install -g --prefix="$npm_prefix" gitnexus@latest
 	if command -v gitnexus >/dev/null 2>&1; then
 		result_ok "WSL" "GitNexus" "usable: $(gitnexus --version 2>/dev/null || echo version unknown)"
 	else
@@ -109,14 +109,38 @@ run_shell() {
 		result_ok "WSL" "uv" "mocked"
 		return 0
 	fi
-	if command -v omz >/dev/null 2>&1 || [[ -d "${ZSH:-}" ]]; then
-		run_step "WSL" "Oh My Zsh" "${LOG_DIR}/wsl-omz.log" omz update
+	local zsh_dir="${ZSH:-$HOME/.oh-my-zsh}"
+	if [[ -x "${zsh_dir}/tools/upgrade.sh" ]]; then
+		run_step "WSL" "Oh My Zsh" "${LOG_DIR}/wsl-omz.log" env ZSH="$zsh_dir" zsh "${zsh_dir}/tools/upgrade.sh" -v minimal
+	elif [[ -d "$zsh_dir" ]]; then
+		result_warn "WSL" "Oh My Zsh" "installed at ${zsh_dir} but tools/upgrade.sh is missing"
 	else
 		result_info "WSL" "Oh My Zsh" "not installed; skipped"
 	fi
-	if command -v upgrade_oh_my_zsh_custom >/dev/null 2>&1; then
-		run_step "WSL" "Oh My Zsh custom" "${LOG_DIR}/wsl-omz-custom.log" upgrade_oh_my_zsh_custom
+	local custom_dir="${ZSH_CUSTOM:-${zsh_dir}/custom}"
+	local plugin
+	for plugin in powerlevel10k autoupdate zsh-autosuggestions zsh-completions zsh-history-substring-search zsh-syntax-highlighting; do
+		case "$plugin" in
+		powerlevel10k)
+			update_git_checkout "WSL" "Oh My Zsh custom powerlevel10k" "${custom_dir}/themes/powerlevel10k" "${LOG_DIR}/wsl-omz-powerlevel10k.log"
+			;;
+		*)
+			update_git_checkout "WSL" "Oh My Zsh plugin ${plugin}" "${custom_dir}/plugins/${plugin}" "${LOG_DIR}/wsl-omz-plugin-${plugin}.log"
+			;;
+		esac
+	done
+}
+
+update_git_checkout() {
+	local area="$1" name="$2" repo_dir="$3" log_file="$4"
+	if [[ -d "${repo_dir}/.git" ]]; then
+		run_step "$area" "$name" "$log_file" git -C "$repo_dir" pull --ff-only
+	elif [[ -e "$repo_dir" ]]; then
+		result_warn "$area" "$name" "${repo_dir} exists but is not a git checkout; skipped"
 	fi
+}
+
+run_uv_update() {
 	if command -v uv >/dev/null 2>&1; then
 		local uv_path
 		uv_path="$(command -v uv)"
@@ -169,6 +193,7 @@ want_section apt && run_apt
 want_section tools && run_tools
 want_section tools && run_opencode
 want_section shell && run_shell
+want_section shell && run_uv_update
 want_section mcp && run_mcp
 want_section services && run_services
 

@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-23 17:36:28
+**Generated:** 2026-05-23 17:58:38
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -901,6 +901,7 @@
 │   │   │   ├── 🔧 environment.sh
 │   │   │   ├── 🔧 logging.sh
 │   │   │   └── 🔧 results.sh
+│   │   ├── 🐍 parse-winget-log.py
 │   │   ├── 🔧 update-check.sh
 │   │   ├── 🔧 update-excalidraw.sh
 │   │   ├── 🔧 update-projects.sh

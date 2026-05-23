@@ -19,6 +19,7 @@ function Run-Logged {
   param([string]$Name, [string]$LogName, [scriptblock]$Block)
   $log = Join-Path $LogDir $LogName
   $start = Get-Date
+  $code = $null
   try {
     & $Block *> $log
     $code = if ($LASTEXITCODE -ne $null) { [int]$LASTEXITCODE } else { 0 }
@@ -33,6 +34,43 @@ function Run-Logged {
     $_ | Out-File -FilePath $log -Append -Encoding UTF8
     Add-Result "WARN" $Name "exception in ${elapsed}s: $($_.Exception.Message); log: $log"
   }
+  $script:LastRunLog = $log
+  $script:LastRunCode = $code
+}
+
+function Add-WinGetPackageResults {
+  param([string]$LogPath)
+  if (-not (Test-Path $LogPath)) { return }
+  $text = Get-Content -Path $LogPath -Raw -ErrorAction SilentlyContinue
+  if ([string]::IsNullOrWhiteSpace($text)) { return }
+
+  $currentName = $null
+  $currentId = $null
+  $foundAny = $false
+  foreach ($line in ($text -split "`r?`n")) {
+    if ($line -match '^\(\d+/\d+\)\s+(?:Encontrado|Found)\s+(.+?)\s+\[([^\]]+)\]') {
+      $currentName = $Matches[1].Trim()
+      $currentId = $Matches[2].Trim()
+      continue
+    }
+    if ($currentName -and $line -match '(?:c[oó]digo de salida|exit code):\s*(-?\d+)') {
+      Add-Result "WARN" "WinGet package $currentName [$currentId]" "upgrade failed with code $($Matches[1])"
+      $foundAny = $true
+      $currentName = $null
+      $currentId = $null
+      continue
+    }
+    if ($currentName -and $line -match '(?:Se instal[oó] correctamente|Successfully installed|Successfully updated)') {
+      Add-Result "OK" "WinGet package $currentName [$currentId]" "updated successfully"
+      $foundAny = $true
+      $currentName = $null
+      $currentId = $null
+      continue
+    }
+  }
+  if ((-not $foundAny) -and ($script:LastRunCode -ne 0)) {
+    Add-Result "WARN" "WinGet package details" "could not parse package-level results; see log: $LogPath"
+  }
 }
 
 Write-Host "Dotfiles Windows update"
@@ -43,6 +81,7 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
   Run-Logged "WinGet packages" "windows-winget-upgrade.log" {
     winget upgrade --all --include-unknown --silent --accept-package-agreements --accept-source-agreements
   }
+  Add-WinGetPackageResults $script:LastRunLog
 } else {
   Add-Result "WARN" "WinGet" "winget not found on Windows PATH"
 }

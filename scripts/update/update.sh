@@ -91,6 +91,9 @@ fi
 if [[ ! -s "$WINDOWS_RESULTS" ]]; then
 	printf 'WARN\tWindows\tWindows result\tNo structured Windows result was produced before timeout (%ss); run dir: %s\n' "${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-7200}" "$RUN_DIR" >"$WINDOWS_RESULTS"
 fi
+if [[ -f "${LOG_DIR}/windows-winget-upgrade.log" ]] && ! grep -q $'\tWindows\tWinGet package ' "$WINDOWS_RESULTS"; then
+	python3 "${SCRIPT_DIR}/parse-winget-log.py" "${LOG_DIR}/windows-winget-upgrade.log" >>"$WINDOWS_RESULTS" || true
+fi
 
 section "Consolidated summary"
 result_print_group "Windows" "$WINDOWS_RESULTS" "Windows"
