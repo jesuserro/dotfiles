@@ -112,6 +112,11 @@ make deps-install DEPS_INSTALL_ARGS="--dry-run --include-optional"
 
 `deps-install` only installs `apt` inventories. It ignores non-APT tooling and Windows-side/WSL environment entries even if those files are present.
 
+For a full workstation bootstrap, use `make install`: it runs the APT baseline,
+the Node.js stack needed by npm-based CLIs, and `make install-agent-tools` so
+`@ast-grep/cli`, `actionlint` and `osv-scanner` are installed without a second
+manual command.
+
 ## What gets checked vs installed
 
 - Installed by `deps-install`: `common.yaml` and `ubuntu.yaml` entries with manager `apt`.
@@ -122,19 +127,39 @@ make deps-install DEPS_INSTALL_ARGS="--dry-run --include-optional"
 ## Current operational examples
 
 - APT baseline: `git`, `zsh`, `tmux`, `python3`, `python3-pip`, `bubblewrap`, `ripgrep`, `fd-find`, `age`.
-- APT test/lint tooling: `bats`, `shellcheck`, `shfmt` (required: true, see "Test/lint dependencies" below).
-- Non-APT tooling: `chezmoi`, `sops`, `uv`, `node`, `npm`, `corepack`, `pnpm`, `codex`, `gitnexus`, `opencode`, `docker`.
+- APT test/lint/security tooling: `bats`, `shellcheck`, `shfmt`, `yamllint`, `gitleaks` (required: true, see "Test/lint dependencies" below).
+- Non-APT tooling: `chezmoi`, `sops`, `uv`, `node`, `npm`, `corepack`, `pnpm`, `codex`, `gitnexus`, `@ast-grep/cli`, `actionlint`, `osv-scanner`, `opencode`, `docker`.
 - WSL/Windows-side: `wslpath`, `powershell.exe`, `wt.exe`.
 
 ## Test/lint dependencies (APT)
 
-`make test-fast` and `make test-lint` rely on three small CLIs that are intentionally part of the required APT baseline so a fresh machine can validate the repo without extra steps:
+`make test-fast` and `make test-lint` rely on small CLIs that are intentionally part of the required APT baseline so a fresh machine can validate the repo without extra steps:
 
 - `bats` — Bats test runner (Ubuntu APT pulls `parallel` and `sysstat` as transitive deps).
 - `shellcheck` — shell linter used by `lint-shellcheck`.
 - `shfmt` — shell formatter used by `lint-shfmt` / `fmt-shell`.
+- `yamllint` — YAML validator for inventories, workflows and visible YAML config.
+- `gitleaks` — working-tree secret scanner used by `make security-check`.
 
-A fail-fast preflight (`make test-deps-check`, also wired into `test-fast` / `test-bats` / `test`) verifies these three are in `PATH` before running anything, and prints `Run: make install SKIP_EXTERNAL=1` if any is missing. This avoids silent hangs or partial runs on fresh machines.
+A fail-fast preflight (`make test-deps-check`, also wired into `test-fast` / `test-bats` / `test`) verifies the core shell test tools are in `PATH` before running anything, and prints `Run: make install SKIP_EXTERNAL=1` if any is missing. This avoids silent hangs or partial runs on fresh machines.
+
+## Agent validation and security tooling
+
+Agents can run the repo checks without guessing tool commands:
+
+```bash
+make quality-check
+make security-check
+make agent-validate
+```
+
+What these cover:
+
+- `make quality-check`: `shellcheck`, `shfmt` in check mode, `yamllint`, and `actionlint -shellcheck=` when `.github/workflows/*.yml|*.yaml` exists. Inline workflow shell is not delegated to actionlint's ShellCheck integration because the repo already has a separate shell lint target and the release workflow embeds changelog text patterns that ShellCheck misparses.
+- `make security-check`: `gitleaks detect --no-git --redact` over the working tree and `osv-scanner scan source -r` when supported manifests/lockfiles exist.
+- `make agent-validate`: quality + security.
+
+Chezmoi templates are not passed raw to `shellcheck` or `shfmt`; those tools do not reliably parse Go template delimiters. The current shell validation covers real shell scripts, launchers and Bats tests. MCP/Chezmoi template syntax remains covered by the existing `chezmoi-templates`, `ai-mcp-render`, and `ai-mcp-drift` paths.
 
 ## Canonical external guidance
 
@@ -147,9 +172,27 @@ A fail-fast preflight (`make test-deps-check`, also wired into `test-fast` / `te
 - `pnpm`: `corepack prepare pnpm@latest --activate`
 - `codex`: `npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest`
 - `gitnexus`: `npm install -g --prefix="$HOME/.npm-global" gitnexus@latest`
+- `@ast-grep/cli`: `make install-agent-tools` or `npm install -g --prefix="$HOME/.npm-global" @ast-grep/cli@latest`
+- `actionlint`: `make install-agent-tools` (official `rhysd/actionlint` GitHub release, checksum verified)
+- `osv-scanner`: `make install-agent-tools` (official `google/osv-scanner` GitHub release, checksum verified)
 - `opencode`: `curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path`
 - `docker`: manual workstation decision on WSL; the repo does not enforce one installer path
 - `wt.exe` / `powershell.exe`: Windows-host capabilities used from WSL, not Linux install targets
+
+## External version policy
+
+Agent tools that are outside APT follow the repo's existing floating-tooling
+policy:
+
+- npm tools use `@latest` in the user npm prefix (`@ast-grep/cli@latest`).
+- GitHub Release tools resolve the latest official release at install/update
+  time and verify the release checksum before installing (`actionlint`,
+  `osv-scanner`).
+- `ups` uses the same policy to refresh them.
+
+The inventory records the install channel, not a pinned version. A fully pinned
+external-tool lock would require a broader inventory schema change, so it stays
+out of this small dependency-layer extension.
 
 ## How to extend the inventory
 

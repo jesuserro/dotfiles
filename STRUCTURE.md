@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-23 11:58:25
+**Generated:** 2026-05-23 12:42:44
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -14,6 +14,20 @@
 │   ├── 📄 run_after_14_link_prompt_launchers.sh.tmpl
 │   └── 📄 run_before_00_backup_rc_files.sh.tmpl
 ├── 📁 .claude
+│   └── 📁 skills
+│       └── 📁 gitnexus
+│           ├── 📁 gitnexus-cli
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-debugging
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-exploring
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-guide
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-impact-analysis
+│           │   └── 📝 SKILL.md
+│           └── 📁 gitnexus-refactoring
+│               └── 📝 SKILL.md
 ├── 📁 .cursor
 │   ├── 📁 plans
 │   └── 📁 rules
@@ -23,7 +37,10 @@
 │       ├── ⚙️ release.yml
 │       └── ⚙️ test.yml
 ├── 📁 .gitnexus
+│   ├── 📁 parse-cache
+│   │   └── ⚙️ index.json
 │   ├── 📁 wiki
+│   ├── 📄 .gitignore
 │   ├── 📄 lbug
 │   └── ⚙️ meta.json
 ├── 📁 .venv-tools
@@ -889,6 +906,7 @@
 │   │   ├── 🔧 install_common.sh
 │   │   ├── 🔧 prompt-vault-common.sh
 │   │   └── 🐍 system_deps.py
+│   ├── 🔧 agent-validate-changed.sh
 │   ├── 🔧 ai-cursor-check.sh
 │   ├── 🔧 check-azure-tools.sh
 │   ├── 🔧 check-system-deps.sh
@@ -922,6 +940,7 @@
 │   ├── 📝 git_start_feature.md
 │   ├── 🔧 git_start_feature.sh
 │   ├── 🔧 git_workflow.sh
+│   ├── 🔧 install-agent-tools.sh
 │   ├── 🔧 install-azure-cli.sh
 │   ├── 🔧 install-check.sh
 │   ├── 🔧 install-chezmoi.sh
@@ -1026,7 +1045,9 @@
 ├── 📄 .chezmoiignore
 ├── 📄 .codex
 ├── 📄 .gitignore
+├── ⚙️ .gitleaks.toml
 ├── ⚙️ .sops.yaml
+├── 📄 .yamllint
 ├── 📝 AGENTS.md
 ├── 📝 CHANGELOG.md
 ├── 📝 CLAUDE.md

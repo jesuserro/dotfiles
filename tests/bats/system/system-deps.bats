@@ -115,6 +115,65 @@ EOF
     [[ "${output}" == *'npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest'* ]]
 }
 
+@test "repo inventory declares agent validation tools in the expected channels" {
+    run python3 "${HELPER_SCRIPT}" list --include-optional \
+        --inventory "${DOTFILES_DIR}/system/packages/ubuntu.yaml" \
+        --inventory "${DOTFILES_DIR}/system/packages/tooling.yaml"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *$'required\tyamllint\tyamllint\tubuntu\tlinting\tapt'* ]]
+    [[ "${output}" == *$'required\tgitleaks\tgitleaks\tubuntu\tsecurity\tapt'* ]]
+    [[ "${output}" == *$'optional\t@ast-grep/cli\tast-grep\tcommon\tagent-validation\texternal\tnpm'* ]]
+    [[ "${output}" == *$'optional\tactionlint\tactionlint\tcommon\tagent-validation\texternal\tgithub-release'* ]]
+    [[ "${output}" == *$'optional\tosv-scanner\tosv-scanner\tcommon\tsecurity\texternal\tgithub-release'* ]]
+}
+
+@test "actions helper routes agent tools to canonical installers" {
+    cat > "${TEST_INVENTORY}" <<'EOF'
+schema_version: 1
+platform: common
+manager: external
+packages:
+  - package: @ast-grep/cli
+    command: ast-grep
+    required: false
+    capability: agent-validation
+    install_method: npm
+    note: ast-grep CLI.
+  - package: actionlint
+    command: actionlint
+    required: false
+    capability: agent-validation
+    install_method: github-release
+    note: actionlint.
+  - package: osv-scanner
+    command: osv-scanner
+    required: false
+    capability: security
+    install_method: github-release
+    note: osv.
+EOF
+
+    run python3 "${HELPER_SCRIPT}" actions --include-optional --inventory "${TEST_INVENTORY}"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *'npm install -g --prefix="$HOME/.npm-global" @ast-grep/cli@latest'* ]]
+    [[ "${output}" == *"Install actionlint from the official GitHub release with checksum verification."* ]]
+    [[ "${output}" == *"Install OSV-Scanner from the official GitHub release with checksum verification."* ]]
+    [[ "${output}" == *"make install-agent-tools"* ]]
+}
+
+@test "Makefile exposes agent validation and installation targets" {
+    run make -pn -C "${DOTFILES_DIR}"
+    [[ "${status}" -eq 0 ]]
+    [[ "${output}" == *"install-agent-tools:"* ]]
+    [[ "${output}" == *"quality-check:"* ]]
+    [[ "${output}" == *"security-check:"* ]]
+    [[ "${output}" == *"agent-validate:"* ]]
+    [[ "${output}" == *"agent-validate-changed:"* ]]
+    [[ "${output}" == *"lint-actions:"* ]]
+    [[ "${output}" == *"security-osv:"* ]]
+    [[ "${output}" == *"install: install-check install-apt install-node-stack install-agent-tools install-external install-dotfiles install-verify"* ]]
+}
+
 @test "show-system-deps-actions reports actionable guidance for missing external tools" {
     cat > "${TEST_INVENTORY}" <<'EOF'
 schema_version: 1

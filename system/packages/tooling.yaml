@@ -44,7 +44,7 @@ packages:
     capability: js-toolchain
     install_method: corepack
     note: Used by ups() and auxiliary MCP repos such as excalidraw-mcp.
-  - package: @openai/codex
+  - package: "@openai/codex"
     command: codex
     required: false
     capability: ai-cli
@@ -56,6 +56,24 @@ packages:
     capability: ai-cli
     install_method: npm
     note: GitNexus CLI is updated separately from the MCP launcher flow.
+  - package: "@ast-grep/cli"
+    command: ast-grep
+    required: false
+    capability: agent-validation
+    install_method: npm
+    note: Structured code search for agents; install with 'make install-agent-tools' and update with ups() through the user npm prefix.
+  - package: actionlint
+    command: actionlint
+    required: false
+    capability: agent-validation
+    install_method: github-release
+    note: GitHub Actions workflow validator; install with 'make install-agent-tools' from rhysd/actionlint releases with checksum verification.
+  - package: osv-scanner
+    command: osv-scanner
+    required: false
+    capability: security
+    install_method: github-release
+    note: Dependency vulnerability scanner; install with 'make install-agent-tools' from google/osv-scanner releases with checksum verification.
   - package: opencode
     command: opencode
     required: false

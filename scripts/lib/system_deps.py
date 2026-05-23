@@ -92,6 +92,26 @@ def _action_for_package(package):
             "summary": "Install GitNexus CLI in the user npm prefix used by this repo.",
             "command": 'npm install -g --prefix="$HOME/.npm-global" gitnexus@latest',
         },
+        "ast-grep": {
+            "kind": "installer",
+            "summary": "Install ast-grep CLI in the user npm prefix used by this repo.",
+            "command": 'npm install -g --prefix="$HOME/.npm-global" @ast-grep/cli@latest',
+        },
+        "@ast-grep/cli": {
+            "kind": "installer",
+            "summary": "Install ast-grep CLI in the user npm prefix used by this repo.",
+            "command": 'npm install -g --prefix="$HOME/.npm-global" @ast-grep/cli@latest',
+        },
+        "actionlint": {
+            "kind": "installer",
+            "summary": "Install actionlint from the official GitHub release with checksum verification.",
+            "command": "make install-agent-tools",
+        },
+        "osv-scanner": {
+            "kind": "installer",
+            "summary": "Install OSV-Scanner from the official GitHub release with checksum verification.",
+            "command": "make install-agent-tools",
+        },
         "opencode": {
             "kind": "installer",
             "summary": "Install or refresh OpenCode with the official installer used by ups().",
@@ -143,6 +163,12 @@ def _action_for_package(package):
             "kind": "installer",
             "summary": "Install this CLI in the user npm prefix used by the repo.",
             "command": f'npm install -g --prefix="$HOME/.npm-global" {package_name}',
+        }
+    if install_method == "github-release":
+        return {
+            "kind": "installer",
+            "summary": "Install this CLI from its official GitHub release with checksum verification.",
+            "command": "make install-agent-tools",
         }
     if install_method == "curl":
         return {
