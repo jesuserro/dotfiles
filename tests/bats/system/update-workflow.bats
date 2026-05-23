@@ -77,7 +77,7 @@ EOF
 @test "update-wsl shell section updates Oh My Zsh through zsh script from Bash" {
 	local fake_home="${TEST_TEMP_DIR}/home"
 	local stub_dir="${TEST_TEMP_DIR}/shell-bin"
-	mkdir -p "${fake_home}/.oh-my-zsh/tools" "${fake_home}/.oh-my-zsh/custom/plugins/zsh-autosuggestions/.git" "$stub_dir"
+	mkdir -p "${fake_home}/.oh-my-zsh/tools" "${fake_home}/.oh-my-zsh/custom/plugins/z/.git" "${fake_home}/.oh-my-zsh/custom/plugins/zsh-autosuggestions/.git" "$stub_dir"
 	cat >"${fake_home}/.oh-my-zsh/tools/upgrade.sh" <<'EOF'
 #!/usr/bin/env bash
 echo "omz upgraded with ZSH=$ZSH"
@@ -100,6 +100,7 @@ EOF
 	[[ "$status" -eq 0 ]]
 	grep -q 'omz upgraded' "${TEST_TEMP_DIR}/run-shell/logs/wsl-omz.log"
 	grep -q $'OK\tWSL\tOh My Zsh\tcompleted' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
+	grep -q $'OK\tWSL\tOh My Zsh plugin z\tcompleted' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
 	[[ "$output" != *"failed with exit 0"* ]]
 }
 
@@ -118,6 +119,52 @@ EOF
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *$'WARN\tWindows\tWinGet package Pandoc [JohnMacFarlane.Pandoc]\tupgrade failed with code 1603'* ]]
 	[[ "$output" == *$'OK\tWindows\tWinGet package Microsoft Teams [Microsoft.Teams]\tupdated successfully'* ]]
+}
+
+@test "winget parser extracts legacy UTF-16 mojibake package details" {
+	local log="${TEST_TEMP_DIR}/legacy-winget.log"
+	python3 - "$log" <<'PY'
+from pathlib import Path
+import sys
+text = """(1/2) Encontrado Pandoc [JohnMacFarlane.Pandoc] Versi├│n 3.9.0.2
+Iniciando la desinstalaci├│n de paquete...
+Error de desinstalaci├│n con el c├│digo de salida: 1603
+
+(2/2) Encontrado Microsoft Teams [Microsoft.Teams] Versi├│n 26106.1911.4707.3286
+Iniciando instalaci├│n de paquete...
+Se instal├│ correctamente. Reinicie la aplicaci├│n para completar la actualizaci├│n.
+"""
+Path(sys.argv[1]).write_bytes(text.encode("utf-16"))
+PY
+	run python3 "${DOTFILES_DIR}/scripts/update/parse-winget-log.py" "$log"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *$'WARN\tWindows\tWinGet package Pandoc [JohnMacFarlane.Pandoc]\tupgrade failed with code 1603'* ]]
+	[[ "$output" == *$'OK\tWindows\tWinGet package Microsoft Teams [Microsoft.Teams]\tupdated successfully'* ]]
+}
+
+@test "winget parser extracts package details from real binary log fixture when present" {
+	local real_log="/mnt/c/Users/jesus/AppData/Local/dotfiles/update-runs/20260523T155942Z-62167/logs/windows-winget-upgrade.log"
+	[[ -f "$real_log" ]] || skip "real Windows winget log fixture not present on this host"
+	run python3 "${DOTFILES_DIR}/scripts/update/parse-winget-log.py" "$real_log"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *$'WARN\tWindows\tWinGet package Pandoc [JohnMacFarlane.Pandoc]\tupgrade failed with code 1603'* ]]
+	[[ "$output" == *$'OK\tWindows\tWinGet package Microsoft Teams [Microsoft.Teams]\tupdated successfully'* ]]
+}
+
+@test "PowerShell Windows logging uses native process capture and UTF-8 log writes" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	grep -q 'Run-NativeLogged' "$ps1"
+	grep -q 'StandardOutputEncoding' "$ps1"
+	grep -Fq '[System.IO.File]::WriteAllText($log, $content, [System.Text.UTF8Encoding]::new($false))' "$ps1"
+	run grep -F '*> $log' "$ps1"
+	[[ "$status" -ne 0 ]]
+}
+
+@test "PowerShell Windows logging keeps WSL and WinGet encoding contracts explicit" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	grep -q 'Run-NativeLogged "WinGet packages".*"utf8"' "$ps1"
+	grep -q 'Run-NativeLogged "WSL status".*"unicode"' "$ps1"
+	grep -q 'Run-NativeLogged "WSL update".*"unicode"' "$ps1"
 }
 
 @test "winget parser degrades cleanly for unknown log format" {
@@ -163,6 +210,15 @@ EOF
 	[[ "${output}" == *"WinGet: mocked winget success"* ]]
 	[[ "${output}" == *"WSL update: mocked wsl --update"* ]]
 	[[ "${output}" != *"Pandoc failed"* ]]
+}
+
+@test "make update replaces WinGet detail fallback when package details are parseable" {
+	run env DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=winget-fallback-with-parseable-log DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-winget-details" make -C "${DOTFILES_DIR}" update
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"WinGet packages: exit -1978335188"* ]]
+	[[ "${output}" == *"WinGet package Pandoc [JohnMacFarlane.Pandoc]: upgrade failed with code 1603"* ]]
+	[[ "${output}" == *"WinGet package Microsoft Teams [Microsoft.Teams]: updated successfully"* ]]
+	[[ "${output}" != *"could not parse package-level results"* ]]
 }
 
 @test "make update mock surfaces WinGet package failure without aborting WSL" {
@@ -235,7 +291,7 @@ EOF
 }
 
 @test "update PowerShell script invokes wsl --update and never wsl --shutdown" {
-	grep -q 'wsl --update' "${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	grep -q 'Run-NativeLogged "WSL update" "windows-wsl-update.log" "wsl" @("--update") "unicode"' "${DOTFILES_DIR}/scripts/update/update-windows.ps1"
 	! grep -Eq '^.*Run-Logged.*wsl --shutdown|^[[:space:]]*wsl --shutdown' "${DOTFILES_DIR}/scripts/update/update-windows.ps1"
 }
 

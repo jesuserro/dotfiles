@@ -34,6 +34,16 @@ launch_windows_update() {
 		ok)
 			printf 'OK\tWindows\tWinGet\tmocked winget success\nOK\tWindows\tWSL update\tmocked wsl --update\n' >"$WINDOWS_RESULTS"
 			;;
+		winget-fallback-with-parseable-log)
+			printf 'WARN\tWindows\tWinGet packages\texit -1978335188 in 19s; log: %s\nWARN\tWindows\tWinGet package details\tcould not parse package-level results; see log: %s\nOK\tWindows\tWSL update\tmocked wsl --update\n' "${LOG_DIR}/windows-winget-upgrade.log" "${LOG_DIR}/windows-winget-upgrade.log" >"$WINDOWS_RESULTS"
+			cat >"${LOG_DIR}/windows-winget-upgrade.log" <<'EOF'
+(1/2) Encontrado Pandoc [JohnMacFarlane.Pandoc] Versi├│n 3.9.0.2
+Error de desinstalaci├│n con el c├│digo de salida: 1603
+
+(2/2) Encontrado Microsoft Teams [Microsoft.Teams] Versi├│n 26106.1911.4707.3286
+Se instal├│ correctamente. Reinicie la aplicaci├│n para completar la actualizaci├│n.
+EOF
+			;;
 		winget-failure)
 			printf 'WARN\tWindows\tWinGet\tPandoc failed with installer exit code 1603\nOK\tWindows\tWSL update\tmocked wsl --update\n' >"$WINDOWS_RESULTS"
 			;;
@@ -91,8 +101,14 @@ fi
 if [[ ! -s "$WINDOWS_RESULTS" ]]; then
 	printf 'WARN\tWindows\tWindows result\tNo structured Windows result was produced before timeout (%ss); run dir: %s\n' "${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-7200}" "$RUN_DIR" >"$WINDOWS_RESULTS"
 fi
-if [[ -f "${LOG_DIR}/windows-winget-upgrade.log" ]] && ! grep -q $'\tWindows\tWinGet package ' "$WINDOWS_RESULTS"; then
-	python3 "${SCRIPT_DIR}/parse-winget-log.py" "${LOG_DIR}/windows-winget-upgrade.log" >>"$WINDOWS_RESULTS" || true
+if [[ -f "${LOG_DIR}/windows-winget-upgrade.log" ]] && ! grep -Eq $'\tWindows\tWinGet package .+\\[[^]]+\\]\t' "$WINDOWS_RESULTS"; then
+	parsed_winget="$(mktemp)"
+	if python3 "${SCRIPT_DIR}/parse-winget-log.py" "${LOG_DIR}/windows-winget-upgrade.log" >"$parsed_winget" && [[ -s "$parsed_winget" ]]; then
+		grep -v $'\tWindows\tWinGet package details\tcould not parse package-level results' "$WINDOWS_RESULTS" >"${parsed_winget}.results" || true
+		cat "$parsed_winget" >>"${parsed_winget}.results"
+		mv "${parsed_winget}.results" "$WINDOWS_RESULTS"
+	fi
+	rm -f "$parsed_winget" "${parsed_winget}.results"
 fi
 
 section "Consolidated summary"
