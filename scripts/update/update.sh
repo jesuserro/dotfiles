@@ -12,6 +12,7 @@ source "${SCRIPT_DIR}/lib/logging.sh"
 RUN_DIR="${DOTFILES_UPDATE_RUN_DIR:-$(new_run_dir)}"
 LOG_DIR="${RUN_DIR}/logs"
 mkdir -p "$LOG_DIR"
+cleanup_old_update_runs "$(dirname "$RUN_DIR")" "$RUN_DIR"
 WSL_RESULTS="${RUN_DIR}/wsl-results.tsv"
 WINDOWS_RESULTS="${RUN_DIR}/windows-results.tsv"
 WINDOWS_DONE="${RUN_DIR}/windows.done"
@@ -30,6 +31,8 @@ launch_windows_update() {
 		return 0
 	fi
 	if is_truthy "${DOTFILES_UPDATE_MOCK:-}"; then
+		local mock_done
+		mock_done=1
 		case "${DOTFILES_UPDATE_MOCK_WINDOWS_RESULT:-winget-failure}" in
 		ok)
 			printf 'OK\tWindows\tWinGet\tmocked winget success\nOK\tWindows\tWSL update\tmocked wsl --update\n' >"$WINDOWS_RESULTS"
@@ -59,11 +62,21 @@ EOF
 		missing)
 			rm -f "$WINDOWS_RESULTS"
 			;;
+		missing-no-done)
+			rm -f "$WINDOWS_RESULTS"
+			mock_done=0
+			;;
+		partial-no-done)
+			printf 'OK\tWindows\tWinGet sources\tmocked partial result before hang\nOK\tWindows\tWinGet packages\tmocked partial result before hang\n' >"$WINDOWS_RESULTS"
+			mock_done=0
+			;;
 		*)
 			printf 'WARN\tWindows\tWindows mock\tunknown DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=%s\n' "${DOTFILES_UPDATE_MOCK_WINDOWS_RESULT}" >"$WINDOWS_RESULTS"
 			;;
 		esac
-		: >"$WINDOWS_DONE"
+		if [[ "$mock_done" -eq 1 ]]; then
+			: >"$WINDOWS_DONE"
+		fi
 		result_ok "Windows" "Windows tab" "mocked result written"
 		return 0
 	fi
@@ -92,14 +105,28 @@ if [[ -f "${RUN_DIR}/wsl-results.tsv" ]]; then
 fi
 
 section "Waiting for Windows result"
+windows_timed_out=0
 if [[ ! -f "$WINDOWS_DONE" ]] && is_wsl && ! is_truthy "${DOTFILES_UPDATE_SKIP_WINDOWS:-}"; then
-	deadline=$((SECONDS + ${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-7200}))
+	windows_timeout="${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-600}"
+	progress_interval="${DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL:-30}"
+	deadline=$((SECONDS + windows_timeout))
+	wait_started="$SECONDS"
+	next_progress=$((SECONDS + progress_interval))
 	while [[ ! -f "$WINDOWS_DONE" && $SECONDS -lt $deadline ]]; do
-		sleep 2
+		if [[ "$SECONDS" -ge "$next_progress" ]]; then
+			info "Waiting for Windows update result... elapsed $((SECONDS - wait_started))s / timeout ${windows_timeout}s; run dir: ${RUN_DIR}"
+			next_progress=$((SECONDS + progress_interval))
+		fi
+		sleep 1
 	done
+	if [[ ! -f "$WINDOWS_DONE" ]]; then
+		windows_timed_out=1
+	fi
 fi
 if [[ ! -s "$WINDOWS_RESULTS" ]]; then
-	printf 'WARN\tWindows\tWindows result\tNo structured Windows result was produced before timeout (%ss); run dir: %s\n' "${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-7200}" "$RUN_DIR" >"$WINDOWS_RESULTS"
+	printf 'WARN\tWindows\tWindows result\tNo structured Windows result was produced before timeout (%ss); run dir: %s; partial logs: %s\n' "${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-600}" "$RUN_DIR" "$LOG_DIR" >"$WINDOWS_RESULTS"
+elif [[ "$windows_timed_out" -eq 1 ]]; then
+	printf 'WARN\tWindows\tWindows result\tWindows update did not write windows.done before timeout (%ss); using partial results; run dir: %s; partial logs: %s\n' "${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-600}" "$RUN_DIR" "$LOG_DIR" >>"$WINDOWS_RESULTS"
 fi
 if [[ -f "${LOG_DIR}/windows-winget-upgrade.log" ]] && ! grep -Eq $'\tWindows\tWinGet package .+\\[[^]]+\\]\t' "$WINDOWS_RESULTS"; then
 	parsed_winget="$(mktemp)"

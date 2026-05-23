@@ -1,9 +1,16 @@
 param(
-  [Parameter(Mandatory = $true)]
-  [string]$RunDir
+  [string]$RunDir = "",
+  [switch]$SelfTestNativeArguments
 )
 
 $ErrorActionPreference = "Continue"
+if ([string]::IsNullOrWhiteSpace($RunDir)) {
+  if ($SelfTestNativeArguments) {
+    $RunDir = Join-Path ([System.IO.Path]::GetTempPath()) ("dotfiles-update-native-args-" + [System.Guid]::NewGuid().ToString("N"))
+  } else {
+    throw "RunDir is required"
+  }
+}
 $LogDir = Join-Path $RunDir "logs"
 $ResultFile = Join-Path $RunDir "windows-results.tsv"
 $DoneFile = Join-Path $RunDir "windows.done"
@@ -18,9 +25,9 @@ function Add-Result {
 }
 
 function Join-NativeArguments {
-  param([string[]]$Args)
+  param([string[]]$NativeArguments)
   $quoted = @()
-  foreach ($arg in $Args) {
+  foreach ($arg in $NativeArguments) {
     if ($arg -match '[\s"]') {
       $quoted += '"' + ($arg -replace '(\\*)"', '$1$1\"' -replace '(\\+)$', '$1$1') + '"'
     } else {
@@ -44,15 +51,27 @@ function Run-NativeLogged {
     [string]$Name,
     [string]$LogName,
     [string]$FileName,
-    [string[]]$Arguments,
+    [string[]]$NativeArguments,
     [string]$OutputEncoding = "utf8"
   )
   $log = Join-Path $LogDir $LogName
   $start = Get-Date
   $encoding = Get-NativeEncoding $OutputEncoding
+  $argumentString = Join-NativeArguments -NativeArguments $NativeArguments
+  Write-Host ""
+  Write-Host "==> $Name"
+  if (($NativeArguments.Count -gt 0) -and [string]::IsNullOrWhiteSpace($argumentString)) {
+    $message = "native arguments were not serialized; refusing to run $FileName without expected arguments"
+    [System.IO.File]::WriteAllText($log, $message, [System.Text.UTF8Encoding]::new($false))
+    Write-Host $message
+    Add-Result "WARN" $Name "$message; log: $log"
+    $script:LastRunLog = $log
+    $script:LastRunCode = $null
+    return
+  }
   $psi = [System.Diagnostics.ProcessStartInfo]::new()
   $psi.FileName = $FileName
-  $psi.Arguments = Join-NativeArguments $Arguments
+  $psi.Arguments = $argumentString
   $psi.UseShellExecute = $false
   $psi.RedirectStandardOutput = $true
   $psi.RedirectStandardError = $true
@@ -63,23 +82,31 @@ function Run-NativeLogged {
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $psi
     [void]$process.Start()
-    $stdout = $process.StandardOutput.ReadToEnd()
-    $stderr = $process.StandardError.ReadToEnd()
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
     $process.WaitForExit()
+    $stdout = $stdoutTask.Result
+    $stderr = $stderrTask.Result
     $code = [int]$process.ExitCode
     $content = (($stdout, $stderr) | Where-Object { -not [string]::IsNullOrEmpty($_) }) -join [Environment]::NewLine
     $content = $content -replace "`r`n", "`n" -replace "`r", "`n"
     [System.IO.File]::WriteAllText($log, $content, [System.Text.UTF8Encoding]::new($false))
+    if (-not [string]::IsNullOrWhiteSpace($content)) {
+      Write-Host $content
+    }
     $elapsed = [int]((Get-Date) - $start).TotalSeconds
     if ($code -eq 0) {
       Add-Result "OK" $Name "completed in ${elapsed}s; log: $log"
+      Write-Host "OK $Name (${elapsed}s)"
     } else {
       Add-Result "WARN" $Name "exit $code in ${elapsed}s; log: $log"
+      Write-Host "WARN $Name exit $code (${elapsed}s); log: $log"
     }
   } catch {
     $elapsed = [int]((Get-Date) - $start).TotalSeconds
     [System.IO.File]::WriteAllText($log, $_.Exception.ToString(), [System.Text.UTF8Encoding]::new($false))
     Add-Result "WARN" $Name "exception in ${elapsed}s: $($_.Exception.Message); log: $log"
+    Write-Host "WARN $Name exception in ${elapsed}s: $($_.Exception.Message); log: $log"
     $code = $null
   }
   $script:LastRunLog = $log
@@ -121,6 +148,29 @@ function Add-WinGetPackageResults {
   }
 }
 
+if ($SelfTestNativeArguments) {
+  Write-Host "Dotfiles Windows update native argument self-test"
+  Write-Host "Run directory: $RunDir"
+  $separator = [char]31
+  $echoScript = Join-Path $RunDir "echo-native-args.ps1"
+  [System.IO.File]::WriteAllText($echoScript, 'Write-Output ($args -join [char]31)', [System.Text.UTF8Encoding]::new($false))
+  Run-NativeLogged "Argument self-test source" "native-args-source.log" "powershell.exe" @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $echoScript, "source", "update", "value with spaces", 'quote"inside') "utf8"
+  Run-NativeLogged "Argument self-test status" "native-args-status.log" "powershell.exe" @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $echoScript, "--status") "utf8"
+  $sourceLog = Get-Content -Path (Join-Path $LogDir "native-args-source.log") -Raw
+  $statusLog = Get-Content -Path (Join-Path $LogDir "native-args-status.log") -Raw
+  $sourceExpected = "source${separator}update${separator}value with spaces${separator}quote`"inside"
+  if (($sourceLog -notlike "*$sourceExpected*") -or ($statusLog -notlike "*--status*")) {
+    Add-Result "WARN" "Argument self-test" "native arguments did not reach child process"
+    New-Item -ItemType File -Force -Path $DoneFile | Out-Null
+    Write-Host "WARN native argument self-test failed"
+    exit 64
+  }
+  Add-Result "OK" "Argument self-test" "native arguments reached child process"
+  New-Item -ItemType File -Force -Path $DoneFile | Out-Null
+  Write-Host "OK native argument self-test passed"
+  exit 0
+}
+
 Write-Host "Dotfiles Windows update"
 Write-Host "Run directory: $RunDir"
 
@@ -141,4 +191,7 @@ if (Get-Command wsl -ErrorAction SilentlyContinue) {
 }
 
 New-Item -ItemType File -Force -Path $DoneFile | Out-Null
+Write-Host ""
+Write-Host "==> Windows summary"
+Get-Content -Path $ResultFile | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { Write-Host $_ }
 Write-Host "Windows update finished. Result: $ResultFile"

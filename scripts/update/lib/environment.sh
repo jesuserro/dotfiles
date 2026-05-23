@@ -34,6 +34,36 @@ new_run_dir() {
 	printf '%s/%s\n' "$root" "$run_id"
 }
 
+cleanup_old_update_runs() {
+	local root="$1" current="${2:-}" keep="${DOTFILES_UPDATE_KEEP_RUNS:-10}" days="${DOTFILES_UPDATE_RETENTION_DAYS:-14}"
+	[[ -d "$root" ]] || return 0
+	local -A keep_paths=()
+	local line rank deleted path current_real root_real
+	root_real="$(realpath -m "$root")"
+	current_real="$(realpath -m "${current:-/dev/null}")"
+	rank=0
+	while IFS= read -r line; do
+		path="${line#* }"
+		rank=$((rank + 1))
+		if [[ "$rank" -le "$keep" ]]; then
+			keep_paths["$(realpath -m "$path")"]=1
+		fi
+	done < <(find "$root" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' 2>/dev/null | sort -rn)
+
+	deleted=0
+	while IFS= read -r path; do
+		path="$(realpath -m "$path")"
+		[[ "$path" == "$current_real" ]] && continue
+		[[ "$path" == "$root_real"/* ]] || continue
+		[[ -n "${keep_paths[$path]:-}" ]] && continue
+		rm -rf -- "$path"
+		deleted=$((deleted + 1))
+	done < <(find "$root" -mindepth 1 -maxdepth 1 -type d -mtime "+$days" -print 2>/dev/null)
+	if [[ "$deleted" -gt 0 ]]; then
+		printf 'INFO   Removed %s old update run(s) from %s\n' "$deleted" "$root"
+	fi
+}
+
 to_windows_path() {
 	local path="$1"
 	if command -v wslpath >/dev/null 2>&1; then

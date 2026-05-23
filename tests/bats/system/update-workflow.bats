@@ -167,6 +167,33 @@ PY
 	grep -q 'Run-NativeLogged "WSL update".*"unicode"' "$ps1"
 }
 
+@test "PowerShell native runner passes arguments to child processes" {
+	command -v powershell.exe >/dev/null 2>&1 || skip "powershell.exe not available"
+	run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "${DOTFILES_DIR}/scripts/update/update-windows.ps1")" -SelfTestNativeArguments
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"source"* ]]
+	[[ "$output" == *"update"* ]]
+	[[ "$output" == *"value with spaces"* ]]
+	[[ "$output" == *'quote"inside'* ]]
+	[[ "$output" == *"--status"* ]]
+	[[ "$output" == *"OK native argument self-test passed"* ]]
+}
+
+@test "PowerShell native argument serializer avoids reserved Args parameter" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	run grep -q 'param(\[string\[\]\]\$Args)' "$ps1"
+	[[ "$status" -ne 0 ]]
+	grep -q 'param(\[string\[\]\]\$NativeArguments)' "$ps1"
+	grep -q 'Join-NativeArguments -NativeArguments \$NativeArguments' "$ps1"
+}
+
+@test "PowerShell tab prints step output and Windows summary" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	grep -q 'Write-Host "==> \$Name"' "$ps1"
+	grep -q 'Write-Host "==> Windows summary"' "$ps1"
+	grep -q 'ReadToEndAsync' "$ps1"
+}
+
 @test "winget parser degrades cleanly for unknown log format" {
 	local log="${TEST_TEMP_DIR}/unknown-winget.log"
 	echo "unrecognized winget output" >"$log"
@@ -210,6 +237,7 @@ PY
 	[[ "${output}" == *"WinGet: mocked winget success"* ]]
 	[[ "${output}" == *"WSL update: mocked wsl --update"* ]]
 	[[ "${output}" != *"Pandoc failed"* ]]
+	[[ "${output}" != *"Waiting for Windows update result"* ]]
 }
 
 @test "make update replaces WinGet detail fallback when package details are parseable" {
@@ -243,9 +271,19 @@ PY
 }
 
 @test "make update mock does not wait indefinitely when Windows result is missing" {
-	run env DOTFILES_FORCE_WSL=1 DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=missing DOTFILES_UPDATE_WINDOWS_TIMEOUT=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-missing" make -C "${DOTFILES_DIR}" update
+	run env DOTFILES_FORCE_WSL=1 DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=missing-no-done DOTFILES_UPDATE_WINDOWS_TIMEOUT=2 DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-missing" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"No structured Windows result was produced before timeout (1s)"* ]]
+	[[ "${output}" == *"Waiting for Windows update result... elapsed"* ]]
+	[[ "${output}" == *"No structured Windows result was produced before timeout (2s)"* ]]
+	[[ "${output}" == *"Completed with incidents"* ]]
+}
+
+@test "make update reports partial Windows results when done marker is missing" {
+	run env DOTFILES_FORCE_WSL=1 DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=partial-no-done DOTFILES_UPDATE_WINDOWS_TIMEOUT=2 DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-partial" make -C "${DOTFILES_DIR}" update
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"WinGet sources: mocked partial result before hang"* ]]
+	[[ "${output}" == *"WinGet packages: mocked partial result before hang"* ]]
+	[[ "${output}" == *"Windows update did not write windows.done before timeout (2s); using partial results"* ]]
 	[[ "${output}" == *"Completed with incidents"* ]]
 }
 
@@ -255,6 +293,30 @@ PY
 	[[ "${output}" == *"WinGet: Pandoc failed with installer exit code 1603"* ]]
 	[[ "${output}" == *"WSL update: wsl --update failed with exit 1"* ]]
 	[[ "${output}" == *"Completed with incidents"* ]]
+}
+
+@test "update run retention preserves current and recent runs while removing old overflow" {
+	local root="${TEST_TEMP_DIR}/runs"
+	mkdir -p "$root"
+	for i in $(seq -w 1 12); do
+		mkdir -p "${root}/old-${i}"
+		touch -d "30 days ago + ${i} minutes" "${root}/old-${i}"
+	done
+	mkdir -p "${root}/current"
+	local script="${TEST_TEMP_DIR}/retention-check.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/environment.sh"
+DOTFILES_UPDATE_KEEP_RUNS=10 DOTFILES_UPDATE_RETENTION_DAYS=14 cleanup_old_update_runs "${root}" "${root}/current"
+EOF
+	chmod +x "$script"
+	run "$script"
+	[[ "$status" -eq 0 ]]
+	[[ -d "${root}/current" ]]
+	[[ ! -d "${root}/old-01" ]]
+	[[ -d "${root}/old-12" ]]
+	[[ "$output" == *"Removed"* ]]
 }
 
 @test "update-check warns on Node 20 and prints install action" {
