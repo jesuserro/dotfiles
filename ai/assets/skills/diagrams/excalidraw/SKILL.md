@@ -13,18 +13,21 @@ Use `excalidraw_canvas` exclusively for advanced editing, scene import/export, a
 
 Abort without modifying files if `import_scene`, `describe_scene`, `update_element`, and `export_scene` are not available under `excalidraw_canvas`.
 
+When the MCP runtime is Docker-managed in dotfiles, use container-internal paths under `/workspace/excalidraw/...` for `import_scene`, `export_scene`, and `export_to_image`. Do not pass WSL paths under `/mnt/c/...` to those tools.
+
 Manual JSON generation is a fallback for environments where the MCP/canvas is unavailable.
 
 ## Editing Existing `.excalidraw` Files
 
-1. Locate the source `.excalidraw` file in the vault or repo.
+1. Locate the source `.excalidraw` sidecar in the vault or repo. Do not import an Obsidian `.excalidraw.md` note for MCP editing.
 2. Run `make excalidraw-status`; start the canvas with `make excalidraw-start` if interactive editing is needed.
-3. Import the scene through `excalidraw_canvas`.
+3. Import the scene through `excalidraw_canvas` using an internal path like `/workspace/excalidraw/<relative-path>.excalidraw`.
 4. Describe the current layout before changing it.
 5. Modify elements incrementally: positions, boxes, arrows, colors, labels.
 6. Inspect the result visually before export.
-7. Export SVG by default; PNG only when compatibility requires it.
-8. Do not overwrite important originals without an explicit instruction or a preserved version.
+7. Export to a new `.excalidraw` file first unless the user explicitly asks to overwrite the source.
+8. Export SVG by default; PNG only when compatibility requires it.
+9. Do not modify files outside `/workspace/excalidraw`, and remember that SVG export or screenshots require the canvas frontend at `http://127.0.0.1:3210`.
 
 ## Customization
 

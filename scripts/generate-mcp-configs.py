@@ -42,6 +42,8 @@ H = "{{ .chezmoi.homeDir }}"
 # {{ .chezmoi.sourceDir }} — add to recipes only as literal string when needed (never str.format).
 # Obsidian mcpvault vault root — set in .chezmoi.toml [data.ai] obsidian_vault_path (override locally).
 OBSIDIAN_VAULT_TMPL = "{{ .ai.obsidian_vault_path }}"
+EXCALIDRAW_WORKSPACE_HOST = "/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw"
+EXCALIDRAW_WORKSPACE_CONTAINER = "/workspace/excalidraw"
 
 SURFACES = ("cursor", "codex", "opencode")
 
@@ -181,49 +183,35 @@ def build_mcp_surface_recipes() -> Dict[str, Dict[str, Dict[str, Any]]]:
     """Full recipe table for all manifest MCP ids (payload only; enabled comes from manifest)."""
     py = f"{H}/.config/ai/runtime/.venv/bin/python"
     df = f"{H}/dotfiles/ai/runtime/mcp/servers"
+    excalidraw_args = [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "EXPRESS_SERVER_URL=http://host.docker.internal:3210",
+        "-e",
+        "ENABLE_CANVAS_SYNC=true",
+        "-e",
+        f"EXCALIDRAW_EXPORT_DIR={EXCALIDRAW_WORKSPACE_CONTAINER}",
+        "-v",
+        f"{EXCALIDRAW_WORKSPACE_HOST}:{EXCALIDRAW_WORKSPACE_CONTAINER}",
+        "ghcr.io/yctimlin/mcp_excalidraw:latest",
+    ]
     return {
         "excalidraw_canvas": _r(
             cursor={
                 "command": "docker",
-                "args": [
-                    "run",
-                    "-i",
-                    "--rm",
-                    "-e",
-                    "EXPRESS_SERVER_URL=http://host.docker.internal:3210",
-                    "-e",
-                    "ENABLE_CANVAS_SYNC=true",
-                    "ghcr.io/yctimlin/mcp_excalidraw:latest",
-                ],
+                "args": excalidraw_args,
                 "env": {},
             },
             codex={
                 "command": "docker",
-                "args": [
-                    "run",
-                    "-i",
-                    "--rm",
-                    "-e",
-                    "EXPRESS_SERVER_URL=http://host.docker.internal:3210",
-                    "-e",
-                    "ENABLE_CANVAS_SYNC=true",
-                    "ghcr.io/yctimlin/mcp_excalidraw:latest",
-                ],
+                "args": excalidraw_args,
                 "env": {},
             },
             opencode={
                 "type": "local",
-                "command": [
-                    "docker",
-                    "run",
-                    "-i",
-                    "--rm",
-                    "-e",
-                    "EXPRESS_SERVER_URL=http://host.docker.internal:3210",
-                    "-e",
-                    "ENABLE_CANVAS_SYNC=true",
-                    "ghcr.io/yctimlin/mcp_excalidraw:latest",
-                ],
+                "command": ["docker", *excalidraw_args],
             },
         ),
         "context7": _r(

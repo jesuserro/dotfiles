@@ -52,7 +52,17 @@ El canvas se arranca solo bajo demanda con `make excalidraw-start` y se abre en 
 
 Los clientes MCP Docker publican el servidor avanzado con el nombre lógico `excalidraw_canvas` y conectan con el canvas mediante `EXPRESS_SERVER_URL=http://host.docker.internal:3210`. El nombre genérico `excalidraw` queda reservado para cualquier superficie simple que pueda exponer un cliente; no debe usarse para edición agentiva avanzada. `make update` puede descargar imágenes con `make excalidraw-update`, pero nunca deja el canvas arrancado.
 
-Los diagramas maestros viven como `.excalidraw` en los vaults de Obsidian. SVG es la salida recomendada para Markdown/PDF técnico; PNG queda para compatibilidad.
+El acceso a ficheros del MCP queda deliberadamente acotado: los clientes lanzan el contenedor efímero con `EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw` y un bind mount estrecho de `/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw` a `/workspace/excalidraw`. Esto mantiene la protección de path traversal y evita montar todo `vault_trabajo`.
+
+Los diagramas maestros viven como `.excalidraw` en los vaults de Obsidian. Las notas nativas de Obsidian usan `.excalidraw.md`, pero para agentes hay que importar el sidecar `.excalidraw`, no el wrapper `.md`. SVG es la salida recomendada para Markdown/PDF técnico; PNG queda para compatibilidad.
+
+Regla de rutas para agentes: no pases rutas WSL `/mnt/c/...` a `import_scene`, `export_scene` ni `export_to_image`. Usa rutas internas del contenedor MCP, por ejemplo:
+
+```text
+/workspace/excalidraw/mcp-test/drawing-input.excalidraw
+/workspace/excalidraw/mcp-test/drawing-canvas-modified.excalidraw
+/workspace/excalidraw/mcp-test/drawing-canvas-modified.svg
+```
 
 ## Logs y troubleshooting
 

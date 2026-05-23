@@ -49,6 +49,7 @@ teardown() {
 	run env PATH="${FAKE_BIN}:/usr/bin:/bin" bash "${DOTFILES_DIR}/scripts/update/update-excalidraw.sh" status
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" == *"http://127.0.0.1:3210"* ]]
+	[[ "${output}" == *"/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw -> /workspace/excalidraw"* ]]
 }
 
 @test "excalidraw start fails when dedicated port is occupied" {
@@ -145,6 +146,14 @@ EOF
 	grep -q 'EXPRESS_SERVER_URL=http://host.docker.internal:3210' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
 	grep -q 'EXPRESS_SERVER_URL=http://host.docker.internal:3210' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
 	grep -q 'EXPRESS_SERVER_URL=http://host.docker.internal:3210' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
+	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
+	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
+	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
+	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
+	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
+	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
+	run grep -R '/mnt/c/Users/jesus/Documents/vault_trabajo:/workspace/excalidraw' "${DOTFILES_DIR}/dot_cursor" "${DOTFILES_DIR}/dot_codex" "${DOTFILES_DIR}/dot_config/opencode"
+	[[ "${status}" -ne 0 ]]
 	run grep -R 'mcp-servers/excalidraw-mcp/dist/index.js' "${DOTFILES_DIR}/dot_cursor" "${DOTFILES_DIR}/dot_codex" "${DOTFILES_DIR}/dot_config/opencode"
 	[[ "${status}" -ne 0 ]]
 	run grep -R 'EXPRESS_SERVER_URL=http://host.docker.internal:3000' "${DOTFILES_DIR}/dot_cursor" "${DOTFILES_DIR}/dot_codex" "${DOTFILES_DIR}/dot_config/opencode"
@@ -182,6 +191,8 @@ EOF
 	[[ "${status}" -ne 0 ]]
 	grep -q 'ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	grep -q 'EXPRESS_SERVER_URL=http://host.docker.internal:3210' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
+	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
+	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	grep -q '3210:3000' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	run grep -q 'mcp-servers/excalidraw-mcp/dist/index.js' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	[[ "${status}" -ne 0 ]]
@@ -189,6 +200,13 @@ EOF
 
 @test "Excalidraw active configuration does not use legacy host port 3000" {
 	run grep -R 'EXPRESS_SERVER_URL=http://host.docker.internal:3000' \
+		"${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml" \
+		"${DOTFILES_DIR}/scripts/generate-mcp-configs.py" \
+		"${DOTFILES_DIR}/dot_cursor" \
+		"${DOTFILES_DIR}/dot_codex" \
+		"${DOTFILES_DIR}/dot_config/opencode"
+	[[ "${status}" -ne 0 ]]
+	run grep -R '/mnt/c/Users/jesus/Documents/vault_trabajo:/workspace/excalidraw' \
 		"${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml" \
 		"${DOTFILES_DIR}/scripts/generate-mcp-configs.py" \
 		"${DOTFILES_DIR}/dot_cursor" \
@@ -210,9 +228,15 @@ EOF
 	grep -q 'describe_scene' "$diagram_skill"
 	grep -q 'update_element' "$diagram_skill"
 	grep -q 'export_scene' "$diagram_skill"
+	grep -q '/workspace/excalidraw' "$diagram_skill"
+	grep -q '.excalidraw.md' "$diagram_skill"
 	grep -q '.excalidraw' "$diagram_skill"
 	grep -q 'import' "$diagram_skill"
 	grep -Eq 'backup|snapshot|copy' "$diagram_skill"
+	grep -q '/workspace/excalidraw' "$ops_skill"
+	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "$ops_skill"
 	grep -q 'SVG' "$publish_skill"
+	grep -q '/workspace/excalidraw' "$publish_skill"
+	grep -q '.excalidraw.md' "$publish_skill"
 	grep -q '.excalidraw' "$publish_skill"
 }

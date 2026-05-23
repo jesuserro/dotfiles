@@ -32,6 +32,10 @@ EXCALIDRAW_MCP_IMAGE="ghcr.io/yctimlin/mcp_excalidraw:latest"
 EXCALIDRAW_CANVAS_IMAGE="ghcr.io/yctimlin/mcp_excalidraw-canvas:latest"
 EXCALIDRAW_EXPRESS_SERVER_URL="http://host.docker.internal:3210"
 EXCALIDRAW_MCP_NAME="excalidraw_canvas"
+EXCALIDRAW_EXPORT_DIR="/workspace/excalidraw"
+EXCALIDRAW_WORKSPACE_HOST="/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw"
+EXCALIDRAW_WORKSPACE_MOUNT="${EXCALIDRAW_WORKSPACE_HOST}:${EXCALIDRAW_EXPORT_DIR}"
+EXCALIDRAW_VAULT_ROOT="/mnt/c/Users/jesus/Documents/vault_trabajo"
 
 strict_mode=0
 if install_is_truthy "${STRICT:-}"; then
@@ -94,11 +98,11 @@ check_excalidraw_surface() {
 	fi
 	local status
 	status="$(
-		python3 - "$path" "$kind" "$EXCALIDRAW_MCP_IMAGE" "$EXCALIDRAW_EXPRESS_SERVER_URL" "$EXCALIDRAW_MCP_NAME" <<-'PY' 2>/dev/null || true
+		python3 - "$path" "$kind" "$EXCALIDRAW_MCP_IMAGE" "$EXCALIDRAW_EXPRESS_SERVER_URL" "$EXCALIDRAW_MCP_NAME" "$EXCALIDRAW_EXPORT_DIR" "$EXCALIDRAW_WORKSPACE_MOUNT" "$EXCALIDRAW_VAULT_ROOT" <<-'PY' 2>/dev/null || true
 			import json
 			import sys
 
-			path, kind, image, express_url, mcp_name = sys.argv[1:6]
+			path, kind, image, express_url, mcp_name, export_dir, workspace_mount, vault_root = sys.argv[1:9]
 
 			def fail(msg):
 			    print("FAIL\t" + msg)
@@ -113,6 +117,7 @@ check_excalidraw_surface() {
 			    fail("uses legacy Excalidraw local checkout")
 
 			expected_env = f"EXPRESS_SERVER_URL={express_url}"
+			export_env = f"EXCALIDRAW_EXPORT_DIR={export_dir}"
 			legacy_env = "EXPRESS_SERVER_URL=http://host.docker.internal:3000"
 
 			def entry_tokens(entry):
@@ -127,12 +132,28 @@ check_excalidraw_surface() {
 			        vals.extend(str(v) for v in entry["args"])
 			    return vals
 
+			def validate_runtime(command, args):
+			    if legacy_env in args:
+			        fail("Excalidraw MCP points to legacy canvas port 3000; expected host port 3210")
+			    for token in args:
+			        if isinstance(token, str) and token.startswith(vault_root + ":") and token != workspace_mount:
+			            fail("Excalidraw MCP mounts more than the scoped excalidraw workspace from vault_trabajo")
+			    if workspace_mount not in args:
+			        fail(f"Excalidraw MCP is missing the scoped workspace bind mount {workspace_mount}")
+			    if export_env not in args:
+			        fail(f"Excalidraw MCP is missing {export_env}")
+			    if command == "docker" and image in args and "run" in args and "-i" in args and "--rm" in args and expected_env in args:
+			        ok()
+			    fail("Excalidraw is present but not configured for ephemeral Docker runtime on host.docker.internal:3210")
+
 			def looks_like_dotfiles_excalidraw(entry):
 			    tokens = entry_tokens(entry)
 			    joined = "\n".join(tokens)
 			    return (
 			        image in tokens
 			        or expected_env in tokens
+			        or export_env in tokens
+			        or workspace_mount in tokens
 			        or legacy_env in tokens
 			        or "mcp-servers/excalidraw-mcp" in joined
 			        or "dist/index.js" in joined
@@ -163,11 +184,7 @@ check_excalidraw_surface() {
 			        command_list = entry.get("command", [])
 			        command = command_list[0] if command_list else None
 			        args = command_list[1:]
-			    if legacy_env in args:
-			        fail("Excalidraw MCP points to legacy canvas port 3000; expected host port 3210")
-			    if command == "docker" and image in args and "run" in args and "-i" in args and "--rm" in args and expected_env in args:
-			        ok()
-			    fail("Excalidraw is present but not configured for ephemeral Docker runtime on host.docker.internal:3210")
+			    validate_runtime(command, args)
 
 			if kind == "codex":
 			    import tomllib
@@ -182,18 +199,14 @@ check_excalidraw_surface() {
 			        raise SystemExit(0)
 			    command = entry.get("command")
 			    args = entry.get("args", [])
-			    if legacy_env in args:
-			        fail("Excalidraw MCP points to legacy canvas port 3000; expected host port 3210")
-			    if command == "docker" and image in args and "run" in args and "-i" in args and "--rm" in args and expected_env in args:
-			        ok()
-			    fail("Excalidraw is present but not configured for ephemeral Docker runtime on host.docker.internal:3210")
+			    validate_runtime(command, args)
 
 			fail("unknown config kind")
 		PY
 	)"
 	case "$status" in
 	OK)
-		line OK "${label} Excalidraw MCP '${EXCALIDRAW_MCP_NAME}' uses Docker runtime"
+		line OK "${label} Excalidraw MCP '${EXCALIDRAW_MCP_NAME}' uses Docker runtime with scoped workspace mount"
 		;;
 	MISSING)
 		line_info "${label} Excalidraw MCP '${EXCALIDRAW_MCP_NAME}' entry not present"
@@ -398,6 +411,12 @@ probe_cmd_missing_strict "npx (used by several Cursor MCPs)" "npx"
 check_excalidraw_surface "Cursor HOME" "${CURSOR_MCP}" "cursor"
 check_excalidraw_surface "Codex HOME" "${CODEX_CONFIG}" "codex"
 check_excalidraw_surface "OpenCode HOME" "${OPENCODE_CONFIG}" "opencode"
+
+if [[ -d "${EXCALIDRAW_WORKSPACE_HOST}" ]]; then
+	line OK "Excalidraw workspace host path present (${EXCALIDRAW_WORKSPACE_HOST})"
+else
+	line MISSING "Excalidraw workspace host path missing (${EXCALIDRAW_WORKSPACE_HOST})"
+fi
 
 if [[ -f "${CURSOR_MCP}" ]] && python3 -c "import json; d=json.load(open('${CURSOR_MCP}')); exit(0 if 'excalidraw_canvas' in d.get('mcpServers',{}) else 1)" 2>/dev/null; then
 	if command -v docker >/dev/null 2>&1; then

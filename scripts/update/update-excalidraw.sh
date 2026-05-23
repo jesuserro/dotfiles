@@ -31,6 +31,8 @@ MCP_IMAGE="${EXCALIDRAW_MCP_IMAGE:-ghcr.io/yctimlin/mcp_excalidraw:latest}"
 CANVAS_NAME="${EXCALIDRAW_CANVAS_NAME:-mcp-excalidraw-canvas}"
 CANVAS_PORT="${EXCALIDRAW_CANVAS_PORT:-3210}"
 CANVAS_URL="${EXCALIDRAW_CANVAS_URL:-http://127.0.0.1:${CANVAS_PORT}}"
+WORKSPACE_HOST="${EXCALIDRAW_WORKSPACE_HOST:-/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw}"
+WORKSPACE_CONTAINER="${EXCALIDRAW_EXPORT_DIR:-/workspace/excalidraw}"
 
 docker_cmd() {
 	if [[ -n "${EXCALIDRAW_DOCKER_BIN:-}" ]]; then
@@ -161,6 +163,7 @@ status)
 	else
 		echo "INFO   Canvas not running. Start with: make excalidraw-start (${CANVAS_URL})"
 	fi
+	echo "INFO   Authorized Excalidraw workspace: ${WORKSPACE_HOST} -> ${WORKSPACE_CONTAINER}"
 	;;
 update)
 	if ! d="$(docker_cmd)"; then

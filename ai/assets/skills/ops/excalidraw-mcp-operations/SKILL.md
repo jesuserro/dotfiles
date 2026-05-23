@@ -20,12 +20,19 @@ Use this skill when an agent needs to start, stop, update, diagnose, or configur
 - The canvas uses stable host URL `http://127.0.0.1:3210`
 - Docker maps host `3210` to the container's internal `3000` port (`3210:3000`)
 - The MCP container connects to the canvas through `EXPRESS_SERVER_URL=http://host.docker.internal:3210`
+- File access is scoped to `/workspace/excalidraw` inside the MCP container
+- The host bind mount is `/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw`
 - Host port `3000` is reserved for Store ETL/Dagster
 - `ENABLE_CANVAS_SYNC=true` is enabled in MCP configs
+- `EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw` is required in MCP configs
 
 Use `excalidraw_canvas` exclusively for advanced agent editing, scene import/export, and `.excalidraw` file work. If another client surface exposes a generic `excalidraw` MCP with only simple tools, do not use it for advanced editing unless the user explicitly asks for that surface.
 
 Abort without modifying files if `import_scene`, `describe_scene`, `update_element`, and `export_scene` are not available under `excalidraw_canvas`.
+
+Agents must pass internal MCP file paths such as `/workspace/excalidraw/mcp-test/drawing-input.excalidraw`. Do not pass WSL host paths like `/mnt/c/...` to `import_scene`, `export_scene`, or `export_to_image`.
+
+Prefer importing the `.excalidraw` sidecar, not an Obsidian `.excalidraw.md` note. Export to a new filename first unless the user explicitly asks to overwrite the source. Do not modify files outside `/workspace/excalidraw`. SVG export and canvas screenshots require the canvas frontend to be open at `http://127.0.0.1:3210`.
 
 Do not clone, `npm install`, `pnpm install`, Bun install, Vite build, TypeScript build, or depend on `~/mcp-servers/excalidraw-mcp/dist/index.js` for normal operation.
 

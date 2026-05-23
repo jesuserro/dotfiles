@@ -169,3 +169,28 @@ imprime ayuda y termina, por lo que Cursor lo interpreta como conexión cerrada.
 **gitnexus CLI** se actualiza dentro de `make update-wsl`, siempre que Node cumpla `>=22`. Si `make update-check` avisa de Node incompatible, ejecuta primero `make install-node-stack`.
 
 Tras ejecutar `make update`, aplica los cambios del shell con: `source ~/.zshrc` si cambió PATH.
+
+### Excalidraw: rutas y formatos para agentes
+
+| Propósito | Formato |
+|-----------|---------|
+| Dibujo nativo Obsidian | `.excalidraw.md` |
+| Sidecar interoperable para agentes | `.excalidraw` |
+| Salida documental preferida | `.svg` |
+
+El MCP `excalidraw_canvas` monta solo `/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw` dentro del contenedor como `/workspace/excalidraw` y publica `EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw`.
+
+No llames `import_scene`, `export_scene` ni `export_to_image` con rutas WSL `/mnt/c/...`. Usa rutas internas del contenedor, por ejemplo:
+
+```text
+/workspace/excalidraw/mcp-test/drawing-input.excalidraw
+/workspace/excalidraw/mcp-test/drawing-canvas-modified.excalidraw
+/workspace/excalidraw/mcp-test/drawing-canvas-modified.svg
+```
+
+Reglas de seguridad:
+
+- Importa el sidecar `.excalidraw`, no el `.excalidraw.md`.
+- Exporta primero a un archivo nuevo salvo petición expresa de sobrescritura.
+- No modifiques archivos fuera de `/workspace/excalidraw`.
+- Para SVG o capturas, el canvas debe estar abierto en `http://127.0.0.1:3210`.
