@@ -1070,7 +1070,12 @@ PY
 }
 
 @test "PowerShell native runner passes arguments to child processes" {
-	command -v powershell.exe >/dev/null 2>&1 || skip "powershell.exe not available"
+	command -v powershell.exe >/dev/null 2>&1 || skip "requires powershell.exe accessible from WSL (Windows interop)"
+	command -v wslpath >/dev/null 2>&1 || skip "requires wslpath to pass repo paths to powershell.exe"
+	run powershell.exe -NoProfile -Command 'exit 0'
+	if [[ "$status" -ne 0 ]]; then
+		skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+	fi
 	run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "${DOTFILES_DIR}/scripts/update/update-windows.ps1")" -SelfTestNativeArguments
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"source"* ]]
