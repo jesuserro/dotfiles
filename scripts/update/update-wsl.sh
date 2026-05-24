@@ -237,6 +237,16 @@ update_global_npm_tool_if_needed() {
 	record_version_transition "$area" "$name" "$before" "$after"
 }
 
+ingest_agent_tools_results() {
+	local result_file="$1"
+	[[ -f "$result_file" ]] || return 0
+	while IFS=$'\t' read -r status tool message; do
+		[[ "$status" == "WARN" && -n "$tool" && -n "$message" ]] || continue
+		result_warn "WSL" "$tool" "$message"
+		RUN_STEP_LAST_RESULT_STATUS="WARN"
+	done <"$result_file"
+}
+
 run_tools() {
 	section "Node and AI tools"
 	local npm_prefix="${NPM_CONFIG_PREFIX:-$HOME/.npm-global}"
@@ -273,10 +283,12 @@ run_tools() {
 	fi
 	local agent_tools_script="${DOTFILES_ROOT}/scripts/install-agent-tools.sh"
 	if [[ -x "$agent_tools_script" ]]; then
-		local actionlint_before actionlint_after osv_before osv_after
+		local actionlint_before actionlint_after osv_before osv_after agent_tools_results
 		actionlint_before="$(probe_named_version "actionlint" actionlint --version || true)"
 		osv_before="$(probe_named_version "osv-scanner" osv-scanner --version || true)"
-		run_step "WSL" "Agent validation tools" "${LOG_DIR}/wsl-agent-tools.log" "$agent_tools_script" --external-only --upgrade
+		agent_tools_results="${LOG_DIR}/wsl-agent-tools-results.tsv"
+		run_step "WSL" "Agent validation tools" "${LOG_DIR}/wsl-agent-tools.log" "$agent_tools_script" --external-only --upgrade --result-file "$agent_tools_results"
+		ingest_agent_tools_results "$agent_tools_results"
 		if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" != "FAIL" ]]; then
 			actionlint_after="$(probe_named_version "actionlint" actionlint --version || true)"
 			osv_after="$(probe_named_version "osv-scanner" osv-scanner --version || true)"

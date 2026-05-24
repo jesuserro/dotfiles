@@ -19,15 +19,19 @@ dry_run=0
 upgrade=0
 npm_only=0
 external_only=0
+result_file=""
 
 usage() {
 	cat <<'EOF'
-Usage: scripts/install-agent-tools.sh [--dry-run] [--upgrade] [--npm-only|--external-only]
+Usage: scripts/install-agent-tools.sh [--dry-run] [--upgrade] [--npm-only|--external-only] [--result-file PATH]
 
 Installs/updates non-APT agent tools:
   - @ast-grep/cli through npm user prefix
   - actionlint from rhysd/actionlint GitHub Releases
   - osv-scanner from google/osv-scanner GitHub Releases
+
+When --result-file is set, non-blocking external-tool update-check warnings are
+appended as tab-separated records: STATUS<TAB>TOOL<TAB>MESSAGE
 EOF
 }
 
@@ -48,6 +52,10 @@ while [[ $# -gt 0 ]]; do
 	--external-only)
 		external_only=1
 		shift
+		;;
+	--result-file)
+		result_file="${2:-}"
+		shift 2
 		;;
 	-h | --help)
 		usage
@@ -85,6 +93,18 @@ need_command() {
 	fi
 	install_label FAIL "Missing required helper: ${cmd}"
 	return 1
+}
+
+record_external_warning() {
+	local tool="$1" message="$2"
+	[[ -n "${result_file}" ]] || return 0
+	printf 'WARN\t%s\t%s\n' "$tool" "$message" >>"${result_file}"
+}
+
+init_result_file() {
+	[[ -n "${result_file}" ]] || return 0
+	mkdir -p "$(dirname "${result_file}")"
+	: >"${result_file}"
 }
 
 latest_tag() {
@@ -162,6 +182,7 @@ install_actionlint() {
 	tag="$(latest_tag rhysd/actionlint)" || {
 		if [[ -n "${installed_version}" ]]; then
 			install_label WARN "actionlint update check failed; keeping installed version ${installed_version}"
+			record_external_warning "actionlint" "update check failed; keeping installed version ${installed_version}"
 			return 0
 		fi
 		install_label FAIL "Could not resolve latest actionlint release"
@@ -225,6 +246,7 @@ install_osv_scanner() {
 	tag="$(latest_tag google/osv-scanner)" || {
 		if [[ -n "${installed_version}" ]]; then
 			install_label WARN "osv-scanner update check failed; keeping installed version ${installed_version}"
+			record_external_warning "osv-scanner" "update check failed; keeping installed version ${installed_version}"
 			return 0
 		fi
 		install_label FAIL "Could not resolve latest osv-scanner release"
@@ -261,6 +283,7 @@ install_osv_scanner() {
 
 main() {
 	echo "==> install-agent-tools (idempotent, checksum-verified where applicable)"
+	init_result_file
 	if dry; then
 		echo "[DRY_RUN] No downloads, npm installs or writes will be performed."
 	fi

@@ -281,6 +281,115 @@ EOF
 	[[ "$output" == *"FAIL   Could not resolve latest actionlint release"* ]]
 }
 
+@test "install-agent-tools records actionlint warning in result file when release lookup fails" {
+	local fake_home="${TEST_TEMP_DIR}/home-actionlint-warn-result"
+	local stub_dir="${TEST_TEMP_DIR}/bin-actionlint-warn-result"
+	local target_dir="${fake_home}/.local/bin"
+	local result_file="${TEST_TEMP_DIR}/actionlint-warn-results.tsv"
+	local curl_log="${TEST_TEMP_DIR}/curl-actionlint-warn.log"
+	mkdir -p "$stub_dir" "$target_dir"
+	cat >"${target_dir}/actionlint" <<'EOF'
+#!/usr/bin/env bash
+echo "actionlint 1.7.12"
+EOF
+	cat >"${target_dir}/osv-scanner" <<'EOF'
+#!/usr/bin/env bash
+echo "osv-scanner version: 2.3.8"
+EOF
+	chmod +x "${target_dir}/actionlint" "${target_dir}/osv-scanner"
+	cat >"${stub_dir}/curl" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >>"${curl_log}"
+case "\$*" in
+  *rhysd/actionlint*) exit 1 ;;
+  *google/osv-scanner*) printf '{"tag_name":"v2.3.8"}\n' ;;
+  *) exit 1 ;;
+esac
+EOF
+	chmod +x "${stub_dir}/curl"
+	run env HOME="$fake_home" PATH="${stub_dir}:${target_dir}:/usr/bin:/bin" bash "${DOTFILES_DIR}/scripts/install-agent-tools.sh" --external-only --upgrade --result-file "$result_file"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"WARN   actionlint update check failed; keeping installed version 1.7.12"* ]]
+	grep -q $'WARN\tactionlint\tupdate check failed; keeping installed version 1.7.12' "$result_file"
+	run grep -q 'releases/download' "$curl_log"
+	[[ "$status" -ne 0 ]]
+	run grep -q $'WARN\tosv-scanner' "$result_file"
+	[[ "$status" -ne 0 ]]
+}
+
+@test "install-agent-tools records osv-scanner warning in result file when release lookup fails" {
+	local fake_home="${TEST_TEMP_DIR}/home-osv-warn-result"
+	local stub_dir="${TEST_TEMP_DIR}/bin-osv-warn-result"
+	local target_dir="${fake_home}/.local/bin"
+	local result_file="${TEST_TEMP_DIR}/osv-warn-results.tsv"
+	mkdir -p "$stub_dir" "$target_dir"
+	cat >"${target_dir}/osv-scanner" <<'EOF'
+#!/usr/bin/env bash
+echo "osv-scanner version: 2.3.8"
+EOF
+	cat >"${target_dir}/actionlint" <<'EOF'
+#!/usr/bin/env bash
+echo "actionlint 1.7.12"
+EOF
+	chmod +x "${target_dir}/osv-scanner" "${target_dir}/actionlint"
+	cat >"${stub_dir}/curl" <<'EOF'
+#!/usr/bin/env bash
+case "$*" in
+  *google/osv-scanner*) exit 1 ;;
+  *rhysd/actionlint*) printf '{"tag_name":"v1.7.12"}\n' ;;
+  *) exit 1 ;;
+esac
+EOF
+	chmod +x "${stub_dir}/curl"
+	run env HOME="$fake_home" PATH="${stub_dir}:${target_dir}:/usr/bin:/bin" bash "${DOTFILES_DIR}/scripts/install-agent-tools.sh" --external-only --upgrade --result-file "$result_file"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"WARN   osv-scanner update check failed; keeping installed version 2.3.8"* ]]
+	grep -q $'WARN\tosv-scanner\tupdate check failed; keeping installed version 2.3.8' "$result_file"
+	run grep -q $'WARN\tactionlint' "$result_file"
+	[[ "$status" -ne 0 ]]
+}
+
+@test "install-agent-tools leaves result file empty when external tools are already latest" {
+	local fake_home="${TEST_TEMP_DIR}/home-agent-tools-clean-result"
+	local stub_dir="${TEST_TEMP_DIR}/bin-agent-tools-clean-result"
+	local target_dir="${fake_home}/.local/bin"
+	local result_file="${TEST_TEMP_DIR}/agent-tools-clean-results.tsv"
+	local curl_log="${TEST_TEMP_DIR}/curl-agent-tools-clean.log"
+	mkdir -p "$stub_dir" "$target_dir"
+	cat >"${target_dir}/actionlint" <<'EOF'
+#!/usr/bin/env bash
+echo "actionlint 1.7.12"
+EOF
+	cat >"${target_dir}/osv-scanner" <<'EOF'
+#!/usr/bin/env bash
+echo "osv-scanner version: 2.3.8"
+EOF
+	chmod +x "${target_dir}/actionlint" "${target_dir}/osv-scanner"
+	cat >"${stub_dir}/curl" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >>"${curl_log}"
+url=""
+while [[ \$# -gt 0 ]]; do
+  case "\$1" in
+    http*) url="\$1"; shift ;;
+    *) shift ;;
+  esac
+done
+case "\$url" in
+  *rhysd/actionlint*) printf '{"tag_name":"v1.7.12"}\n' ;;
+  *google/osv-scanner*) printf '{"tag_name":"v2.3.8"}\n' ;;
+  *) exit 1 ;;
+esac
+EOF
+	chmod +x "${stub_dir}/curl"
+	run env HOME="$fake_home" PATH="${stub_dir}:${target_dir}:/usr/bin:/bin" bash "${DOTFILES_DIR}/scripts/install-agent-tools.sh" --external-only --upgrade --result-file "$result_file"
+	[[ "$status" -eq 0 ]]
+	[[ -f "$result_file" ]]
+	[[ ! -s "$result_file" ]]
+	run grep -q 'releases/download' "$curl_log"
+	[[ "$status" -ne 0 ]]
+}
+
 @test "install-agent-tools warns and preserves osv-scanner when release lookup fails" {
 	local fake_home="${TEST_TEMP_DIR}/home-osv-warn"
 	local stub_dir="${TEST_TEMP_DIR}/bin-osv-warn"

@@ -577,6 +577,73 @@ EOF
 	[[ "$output" == *"pnpm version: 11.2.2 (unchanged)"* ]]
 	[[ "$output" == *"WARN   actionlint update check failed; keeping installed version 1.7.12"* ]]
 	[[ "$output" != *"version: version:"* ]]
+	grep -q $'WARN\tWSL\tactionlint\tupdate check failed; keeping installed version 1.7.12' "${TEST_TEMP_DIR}/run-tools/wsl-results.tsv"
+	grep -q $'WARN\tWSL\tosv-scanner\tupdate check failed; keeping installed version 2.3.8' "${TEST_TEMP_DIR}/run-tools/wsl-results.tsv"
+	grep -q $'actionlint\t1.7.12\t1.7.12\tunchanged' "${TEST_TEMP_DIR}/run-tools/tool-snapshot.tsv"
+	grep -q $'osv-scanner\t2.3.8\t2.3.8\tunchanged' "${TEST_TEMP_DIR}/run-tools/tool-snapshot.tsv"
+}
+
+@test "concise summary shows agent tool update-check warnings in incidents" {
+	local windows="${TEST_TEMP_DIR}/windows-agent-warn.tsv"
+	local wsl="${TEST_TEMP_DIR}/wsl-agent-warn.tsv"
+	local snapshot="${TEST_TEMP_DIR}/snapshot-agent-warn.tsv"
+	: >"$windows"
+	cat >"$wsl" <<'EOF'
+OK	WSL	Agent validation tools	completed in 1s
+WARN	WSL	actionlint	update check failed; keeping installed version 1.7.12
+WARN	WSL	osv-scanner	update check failed; keeping installed version 2.3.8
+EOF
+	cat >"$snapshot" <<'EOF'
+actionlint	1.7.12	1.7.12	unchanged
+osv-scanner	2.3.8	2.3.8	unchanged
+EOF
+	local script="${TEST_TEMP_DIR}/agent-warn-summary.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+result_print_concise_summary "$windows" "$wsl" "$snapshot" "${TEST_TEMP_DIR}/logs"
+EOF
+	chmod +x "$script"
+	run env NO_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Incidents"* ]]
+	[[ "$output" == *"WARN  WSL / actionlint: update check failed; keeping installed version 1.7.12"* ]]
+	[[ "$output" == *"WARN  WSL / osv-scanner: update check failed; keeping installed version 2.3.8"* ]]
+	[[ "$output" == *"actionlint             1.7.12         1.7.12         unchanged"* ]]
+	[[ "$output" == *"Completed with 2 incident"* ]]
+	[[ "$output" != *"Skipped"* ]]
+}
+
+@test "concise summary combines Pandoc and agent tool update-check warnings" {
+	local windows="${TEST_TEMP_DIR}/windows-pandoc-agent.tsv"
+	local wsl="${TEST_TEMP_DIR}/wsl-pandoc-agent.tsv"
+	local snapshot="${TEST_TEMP_DIR}/snapshot-pandoc-agent.tsv"
+	cat >"$windows" <<EOF
+WARN	Windows	WinGet packages	exit -1978335188 in 5s; log: ${TEST_TEMP_DIR}/logs/windows-winget-upgrade.log
+WARN	Windows	WinGet package details	could not parse package-level results; see log: ${TEST_TEMP_DIR}/logs/windows-winget-upgrade.log
+WARN	Windows	WinGet package Pandoc [JohnMacFarlane.Pandoc]	upgrade failed with code 1603
+EOF
+	cat >"$wsl" <<'EOF'
+WARN	WSL	actionlint	update check failed; keeping installed version 1.7.12
+EOF
+	cat >"$snapshot" <<'EOF'
+actionlint	1.7.12	1.7.12	unchanged
+EOF
+	local script="${TEST_TEMP_DIR}/pandoc-agent-summary.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+result_print_concise_summary "$windows" "$wsl" "$snapshot" "${TEST_TEMP_DIR}/logs"
+EOF
+	chmod +x "$script"
+	run env NO_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"WARN  Windows / WinGet / Pandoc: upgrade failed with code 1603"* ]]
+	[[ "$output" == *"WARN  WSL / actionlint: update check failed; keeping installed version 1.7.12"* ]]
+	[[ "$output" != *"WinGet packages: exit -1978335188"* ]]
+	[[ "$output" == *"Completed with 2 incident"* ]]
 }
 
 @test "global npm helper skips reinstall when package already matches remote target" {
