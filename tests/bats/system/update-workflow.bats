@@ -173,6 +173,55 @@ EOF
 	[[ "$output" == *"OK    color check"* ]]
 }
 
+@test "section headers render with ANSI and Unicode separators when color is forced" {
+	local script="${TEST_TEMP_DIR}/section-format.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+source "${DOTFILES_DIR}/scripts/update/lib/logging.sh"
+section "APT"
+section "Update summary"
+EOF
+	chmod +x "$script"
+	run env -u NO_COLOR DOTFILES_UPDATE_FORCE_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *$'\033[0;36m'* ]]
+	[[ "$output" == *"━━━"* ]]
+	[[ "$output" == *"APT"* ]]
+	[[ "$output" == *"Update summary"* ]]
+	[[ "$output" != *"\\033"* ]]
+	[[ "$output" != *"> APT"* ]]
+	[[ "$output" != *"> Update summary"* ]]
+}
+
+@test "section headers honor plain mode with ASCII separators" {
+	local script="${TEST_TEMP_DIR}/section-plain.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+source "${DOTFILES_DIR}/scripts/update/lib/logging.sh"
+section "APT"
+section "Update summary"
+EOF
+	chmod +x "$script"
+	run env DOTFILES_UPDATE_FORCE_COLOR=1 NO_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" != *$'\033['* ]]
+	[[ "$output" != *"\\033"* ]]
+	[[ "$output" == *"=== APT ="* ]]
+	[[ "$output" == *"=== Update summary ="* ]]
+	[[ "$output" != *"━━━"* ]]
+	[[ "$output" != *"> APT"* ]]
+
+	run env -u NO_COLOR DOTFILES_UPDATE_FORCE_COLOR=1 DOTFILES_UPDATE_PLAIN=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" != *$'\033['* ]]
+	[[ "$output" == *"=== APT ="* ]]
+	[[ "$output" == *"=== Update summary ="* ]]
+}
+
 @test "result_has_incidents ignores SKIP and counts WARN" {
 	local script="${TEST_TEMP_DIR}/incidents-check.sh"
 	cat >"$script" <<EOF
@@ -668,7 +717,8 @@ PY
 	[[ "${output}" != *"Pandoc failed"* ]]
 	[[ "${output}" != *"Waiting for Windows update result"* ]]
 	[[ "${output}" != *"> Services"* ]]
-	[[ "${output}" == *"> Update summary"* ]]
+	[[ "${output}" != *"> Update summary"* ]]
+	[[ "${output}" == *"=== Update summary ="* ]]
 	[[ "${output}" == *"Completed successfully"* ]]
 }
 

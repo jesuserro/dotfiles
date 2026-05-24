@@ -8,8 +8,66 @@ RUN_STEP_LAST_STREAM_EXIT_CODE=0
 RUN_STEP_LAST_RESULT_STATUS="OK"
 RUN_STEP_LAST_LOG_FILE=""
 
+section_id_for_title() {
+	local title="${1:-}"
+	case "$title" in
+	"Dotfiles update") printf 'dotfiles' ;;
+	"WSL update") printf 'wsl' ;;
+	"APT") printf 'apt' ;;
+	"Node and AI tools") printf 'node' ;;
+	"OpenCode") printf 'opencode' ;;
+	"Shell") printf 'shell' ;;
+	"MCPs and Docker") printf 'mcp' ;;
+	"Update summary") printf 'summary' ;;
+	*) printf 'default' ;;
+	esac
+}
+
+section_icon() {
+	case "${1:-default}" in
+	dotfiles) printf '↻' ;;
+	wsl) printf '◆' ;;
+	apt) printf '▣' ;;
+	node) printf '⬢' ;;
+	opencode) printf '⌘' ;;
+	shell) printf '⌁' ;;
+	mcp) printf '◇' ;;
+	summary) printf '☰' ;;
+	*) printf '◆' ;;
+	esac
+}
+
+section_repeat() {
+	local char="$1" count="${2:-0}" i
+	for ((i = 0; i < count; i++)); do
+		printf '%s' "$char"
+	done
+}
+
 section() {
-	printf '\n> %s\n' "$1"
+	local title="${1:-}" id width=64 left right_len
+	id="$(section_id_for_title "$title")"
+	if result_colors_enabled; then
+		local color reset icon icon_part visible_len
+		color=$'\033[0;36m'
+		reset=$'\033[0m'
+		icon_part=""
+		if result_icons_enabled; then
+			icon="$(section_icon "$id")"
+			icon_part="${icon}  "
+		fi
+		left="━━━ ${icon_part}${title} "
+		visible_len=$((${#left} + 1))
+		right_len=$((width - visible_len))
+		[[ "$right_len" -lt 6 ]] && right_len=6
+		printf '\n%s%s%s%s\n' "$color" "$left" "$(section_repeat "━" "$right_len")" "$reset"
+	else
+		left="=== ${title} "
+		visible_len=$((${#left} + 1))
+		right_len=$((width - visible_len))
+		[[ "$right_len" -lt 6 ]] && right_len=6
+		printf '\n%s%s\n' "$left" "$(section_repeat "=" "$right_len")"
+	fi
 }
 
 info() {
