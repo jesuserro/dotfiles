@@ -2,36 +2,24 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.05.24_1230] - 2026-05-24
+## [v2026.05.24_1303] - 2026-05-24
 
 ## Changes
-### Added
-- 2026-05-24 11:49 [4f90437](https://github.com/jesuserro/dotfiles/commit/4f90437) feat(update): skip unnecessary installations when the latest version is already installed (Cursor Agent)
-  - Introduced functions to normalize tool version extraction and check installed versions for actionlint and osv-scanner.
-  - Updated installation logic to provide informative logging on version checks and updates for npm tools.
-  - Enhanced the update process to skip unnecessary installations when the latest version is already installed, improving efficiency.
-
 ### Fixed
-- 2026-05-24 12:28 [99f9a4e](https://github.com/jesuserro/dotfiles/commit/99f9a4e) fix(agent-tools): add result file option for logging update-check warnings (Cursor Agent)
-  - Introduced a `--result-file` option in the `install-agent-tools.sh` script to log warnings during external tool updates.
-  - Implemented functions to record warnings for `actionlint` and `osv-scanner` when update checks fail, appending them to the specified result file.
-  - Enhanced the `update-wsl.sh` script to ingest results from the new result file, improving feedback on tool update statuses.
+- 2026-05-24 12:55 [2ec0f5c](https://github.com/jesuserro/dotfiles/commit/2ec0f5c) fix(tests): enhance PowerShell runner tests for WSL compatibility (Cursor Agent)
+  - Updated the PowerShell native runner test to check for the availability of both `powershell.exe` and `wslpath`.
+  - Added conditions to skip tests if PowerShell is not runnable in the current WSL environment, improving test reliability and clarity.
+  - Ensured that the test output reflects the status of the PowerShell execution, enhancing feedback during testing.
+- 2026-05-24 12:49 [6a2363b](https://github.com/jesuserro/dotfiles/commit/6a2363b) fix(github actions): update BATS test scripts and improve dotfiles directory handling (Cursor Agent)
+  - Updated GitHub Actions workflow to use actions/checkout@v6 for improved functionality.
+  - Modified BATS test scripts to ensure the DOTFILES_DIR environment variable is correctly set when running tests.
+  - Enhanced the get_dotfiles_dir function to better locate the dotfiles directory, improving test reliability.
 
 ### Refactored
-- 2026-05-24 10:46 [99b2a91](https://github.com/jesuserro/dotfiles/commit/99b2a91) refactor(update): implement tool snapshot functionality and enhance version normalization (Cursor Agent)
-  - Introduced a tool snapshot feature to track the installation status and version changes of various tools during the update process.
-  - Enhanced version normalization logic for specific tools, ensuring accurate version extraction and reporting.
-  - Updated the summary reporting to include concise tool snapshot information, improving clarity on tool status after updates.
-- 2026-05-24 10:19 [d40f955](https://github.com/jesuserro/dotfiles/commit/d40f955) refactor(update): clarify Docker Desktop behavior during updates and enhance logging (Cursor Agent)
-  - Added documentation to specify that if Docker Desktop is off during `make update`, the process will report a `SKIP` status without counting as an incident.
-  - Updated logging in the update scripts to provide clearer messages when Docker is unavailable, guiding users to run `make excalidraw-update` once Docker is back online.
-  - Enhanced the logging functions to improve the clarity of status messages, ensuring users receive accurate feedback during the update process.
-
-### Other
-- 2026-05-24 11:08 [45c3c2f](https://github.com/jesuserro/dotfiles/commit/45c3c2f) enhance(logging): improve section formatting with icons and colors (Cursor Agent)
-  - Added functions to generate section IDs and icons for improved visual representation in logs.
-  - Updated the section function to support ANSI color codes and Unicode separators, enhancing readability.
-  - Introduced tests to validate the rendering of section headers in both color and plain modes, ensuring consistent output across different environments.
+- 2026-05-24 13:00 [70bab2e](https://github.com/jesuserro/dotfiles/commit/70bab2e) refactor(tests): standardize formatting in common.bash and filesystem-launcher.bats (Cursor Agent)
+  - Reformatted code in common.bash and filesystem-launcher.bats for consistent indentation and readability.
+  - Ensured uniform spacing and alignment across functions to enhance maintainability.
+  - Improved clarity in test setup and assertions by aligning code structure, making it easier to follow and understand.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
