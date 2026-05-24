@@ -405,9 +405,9 @@ chezmoi-templates:
 
 define run_bats
 	@if command -v bats &>/dev/null; then \
-		bats $(1); \
+		DOTFILES_DIR="$(DOTFILES_DIR)" bats $(1); \
 	elif [ -x "$(HOME)/.local/bin/bats" ]; then \
-		$$HOME/.local/bin/bats $(1); \
+		DOTFILES_DIR="$(DOTFILES_DIR)" $$HOME/.local/bin/bats $(1); \
 	else \
 		echo "$(RED)==>$NC bats not installed. Run: make test-install"; \
 		exit 1; \
@@ -416,12 +416,12 @@ endef
 
 define run_bats_ci
 	@if command -v bats &>/dev/null; then \
-		bats --timing --formatter junit $(1) 2>&1 || { \
+		DOTFILES_DIR="$(DOTFILES_DIR)" bats --timing --formatter junit $(1) 2>&1 || { \
 			echo "$(RED)==>$NC Test failed"; \
 			exit 1; \
 		}; \
 	elif [ -x "$(HOME)/.local/bin/bats" ]; then \
-		$$HOME/.local/bin/bats --timing --formatter junit $(1) 2>&1 || { \
+		DOTFILES_DIR="$(DOTFILES_DIR)" $$HOME/.local/bin/bats --timing --formatter junit $(1) 2>&1 || { \
 			echo "$(RED)==>$NC Test failed"; \
 			exit 1; \
 		}; \
