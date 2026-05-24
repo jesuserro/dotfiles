@@ -28,6 +28,30 @@ EOF
 	chmod +x "${dir}/node" "${dir}/npm" "${dir}/gitnexus"
 }
 
+make_passthrough_node_stub() {
+	local dir="$1" version="$2"
+	local real_node
+	real_node="$(command -v node)"
+	cat >"${dir}/node" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "--version" ]]; then
+  echo "${version}"
+  exit 0
+fi
+exec "${real_node}" "\$@"
+EOF
+	chmod +x "${dir}/node"
+}
+
+write_global_npm_package() {
+	local prefix="$1" package_name="$2" version="$3"
+	local package_dir="${prefix}/lib/node_modules/${package_name}"
+	mkdir -p "$package_dir"
+	cat >"${package_dir}/package.json" <<EOF
+{"name":"${package_name}","version":"${version}"}
+EOF
+}
+
 @test "run_step preserves real exit codes and logs stderr for missing commands" {
 	local script="${TEST_TEMP_DIR}/run-step-check.sh"
 	cat >"$script" <<EOF
@@ -492,15 +516,24 @@ EOF
 	local stub_dir="${TEST_TEMP_DIR}/tools-bin"
 	local npm_prefix="${fake_home}/.npm-global"
 	mkdir -p "$stub_dir" "$npm_prefix/bin"
+	write_global_npm_package "$npm_prefix" "gitnexus" "1.6.5"
 	printf '1.6.5\n' >"${TEST_TEMP_DIR}/gitnexus-version"
-	cat >"${stub_dir}/node" <<'EOF'
-#!/usr/bin/env bash
-case "$1" in --version) echo "v24.11.1";; *) exit 0;; esac
-EOF
+	make_passthrough_node_stub "$stub_dir" "v24.11.1"
 	cat >"${stub_dir}/npm" <<EOF
 #!/usr/bin/env bash
-if [[ "\$*" == *"gitnexus@latest"* ]]; then
+if [[ "\$1" == "root" && "\$2" == "-g" ]]; then
+  echo "${npm_prefix}/lib/node_modules"
+  exit 0
+fi
+if [[ "\$1" == "view" ]]; then
+  echo "1.6.6"
+  exit 0
+fi
+if [[ "\$1" == "install" && "\$*" == *"gitnexus@latest"* ]]; then
   printf '1.6.6\n' >"${TEST_TEMP_DIR}/gitnexus-version"
+  cat >"${npm_prefix}/lib/node_modules/gitnexus/package.json" <<'PKG'
+{"name":"gitnexus","version":"1.6.6"}
+PKG
 fi
 echo "npm install \$*"
 exit 0
@@ -518,14 +551,342 @@ EOF
 #!/usr/bin/env bash
 case "$1" in --version) echo "11.2.2";; *) exit 0;; esac
 EOF
-	chmod +x "${stub_dir}/node" "${stub_dir}/npm" "${stub_dir}/gitnexus" "${stub_dir}/corepack" "${stub_dir}/pnpm"
+	cat >"${stub_dir}/actionlint" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "actionlint 1.7.12";; *) exit 0;; esac
+EOF
+	cat >"${stub_dir}/osv-scanner" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "osv-scanner version: 2.3.8";; *) exit 0;; esac
+EOF
+	cat >"${stub_dir}/curl" <<'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+	cat >"${stub_dir}/jq" <<'EOF'
+#!/usr/bin/env bash
+cat >/dev/null
+exit 0
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm" "${stub_dir}/gitnexus" "${stub_dir}/corepack" "${stub_dir}/pnpm" "${stub_dir}/actionlint" "${stub_dir}/osv-scanner" "${stub_dir}/curl" "${stub_dir}/jq"
 	run env HOME="$fake_home" NPM_CONFIG_PREFIX="$npm_prefix" PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-tools" "${DOTFILES_DIR}/scripts/update/update-wsl.sh" --section tools
 	[[ "$status" -eq 0 ]]
 	grep -q $'INFO\tWSL\tGitNexus CLI version\t1.6.5 → 1.6.6' "${TEST_TEMP_DIR}/run-tools/wsl-results.tsv"
 	grep -q $'INFO\tWSL\tpnpm version\t11.2.2 (unchanged)' "${TEST_TEMP_DIR}/run-tools/wsl-results.tsv"
 	[[ "$output" == *"GitNexus CLI version: 1.6.5 → 1.6.6"* ]]
 	[[ "$output" == *"pnpm version: 11.2.2 (unchanged)"* ]]
+	[[ "$output" == *"WARN   actionlint update check failed; keeping installed version 1.7.12"* ]]
 	[[ "$output" != *"version: version:"* ]]
+}
+
+@test "global npm helper skips reinstall when package already matches remote target" {
+	local fake_home="${TEST_TEMP_DIR}/home-npm-same"
+	local stub_dir="${TEST_TEMP_DIR}/npm-same-bin"
+	local npm_prefix="${fake_home}/.npm-global"
+	mkdir -p "$stub_dir" "$npm_prefix/bin"
+	write_global_npm_package "$npm_prefix" "gitnexus" "1.6.5"
+	printf '1.6.5\n' >"${TEST_TEMP_DIR}/gitnexus-version"
+	make_passthrough_node_stub "$stub_dir" "v24.11.1"
+	cat >"${stub_dir}/npm" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "root" && "\$2" == "-g" ]]; then
+  echo "${npm_prefix}/lib/node_modules"
+  exit 0
+fi
+if [[ "\$1" == "view" ]]; then
+  echo "1.6.5"
+  exit 0
+fi
+if [[ "\$1" == "install" ]]; then
+  echo "install should not run" >&2
+  exit 97
+fi
+exit 0
+EOF
+	cat >"${stub_dir}/gitnexus" <<EOF
+#!/usr/bin/env bash
+case "\$1" in --version) printf 'gitnexus %s\n' "\$(cat "${TEST_TEMP_DIR}/gitnexus-version")";; *) exit 0;; esac
+EOF
+	local script="${TEST_TEMP_DIR}/npm-same.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+set -- --section none
+HOME="${fake_home}"
+NPM_CONFIG_PREFIX="${npm_prefix}"
+PATH="${stub_dir}:/usr/bin:/bin"
+DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-npm-same"
+source "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+update_global_npm_tool_if_needed "WSL" "GitNexus CLI" "${TEST_TEMP_DIR}/run-npm-same/gitnexus.log" "${npm_prefix}" "gitnexus" "latest" gitnexus --version --
+tool_snapshot_print "${TEST_TEMP_DIR}/run-npm-same/tool-snapshot.tsv"
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm" "${stub_dir}/gitnexus" "$script"
+	run "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"OK    GitNexus CLI already latest: 1.6.5"* ]]
+	[[ "$output" == *"GitNexus CLI           1.6.5          1.6.5          unchanged"* ]]
+	grep -q $'OK\tWSL\tGitNexus CLI\talready latest: 1.6.5' "${TEST_TEMP_DIR}/run-npm-same/wsl-results.tsv"
+	grep -q $'GitNexus CLI\t1.6.5\t1.6.5\tunchanged' "${TEST_TEMP_DIR}/run-npm-same/tool-snapshot.tsv"
+	[[ "$output" != *"SKIP"* ]]
+	[[ "$output" != *"npm warn"* ]]
+}
+
+@test "global npm helper installs when remote version is newer" {
+	local fake_home="${TEST_TEMP_DIR}/home-npm-update"
+	local stub_dir="${TEST_TEMP_DIR}/npm-update-bin"
+	local npm_prefix="${fake_home}/.npm-global"
+	mkdir -p "$stub_dir" "$npm_prefix/bin"
+	write_global_npm_package "$npm_prefix" "gitnexus" "1.6.5"
+	printf '1.6.5\n' >"${TEST_TEMP_DIR}/gitnexus-version"
+	printf '0\n' >"${TEST_TEMP_DIR}/gitnexus-install-count"
+	make_passthrough_node_stub "$stub_dir" "v24.11.1"
+	cat >"${stub_dir}/npm" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "root" && "\$2" == "-g" ]]; then
+  echo "${npm_prefix}/lib/node_modules"
+  exit 0
+fi
+if [[ "\$1" == "view" ]]; then
+  echo "1.6.6"
+  exit 0
+fi
+if [[ "\$1" == "install" && "\$*" == *"gitnexus@latest"* ]]; then
+  echo 1 >"${TEST_TEMP_DIR}/gitnexus-install-count"
+  printf '1.6.6\n' >"${TEST_TEMP_DIR}/gitnexus-version"
+  cat >"${npm_prefix}/lib/node_modules/gitnexus/package.json" <<'PKG'
+{"name":"gitnexus","version":"1.6.6"}
+PKG
+  echo "changed 1 package"
+  exit 0
+fi
+exit 0
+EOF
+	cat >"${stub_dir}/gitnexus" <<EOF
+#!/usr/bin/env bash
+case "\$1" in --version) printf 'gitnexus %s\n' "\$(cat "${TEST_TEMP_DIR}/gitnexus-version")";; *) exit 0;; esac
+EOF
+	local script="${TEST_TEMP_DIR}/npm-update.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+set -- --section none
+HOME="${fake_home}"
+NPM_CONFIG_PREFIX="${npm_prefix}"
+PATH="${stub_dir}:/usr/bin:/bin"
+DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-npm-update"
+source "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+update_global_npm_tool_if_needed "WSL" "GitNexus CLI" "${TEST_TEMP_DIR}/run-npm-update/gitnexus.log" "${npm_prefix}" "gitnexus" "latest" gitnexus --version --
+tool_snapshot_print "${TEST_TEMP_DIR}/run-npm-update/tool-snapshot.tsv"
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm" "${stub_dir}/gitnexus" "$script"
+	run "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"INFO  GitNexus CLI update available: 1.6.5 → 1.6.6"* ]]
+	[[ "$output" == *"OK    GitNexus CLI ("* ]]
+	[[ "$output" == *"GitNexus CLI           1.6.5          1.6.6          updated"* ]]
+	[[ "$(cat "${TEST_TEMP_DIR}/gitnexus-install-count")" -eq 1 ]]
+	grep -q $'GitNexus CLI\t1.6.5\t1.6.6\tupdated' "${TEST_TEMP_DIR}/run-npm-update/tool-snapshot.tsv"
+}
+
+@test "global npm helper installs missing tool and records installed snapshot" {
+	local fake_home="${TEST_TEMP_DIR}/home-npm-install"
+	local stub_dir="${TEST_TEMP_DIR}/npm-install-bin"
+	local npm_prefix="${fake_home}/.npm-global"
+	mkdir -p "$stub_dir" "$npm_prefix/bin"
+	make_passthrough_node_stub "$stub_dir" "v24.11.1"
+	cat >"${stub_dir}/npm" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "root" && "\$2" == "-g" ]]; then
+  echo "${npm_prefix}/lib/node_modules"
+  exit 0
+fi
+if [[ "\$1" == "view" ]]; then
+  echo "0.133.0"
+  exit 0
+fi
+if [[ "\$1" == "install" && "\$*" == *"@openai/codex@latest"* ]]; then
+  mkdir -p "${npm_prefix}/lib/node_modules/@openai/codex"
+  cat >"${npm_prefix}/lib/node_modules/@openai/codex/package.json" <<'PKG'
+{"name":"@openai/codex","version":"0.133.0"}
+PKG
+  printf '0.133.0\n' >"${TEST_TEMP_DIR}/codex-version"
+  echo "added 1 package"
+  exit 0
+fi
+exit 0
+EOF
+	cat >"${stub_dir}/codex" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "--version" && -f "${TEST_TEMP_DIR}/codex-version" ]]; then
+  printf 'codex-cli %s\n' "\$(cat "${TEST_TEMP_DIR}/codex-version")"
+  exit 0
+fi
+exit 1
+EOF
+	local script="${TEST_TEMP_DIR}/npm-install.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+set -- --section none
+HOME="${fake_home}"
+NPM_CONFIG_PREFIX="${npm_prefix}"
+PATH="${stub_dir}:/usr/bin:/bin"
+DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-npm-install"
+source "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+update_global_npm_tool_if_needed "WSL" "Codex CLI" "${TEST_TEMP_DIR}/run-npm-install/codex.log" "${npm_prefix}" "@openai/codex" "latest" codex --version --
+tool_snapshot_print "${TEST_TEMP_DIR}/run-npm-install/tool-snapshot.tsv"
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm" "${stub_dir}/codex" "$script"
+	run "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"INFO  Codex CLI is not installed; installing latest available version 0.133.0"* ]]
+	[[ "$output" == *"0.133.0"* ]]
+	[[ "$output" == *"installed"* ]]
+	grep -q $'Codex CLI\t\t0.133.0\tinstalled' "${TEST_TEMP_DIR}/run-npm-install/tool-snapshot.tsv"
+}
+
+@test "global npm helper warns on remote lookup failure and keeps installed version" {
+	local fake_home="${TEST_TEMP_DIR}/home-npm-warn"
+	local stub_dir="${TEST_TEMP_DIR}/npm-warn-bin"
+	local npm_prefix="${fake_home}/.npm-global"
+	mkdir -p "$stub_dir" "$npm_prefix/bin"
+	write_global_npm_package "$npm_prefix" "gitnexus" "1.6.5"
+	printf '1.6.5\n' >"${TEST_TEMP_DIR}/gitnexus-version"
+	make_passthrough_node_stub "$stub_dir" "v24.11.1"
+	cat >"${stub_dir}/npm" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "root" && "\$2" == "-g" ]]; then
+  echo "${npm_prefix}/lib/node_modules"
+  exit 0
+fi
+if [[ "\$1" == "view" ]]; then
+  exit 1
+fi
+if [[ "\$1" == "install" ]]; then
+  echo "install should not run" >&2
+  exit 91
+fi
+exit 0
+EOF
+	cat >"${stub_dir}/gitnexus" <<EOF
+#!/usr/bin/env bash
+case "\$1" in --version) printf 'gitnexus %s\n' "\$(cat "${TEST_TEMP_DIR}/gitnexus-version")";; *) exit 0;; esac
+EOF
+	local script="${TEST_TEMP_DIR}/npm-warn.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+set -- --section none
+HOME="${fake_home}"
+NPM_CONFIG_PREFIX="${npm_prefix}"
+PATH="${stub_dir}:/usr/bin:/bin"
+DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-npm-warn"
+source "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+update_global_npm_tool_if_needed "WSL" "GitNexus CLI" "${TEST_TEMP_DIR}/run-npm-warn/gitnexus.log" "${npm_prefix}" "gitnexus" "latest" gitnexus --version --
+tool_snapshot_print "${TEST_TEMP_DIR}/run-npm-warn/tool-snapshot.tsv"
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm" "${stub_dir}/gitnexus" "$script"
+	run "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"WARN  GitNexus CLI update check failed; keeping installed version 1.6.5"* ]]
+	[[ "$output" == *"GitNexus CLI           1.6.5          1.6.5          unchanged"* ]]
+	grep -q $'WARN\tWSL\tGitNexus CLI\tupdate check failed; keeping installed version 1.6.5' "${TEST_TEMP_DIR}/run-npm-warn/wsl-results.tsv"
+}
+
+@test "global npm helper preserves real installation failures" {
+	local fake_home="${TEST_TEMP_DIR}/home-npm-fail"
+	local stub_dir="${TEST_TEMP_DIR}/npm-fail-bin"
+	local npm_prefix="${fake_home}/.npm-global"
+	mkdir -p "$stub_dir" "$npm_prefix/bin"
+	write_global_npm_package "$npm_prefix" "gitnexus" "1.6.5"
+	printf '1.6.5\n' >"${TEST_TEMP_DIR}/gitnexus-version"
+	make_passthrough_node_stub "$stub_dir" "v24.11.1"
+	cat >"${stub_dir}/npm" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "root" && "\$2" == "-g" ]]; then
+  echo "${npm_prefix}/lib/node_modules"
+  exit 0
+fi
+if [[ "\$1" == "view" ]]; then
+  echo "1.6.6"
+  exit 0
+fi
+if [[ "\$1" == "install" ]]; then
+  echo "install failed" >&2
+  exit 42
+fi
+exit 0
+EOF
+	cat >"${stub_dir}/gitnexus" <<EOF
+#!/usr/bin/env bash
+case "\$1" in --version) printf 'gitnexus %s\n' "\$(cat "${TEST_TEMP_DIR}/gitnexus-version")";; *) exit 0;; esac
+EOF
+	local script="${TEST_TEMP_DIR}/npm-fail.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+set -- --section none
+HOME="${fake_home}"
+NPM_CONFIG_PREFIX="${npm_prefix}"
+PATH="${stub_dir}:/usr/bin:/bin"
+DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-npm-fail"
+source "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+update_global_npm_tool_if_needed "WSL" "GitNexus CLI" "${TEST_TEMP_DIR}/run-npm-fail/gitnexus.log" "${npm_prefix}" "gitnexus" "latest" gitnexus --version --
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm" "${stub_dir}/gitnexus" "$script"
+	run "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q $'FAIL\tWSL\tGitNexus CLI\texit 42' "${TEST_TEMP_DIR}/run-npm-fail/wsl-results.tsv"
+	run grep -q $'GitNexus CLI\t1.6.5\t1.6.6\tupdated' "${TEST_TEMP_DIR}/run-npm-fail/tool-snapshot.tsv"
+	[[ "$status" -ne 0 ]]
+}
+
+@test "global npm helper resolves scoped package versions without reinstalling" {
+	local fake_home="${TEST_TEMP_DIR}/home-npm-scoped"
+	local stub_dir="${TEST_TEMP_DIR}/npm-scoped-bin"
+	local npm_prefix="${fake_home}/.npm-global"
+	mkdir -p "$stub_dir" "$npm_prefix/bin"
+	write_global_npm_package "$npm_prefix" "@ast-grep/cli" "0.42.3"
+	printf '0.42.3\n' >"${TEST_TEMP_DIR}/ast-grep-version"
+	make_passthrough_node_stub "$stub_dir" "v24.11.1"
+	cat >"${stub_dir}/npm" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "root" && "\$2" == "-g" ]]; then
+  echo "${npm_prefix}/lib/node_modules"
+  exit 0
+fi
+if [[ "\$1" == "view" ]]; then
+  echo "0.42.3"
+  exit 0
+fi
+if [[ "\$1" == "install" ]]; then
+  echo "install should not run" >&2
+  exit 98
+fi
+exit 0
+EOF
+	cat >"${stub_dir}/ast-grep" <<EOF
+#!/usr/bin/env bash
+case "\$1" in --version) printf 'ast-grep %s\n' "\$(cat "${TEST_TEMP_DIR}/ast-grep-version")";; *) exit 0;; esac
+EOF
+	local script="${TEST_TEMP_DIR}/npm-scoped.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+set -- --section none
+HOME="${fake_home}"
+NPM_CONFIG_PREFIX="${npm_prefix}"
+PATH="${stub_dir}:/usr/bin:/bin"
+DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-npm-scoped"
+source "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+update_global_npm_tool_if_needed "WSL" "ast-grep CLI" "${TEST_TEMP_DIR}/run-npm-scoped/ast-grep.log" "${npm_prefix}" "@ast-grep/cli" "latest" ast-grep --version --
+tool_snapshot_print "${TEST_TEMP_DIR}/run-npm-scoped/tool-snapshot.tsv"
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm" "${stub_dir}/ast-grep" "$script"
+	run "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"OK    ast-grep CLI already latest: 0.42.3"* ]]
+	[[ "$output" == *"ast-grep CLI           0.42.3         0.42.3         unchanged"* ]]
 }
 
 @test "update-wsl shell section updates Oh My Zsh through zsh script from Bash" {

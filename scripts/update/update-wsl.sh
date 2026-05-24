@@ -154,6 +154,89 @@ probe_named_version() {
 	normalize_component_version "$name" "$raw"
 }
 
+append_log_line() {
+	local log_file="$1" message="$2"
+	mkdir -p "$(dirname "$log_file")"
+	printf '%s\n' "$message" >>"$log_file"
+}
+
+global_npm_package_version() {
+	local npm_prefix="$1" package_name="$2"
+	local npm_root package_json
+	npm_root="$(npm root -g --prefix="$npm_prefix" 2>/dev/null || true)"
+	[[ -n "$npm_root" ]] || return 1
+	package_json="${npm_root}/${package_name}/package.json"
+	[[ -f "$package_json" ]] || return 1
+	node -e 'const fs = require("fs"); const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if (data && data.version) process.stdout.write(String(data.version));' "$package_json" 2>/dev/null
+}
+
+npm_dist_tag_version() {
+	local package_name="$1" dist_tag="$2"
+	npm view "${package_name}@${dist_tag}" version 2>/dev/null | head -n 1 | tr -d '\r'
+}
+
+update_global_npm_tool_if_needed() {
+	local area="$1" name="$2" log_file="$3" npm_prefix="$4" package_name="$5" dist_tag="$6"
+	shift 6
+	local probe_delimiter_seen=0
+	local -a probe_cmd=()
+	while [[ $# -gt 0 ]]; do
+		if [[ "$1" == "--" ]]; then
+			probe_delimiter_seen=1
+			shift
+			break
+		fi
+		probe_cmd+=("$1")
+		shift
+	done
+	[[ "$probe_delimiter_seen" -eq 1 ]] || return 2
+
+	local before after installed_version remote_version display_before display_installed
+	before="$(probe_version_line "${probe_cmd[@]}" || true)"
+	display_before="$(normalize_component_version "$name" "$before")"
+	installed_version="$(global_npm_package_version "$npm_prefix" "$package_name" || true)"
+	display_installed="${installed_version:-$display_before}"
+	: >"$log_file"
+	append_log_line "$log_file" "precheck: package=${package_name}@${dist_tag}"
+	append_log_line "$log_file" "precheck: before_version=${display_before:-unavailable}"
+	append_log_line "$log_file" "precheck: installed_package_version=${installed_version:-unavailable}"
+
+	remote_version="$(npm_dist_tag_version "$package_name" "$dist_tag" || true)"
+	if [[ -z "$remote_version" ]]; then
+		append_log_line "$log_file" "precheck: remote_target_version=unavailable"
+		if [[ -n "$display_installed" ]]; then
+			warn "${name} update check failed; keeping installed version ${display_installed}"
+			result_warn "$area" "$name" "update check failed; keeping installed version ${display_installed}"
+			tool_snapshot_add "$name" "$display_before" "$display_before"
+			RUN_STEP_LAST_RESULT_STATUS="WARN"
+			return 0
+		fi
+		info "${name} update check failed; attempting installation without pre-resolved target"
+		append_log_line "$log_file" "precheck: remote lookup failed; proceeding with install because tool is unavailable"
+	else
+		append_log_line "$log_file" "precheck: remote_target_version=${remote_version}"
+		if [[ -n "$display_installed" && "$installed_version" == "$remote_version" ]]; then
+			ok "${name} already latest: ${display_installed}"
+			result_ok "$area" "$name" "already latest: ${display_installed}"
+			tool_snapshot_add "$name" "$display_before" "$display_before"
+			RUN_STEP_LAST_RESULT_STATUS="OK"
+			return 0
+		fi
+		if [[ -n "$display_installed" ]]; then
+			info "${name} update available: ${display_installed} → ${remote_version}"
+		else
+			info "${name} is not installed; installing latest available version ${remote_version}"
+		fi
+	fi
+
+	run_npm_step "$area" "$name" "$log_file" npm install -g --prefix="$npm_prefix" "${package_name}@${dist_tag}"
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" ]]; then
+		return 0
+	fi
+	after="$(probe_version_line "${probe_cmd[@]}" || true)"
+	record_version_transition "$area" "$name" "$before" "$after"
+}
+
 run_tools() {
 	section "Node and AI tools"
 	local npm_prefix="${NPM_CONFIG_PREFIX:-$HOME/.npm-global}"
@@ -173,11 +256,13 @@ run_tools() {
 		return 0
 	fi
 
-	run_versioned_step run_npm_step "WSL" "Codex CLI" "${LOG_DIR}/wsl-codex.log" codex --version -- npm install -g --prefix="$npm_prefix" @openai/codex@latest
-	run_versioned_step run_npm_step "WSL" "ast-grep CLI" "${LOG_DIR}/wsl-ast-grep.log" ast-grep --version -- npm install -g --prefix="$npm_prefix" @ast-grep/cli@latest
-	run_versioned_step run_npm_step "WSL" "GitNexus CLI" "${LOG_DIR}/wsl-gitnexus.log" gitnexus --version -- npm install -g --prefix="$npm_prefix" gitnexus@latest
-	if command -v gitnexus >/dev/null 2>&1; then
+	update_global_npm_tool_if_needed "WSL" "Codex CLI" "${LOG_DIR}/wsl-codex.log" "$npm_prefix" "@openai/codex" "latest" codex --version --
+	update_global_npm_tool_if_needed "WSL" "ast-grep CLI" "${LOG_DIR}/wsl-ast-grep.log" "$npm_prefix" "@ast-grep/cli" "latest" ast-grep --version --
+	update_global_npm_tool_if_needed "WSL" "GitNexus CLI" "${LOG_DIR}/wsl-gitnexus.log" "$npm_prefix" "gitnexus" "latest" gitnexus --version --
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" != "FAIL" && "${RUN_STEP_LAST_RESULT_STATUS:-}" != "WARN" ]] && command -v gitnexus >/dev/null 2>&1; then
 		result_ok "WSL" "GitNexus" "usable: $(gitnexus --version 2>/dev/null || echo version unknown)"
+	elif [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" ]]; then
+		:
 	else
 		result_fail "WSL" "GitNexus" "install finished but gitnexus not found in PATH"
 	fi

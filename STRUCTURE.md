@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-24 10:46:24
+**Generated:** 2026-05-24 11:48:43
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -1006,6 +1006,7 @@
 │   │   │   ├── 📄 azure-tools.bats
 │   │   │   ├── 📄 dry-run-guard.bats
 │   │   │   ├── 📄 excalidraw-docker.bats
+│   │   │   ├── 📄 install-agent-tools.bats
 │   │   │   ├── 📄 install-azure-cli.bats
 │   │   │   ├── 📄 install-chezmoi.bats
 │   │   │   ├── 📄 install-dotfiles.bats

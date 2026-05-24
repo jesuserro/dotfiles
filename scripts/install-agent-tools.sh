@@ -92,6 +92,28 @@ latest_tag() {
 	curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" | jq -r '.tag_name'
 }
 
+normalize_release_version() {
+	local tool="$1" version_line="${2:-}"
+	version_line="$(printf '%s\n' "$version_line" | head -n 1 | tr -d '\r')"
+	case "$tool" in
+	actionlint)
+		printf '%s\n' "$version_line" | sed -E 's/^actionlint[[:space:]]+//; s/^v//'
+		;;
+	osv-scanner)
+		printf '%s\n' "$version_line" | sed -E 's/^osv-scanner[[:space:]]+(version:?[[:space:]]*)?//; s/^version:?[[:space:]]*//; s/^v([0-9])/\1/'
+		;;
+	*)
+		printf '%s\n' "$version_line"
+		;;
+	esac
+}
+
+installed_tool_version() {
+	local tool="$1"
+	command -v "$tool" >/dev/null 2>&1 || return 1
+	normalize_release_version "$tool" "$("$tool" --version 2>/dev/null | head -n 1)"
+}
+
 install_ast_grep() {
 	echo ""
 	echo "==> ast-grep (@ast-grep/cli via npm)"
@@ -134,8 +156,27 @@ install_actionlint() {
 		echo "[DRY_RUN] Would install actionlint to ${TARGET_DIR}/actionlint"
 		return 0
 	fi
-	tag="$(latest_tag rhysd/actionlint)"
+
+	local installed_version=""
+	installed_version="$(installed_tool_version actionlint || true)"
+	tag="$(latest_tag rhysd/actionlint)" || {
+		if [[ -n "${installed_version}" ]]; then
+			install_label WARN "actionlint update check failed; keeping installed version ${installed_version}"
+			return 0
+		fi
+		install_label FAIL "Could not resolve latest actionlint release"
+		return 1
+	}
 	version="${tag#v}"
+	if [[ -n "${installed_version}" && "${installed_version}" == "${version}" ]]; then
+		install_label OK "actionlint already latest: ${installed_version}"
+		return 0
+	fi
+	if [[ -n "${installed_version}" ]]; then
+		install_label INFO "actionlint update available: ${installed_version} -> ${version}"
+	else
+		install_label INFO "actionlint is not installed; installing latest available version ${version}"
+	fi
 	asset="actionlint_${version}_linux_${arch}.tar.gz"
 	asset_url="https://github.com/rhysd/actionlint/releases/download/${tag}/${asset}"
 	checksums_url="https://github.com/rhysd/actionlint/releases/download/${tag}/actionlint_${version}_checksums.txt"
@@ -178,7 +219,27 @@ install_osv_scanner() {
 		echo "[DRY_RUN] Would install osv-scanner to ${TARGET_DIR}/osv-scanner"
 		return 0
 	fi
-	tag="$(latest_tag google/osv-scanner)"
+
+	local installed_version=""
+	installed_version="$(installed_tool_version osv-scanner || true)"
+	tag="$(latest_tag google/osv-scanner)" || {
+		if [[ -n "${installed_version}" ]]; then
+			install_label WARN "osv-scanner update check failed; keeping installed version ${installed_version}"
+			return 0
+		fi
+		install_label FAIL "Could not resolve latest osv-scanner release"
+		return 1
+	}
+	local version="${tag#v}"
+	if [[ -n "${installed_version}" && "${installed_version}" == "${version}" ]]; then
+		install_label OK "osv-scanner already latest: ${installed_version}"
+		return 0
+	fi
+	if [[ -n "${installed_version}" ]]; then
+		install_label INFO "osv-scanner update available: ${installed_version} -> ${version}"
+	else
+		install_label INFO "osv-scanner is not installed; installing latest available version ${version}"
+	fi
 	asset="osv-scanner_linux_${arch}"
 	asset_url="https://github.com/google/osv-scanner/releases/download/${tag}/${asset}"
 	checksums_url="https://github.com/google/osv-scanner/releases/download/${tag}/osv-scanner_SHA256SUMS"
