@@ -118,9 +118,9 @@ bats_require_minimum_version 1.5.0
     [[ -x "$LAUNCHER" ]] || skip "Launcher not executable"
     
     run bash "$LAUNCHER" --help
-    [[ "$output" == *"/home/jesus/dotfiles"* ]]
-    [[ "$output" == *"/home/jesus/proyectos"* ]]
-    [[ "$output" == *"/home/jesus/.config"* ]]
+    [[ "$output" == *"${DOTFILES_DIR}"* ]]
+    [[ "$output" == *"${HOME}/proyectos"* ]]
+    [[ "$output" == *"${HOME}/.config"* ]]
     [[ "$output" == *"/mnt/c/Users/jesus/Documents/vault_trabajo"* ]]
 }
 

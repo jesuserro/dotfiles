@@ -77,11 +77,37 @@ EOF
 }
 
 get_dotfiles_dir() {
+    if [[ -n "${DOTFILES_DIR:-}" && -f "${DOTFILES_DIR}/tests/Makefile.tests" ]]; then
+        echo "${DOTFILES_DIR}"
+        return
+    fi
+
+    local start="${BATS_TEST_DIRNAME:-$(dirname "${BATS_FILENAME:-.}")}"
+
+    if command -v git &>/dev/null; then
+        local top
+        top="$(git -C "$start" rev-parse --show-toplevel 2>/dev/null || true)"
+        if [[ -n "$top" && -f "$top/tests/Makefile.tests" ]]; then
+            echo "$top"
+            return
+        fi
+    fi
+
+    local dir="$start"
+    while [[ "$dir" != "/" ]]; do
+        if [[ -f "$dir/tests/Makefile.tests" ]]; then
+            echo "$dir"
+            return
+        fi
+        dir="$(dirname "$dir")"
+    done
+
     if [[ -d "$HOME/dotfiles/.git" ]]; then
         echo "$HOME/dotfiles"
-    else
-        echo "${BATS_TEST_DIRNAME:-$(dirname "${BATS_FILENAME:-.}")}/../.."
+        return
     fi
+
+    echo "${start}/../.."
 }
 
 skip_if_command_missing() {
