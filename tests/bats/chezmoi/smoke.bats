@@ -219,7 +219,7 @@ tomllib.loads(content)
 }
 
 @test "make update summary reports warnings honestly" {
-	grep -q 'Completed with incidents' "$DOTFILES_DIR/scripts/update/update.sh"
+	grep -q 'result_print_concise_summary' "$DOTFILES_DIR/scripts/update/update.sh"
 	grep -q 'result_has_incidents' "$DOTFILES_DIR/scripts/update/update.sh"
 }
 

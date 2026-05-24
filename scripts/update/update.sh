@@ -15,8 +15,11 @@ mkdir -p "$LOG_DIR"
 cleanup_old_update_runs "$(dirname "$RUN_DIR")" "$RUN_DIR"
 WSL_RESULTS="${RUN_DIR}/wsl-results.tsv"
 WINDOWS_RESULTS="${RUN_DIR}/windows-results.tsv"
+TOOL_SNAPSHOT_FILE="${RUN_DIR}/tool-snapshot.tsv"
 WINDOWS_DONE="${RUN_DIR}/windows.done"
 result_init "$WSL_RESULTS"
+tool_snapshot_init "$TOOL_SNAPSHOT_FILE"
+export TOOL_SNAPSHOT_FILE
 
 section "Dotfiles update"
 info "Run directory: ${RUN_DIR}"
@@ -104,9 +107,9 @@ if [[ -f "${RUN_DIR}/wsl-results.tsv" ]]; then
 	WSL_RESULTS="${RUN_DIR}/wsl-results.tsv"
 fi
 
-section "Waiting for Windows result"
 windows_timed_out=0
 if [[ ! -f "$WINDOWS_DONE" ]] && is_wsl && ! is_truthy "${DOTFILES_UPDATE_SKIP_WINDOWS:-}"; then
+	section "Waiting for Windows result"
 	windows_timeout="${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-600}"
 	progress_interval="${DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL:-30}"
 	deadline=$((SECONDS + windows_timeout))
@@ -138,13 +141,9 @@ if [[ -f "${LOG_DIR}/windows-winget-upgrade.log" ]] && ! grep -Eq $'\tWindows\tW
 	rm -f "$parsed_winget" "${parsed_winget}.results"
 fi
 
-section "Consolidated summary"
-result_print_group "Windows" "$WINDOWS_RESULTS" "Windows"
-result_print_group "WSL" "$WSL_RESULTS" "WSL"
-printf '\nProjects:\n  - INFO Personal projects are not part of make update; use make update-projects\n'
+section "Update summary"
+result_print_concise_summary "$WINDOWS_RESULTS" "$WSL_RESULTS" "$TOOL_SNAPSHOT_FILE" "$LOG_DIR"
 
 if result_has_incidents "$WINDOWS_RESULTS" || result_has_incidents "$WSL_RESULTS"; then
-	printf '\nCompleted with incidents. Logs: %s\n' "$LOG_DIR"
 	exit 0
 fi
-printf '\nCompleted without recorded incidents. Logs: %s\n' "$LOG_DIR"

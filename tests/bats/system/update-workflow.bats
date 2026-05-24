@@ -258,6 +258,186 @@ EOF
 	[[ "$output" == *"INFO  uv version: 0.11.16 (unchanged)"* ]]
 }
 
+@test "concise summary suppresses routine OK steps and shows tool snapshot" {
+	local windows="${TEST_TEMP_DIR}/windows-ok.tsv"
+	local wsl="${TEST_TEMP_DIR}/wsl-ok.tsv"
+	local snapshot="${TEST_TEMP_DIR}/tool-snapshot.tsv"
+	cat >"$windows" <<'EOF'
+OK	Windows	WinGet sources	completed in 1s
+OK	Windows	WSL update	completed in 2s
+EOF
+	cat >"$wsl" <<'EOF'
+OK	WSL	APT update	completed in 2s
+OK	WSL	APT upgrade	completed in 0s
+OK	WSL	Oh My Zsh plugin z	completed in 1s
+INFO	WSL	Services	no managed local service restart required
+EOF
+	cat >"$snapshot" <<'EOF'
+Node.js	v24.15.0	v24.15.0	unchanged
+Codex CLI	0.80.0	0.81.0	updated
+uv	0.11.16	0.11.16	unchanged
+EOF
+	local script="${TEST_TEMP_DIR}/concise-summary.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+result_print_concise_summary "$windows" "$wsl" "$snapshot" "${TEST_TEMP_DIR}/logs"
+EOF
+	chmod +x "$script"
+	run env NO_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Tool snapshot"* ]]
+	[[ "$output" == *"Node.js"* ]]
+	[[ "$output" == *"Codex CLI"* ]]
+	[[ "$output" == *"0.80.0"* ]]
+	[[ "$output" == *"0.81.0"* ]]
+	[[ "$output" == *"updated"* ]]
+	[[ "$output" == *"Completed successfully"* ]]
+	[[ "$output" == *"Logs: ${TEST_TEMP_DIR}/logs"* ]]
+	[[ "$output" != *"APT update"* ]]
+	[[ "$output" != *"APT upgrade"* ]]
+	[[ "$output" != *"Oh My Zsh plugin z"* ]]
+	[[ "$output" != *"Services"* ]]
+	[[ "$output" != *"Incidents"* ]]
+	[[ "$output" != *"Skipped"* ]]
+}
+
+@test "tool snapshot renders updated and installed rows safely" {
+	local snapshot="${TEST_TEMP_DIR}/tool-snapshot.tsv"
+	local script="${TEST_TEMP_DIR}/snapshot-render.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+tool_snapshot_init "$snapshot"
+tool_snapshot_add "Codex CLI" "0.80.0" "0.81.0"
+tool_snapshot_add "uv" "0.11.16" "0.11.16"
+tool_snapshot_add "actionlint" "" "1.7.12"
+tool_snapshot_print "$snapshot"
+EOF
+	chmod +x "$script"
+	run env -u NO_COLOR DOTFILES_UPDATE_FORCE_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Tool"* ]]
+	[[ "$output" == *"Codex CLI"* ]]
+	[[ "$output" == *"0.80.0"* ]]
+	[[ "$output" == *"0.81.0"* ]]
+	[[ "$output" == *"updated"* ]]
+	[[ "$output" == *"actionlint"* ]]
+	[[ "$output" == *"1.7.12"* ]]
+	[[ "$output" == *"installed"* ]]
+	[[ "$output" == *$'\033[0;32m  Codex CLI'* || "$output" == *$'\033[0;32mCodex CLI'* ]]
+	[[ "$output" != *"\\033"* ]]
+	local stored
+	stored="$(<"$snapshot")"
+	[[ "$stored" == *$'Codex CLI\t0.80.0\t0.81.0\tupdated'* ]]
+	[[ "$stored" == *$'actionlint\t\t1.7.12\tinstalled'* ]]
+	[[ "$stored" != *$'\033['* ]]
+	[[ "$stored" != *"\\033"* ]]
+	[[ "$stored" != *"✔"* ]]
+
+	run env NO_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" != *$'\033['* ]]
+	[[ "$output" != *"\\033"* ]]
+	[[ "$output" == *"updated"* ]]
+	[[ "$output" == *"installed"* ]]
+}
+
+@test "version normalization keeps osv-scanner and existing tools clean" {
+	local script="${TEST_TEMP_DIR}/normalize-versions.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+set -- --section none
+DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/normalize-run"
+source "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+snapshot="${TEST_TEMP_DIR}/normalize-snapshot.tsv"
+tool_snapshot_init "\$snapshot"
+tool_snapshot_add "osv-scanner" "\$(normalize_component_version "osv-scanner" "osv-scanner version: 2.3.8")" "\$(normalize_component_version "osv-scanner" "osv-scanner version: 2.3.8")"
+tool_snapshot_add "Codex CLI" "\$(normalize_component_version "Codex CLI" "codex 0.133.0")" "\$(normalize_component_version "Codex CLI" "codex 0.133.0")"
+tool_snapshot_add "ast-grep CLI" "\$(normalize_component_version "ast-grep CLI" "ast-grep 0.42.3")" "\$(normalize_component_version "ast-grep CLI" "ast-grep 0.42.3")"
+tool_snapshot_add "uv" "\$(normalize_component_version "uv" "uv 0.11.16 (x86_64-unknown-linux-gnu)")" "\$(normalize_component_version "uv" "uv 0.11.16 (x86_64-unknown-linux-gnu)")"
+tool_snapshot_print "\$snapshot"
+EOF
+	chmod +x "$script"
+	run env NO_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"osv-scanner            2.3.8          2.3.8          unchanged"* ]]
+	[[ "$output" == *"Codex CLI              0.133.0        0.133.0        unchanged"* ]]
+	[[ "$output" == *"ast-grep CLI           0.42.3         0.42.3         unchanged"* ]]
+	[[ "$output" == *"uv                     0.11.16        0.11.16        unchanged"* ]]
+	[[ "$output" != *"ersion:"* ]]
+	grep -q $'osv-scanner\t2.3.8\t2.3.8\tunchanged' "${TEST_TEMP_DIR}/normalize-snapshot.tsv"
+}
+
+@test "concise summary deduplicates Pandoc incident and keeps log reference" {
+	local windows="${TEST_TEMP_DIR}/windows-pandoc.tsv"
+	local wsl="${TEST_TEMP_DIR}/wsl-pandoc.tsv"
+	local snapshot="${TEST_TEMP_DIR}/snapshot-pandoc.tsv"
+	cat >"$windows" <<EOF
+WARN	Windows	WinGet packages	exit -1978335188 in 5s; log: ${TEST_TEMP_DIR}/logs/windows-winget-upgrade.log
+WARN	Windows	WinGet package details	could not parse package-level results; see log: ${TEST_TEMP_DIR}/logs/windows-winget-upgrade.log
+WARN	Windows	WinGet package Pandoc [JohnMacFarlane.Pandoc]	upgrade failed with code 1603
+OK	Windows	WSL update	completed in 2s
+EOF
+	cat >"$wsl" <<'EOF'
+OK	WSL	APT update	completed in 2s
+EOF
+	cat >"$snapshot" <<'EOF'
+uv	0.11.16	0.11.16	unchanged
+EOF
+	local script="${TEST_TEMP_DIR}/pandoc-summary.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+result_print_concise_summary "$windows" "$wsl" "$snapshot" "${TEST_TEMP_DIR}/logs"
+EOF
+	chmod +x "$script"
+	run env NO_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Incidents"* ]]
+	[[ "$output" == *"WARN  Windows / WinGet / Pandoc: upgrade failed with code 1603"* ]]
+	[[ "$output" == *"log: ${TEST_TEMP_DIR}/logs/windows-winget-upgrade.log"* ]]
+	[[ "$output" != *"WinGet packages: exit -1978335188"* ]]
+	[[ "$output" != *"could not parse package-level results"* ]]
+	[[ "$output" == *"Completed with 1 incident: Windows / WinGet / Pandoc."* ]]
+}
+
+@test "concise summary shows Docker skip once without incident" {
+	local windows="${TEST_TEMP_DIR}/windows-docker.tsv"
+	local wsl="${TEST_TEMP_DIR}/wsl-docker.tsv"
+	local snapshot="${TEST_TEMP_DIR}/snapshot-docker.tsv"
+	: >"$windows"
+	cat >"$wsl" <<'EOF'
+SKIP	WSL	Excalidraw Docker	Docker Desktop is not running; Excalidraw images were not updated
+INFO	WSL	Excalidraw Docker	Run 'make excalidraw-update' after starting Docker Desktop when needed
+OK	WSL	APT update	completed in 2s
+EOF
+	cat >"$snapshot" <<'EOF'
+uv	0.11.16	0.11.16	unchanged
+EOF
+	local script="${TEST_TEMP_DIR}/docker-summary.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+result_print_concise_summary "$windows" "$wsl" "$snapshot" "${TEST_TEMP_DIR}/logs"
+EOF
+	chmod +x "$script"
+	run env NO_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Skipped"* ]]
+	[[ "$output" == *"SKIP  Excalidraw Docker: Docker Desktop is not running"* ]]
+	[[ "$output" == *"run: make excalidraw-update after starting Docker Desktop"* ]]
+	[[ "$output" == *"Completed successfully. 1 optional step skipped: Excalidraw Docker."* ]]
+	[[ "$output" != *"Incidents"* ]]
+	[[ "$output" != *"APT update"* ]]
+	[[ "$(grep -o 'Excalidraw Docker:' <<<"$output" | wc -l)" -eq 1 ]]
+}
+
 @test "version formatting normalizes labels and changed versions" {
 	local fake_home="${TEST_TEMP_DIR}/home-tools"
 	local stub_dir="${TEST_TEMP_DIR}/tools-bin"
@@ -468,30 +648,40 @@ PY
 }
 
 @test "make update mock run records Windows warning and excludes projects" {
-	run env DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run" make -C "${DOTFILES_DIR}" update
+	local stub_dir="${TEST_TEMP_DIR}/node24-mock-warning"
+	make_node_stub "$stub_dir" "v24.15.0"
+	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" == *"Pandoc failed with installer exit code 1603"* ]]
-	[[ "${output}" == *"Personal projects are not part of make update"* ]]
+	[[ "${output}" != *"Personal projects are not part of make update"* ]]
 	[[ -f "${TEST_TEMP_DIR}/run/windows-results.tsv" ]]
 	[[ -f "${TEST_TEMP_DIR}/run/wsl-results.tsv" ]]
 }
 
 @test "make update mock records successful Windows results when provided" {
-	run env DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=ok DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-ok" make -C "${DOTFILES_DIR}" update
+	local stub_dir="${TEST_TEMP_DIR}/node24-mock-ok"
+	make_node_stub "$stub_dir" "v24.15.0"
+	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=ok DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-ok" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"WinGet: mocked winget success"* ]]
-	[[ "${output}" == *"WSL update: mocked wsl --update"* ]]
+	[[ "${output}" != *"WinGet: mocked winget success"* ]]
+	[[ "${output}" != *"WSL update: mocked wsl --update"* ]]
 	[[ "${output}" != *"Pandoc failed"* ]]
 	[[ "${output}" != *"Waiting for Windows update result"* ]]
+	[[ "${output}" != *"> Services"* ]]
+	[[ "${output}" == *"> Update summary"* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 }
 
 @test "make update replaces WinGet detail fallback when package details are parseable" {
-	run env DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=winget-fallback-with-parseable-log DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-winget-details" make -C "${DOTFILES_DIR}" update
+	local stub_dir="${TEST_TEMP_DIR}/node24-winget-details"
+	make_node_stub "$stub_dir" "v24.15.0"
+	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=winget-fallback-with-parseable-log DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-winget-details" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"WinGet packages: exit -1978335188"* ]]
-	[[ "${output}" == *"WinGet package Pandoc [JohnMacFarlane.Pandoc]: upgrade failed with code 1603"* ]]
-	[[ "${output}" == *"WinGet package Microsoft Teams [Microsoft.Teams]: updated successfully"* ]]
+	[[ "${output}" != *"WinGet packages: exit -1978335188"* ]]
+	[[ "${output}" == *"Windows / WinGet / Pandoc: upgrade failed with code 1603"* ]]
+	[[ "${output}" != *"WinGet package Microsoft Teams [Microsoft.Teams]: updated successfully"* ]]
 	[[ "${output}" != *"could not parse package-level results"* ]]
+	[[ "${output}" == *"Completed with 1 incident: Windows / WinGet / Pandoc."* ]]
 }
 
 @test "make update mock surfaces WinGet package failure without aborting WSL" {
@@ -499,45 +689,55 @@ PY
 	make_node_stub "$stub_dir" "v20.18.2"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=winget-failure DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-winget" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"WinGet: Pandoc failed with installer exit code 1603"* ]]
-	[[ "${output}" == *"WSL update: mocked wsl --update"* ]]
+	[[ "${output}" == *"Windows / WinGet: Pandoc failed with installer exit code 1603"* ]]
+	[[ "${output}" != *"WSL update: mocked wsl --update"* ]]
 	[[ "${output}" == *"Node v20.18.2 is below required >=22"* ]]
 	[[ "${output}" == *"GitNexus: skipped because Node runtime is incompatible"* ]]
-	[[ "${output}" == *"Completed with incidents"* ]]
+	[[ "${output}" == *"Completed with 3 incidents"* ]]
 }
 
 @test "make update mock surfaces wsl --update failure and never uses shutdown" {
-	run env DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=wsl-failure DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-wsl-fail" make -C "${DOTFILES_DIR}" update
+	local stub_dir="${TEST_TEMP_DIR}/node24-wsl-fail"
+	make_node_stub "$stub_dir" "v24.15.0"
+	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=wsl-failure DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-wsl-fail" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"WSL update: wsl --update failed with exit 1"* ]]
-	[[ "${output}" == *"Completed with incidents"* ]]
+	[[ "${output}" == *"Windows / WSL update: wsl --update failed with exit 1"* ]]
+	[[ "${output}" == *"Completed with 1 incident: Windows / WSL update."* ]]
 	run grep -Eq 'Run-Logged.*wsl --shutdown|^[[:space:]]*wsl --shutdown' "${DOTFILES_DIR}/scripts/update"/*.sh "${DOTFILES_DIR}/scripts/update"/*.ps1
 	[[ "${status}" -ne 0 ]]
 }
 
 @test "make update mock does not wait indefinitely when Windows result is missing" {
-	run env DOTFILES_FORCE_WSL=1 DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=missing-no-done DOTFILES_UPDATE_WINDOWS_TIMEOUT=2 DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-missing" make -C "${DOTFILES_DIR}" update
+	local stub_dir="${TEST_TEMP_DIR}/node24-missing"
+	make_node_stub "$stub_dir" "v24.15.0"
+	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_FORCE_WSL=1 DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=missing-no-done DOTFILES_UPDATE_WINDOWS_TIMEOUT=2 DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-missing" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" == *"Waiting for Windows update result... elapsed"* ]]
 	[[ "${output}" == *"No structured Windows result was produced before timeout (2s)"* ]]
-	[[ "${output}" == *"Completed with incidents"* ]]
+	[[ "${output}" == *"Completed with 1 incident: Windows / Windows result."* ]]
 }
 
 @test "make update reports partial Windows results when done marker is missing" {
-	run env DOTFILES_FORCE_WSL=1 DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=partial-no-done DOTFILES_UPDATE_WINDOWS_TIMEOUT=2 DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-partial" make -C "${DOTFILES_DIR}" update
+	local stub_dir="${TEST_TEMP_DIR}/node24-partial"
+	make_node_stub "$stub_dir" "v24.15.0"
+	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_FORCE_WSL=1 DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=partial-no-done DOTFILES_UPDATE_WINDOWS_TIMEOUT=2 DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-partial" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"WinGet sources: mocked partial result before hang"* ]]
-	[[ "${output}" == *"WinGet packages: mocked partial result before hang"* ]]
+	[[ "${output}" != *"WinGet sources: mocked partial result before hang"* ]]
+	[[ "${output}" != *"WinGet packages: mocked partial result before hang"* ]]
 	[[ "${output}" == *"Windows update did not write windows.done before timeout (2s); using partial results"* ]]
-	[[ "${output}" == *"Completed with incidents"* ]]
+	[[ "${output}" == *"Completed with 1 incident: Windows / Windows result."* ]]
 }
 
 @test "make update mock consolidates multiple Windows incidents" {
-	run env DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=multi-failure DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-multi" make -C "${DOTFILES_DIR}" update
+	local stub_dir="${TEST_TEMP_DIR}/node24-multi"
+	make_node_stub "$stub_dir" "v24.15.0"
+	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=multi-failure DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-multi" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"WinGet: Pandoc failed with installer exit code 1603"* ]]
-	[[ "${output}" == *"WSL update: wsl --update failed with exit 1"* ]]
-	[[ "${output}" == *"Completed with incidents"* ]]
+	[[ "${output}" == *"Windows / WinGet: Pandoc failed with installer exit code 1603"* ]]
+	[[ "${output}" == *"Windows / WSL update: wsl --update failed with exit 1"* ]]
+	[[ "${output}" == *"Completed with 2 incidents:"* ]]
+	[[ "${output}" == *"Windows / WinGet"* ]]
+	[[ "${output}" == *"Windows / WSL update"* ]]
 }
 
 @test "update run retention preserves current and recent runs while removing old overflow" {

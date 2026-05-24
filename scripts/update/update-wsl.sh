@@ -19,6 +19,8 @@ RUN_DIR="${DOTFILES_UPDATE_RUN_DIR:-$(new_run_dir)}"
 LOG_DIR="${RUN_DIR}/logs"
 mkdir -p "$LOG_DIR"
 result_init "${RUN_DIR}/wsl-results.tsv"
+TOOL_SNAPSHOT_FILE="${TOOL_SNAPSHOT_FILE:-${RUN_DIR}/tool-snapshot.tsv}"
+tool_snapshot_init "$TOOL_SNAPSHOT_FILE"
 
 want_section() {
 	[[ "$SECTION" == "all" || "$SECTION" == "$1" ]]
@@ -33,8 +35,23 @@ normalize_component_version() {
 	lower="${name,,}"
 	version="$(printf '%s\n' "$version" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
 	case "$lower" in
+	*codex*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^[Cc]odex([[:space:]-]+[Cc][Ll][Ii])?[[:space:]]+//; s/^codex-cli[[:space:]]+//')"
+		;;
 	*gitnexus*)
 		version="$(printf '%s\n' "$version" | sed -E 's/^[Gg]it[Nn]exus[[:space:]]+//')"
+		;;
+	*ast-grep*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^(ast-grep|sg)[[:space:]]+//')"
+		;;
+	*actionlint*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^actionlint[[:space:]]+//; s/^v//')"
+		;;
+	*osv-scanner*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^osv-scanner[[:space:]]+(version:?[[:space:]]*)?//; s/^version:?[[:space:]]*//; s/^v([0-9])/\1/')"
+		;;
+	*opencode*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^[Oo]pen[Cc]ode[[:space:]]+//')"
 		;;
 	*uv*)
 		version="$(printf '%s\n' "$version" | sed -E 's/^uv[[:space:]]+//; s/[[:space:]]+\([^)]*\)$//')"
@@ -67,6 +84,7 @@ record_version_transition() {
 	message="${message%$'\n'}"
 	info "${name} version: ${message}"
 	result_info "$area" "${name} version" "$message"
+	tool_snapshot_add "$name" "$before" "$after"
 }
 
 run_versioned_step() {
@@ -112,17 +130,28 @@ run_apt() {
 ensure_node_runtime() {
 	local version major
 	if ! command -v node >/dev/null 2>&1; then
+		tool_snapshot_add "Node.js" "" ""
 		result_fail "WSL" "Node" "node not found; run make install-node-stack"
 		return 1
 	fi
 	version="$(node --version 2>/dev/null || true)"
 	major="$(node_major "$version")"
 	if [[ -z "$major" || "$major" -lt 22 ]]; then
+		tool_snapshot_add "Node.js" "$version" "$version"
 		result_fail "WSL" "Node" "Node ${version:-unknown} is below required >=22; GitNexus update skipped; run make install-node-stack"
 		return 1
 	fi
+	tool_snapshot_add "Node.js" "$version" "$version"
 	result_ok "WSL" "Node" "runtime ${version} satisfies >=22"
 	return 0
+}
+
+probe_named_version() {
+	local name="$1"
+	shift
+	local raw
+	raw="$(probe_version_line "$@" || true)"
+	normalize_component_version "$name" "$raw"
 }
 
 run_tools() {
@@ -144,8 +173,8 @@ run_tools() {
 		return 0
 	fi
 
-	run_npm_step "WSL" "Codex CLI" "${LOG_DIR}/wsl-codex.log" npm install -g --prefix="$npm_prefix" @openai/codex@latest
-	run_npm_step "WSL" "ast-grep CLI" "${LOG_DIR}/wsl-ast-grep.log" npm install -g --prefix="$npm_prefix" @ast-grep/cli@latest
+	run_versioned_step run_npm_step "WSL" "Codex CLI" "${LOG_DIR}/wsl-codex.log" codex --version -- npm install -g --prefix="$npm_prefix" @openai/codex@latest
+	run_versioned_step run_npm_step "WSL" "ast-grep CLI" "${LOG_DIR}/wsl-ast-grep.log" ast-grep --version -- npm install -g --prefix="$npm_prefix" @ast-grep/cli@latest
 	run_versioned_step run_npm_step "WSL" "GitNexus CLI" "${LOG_DIR}/wsl-gitnexus.log" gitnexus --version -- npm install -g --prefix="$npm_prefix" gitnexus@latest
 	if command -v gitnexus >/dev/null 2>&1; then
 		result_ok "WSL" "GitNexus" "usable: $(gitnexus --version 2>/dev/null || echo version unknown)"
@@ -159,7 +188,16 @@ run_tools() {
 	fi
 	local agent_tools_script="${DOTFILES_ROOT}/scripts/install-agent-tools.sh"
 	if [[ -x "$agent_tools_script" ]]; then
+		local actionlint_before actionlint_after osv_before osv_after
+		actionlint_before="$(probe_named_version "actionlint" actionlint --version || true)"
+		osv_before="$(probe_named_version "osv-scanner" osv-scanner --version || true)"
 		run_step "WSL" "Agent validation tools" "${LOG_DIR}/wsl-agent-tools.log" "$agent_tools_script" --external-only --upgrade
+		if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" != "FAIL" ]]; then
+			actionlint_after="$(probe_named_version "actionlint" actionlint --version || true)"
+			osv_after="$(probe_named_version "osv-scanner" osv-scanner --version || true)"
+			tool_snapshot_add "actionlint" "$actionlint_before" "$actionlint_after"
+			tool_snapshot_add "osv-scanner" "$osv_before" "$osv_after"
+		fi
 	fi
 }
 
@@ -169,7 +207,7 @@ run_opencode() {
 		result_ok "WSL" "OpenCode" "mocked"
 		return 0
 	fi
-	run_step "WSL" "OpenCode" "${LOG_DIR}/wsl-opencode.log" bash -c 'curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path'
+	run_versioned_step run_step "WSL" "OpenCode" "${LOG_DIR}/wsl-opencode.log" opencode --version -- bash -c 'curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path'
 }
 
 run_shell() {
@@ -247,15 +285,12 @@ run_mcp() {
 }
 
 run_services() {
-	section "Services"
 	if is_truthy "${DOTFILES_UPDATE_MOCK:-}"; then
-		result_ok "WSL" "Services" "mocked"
 		return 0
 	fi
 	if command -v apache2 >/dev/null 2>&1 && declare -F restart_apache >/dev/null 2>&1; then
+		section "Services"
 		run_step "WSL" "Apache/MySQL" "${LOG_DIR}/wsl-services.log" restart_apache
-	else
-		result_info "WSL" "Services" "no managed local service restart required"
 	fi
 }
 
