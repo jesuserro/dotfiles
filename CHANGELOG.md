@@ -2,24 +2,14 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.05.24_1303] - 2026-05-24
+## [v2026.05.24_1312] - 2026-05-24
 
 ## Changes
 ### Fixed
-- 2026-05-24 12:55 [2ec0f5c](https://github.com/jesuserro/dotfiles/commit/2ec0f5c) fix(tests): enhance PowerShell runner tests for WSL compatibility (Cursor Agent)
-  - Updated the PowerShell native runner test to check for the availability of both `powershell.exe` and `wslpath`.
-  - Added conditions to skip tests if PowerShell is not runnable in the current WSL environment, improving test reliability and clarity.
-  - Ensured that the test output reflects the status of the PowerShell execution, enhancing feedback during testing.
-- 2026-05-24 12:49 [6a2363b](https://github.com/jesuserro/dotfiles/commit/6a2363b) fix(github actions): update BATS test scripts and improve dotfiles directory handling (Cursor Agent)
-  - Updated GitHub Actions workflow to use actions/checkout@v6 for improved functionality.
-  - Modified BATS test scripts to ensure the DOTFILES_DIR environment variable is correctly set when running tests.
-  - Enhanced the get_dotfiles_dir function to better locate the dotfiles directory, improving test reliability.
-
-### Refactored
-- 2026-05-24 13:00 [70bab2e](https://github.com/jesuserro/dotfiles/commit/70bab2e) refactor(tests): standardize formatting in common.bash and filesystem-launcher.bats (Cursor Agent)
-  - Reformatted code in common.bash and filesystem-launcher.bats for consistent indentation and readability.
-  - Ensured uniform spacing and alignment across functions to enhance maintainability.
-  - Improved clarity in test setup and assertions by aligning code structure, making it easier to follow and understand.
+- 2026-05-24 13:12 [a1e756f](https://github.com/jesuserro/dotfiles/commit/a1e756f) fix(github actions): update actions in release workflow for improved functionality (Cursor Agent)
+  - Upgraded actions/checkout to v6 for enhanced performance and features.
+  - Updated actions/github-script to v8 to leverage the latest improvements.
+  - Changed softprops/action-gh-release to v3 to ensure compatibility with recent updates.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
