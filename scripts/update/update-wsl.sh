@@ -24,6 +24,76 @@ want_section() {
 	[[ "$SECTION" == "all" || "$SECTION" == "$1" ]]
 }
 
+probe_version_line() {
+	"$@" 2>/dev/null | head -n 1 | tr -d '\r'
+}
+
+normalize_component_version() {
+	local name="$1" version="${2:-}" lower
+	lower="${name,,}"
+	version="$(printf '%s\n' "$version" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+	case "$lower" in
+	*gitnexus*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^[Gg]it[Nn]exus[[:space:]]+//')"
+		;;
+	*uv*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^uv[[:space:]]+//; s/[[:space:]]+\([^)]*\)$//')"
+		;;
+	esac
+	printf '%s\n' "$version"
+}
+
+format_version_transition() {
+	local before="${1:-}" after="${2:-}"
+	if [[ -z "$before" && -z "$after" ]]; then
+		printf 'version unavailable\n'
+	elif [[ -z "$before" && -n "$after" ]]; then
+		printf 'unavailable → %s\n' "$after"
+	elif [[ -n "$before" && -z "$after" ]]; then
+		printf '%s → unavailable\n' "$before"
+	elif [[ "$before" == "$after" ]]; then
+		printf '%s (unchanged)\n' "$after"
+	else
+		printf '%s → %s\n' "$before" "$after"
+	fi
+}
+
+record_version_transition() {
+	local area="$1" name="$2" before="$3" after="$4"
+	local message
+	before="$(normalize_component_version "$name" "$before")"
+	after="$(normalize_component_version "$name" "$after")"
+	message="$(format_version_transition "$before" "$after")"
+	message="${message%$'\n'}"
+	info "${name} version: ${message}"
+	result_info "$area" "${name} version" "$message"
+}
+
+run_versioned_step() {
+	local runner="$1" area="$2" name="$3" log_file="$4"
+	shift 4
+	local probe_delimiter_seen=0
+	local -a probe_cmd=()
+	while [[ $# -gt 0 ]]; do
+		if [[ "$1" == "--" ]]; then
+			probe_delimiter_seen=1
+			shift
+			break
+		fi
+		probe_cmd+=("$1")
+		shift
+	done
+	[[ "$probe_delimiter_seen" -eq 1 ]] || return 2
+	local before after
+	before="$(probe_version_line "${probe_cmd[@]}" || true)"
+	"$runner" "$area" "$name" "$log_file" "$@"
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" ]]; then
+		return 0
+	fi
+	after="$(probe_version_line "${probe_cmd[@]}" || true)"
+	record_version_transition "$area" "$name" "$before" "$after"
+}
+
 run_apt() {
 	section "APT"
 	if is_truthy "${DOTFILES_UPDATE_MOCK:-}"; then
@@ -31,7 +101,7 @@ run_apt() {
 		return 0
 	fi
 	if ! command -v sudo >/dev/null 2>&1; then
-		result_incident "WSL" "APT" "sudo not found"
+		result_fail "WSL" "APT" "sudo not found"
 		return 0
 	fi
 	run_step "WSL" "APT update" "${LOG_DIR}/wsl-apt-update.log" sudo apt-get update -y
@@ -42,13 +112,13 @@ run_apt() {
 ensure_node_runtime() {
 	local version major
 	if ! command -v node >/dev/null 2>&1; then
-		result_incident "WSL" "Node" "node not found; run make install-node-stack"
+		result_fail "WSL" "Node" "node not found; run make install-node-stack"
 		return 1
 	fi
 	version="$(node --version 2>/dev/null || true)"
 	major="$(node_major "$version")"
 	if [[ -z "$major" || "$major" -lt 22 ]]; then
-		result_incident "WSL" "Node" "Node ${version:-unknown} is below required >=22; GitNexus update skipped; run make install-node-stack"
+		result_fail "WSL" "Node" "Node ${version:-unknown} is below required >=22; GitNexus update skipped; run make install-node-stack"
 		return 1
 	fi
 	result_ok "WSL" "Node" "runtime ${version} satisfies >=22"
@@ -70,22 +140,22 @@ run_tools() {
 		return 0
 	fi
 	if ! command -v npm >/dev/null 2>&1; then
-		result_incident "WSL" "npm" "npm not found after Node validation"
+		result_fail "WSL" "npm" "npm not found after Node validation"
 		return 0
 	fi
 
 	run_npm_step "WSL" "Codex CLI" "${LOG_DIR}/wsl-codex.log" npm install -g --prefix="$npm_prefix" @openai/codex@latest
 	run_npm_step "WSL" "ast-grep CLI" "${LOG_DIR}/wsl-ast-grep.log" npm install -g --prefix="$npm_prefix" @ast-grep/cli@latest
-	run_npm_step "WSL" "GitNexus CLI" "${LOG_DIR}/wsl-gitnexus.log" npm install -g --prefix="$npm_prefix" gitnexus@latest
+	run_versioned_step run_npm_step "WSL" "GitNexus CLI" "${LOG_DIR}/wsl-gitnexus.log" gitnexus --version -- npm install -g --prefix="$npm_prefix" gitnexus@latest
 	if command -v gitnexus >/dev/null 2>&1; then
 		result_ok "WSL" "GitNexus" "usable: $(gitnexus --version 2>/dev/null || echo version unknown)"
 	else
-		result_incident "WSL" "GitNexus" "install finished but gitnexus not found in PATH"
+		result_fail "WSL" "GitNexus" "install finished but gitnexus not found in PATH"
 	fi
 	if command -v corepack >/dev/null 2>&1; then
-		run_step "WSL" "pnpm" "${LOG_DIR}/wsl-pnpm.log" corepack prepare pnpm@latest --activate
+		run_versioned_step run_step "WSL" "pnpm" "${LOG_DIR}/wsl-pnpm.log" pnpm --version -- corepack prepare pnpm@latest --activate
 	else
-		result_warn "WSL" "pnpm" "corepack not found; skipped"
+		result_skip "WSL" "pnpm" "corepack not found; skipped"
 	fi
 	local agent_tools_script="${DOTFILES_ROOT}/scripts/install-agent-tools.sh"
 	if [[ -x "$agent_tools_script" ]]; then
@@ -145,7 +215,7 @@ run_uv_update() {
 		local uv_path
 		uv_path="$(command -v uv)"
 		if [[ "$uv_path" == "$HOME/.local/bin/uv" ]]; then
-			run_step "WSL" "uv" "${LOG_DIR}/wsl-uv.log" uv self update
+			run_versioned_step run_step "WSL" "uv" "${LOG_DIR}/wsl-uv.log" uv --version -- uv self update
 		else
 			result_info "WSL" "uv" "detected at ${uv_path}; update with its owning package manager"
 		fi

@@ -27,7 +27,7 @@ launch_windows_update() {
 		return 0
 	fi
 	if is_truthy "${DOTFILES_UPDATE_SKIP_WINDOWS:-}"; then
-		result_warn "Windows" "Windows tab" "skipped by DOTFILES_UPDATE_SKIP_WINDOWS"
+		result_skip "Windows" "Windows tab" "skipped by DOTFILES_UPDATE_SKIP_WINDOWS"
 		return 0
 	fi
 	if is_truthy "${DOTFILES_UPDATE_MOCK:-}"; then

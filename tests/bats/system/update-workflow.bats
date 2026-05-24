@@ -44,10 +44,39 @@ EOF
 	run "$script"
 	[[ "$status" -eq 0 ]]
 	grep -q $'OK\tTest\tSuccess\tcompleted' "${TEST_TEMP_DIR}/results.tsv"
-	grep -q $'INCIDENT\tTest\tExit 42\texit 42' "${TEST_TEMP_DIR}/results.tsv"
-	grep -q $'INCIDENT\tTest\tMissing command\texit 127' "${TEST_TEMP_DIR}/results.tsv"
+	grep -q $'FAIL\tTest\tExit 42\texit 42' "${TEST_TEMP_DIR}/results.tsv"
+	grep -q $'FAIL\tTest\tMissing command\texit 127' "${TEST_TEMP_DIR}/results.tsv"
 	grep -q 'definitely-not-a-command' "${TEST_TEMP_DIR}/missing.log"
 	[[ "$output" != *"failed with exit 0"* ]]
+}
+
+@test "run_step streams long command output before completion" {
+	local script="${TEST_TEMP_DIR}/run-step-stream.sh"
+	local stdout_file="${TEST_TEMP_DIR}/stdout.txt"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+source "${DOTFILES_DIR}/scripts/update/lib/logging.sh"
+result_init "${TEST_TEMP_DIR}/stream-results.tsv"
+run_step "Test" "Slow step" "${TEST_TEMP_DIR}/slow.log" bash -c 'echo first-line; sleep 2; echo second-line; exit 7'
+EOF
+	chmod +x "$script"
+	"$script" >"$stdout_file" 2>&1 &
+	local pid=$!
+	local saw_first=0
+	for _ in 1 2 3 4 5 6 7 8 9 10; do
+		if [[ -f "${TEST_TEMP_DIR}/slow.log" ]] && grep -q 'first-line' "${TEST_TEMP_DIR}/slow.log"; then
+			saw_first=1
+			break
+		fi
+		sleep 0.3
+	done
+	wait "$pid"
+	[[ "$saw_first" -eq 1 ]]
+	grep -q 'first-line' "$stdout_file"
+	grep -q 'second-line' "$stdout_file"
+	grep -q $'FAIL\tTest\tSlow step\texit 7' "${TEST_TEMP_DIR}/stream-results.tsv"
 }
 
 @test "run_npm_step reports npm warnings without failing usable tools" {
@@ -67,11 +96,207 @@ EOF
 	run "$script"
 	[[ "$status" -eq 0 ]]
 	grep -q $'OK\tWSL\tnpm clean\tcompleted' "${TEST_TEMP_DIR}/npm-results.tsv"
-	grep -q $'WARN\tWSL\tnpm warn tool\tcompleted with npm warnings' "${TEST_TEMP_DIR}/npm-results.tsv"
-	grep -q $'WARN\tWSL\tnpm carriage warn\tcompleted with npm warnings' "${TEST_TEMP_DIR}/npm-results.tsv"
-	grep -q $'INCIDENT\tWSL\tnpm fail tool\texit 42' "${TEST_TEMP_DIR}/npm-results.tsv"
+	grep -q $'OK\tWSL\tnpm warn tool\tcompleted' "${TEST_TEMP_DIR}/npm-results.tsv"
+	grep -q $'INFO\tWSL\tnpm warn tool npm warnings\tcompleted with npm warnings' "${TEST_TEMP_DIR}/npm-results.tsv"
+	grep -q $'OK\tWSL\tnpm carriage warn\tcompleted' "${TEST_TEMP_DIR}/npm-results.tsv"
+	grep -q $'INFO\tWSL\tnpm carriage warn npm warnings\tcompleted with npm warnings' "${TEST_TEMP_DIR}/npm-results.tsv"
+	grep -q $'FAIL\tWSL\tnpm fail tool\texit 42' "${TEST_TEMP_DIR}/npm-results.tsv"
+	run bash -c "source '${DOTFILES_DIR}/scripts/update/lib/results.sh'; result_has_incidents '${TEST_TEMP_DIR}/npm-results.tsv'"
+	[[ "$status" -eq 0 ]]
 	grep -q 'npm warn deprecated boolean@3.2.0: Package no longer supported' "${TEST_TEMP_DIR}/npm-warn.log"
 	grep -q 'npm WARN deprecated old-package: still visible' "${TEST_TEMP_DIR}/npm-cr.log"
+}
+
+@test "npm warnings with exit 0 do not count as incidents by themselves" {
+	local script="${TEST_TEMP_DIR}/npm-warning-only.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+source "${DOTFILES_DIR}/scripts/update/lib/logging.sh"
+result_init "${TEST_TEMP_DIR}/npm-warning-only.tsv"
+run_npm_step "WSL" "GitNexus CLI" "${TEST_TEMP_DIR}/gitnexus.log" bash -c 'echo "npm warn deprecated boolean@3.2.0: Package no longer supported" >&2; exit 0'
+if result_has_incidents "${TEST_TEMP_DIR}/npm-warning-only.tsv"; then
+	exit 12
+fi
+EOF
+	chmod +x "$script"
+	run "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q $'OK\tWSL\tGitNexus CLI\tcompleted' "${TEST_TEMP_DIR}/npm-warning-only.tsv"
+	grep -q $'INFO\tWSL\tGitNexus CLI npm warnings\tcompleted with npm warnings' "${TEST_TEMP_DIR}/npm-warning-only.tsv"
+}
+
+@test "status formatting emits real ANSI and icons without literal escapes" {
+	local script="${TEST_TEMP_DIR}/status-format.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+source "${DOTFILES_DIR}/scripts/update/lib/logging.sh"
+ok "color check"
+skip "skip check"
+warn "warn check"
+EOF
+	chmod +x "$script"
+	run env -u NO_COLOR DOTFILES_UPDATE_FORCE_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *$'\033[0;32mOK'* ]]
+	[[ "$output" == *$'\033[0m'* ]]
+	[[ "$output" == *"✔"* ]]
+	[[ "$output" == *"⏭"* ]]
+	[[ "$output" == *"⚠"* ]]
+	[[ "$output" != *"\\033"* ]]
+	[[ "$output" != *"\\\\033"* ]]
+}
+
+@test "status formatting honors NO_COLOR and plain mode" {
+	local script="${TEST_TEMP_DIR}/status-plain.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+source "${DOTFILES_DIR}/scripts/update/lib/logging.sh"
+ok "color check"
+skip "skip check"
+EOF
+	chmod +x "$script"
+	run env DOTFILES_UPDATE_FORCE_COLOR=1 NO_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" != *$'\033['* ]]
+	[[ "$output" != *"\\033"* ]]
+	[[ "$output" == *"OK    color check"* ]]
+	[[ "$output" == *"SKIP  skip check"* ]]
+	run env -u NO_COLOR DOTFILES_UPDATE_FORCE_COLOR=1 DOTFILES_UPDATE_PLAIN=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" != *$'\033['* ]]
+	[[ "$output" == *"OK    color check"* ]]
+}
+
+@test "result_has_incidents ignores SKIP and counts WARN" {
+	local script="${TEST_TEMP_DIR}/incidents-check.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+result_init "${TEST_TEMP_DIR}/incidents.tsv"
+result_skip "WSL" "Excalidraw Docker" "Docker Desktop is not running"
+result_info "WSL" "Excalidraw Docker" "Run make excalidraw-update later"
+if result_has_incidents "${TEST_TEMP_DIR}/incidents.tsv"; then
+	exit 10
+fi
+result_warn "Windows" "WinGet" "Pandoc failed with installer exit code 1603"
+if ! result_has_incidents "${TEST_TEMP_DIR}/incidents.tsv"; then
+	exit 11
+fi
+EOF
+	chmod +x "$script"
+	run "$script"
+	[[ "$status" -eq 0 ]]
+}
+
+@test "persisted results stay semantic and render clean summary later" {
+	local script="${TEST_TEMP_DIR}/persisted-clean.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+result_init "${TEST_TEMP_DIR}/clean-results.tsv"
+result_ok "WSL" "APT update" "completed in 6s"
+result_info "WSL" "uv version" "0.11.16 (unchanged)"
+result_skip "WSL" "Excalidraw Docker" "Docker Desktop is not running"
+result_warn "Windows" "WinGet package Pandoc [JohnMacFarlane.Pandoc]" "upgrade failed with code 1603"
+result_fail "WSL" "Broken step" "exit 42"
+result_print_group "WSL" "${TEST_TEMP_DIR}/clean-results.tsv" "WSL"
+EOF
+	chmod +x "$script"
+	run env NO_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	local stored
+	stored="$(<"${TEST_TEMP_DIR}/clean-results.tsv")"
+	[[ "$stored" != *$'\033['* ]]
+	[[ "$stored" != *"\\033"* ]]
+	[[ "$stored" != *"✔"* ]]
+	[[ "$stored" != *"⏭"* ]]
+	[[ "$stored" != *"OK    "* ]]
+	[[ "$output" == *"OK    APT update: completed in 6s"* ]]
+	[[ "$output" == *"INFO  uv version: 0.11.16 (unchanged)"* ]]
+	[[ "$output" == *"SKIP  Excalidraw Docker: Docker Desktop is not running"* ]]
+}
+
+@test "summary renders Windows and WSL fixtures without escaped ANSI or duplicated version labels" {
+	local windows="${TEST_TEMP_DIR}/windows.tsv"
+	local wsl="${TEST_TEMP_DIR}/wsl.tsv"
+	cat >"$windows" <<'EOF'
+WARN	Windows	WinGet package Pandoc [JohnMacFarlane.Pandoc]	upgrade failed with code 1603
+OK	Windows	WSL update	completed in 2s
+EOF
+	cat >"$wsl" <<'EOF'
+OK	WSL	APT update	completed in 6s
+SKIP	WSL	Excalidraw Docker	Docker Desktop is not running; Excalidraw images were not updated
+INFO	WSL	GitNexus CLI version	1.6.5 (unchanged)
+INFO	WSL	pnpm version	11.2.2 (unchanged)
+INFO	WSL	uv version	0.11.16 (unchanged)
+EOF
+	local script="${TEST_TEMP_DIR}/summary-fixture.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+source "${DOTFILES_DIR}/scripts/update/lib/results.sh"
+result_print_group "Windows" "$windows" "Windows"
+result_print_group "WSL" "$wsl" "WSL"
+EOF
+	chmod +x "$script"
+	run env NO_COLOR=1 "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" != *"\\033"* ]]
+	[[ "$output" != *"version: version:"* ]]
+	[[ "$output" == *"WARN  WinGet package Pandoc [JohnMacFarlane.Pandoc]: upgrade failed with code 1603"* ]]
+	[[ "$output" == *"SKIP  Excalidraw Docker: Docker Desktop is not running; Excalidraw images were not updated"* ]]
+	[[ "$output" == *"INFO  GitNexus CLI version: 1.6.5 (unchanged)"* ]]
+	[[ "$output" == *"INFO  pnpm version: 11.2.2 (unchanged)"* ]]
+	[[ "$output" == *"INFO  uv version: 0.11.16 (unchanged)"* ]]
+}
+
+@test "version formatting normalizes labels and changed versions" {
+	local fake_home="${TEST_TEMP_DIR}/home-tools"
+	local stub_dir="${TEST_TEMP_DIR}/tools-bin"
+	local npm_prefix="${fake_home}/.npm-global"
+	mkdir -p "$stub_dir" "$npm_prefix/bin"
+	printf '1.6.5\n' >"${TEST_TEMP_DIR}/gitnexus-version"
+	cat >"${stub_dir}/node" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "v24.11.1";; *) exit 0;; esac
+EOF
+	cat >"${stub_dir}/npm" <<EOF
+#!/usr/bin/env bash
+if [[ "\$*" == *"gitnexus@latest"* ]]; then
+  printf '1.6.6\n' >"${TEST_TEMP_DIR}/gitnexus-version"
+fi
+echo "npm install \$*"
+exit 0
+EOF
+	cat >"${stub_dir}/gitnexus" <<EOF
+#!/usr/bin/env bash
+case "\$1" in --version) printf 'gitnexus %s\n' "\$(cat "${TEST_TEMP_DIR}/gitnexus-version")";; *) exit 0;; esac
+EOF
+	cat >"${stub_dir}/corepack" <<'EOF'
+#!/usr/bin/env bash
+echo "corepack $*"
+exit 0
+EOF
+	cat >"${stub_dir}/pnpm" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "11.2.2";; *) exit 0;; esac
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm" "${stub_dir}/gitnexus" "${stub_dir}/corepack" "${stub_dir}/pnpm"
+	run env HOME="$fake_home" NPM_CONFIG_PREFIX="$npm_prefix" PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-tools" "${DOTFILES_DIR}/scripts/update/update-wsl.sh" --section tools
+	[[ "$status" -eq 0 ]]
+	grep -q $'INFO\tWSL\tGitNexus CLI version\t1.6.5 → 1.6.6' "${TEST_TEMP_DIR}/run-tools/wsl-results.tsv"
+	grep -q $'INFO\tWSL\tpnpm version\t11.2.2 (unchanged)' "${TEST_TEMP_DIR}/run-tools/wsl-results.tsv"
+	[[ "$output" == *"GitNexus CLI version: 1.6.5 → 1.6.6"* ]]
+	[[ "$output" == *"pnpm version: 11.2.2 (unchanged)"* ]]
+	[[ "$output" != *"version: version:"* ]]
 }
 
 @test "update-wsl shell section updates Oh My Zsh through zsh script from Bash" {
@@ -102,6 +327,26 @@ EOF
 	grep -q $'OK\tWSL\tOh My Zsh\tcompleted' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
 	grep -q $'OK\tWSL\tOh My Zsh plugin z\tcompleted' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
 	[[ "$output" != *"failed with exit 0"* ]]
+}
+
+@test "update-wsl reports unchanged uv version cleanly" {
+	local fake_home="${TEST_TEMP_DIR}/home"
+	local stub_dir="${fake_home}/.local/bin"
+	mkdir -p "$stub_dir"
+	cat >"${stub_dir}/uv" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  --version) echo "uv 0.6.1" ;;
+  self) echo "already up to date"; exit 0 ;;
+  *) exit 0 ;;
+esac
+EOF
+	chmod +x "${stub_dir}/uv"
+	run env HOME="${fake_home}" PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-uv" "${DOTFILES_DIR}/scripts/update/update-wsl.sh" --section shell
+	[[ "$status" -eq 0 ]]
+	grep -q $'INFO\tWSL\tuv version\t0.6.1 (unchanged)' "${TEST_TEMP_DIR}/run-uv/wsl-results.tsv"
+	[[ "$output" == *"uv version: 0.6.1 (unchanged)"* ]]
+	[[ "$output" != *"version: version:"* ]]
 }
 
 @test "winget parser extracts Spanish package failure and success" {

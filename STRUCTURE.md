@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-24 00:39:13
+**Generated:** 2026-05-24 10:19:11
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -835,6 +835,7 @@
 │   ├── 📝 branch_feature_11-adding-prompt-launcher.md
 │   ├── 📝 branch_feature_12-adding-make-install.md
 │   ├── 📝 branch_feature_15-adding-refactors-and-enhancements.md
+│   ├── 📝 branch_feature_16-enhancing-ups-command.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
