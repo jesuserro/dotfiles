@@ -167,15 +167,25 @@ status)
 	;;
 update)
 	if ! d="$(docker_cmd)"; then
-		msg="Docker CLI not found; Excalidraw images not updated"
-		warn "$msg"
-		[[ -n "${RESULTS_FILE:-}" ]] && result_warn "WSL" "Excalidraw Docker" "$msg"
+		msg="Docker CLI not found; Excalidraw images were not updated"
+		note="Run 'make excalidraw-update' after Docker is available if you need this optional component"
+		skip "$msg"
+		info "$note"
+		if [[ -n "${RESULTS_FILE:-}" ]]; then
+			result_skip "WSL" "Excalidraw Docker" "$msg"
+			result_info "WSL" "Excalidraw Docker" "$note"
+		fi
 		exit 0
 	fi
 	if ! docker_available; then
-		msg="Docker unavailable; open Docker Desktop to update Excalidraw images"
-		warn "$msg"
-		[[ -n "${RESULTS_FILE:-}" ]] && result_warn "WSL" "Excalidraw Docker" "$msg"
+		msg="Docker Desktop is not running; Excalidraw images were not updated"
+		note="Run 'make excalidraw-update' after starting Docker Desktop when needed"
+		skip "$msg"
+		info "$note"
+		if [[ -n "${RESULTS_FILE:-}" ]]; then
+			result_skip "WSL" "Excalidraw Docker" "$msg"
+			result_info "WSL" "Excalidraw Docker" "$note"
+		fi
 		exit 0
 	fi
 	mkdir -p "$LOG_DIR"

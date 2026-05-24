@@ -52,6 +52,29 @@ teardown() {
 	[[ "${output}" == *"/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw -> /workspace/excalidraw"* ]]
 }
 
+@test "excalidraw update reports Docker Desktop down as SKIP and not incident" {
+	local results_file="${TEST_TEMP_DIR}/results.tsv"
+	local down_bin="${TEST_TEMP_DIR}/down-bin"
+	mkdir -p "$down_bin"
+	cat >"${down_bin}/docker" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  version) exit 1 ;;
+  *) exit 0 ;;
+esac
+EOF
+	chmod +x "${down_bin}/docker"
+	run env PATH="${down_bin}:/usr/bin:/bin" RESULTS_FILE="$results_file" bash "${DOTFILES_DIR}/scripts/update/update-excalidraw.sh" update --results "$results_file"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"SKIP"* ]]
+	[[ "${output}" == *"Docker Desktop is not running"* ]]
+	[[ "${output}" == *"make excalidraw-update"* ]]
+	grep -q $'SKIP\tWSL\tExcalidraw Docker\tDocker Desktop is not running; Excalidraw images were not updated' "$results_file"
+	grep -q $'INFO\tWSL\tExcalidraw Docker\tRun '\''make excalidraw-update'\'' after starting Docker Desktop when needed' "$results_file"
+	run bash -c "source '${DOTFILES_DIR}/scripts/update/lib/results.sh'; result_has_incidents '$results_file'"
+	[[ "${status}" -ne 0 ]]
+}
+
 @test "excalidraw start fails when dedicated port is occupied" {
 	local occupied_bin="${TEST_TEMP_DIR}/occupied-bin"
 	mkdir -p "$occupied_bin"

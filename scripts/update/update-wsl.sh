@@ -19,9 +19,97 @@ RUN_DIR="${DOTFILES_UPDATE_RUN_DIR:-$(new_run_dir)}"
 LOG_DIR="${RUN_DIR}/logs"
 mkdir -p "$LOG_DIR"
 result_init "${RUN_DIR}/wsl-results.tsv"
+TOOL_SNAPSHOT_FILE="${TOOL_SNAPSHOT_FILE:-${RUN_DIR}/tool-snapshot.tsv}"
+tool_snapshot_init "$TOOL_SNAPSHOT_FILE"
 
 want_section() {
 	[[ "$SECTION" == "all" || "$SECTION" == "$1" ]]
+}
+
+probe_version_line() {
+	"$@" 2>/dev/null | head -n 1 | tr -d '\r'
+}
+
+normalize_component_version() {
+	local name="$1" version="${2:-}" lower
+	lower="${name,,}"
+	version="$(printf '%s\n' "$version" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+	case "$lower" in
+	*codex*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^[Cc]odex([[:space:]-]+[Cc][Ll][Ii])?[[:space:]]+//; s/^codex-cli[[:space:]]+//')"
+		;;
+	*gitnexus*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^[Gg]it[Nn]exus[[:space:]]+//')"
+		;;
+	*ast-grep*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^(ast-grep|sg)[[:space:]]+//')"
+		;;
+	*actionlint*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^actionlint[[:space:]]+//; s/^v//')"
+		;;
+	*osv-scanner*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^osv-scanner[[:space:]]+(version:?[[:space:]]*)?//; s/^version:?[[:space:]]*//; s/^v([0-9])/\1/')"
+		;;
+	*opencode*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^[Oo]pen[Cc]ode[[:space:]]+//')"
+		;;
+	*uv*)
+		version="$(printf '%s\n' "$version" | sed -E 's/^uv[[:space:]]+//; s/[[:space:]]+\([^)]*\)$//')"
+		;;
+	esac
+	printf '%s\n' "$version"
+}
+
+format_version_transition() {
+	local before="${1:-}" after="${2:-}"
+	if [[ -z "$before" && -z "$after" ]]; then
+		printf 'version unavailable\n'
+	elif [[ -z "$before" && -n "$after" ]]; then
+		printf 'unavailable → %s\n' "$after"
+	elif [[ -n "$before" && -z "$after" ]]; then
+		printf '%s → unavailable\n' "$before"
+	elif [[ "$before" == "$after" ]]; then
+		printf '%s (unchanged)\n' "$after"
+	else
+		printf '%s → %s\n' "$before" "$after"
+	fi
+}
+
+record_version_transition() {
+	local area="$1" name="$2" before="$3" after="$4"
+	local message
+	before="$(normalize_component_version "$name" "$before")"
+	after="$(normalize_component_version "$name" "$after")"
+	message="$(format_version_transition "$before" "$after")"
+	message="${message%$'\n'}"
+	info "${name} version: ${message}"
+	result_info "$area" "${name} version" "$message"
+	tool_snapshot_add "$name" "$before" "$after"
+}
+
+run_versioned_step() {
+	local runner="$1" area="$2" name="$3" log_file="$4"
+	shift 4
+	local probe_delimiter_seen=0
+	local -a probe_cmd=()
+	while [[ $# -gt 0 ]]; do
+		if [[ "$1" == "--" ]]; then
+			probe_delimiter_seen=1
+			shift
+			break
+		fi
+		probe_cmd+=("$1")
+		shift
+	done
+	[[ "$probe_delimiter_seen" -eq 1 ]] || return 2
+	local before after
+	before="$(probe_version_line "${probe_cmd[@]}" || true)"
+	"$runner" "$area" "$name" "$log_file" "$@"
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" ]]; then
+		return 0
+	fi
+	after="$(probe_version_line "${probe_cmd[@]}" || true)"
+	record_version_transition "$area" "$name" "$before" "$after"
 }
 
 run_apt() {
@@ -31,7 +119,7 @@ run_apt() {
 		return 0
 	fi
 	if ! command -v sudo >/dev/null 2>&1; then
-		result_incident "WSL" "APT" "sudo not found"
+		result_fail "WSL" "APT" "sudo not found"
 		return 0
 	fi
 	run_step "WSL" "APT update" "${LOG_DIR}/wsl-apt-update.log" sudo apt-get update -y
@@ -42,17 +130,121 @@ run_apt() {
 ensure_node_runtime() {
 	local version major
 	if ! command -v node >/dev/null 2>&1; then
-		result_incident "WSL" "Node" "node not found; run make install-node-stack"
+		tool_snapshot_add "Node.js" "" ""
+		result_fail "WSL" "Node" "node not found; run make install-node-stack"
 		return 1
 	fi
 	version="$(node --version 2>/dev/null || true)"
 	major="$(node_major "$version")"
 	if [[ -z "$major" || "$major" -lt 22 ]]; then
-		result_incident "WSL" "Node" "Node ${version:-unknown} is below required >=22; GitNexus update skipped; run make install-node-stack"
+		tool_snapshot_add "Node.js" "$version" "$version"
+		result_fail "WSL" "Node" "Node ${version:-unknown} is below required >=22; GitNexus update skipped; run make install-node-stack"
 		return 1
 	fi
+	tool_snapshot_add "Node.js" "$version" "$version"
 	result_ok "WSL" "Node" "runtime ${version} satisfies >=22"
 	return 0
+}
+
+probe_named_version() {
+	local name="$1"
+	shift
+	local raw
+	raw="$(probe_version_line "$@" || true)"
+	normalize_component_version "$name" "$raw"
+}
+
+append_log_line() {
+	local log_file="$1" message="$2"
+	mkdir -p "$(dirname "$log_file")"
+	printf '%s\n' "$message" >>"$log_file"
+}
+
+global_npm_package_version() {
+	local npm_prefix="$1" package_name="$2"
+	local npm_root package_json
+	npm_root="$(npm root -g --prefix="$npm_prefix" 2>/dev/null || true)"
+	[[ -n "$npm_root" ]] || return 1
+	package_json="${npm_root}/${package_name}/package.json"
+	[[ -f "$package_json" ]] || return 1
+	node -e 'const fs = require("fs"); const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if (data && data.version) process.stdout.write(String(data.version));' "$package_json" 2>/dev/null
+}
+
+npm_dist_tag_version() {
+	local package_name="$1" dist_tag="$2"
+	npm view "${package_name}@${dist_tag}" version 2>/dev/null | head -n 1 | tr -d '\r'
+}
+
+update_global_npm_tool_if_needed() {
+	local area="$1" name="$2" log_file="$3" npm_prefix="$4" package_name="$5" dist_tag="$6"
+	shift 6
+	local probe_delimiter_seen=0
+	local -a probe_cmd=()
+	while [[ $# -gt 0 ]]; do
+		if [[ "$1" == "--" ]]; then
+			probe_delimiter_seen=1
+			shift
+			break
+		fi
+		probe_cmd+=("$1")
+		shift
+	done
+	[[ "$probe_delimiter_seen" -eq 1 ]] || return 2
+
+	local before after installed_version remote_version display_before display_installed
+	before="$(probe_version_line "${probe_cmd[@]}" || true)"
+	display_before="$(normalize_component_version "$name" "$before")"
+	installed_version="$(global_npm_package_version "$npm_prefix" "$package_name" || true)"
+	display_installed="${installed_version:-$display_before}"
+	: >"$log_file"
+	append_log_line "$log_file" "precheck: package=${package_name}@${dist_tag}"
+	append_log_line "$log_file" "precheck: before_version=${display_before:-unavailable}"
+	append_log_line "$log_file" "precheck: installed_package_version=${installed_version:-unavailable}"
+
+	remote_version="$(npm_dist_tag_version "$package_name" "$dist_tag" || true)"
+	if [[ -z "$remote_version" ]]; then
+		append_log_line "$log_file" "precheck: remote_target_version=unavailable"
+		if [[ -n "$display_installed" ]]; then
+			warn "${name} update check failed; keeping installed version ${display_installed}"
+			result_warn "$area" "$name" "update check failed; keeping installed version ${display_installed}"
+			tool_snapshot_add "$name" "$display_before" "$display_before"
+			RUN_STEP_LAST_RESULT_STATUS="WARN"
+			return 0
+		fi
+		info "${name} update check failed; attempting installation without pre-resolved target"
+		append_log_line "$log_file" "precheck: remote lookup failed; proceeding with install because tool is unavailable"
+	else
+		append_log_line "$log_file" "precheck: remote_target_version=${remote_version}"
+		if [[ -n "$display_installed" && "$installed_version" == "$remote_version" ]]; then
+			ok "${name} already latest: ${display_installed}"
+			result_ok "$area" "$name" "already latest: ${display_installed}"
+			tool_snapshot_add "$name" "$display_before" "$display_before"
+			RUN_STEP_LAST_RESULT_STATUS="OK"
+			return 0
+		fi
+		if [[ -n "$display_installed" ]]; then
+			info "${name} update available: ${display_installed} → ${remote_version}"
+		else
+			info "${name} is not installed; installing latest available version ${remote_version}"
+		fi
+	fi
+
+	run_npm_step "$area" "$name" "$log_file" npm install -g --prefix="$npm_prefix" "${package_name}@${dist_tag}"
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" ]]; then
+		return 0
+	fi
+	after="$(probe_version_line "${probe_cmd[@]}" || true)"
+	record_version_transition "$area" "$name" "$before" "$after"
+}
+
+ingest_agent_tools_results() {
+	local result_file="$1"
+	[[ -f "$result_file" ]] || return 0
+	while IFS=$'\t' read -r status tool message; do
+		[[ "$status" == "WARN" && -n "$tool" && -n "$message" ]] || continue
+		result_warn "WSL" "$tool" "$message"
+		RUN_STEP_LAST_RESULT_STATUS="WARN"
+	done <"$result_file"
 }
 
 run_tools() {
@@ -70,26 +262,39 @@ run_tools() {
 		return 0
 	fi
 	if ! command -v npm >/dev/null 2>&1; then
-		result_incident "WSL" "npm" "npm not found after Node validation"
+		result_fail "WSL" "npm" "npm not found after Node validation"
 		return 0
 	fi
 
-	run_npm_step "WSL" "Codex CLI" "${LOG_DIR}/wsl-codex.log" npm install -g --prefix="$npm_prefix" @openai/codex@latest
-	run_npm_step "WSL" "ast-grep CLI" "${LOG_DIR}/wsl-ast-grep.log" npm install -g --prefix="$npm_prefix" @ast-grep/cli@latest
-	run_npm_step "WSL" "GitNexus CLI" "${LOG_DIR}/wsl-gitnexus.log" npm install -g --prefix="$npm_prefix" gitnexus@latest
-	if command -v gitnexus >/dev/null 2>&1; then
+	update_global_npm_tool_if_needed "WSL" "Codex CLI" "${LOG_DIR}/wsl-codex.log" "$npm_prefix" "@openai/codex" "latest" codex --version --
+	update_global_npm_tool_if_needed "WSL" "ast-grep CLI" "${LOG_DIR}/wsl-ast-grep.log" "$npm_prefix" "@ast-grep/cli" "latest" ast-grep --version --
+	update_global_npm_tool_if_needed "WSL" "GitNexus CLI" "${LOG_DIR}/wsl-gitnexus.log" "$npm_prefix" "gitnexus" "latest" gitnexus --version --
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" != "FAIL" && "${RUN_STEP_LAST_RESULT_STATUS:-}" != "WARN" ]] && command -v gitnexus >/dev/null 2>&1; then
 		result_ok "WSL" "GitNexus" "usable: $(gitnexus --version 2>/dev/null || echo version unknown)"
+	elif [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" ]]; then
+		:
 	else
-		result_incident "WSL" "GitNexus" "install finished but gitnexus not found in PATH"
+		result_fail "WSL" "GitNexus" "install finished but gitnexus not found in PATH"
 	fi
 	if command -v corepack >/dev/null 2>&1; then
-		run_step "WSL" "pnpm" "${LOG_DIR}/wsl-pnpm.log" corepack prepare pnpm@latest --activate
+		run_versioned_step run_step "WSL" "pnpm" "${LOG_DIR}/wsl-pnpm.log" pnpm --version -- corepack prepare pnpm@latest --activate
 	else
-		result_warn "WSL" "pnpm" "corepack not found; skipped"
+		result_skip "WSL" "pnpm" "corepack not found; skipped"
 	fi
 	local agent_tools_script="${DOTFILES_ROOT}/scripts/install-agent-tools.sh"
 	if [[ -x "$agent_tools_script" ]]; then
-		run_step "WSL" "Agent validation tools" "${LOG_DIR}/wsl-agent-tools.log" "$agent_tools_script" --external-only --upgrade
+		local actionlint_before actionlint_after osv_before osv_after agent_tools_results
+		actionlint_before="$(probe_named_version "actionlint" actionlint --version || true)"
+		osv_before="$(probe_named_version "osv-scanner" osv-scanner --version || true)"
+		agent_tools_results="${LOG_DIR}/wsl-agent-tools-results.tsv"
+		run_step "WSL" "Agent validation tools" "${LOG_DIR}/wsl-agent-tools.log" "$agent_tools_script" --external-only --upgrade --result-file "$agent_tools_results"
+		ingest_agent_tools_results "$agent_tools_results"
+		if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" != "FAIL" ]]; then
+			actionlint_after="$(probe_named_version "actionlint" actionlint --version || true)"
+			osv_after="$(probe_named_version "osv-scanner" osv-scanner --version || true)"
+			tool_snapshot_add "actionlint" "$actionlint_before" "$actionlint_after"
+			tool_snapshot_add "osv-scanner" "$osv_before" "$osv_after"
+		fi
 	fi
 }
 
@@ -99,7 +304,7 @@ run_opencode() {
 		result_ok "WSL" "OpenCode" "mocked"
 		return 0
 	fi
-	run_step "WSL" "OpenCode" "${LOG_DIR}/wsl-opencode.log" bash -c 'curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path'
+	run_versioned_step run_step "WSL" "OpenCode" "${LOG_DIR}/wsl-opencode.log" opencode --version -- bash -c 'curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path'
 }
 
 run_shell() {
@@ -145,7 +350,7 @@ run_uv_update() {
 		local uv_path
 		uv_path="$(command -v uv)"
 		if [[ "$uv_path" == "$HOME/.local/bin/uv" ]]; then
-			run_step "WSL" "uv" "${LOG_DIR}/wsl-uv.log" uv self update
+			run_versioned_step run_step "WSL" "uv" "${LOG_DIR}/wsl-uv.log" uv --version -- uv self update
 		else
 			result_info "WSL" "uv" "detected at ${uv_path}; update with its owning package manager"
 		fi
@@ -177,15 +382,12 @@ run_mcp() {
 }
 
 run_services() {
-	section "Services"
 	if is_truthy "${DOTFILES_UPDATE_MOCK:-}"; then
-		result_ok "WSL" "Services" "mocked"
 		return 0
 	fi
 	if command -v apache2 >/dev/null 2>&1 && declare -F restart_apache >/dev/null 2>&1; then
+		section "Services"
 		run_step "WSL" "Apache/MySQL" "${LOG_DIR}/wsl-services.log" restart_apache
-	else
-		result_info "WSL" "Services" "no managed local service restart required"
 	fi
 }
 

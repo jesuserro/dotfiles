@@ -19,15 +19,19 @@ dry_run=0
 upgrade=0
 npm_only=0
 external_only=0
+result_file=""
 
 usage() {
 	cat <<'EOF'
-Usage: scripts/install-agent-tools.sh [--dry-run] [--upgrade] [--npm-only|--external-only]
+Usage: scripts/install-agent-tools.sh [--dry-run] [--upgrade] [--npm-only|--external-only] [--result-file PATH]
 
 Installs/updates non-APT agent tools:
   - @ast-grep/cli through npm user prefix
   - actionlint from rhysd/actionlint GitHub Releases
   - osv-scanner from google/osv-scanner GitHub Releases
+
+When --result-file is set, non-blocking external-tool update-check warnings are
+appended as tab-separated records: STATUS<TAB>TOOL<TAB>MESSAGE
 EOF
 }
 
@@ -48,6 +52,10 @@ while [[ $# -gt 0 ]]; do
 	--external-only)
 		external_only=1
 		shift
+		;;
+	--result-file)
+		result_file="${2:-}"
+		shift 2
 		;;
 	-h | --help)
 		usage
@@ -87,9 +95,43 @@ need_command() {
 	return 1
 }
 
+record_external_warning() {
+	local tool="$1" message="$2"
+	[[ -n "${result_file}" ]] || return 0
+	printf 'WARN\t%s\t%s\n' "$tool" "$message" >>"${result_file}"
+}
+
+init_result_file() {
+	[[ -n "${result_file}" ]] || return 0
+	mkdir -p "$(dirname "${result_file}")"
+	: >"${result_file}"
+}
+
 latest_tag() {
 	local repo="$1"
 	curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" | jq -r '.tag_name'
+}
+
+normalize_release_version() {
+	local tool="$1" version_line="${2:-}"
+	version_line="$(printf '%s\n' "$version_line" | head -n 1 | tr -d '\r')"
+	case "$tool" in
+	actionlint)
+		printf '%s\n' "$version_line" | sed -E 's/^actionlint[[:space:]]+//; s/^v//'
+		;;
+	osv-scanner)
+		printf '%s\n' "$version_line" | sed -E 's/^osv-scanner[[:space:]]+(version:?[[:space:]]*)?//; s/^version:?[[:space:]]*//; s/^v([0-9])/\1/'
+		;;
+	*)
+		printf '%s\n' "$version_line"
+		;;
+	esac
+}
+
+installed_tool_version() {
+	local tool="$1"
+	command -v "$tool" >/dev/null 2>&1 || return 1
+	normalize_release_version "$tool" "$("$tool" --version 2>/dev/null | head -n 1)"
 }
 
 install_ast_grep() {
@@ -134,8 +176,28 @@ install_actionlint() {
 		echo "[DRY_RUN] Would install actionlint to ${TARGET_DIR}/actionlint"
 		return 0
 	fi
-	tag="$(latest_tag rhysd/actionlint)"
+
+	local installed_version=""
+	installed_version="$(installed_tool_version actionlint || true)"
+	tag="$(latest_tag rhysd/actionlint)" || {
+		if [[ -n "${installed_version}" ]]; then
+			install_label WARN "actionlint update check failed; keeping installed version ${installed_version}"
+			record_external_warning "actionlint" "update check failed; keeping installed version ${installed_version}"
+			return 0
+		fi
+		install_label FAIL "Could not resolve latest actionlint release"
+		return 1
+	}
 	version="${tag#v}"
+	if [[ -n "${installed_version}" && "${installed_version}" == "${version}" ]]; then
+		install_label OK "actionlint already latest: ${installed_version}"
+		return 0
+	fi
+	if [[ -n "${installed_version}" ]]; then
+		install_label INFO "actionlint update available: ${installed_version} -> ${version}"
+	else
+		install_label INFO "actionlint is not installed; installing latest available version ${version}"
+	fi
 	asset="actionlint_${version}_linux_${arch}.tar.gz"
 	asset_url="https://github.com/rhysd/actionlint/releases/download/${tag}/${asset}"
 	checksums_url="https://github.com/rhysd/actionlint/releases/download/${tag}/actionlint_${version}_checksums.txt"
@@ -178,7 +240,28 @@ install_osv_scanner() {
 		echo "[DRY_RUN] Would install osv-scanner to ${TARGET_DIR}/osv-scanner"
 		return 0
 	fi
-	tag="$(latest_tag google/osv-scanner)"
+
+	local installed_version=""
+	installed_version="$(installed_tool_version osv-scanner || true)"
+	tag="$(latest_tag google/osv-scanner)" || {
+		if [[ -n "${installed_version}" ]]; then
+			install_label WARN "osv-scanner update check failed; keeping installed version ${installed_version}"
+			record_external_warning "osv-scanner" "update check failed; keeping installed version ${installed_version}"
+			return 0
+		fi
+		install_label FAIL "Could not resolve latest osv-scanner release"
+		return 1
+	}
+	local version="${tag#v}"
+	if [[ -n "${installed_version}" && "${installed_version}" == "${version}" ]]; then
+		install_label OK "osv-scanner already latest: ${installed_version}"
+		return 0
+	fi
+	if [[ -n "${installed_version}" ]]; then
+		install_label INFO "osv-scanner update available: ${installed_version} -> ${version}"
+	else
+		install_label INFO "osv-scanner is not installed; installing latest available version ${version}"
+	fi
 	asset="osv-scanner_linux_${arch}"
 	asset_url="https://github.com/google/osv-scanner/releases/download/${tag}/${asset}"
 	checksums_url="https://github.com/google/osv-scanner/releases/download/${tag}/osv-scanner_SHA256SUMS"
@@ -200,6 +283,7 @@ install_osv_scanner() {
 
 main() {
 	echo "==> install-agent-tools (idempotent, checksum-verified where applicable)"
+	init_result_file
 	if dry; then
 		echo "[DRY_RUN] No downloads, npm installs or writes will be performed."
 	fi

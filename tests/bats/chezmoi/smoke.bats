@@ -209,7 +209,7 @@ tomllib.loads(content)
 @test "shell policy defines canonical npm global prefix for Codex and GitNexus" {
 	grep -q 'export NPM_CONFIG_PREFIX="$HOME/.npm-global"' "$DOTFILES_DIR/zsh/00-env.zsh"
 	grep -q 'path_prepend "\$NPM_CONFIG_PREFIX/bin"' "$DOTFILES_DIR/zsh/10-path.zsh"
-	grep -q '@openai/codex@latest' "$DOTFILES_DIR/scripts/update/update-wsl.sh"
+	grep -q '"@openai/codex"' "$DOTFILES_DIR/scripts/update/update-wsl.sh"
 	run grep -R 'npm update -g codex' "$DOTFILES_DIR/scripts/update" "$DOTFILES_DIR/aliases"
 	[[ "${status}" -ne 0 ]]
 	grep -q 'NPM_CONFIG_PREFIX="\${NPM_CONFIG_PREFIX:-\$HOME/.npm-global}"' "$DOTFILES_DIR/scripts/install-gitnexus.sh"
@@ -219,12 +219,12 @@ tomllib.loads(content)
 }
 
 @test "make update summary reports warnings honestly" {
-	grep -q 'Completed with incidents' "$DOTFILES_DIR/scripts/update/update.sh"
+	grep -q 'result_print_concise_summary' "$DOTFILES_DIR/scripts/update/update.sh"
 	grep -q 'result_has_incidents' "$DOTFILES_DIR/scripts/update/update.sh"
 }
 
 @test "make update validates Node before GitNexus" {
 	grep -q 'ensure_node_runtime' "$DOTFILES_DIR/scripts/update/update-wsl.sh"
-	grep -q 'gitnexus@latest' "$DOTFILES_DIR/scripts/update/update-wsl.sh"
+	grep -q '"gitnexus"' "$DOTFILES_DIR/scripts/update/update-wsl.sh"
 	grep -q 'below required >=22' "$DOTFILES_DIR/scripts/update/update-wsl.sh"
 }
