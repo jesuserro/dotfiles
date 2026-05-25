@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-25 17:29:18
+**Generated:** 2026-05-25 20:16:13
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -902,6 +902,7 @@
 │   │   │   ├── 🔧 docker_desktop_credentials.sh
 │   │   │   ├── 🔧 environment.sh
 │   │   │   ├── 🔧 logging.sh
+│   │   │   ├── 🔧 node_runtime.sh
 │   │   │   └── 🔧 results.sh
 │   │   ├── 🐍 parse-winget-log.py
 │   │   ├── 🔧 update-check.sh
@@ -1021,6 +1022,7 @@
 │   │   │   ├── 📄 mcp-manifest.bats
 │   │   │   ├── 📄 mcp-render-drift.bats
 │   │   │   ├── 📄 system-deps.bats
+│   │   │   ├── 📄 update-node-runtime.bats
 │   │   │   └── 📄 update-workflow.bats
 │   │   ├── 📁 zsh
 │   │   │   ├── 📄 p10k_cache_keys.bats

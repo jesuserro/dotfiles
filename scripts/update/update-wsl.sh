@@ -5,6 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 # shellcheck source=scripts/update/lib/environment.sh
 source "${SCRIPT_DIR}/lib/environment.sh"
+# shellcheck source=scripts/update/lib/node_runtime.sh
+source "${SCRIPT_DIR}/lib/node_runtime.sh"
 # shellcheck source=scripts/update/lib/results.sh
 source "${SCRIPT_DIR}/lib/results.sh"
 # shellcheck source=scripts/update/lib/logging.sh
@@ -128,21 +130,23 @@ run_apt() {
 }
 
 ensure_node_runtime() {
-	local version major
-	if ! command -v node >/dev/null 2>&1; then
+	local path version major min_major
+	min_major="$(node_runtime_min_major)"
+	path="$(command -v node 2>/dev/null || true)"
+	if [[ -z "$path" ]]; then
 		tool_snapshot_add "Node.js" "" ""
 		result_fail "WSL" "Node" "node not found; run make install-node-stack"
 		return 1
 	fi
 	version="$(node --version 2>/dev/null || true)"
 	major="$(node_major "$version")"
-	if [[ -z "$major" || "$major" -lt 22 ]]; then
+	if [[ -z "$major" || "$major" -lt "$min_major" ]]; then
 		tool_snapshot_add "Node.js" "$version" "$version"
-		result_fail "WSL" "Node" "Node ${version:-unknown} is below required >=22; GitNexus update skipped; run make install-node-stack"
+		result_fail "WSL" "Node" "Node ${version:-unknown} at ${path} is below required >=${min_major}; run make install-node-stack"
 		return 1
 	fi
 	tool_snapshot_add "Node.js" "$version" "$version"
-	result_ok "WSL" "Node" "runtime ${version} satisfies >=22"
+	result_ok "WSL" "Node" "runtime ${version} at ${path} satisfies >=${min_major}"
 	return 0
 }
 
@@ -381,20 +385,52 @@ ingest_agent_tools_results() {
 
 run_tools() {
 	section "Node and AI tools"
-	local npm_prefix="${NPM_CONFIG_PREFIX:-$HOME/.npm-global}"
-	export PATH="$npm_prefix/bin:$PATH"
+	local npm_prefix="${NPM_CONFIG_PREFIX:-${DOTFILES_NPM_PREFIX:-$HOME/.npm-global}}"
+	local original_path="$PATH" overlay="" switched=0
 	mkdir -p "$npm_prefix/bin" "$npm_prefix/lib/node_modules"
 
-	if ! ensure_node_runtime; then
-		result_warn "WSL" "GitNexus" "skipped because Node runtime is incompatible; run make install-node-stack"
+	node_runtime_probe
+	if [[ "$NODE_RUNTIME_EFFECTIVE_OK" -eq 1 ]]; then
+		export PATH="$npm_prefix/bin:$PATH"
+		tool_snapshot_add "Node.js" "$NODE_RUNTIME_EFFECTIVE_VERSION" "$NODE_RUNTIME_EFFECTIVE_VERSION"
+		result_ok "WSL" "Node" "runtime ${NODE_RUNTIME_EFFECTIVE_VERSION} at ${NODE_RUNTIME_EFFECTIVE_PATH} satisfies >=${NODE_RUNTIME_MIN_MAJOR}"
+	elif [[ "$NODE_RUNTIME_MANAGED_OK" -eq 1 ]]; then
+		overlay="$(node_runtime_create_overlay "$RUN_DIR" "$NODE_RUNTIME_MANAGED_PATH")"
+		export PATH
+		PATH="$(node_runtime_controlled_path "$overlay" "$npm_prefix" "$original_path")"
+		switched=1
+		local active_node active_version
+		active_node="$(command -v node 2>/dev/null || true)"
+		active_version="$(node --version 2>/dev/null || true)"
+		if [[ "$active_node" != "${overlay}/node" ]] || ! node_runtime_version_satisfies "$active_version" "$NODE_RUNTIME_MIN_MAJOR"; then
+			PATH="$original_path"
+			result_fail "WSL" "Node" "managed runtime overlay did not activate cleanly; expected ${overlay}/node -> ${NODE_RUNTIME_MANAGED_PATH}, got ${active_node:-missing} ${active_version:-unknown}"
+			tool_snapshot_add "Node.js" "$NODE_RUNTIME_EFFECTIVE_VERSION" "$NODE_RUNTIME_EFFECTIVE_VERSION"
+			return 0
+		fi
+		info "Node runtime for managed tools: switched from ${NODE_RUNTIME_EFFECTIVE_VERSION:-missing} (${NODE_RUNTIME_EFFECTIVE_ORIGIN}) to ${NODE_RUNTIME_MANAGED_VERSION} (${NODE_RUNTIME_MANAGED_PATH})"
+		result_info "WSL" "Node runtime for managed tools" "switched from ${NODE_RUNTIME_EFFECTIVE_VERSION:-missing} (${NODE_RUNTIME_EFFECTIVE_ORIGIN}) to ${NODE_RUNTIME_MANAGED_VERSION} (${NODE_RUNTIME_MANAGED_PATH})"
+		tool_snapshot_add "Node.js" "$NODE_RUNTIME_EFFECTIVE_VERSION" "$NODE_RUNTIME_EFFECTIVE_VERSION"
+		tool_snapshot_add "Node.js managed tools" "$NODE_RUNTIME_MANAGED_VERSION" "$NODE_RUNTIME_MANAGED_VERSION"
+	else
+		local effective_desc
+		if [[ -n "$NODE_RUNTIME_EFFECTIVE_PATH" ]]; then
+			effective_desc="${NODE_RUNTIME_EFFECTIVE_VERSION:-unknown} at ${NODE_RUNTIME_EFFECTIVE_PATH} (${NODE_RUNTIME_EFFECTIVE_ORIGIN})"
+		else
+			effective_desc="missing"
+		fi
+		result_fail "WSL" "Node" "effective runtime ${effective_desc} is below required >=${NODE_RUNTIME_MIN_MAJOR}; no compatible managed runtime available at ${NODE_RUNTIME_MANAGED_PATH}: ${NODE_RUNTIME_MANAGED_ERROR:-unknown}; run make install-node-stack"
+		tool_snapshot_add "Node.js" "$NODE_RUNTIME_EFFECTIVE_VERSION" "$NODE_RUNTIME_EFFECTIVE_VERSION"
 		return 0
 	fi
 	if is_truthy "${DOTFILES_UPDATE_MOCK:-}"; then
 		result_ok "WSL" "Node / AI tools" "mocked"
+		PATH="$original_path"
 		return 0
 	fi
 	if ! command -v npm >/dev/null 2>&1; then
 		result_fail "WSL" "npm" "npm not found after Node validation"
+		PATH="$original_path"
 		return 0
 	fi
 
@@ -423,6 +459,9 @@ run_tools() {
 			tool_snapshot_add "actionlint" "$actionlint_before" "$actionlint_after"
 			tool_snapshot_add "osv-scanner" "$osv_before" "$osv_after"
 		fi
+	fi
+	if [[ "$switched" -eq 1 ]]; then
+		PATH="$original_path"
 	fi
 }
 

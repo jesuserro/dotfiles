@@ -1483,9 +1483,9 @@ PY
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" == *"Windows / WinGet: Pandoc failed with installer exit code 1603"* ]]
 	[[ "${output}" != *"WSL update: mocked wsl --update"* ]]
-	[[ "${output}" == *"Node v20.18.2 is below required >=22"* ]]
-	[[ "${output}" == *"GitNexus: skipped because Node runtime is incompatible"* ]]
-	[[ "${output}" == *"Completed with 3 incidents"* ]]
+	[[ "${output}" == *"Node runtime for managed tools: switched from v20.18.2"* ]]
+	[[ "${output}" != *"GitNexus: skipped because Node runtime is incompatible"* ]]
+	[[ "${output}" == *"Completed with 1 incident: Windows / WinGet."* ]]
 }
 
 @test "make update mock surfaces wsl --update failure and never uses shutdown" {
@@ -1556,13 +1556,13 @@ EOF
 	[[ "$output" == *"Removed"* ]]
 }
 
-@test "update-check warns on Node 20 and prints install action" {
+@test "update-check reports recoverable Node 20 shadowing" {
 	local stub_dir="${TEST_TEMP_DIR}/node20-check"
 	make_node_stub "$stub_dir" "v20.18.2"
 	run env PATH="${stub_dir}:/usr/bin:/bin" "${DOTFILES_DIR}/scripts/update/update-check.sh"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Node v20.18.2 is below required >=22 for GitNexus"* ]]
-	[[ "${output}" == *"Ejecuta: make install-node-stack"* ]]
+	[[ "${output}" == *"Node.js effective runtime is below required >=22: v20.18.2 (${stub_dir}/node, unknown-shadowing)"* ]]
+	[[ "${output}" == *"Managed compatible runtime available for update tools"* ]]
 }
 
 @test "update-check accepts Node 22 and Node 24" {
@@ -1570,13 +1570,13 @@ EOF
 	make_node_stub "$stub_dir" "v22.12.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" "${DOTFILES_DIR}/scripts/update/update-check.sh"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Node v22.12.0 satisfies >=22"* ]]
+	[[ "${output}" == *"Node.js effective runtime: v22.12.0 (${stub_dir}/node)"* ]]
 
 	local stub_dir24="${TEST_TEMP_DIR}/node24-check"
 	make_node_stub "$stub_dir24" "v24.11.1"
 	run env PATH="${stub_dir24}:/usr/bin:/bin" "${DOTFILES_DIR}/scripts/update/update-check.sh"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Node v24.11.1 satisfies >=22"* ]]
+	[[ "${output}" == *"Node.js effective runtime: v24.11.1 (${stub_dir24}/node)"* ]]
 }
 
 @test "update-check ignores Docker Desktop helper for unrelated registry" {
@@ -1629,13 +1629,14 @@ EOF
 	[[ "$output" != *"make install-docker-desktop-helper"* ]]
 }
 
-@test "update-wsl does not declare GitNexus success under Node 20" {
+@test "update-wsl recovers managed tools under Node 20 shadowing" {
 	local stub_dir="${TEST_TEMP_DIR}/node20-wsl"
 	make_node_stub "$stub_dir" "v20.18.2"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-node20" "${DOTFILES_DIR}/scripts/update/update-wsl.sh" --section tools
 	[[ "${status}" -eq 0 ]]
-	grep -q 'Node v20.18.2 is below required >=22' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
-	grep -q 'GitNexus.*skipped because Node runtime is incompatible' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
+	grep -q $'INFO\tWSL\tNode runtime for managed tools\tswitched from v20.18.2' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
+	! grep -q $'FAIL\tWSL\tNode\t' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
+	! grep -q 'GitNexus.*skipped because Node runtime is incompatible' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
 	! grep -q 'GitNexus.*usable' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
 }
 

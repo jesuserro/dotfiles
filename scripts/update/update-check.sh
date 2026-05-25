@@ -5,6 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 # shellcheck source=scripts/update/lib/environment.sh
 source "${SCRIPT_DIR}/lib/environment.sh"
+# shellcheck source=scripts/update/lib/node_runtime.sh
+source "${SCRIPT_DIR}/lib/node_runtime.sh"
 # shellcheck source=scripts/update/lib/docker_desktop_credentials.sh
 source "${SCRIPT_DIR}/lib/docker_desktop_credentials.sh"
 
@@ -34,17 +36,10 @@ done
 for cmd in wt.exe powershell.exe wslpath; do
 	if command -v "$cmd" >/dev/null 2>&1; then status OK "$cmd available from WSL"; else status WARN "$cmd unavailable from WSL"; fi
 done
-if command -v node >/dev/null 2>&1; then
-	version="$(node --version 2>/dev/null || true)"
-	major="$(node_major "$version")"
-	if [[ -n "$major" && "$major" -ge 22 ]]; then
-		status OK "Node ${version} satisfies >=22"
-	else
-		status WARN "Node ${version:-unknown} is below required >=22 for GitNexus. Ejecuta: make install-node-stack"
-	fi
-else
-	status WARN "node missing for GitNexus. Ejecuta: make install-node-stack"
-fi
+while IFS=$'\t' read -r state message; do
+	[[ -n "$state" && -n "$message" ]] || continue
+	status "$state" "$message"
+done < <(node_runtime_diagnostic_effective)
 if docker_cmd="$(docker_check_cmd)"; then
 	status OK "Docker CLI available for Excalidraw image operations"
 	if "$docker_cmd" version >/dev/null 2>&1; then

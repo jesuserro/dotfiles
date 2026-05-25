@@ -166,7 +166,7 @@ Chezmoi templates are not passed raw to `shellcheck` or `shfmt`; those tools do 
 - `chezmoi`: `make install-chezmoi` (preferred, idempotent, no sudo, drops the binary at `~/.local/bin/chezmoi`). Direct fallback: `sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"` or download from https://github.com/twpayne/chezmoi/releases.
 - `sops`: `make install-sops` (preferred, idempotent, no sudo, sha256-verified, pinned version). Direct fallback: download the matching `sops-vX.Y.Z.linux.<arch>` binary from https://github.com/getsops/sops/releases and drop it at `~/.local/bin/sops`. Not in Ubuntu APT repos.
 - `uv`: `make install-uv` (preferred, idempotent, never edits rc files). Direct fallback: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- `node` / `npm`: install together with `make install-node-stack` (NodeSource 24.x, Node `>=22` for GitNexus)
+- `node` / `npm`: install together with `make install-node-stack` (NodeSource 24.x, Node `>=22` for GitNexus and managed Node tooling)
 - `azure-cli`: `make install-azure-cli` (opt-in, Debian/Ubuntu/WSL via Microsoft's official Azure CLI repository). It is not part of `make install`; `az login` remains manual.
 - `corepack`: ships with the Node stack; validate with `corepack --version`
 - `pnpm`: `npm install --global corepack@latest` then `corepack prepare pnpm@latest-11 --activate`
@@ -178,6 +178,16 @@ Chezmoi templates are not passed raw to `shellcheck` or `shfmt`; those tools do 
 - `opencode`: `curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path`
 - `docker`: manual workstation decision on WSL; the repo does not enforce one installer path
 - `wt.exe` / `powershell.exe`: Windows-host capabilities used from WSL, not Linux install targets
+
+`make update` and `make update-tools` can autorrecover their Node/tooling block when an IDE or agent injects an incompatible `node` earlier in `PATH`. The update flow creates a temporary overlay for the child process so `#!/usr/bin/env node` resolves to the managed compatible runtime, while npm/Corepack/pnpm continue to live in the user npm prefix. It does not modify Cursor Server, shell startup files, or persistent `PATH`.
+
+Runtime overrides for advanced cases:
+
+- `DOTFILES_MANAGED_NODE_BIN`: explicit managed Node candidate, instead of `/usr/bin/node`
+- `DOTFILES_NODE_MIN_MAJOR`: minimum accepted Node major, default `22`
+- `DOTFILES_NPM_PREFIX`: user-space npm prefix for managed tooling, defaulting through the existing npm prefix policy
+
+Use `make update-check` to see the effective Node, managed candidate, and whether `make update-tools` can recover without mutating the environment.
 
 ## External version policy
 

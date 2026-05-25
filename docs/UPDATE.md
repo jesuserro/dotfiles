@@ -40,13 +40,17 @@ PowerShell escribe logs y un resultado TSV parseable. Al final, WSL espera ese r
 
 La política del repo exige Node `>=22`. `make install-node-stack` instala NodeSource `24.x`, una fuente externa de paquetes APT firmada y configurada con `signed-by`. Esto evita depender de `nvm`/`fnm` en shells no interactivos y mantiene `node`, `npm` y `npx` disponibles para Make, MCPs y GitNexus.
 
-`make update-wsl` valida la versión de Node antes de actualizar GitNexus. Si el runtime no cumple el engine, el resumen muestra una incidencia visible.
+`make update-wsl` valida la versión de Node antes de actualizar herramientas Node/IA. Si el proceso fue lanzado desde un IDE o agente con un `PATH` sombreado por un Node incompatible, pero existe un runtime gestionado compatible, el bloque Node/tooling se ejecuta dentro de un overlay temporal que fija `node` al runtime gestionado. Esto afecta a `make update` y `make update-tools`, no al proceso padre ni al resto de bloques de actualización.
+
+El runtime gestionado por defecto es `/usr/bin/node`, coherente con NodeSource/APT. Puede sobreescribirse con `DOTFILES_MANAGED_NODE_BIN`. La major mínima puede ajustarse con `DOTFILES_NODE_MIN_MAJOR` y el prefijo user-space de npm con `DOTFILES_NPM_PREFIX`.
+
+`make update-check` diagnostica el Node efectivo, el candidato gestionado y si `make update-tools` podrá autorrecuperarse. No crea overlays, no instala Node y no modifica `PATH`, Cursor Server ni ficheros de shell.
 
 ## pnpm
 
 La política de mantenimiento converge `pnpm` a major 11. `make update-wsl` actualiza primero Corepack en el prefijo npm de usuario y activa `pnpm@latest-11` desde rutas user-space, sin escribir en `/usr/bin` ni modificar ficheros de shell.
 
-El éxito se valida siempre ejecutando `pnpm --version`. Si Corepack actualizado no deja un `pnpm` 11 funcional, el flujo registra un `WARN` y usa fallback explícito con `npm install -g --prefix=<prefijo-usuario> "pnpm@^11"`. El snapshot mantiene versiones limpias; el método final aparece como mensaje separado.
+`pnpm` 11 requiere Node compatible. Cuando el bloque Node/tooling usa overlay temporal, `npm`, Corepack y `pnpm` del prefijo user-space se ejecutan bajo el Node gestionado compatible. El éxito se valida siempre ejecutando `pnpm --version`. Si Corepack actualizado no deja un `pnpm` 11 funcional, el flujo registra un `WARN` y usa fallback explícito con `npm install -g --prefix=<prefijo-usuario> "pnpm@^11"`. El snapshot mantiene versiones limpias; el método final aparece como mensaje separado.
 
 ## Excalidraw MCP
 
