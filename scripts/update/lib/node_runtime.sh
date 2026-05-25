@@ -109,6 +109,14 @@ node_runtime_create_overlay() {
 	printf '%s\n' "$overlay"
 }
 
+node_runtime_cleanup_overlay() {
+	local overlay="${1:-}"
+	[[ -n "$overlay" && -d "$overlay" ]] || return 0
+	case "$(basename "$overlay")" in
+	node-runtime.*) rm -rf -- "$overlay" ;;
+	esac
+}
+
 node_runtime_controlled_path() {
 	local overlay="$1" npm_prefix="$2" original_path="$3"
 	printf '%s\n' "${overlay}:${npm_prefix}/bin:${original_path}"

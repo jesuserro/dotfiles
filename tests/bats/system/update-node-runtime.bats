@@ -205,6 +205,28 @@ run_runtime_probe() {
 	[[ "$(grep -c $'INFO\tWSL\tNode runtime for managed tools\t' "${run_dir}/wsl-results.tsv")" -eq 1 ]]
 	! grep -q $'FAIL\tWSL\tNode\t' "${run_dir}/wsl-results.tsv"
 	grep -q $'Node.js managed tools\tv24.15.0\tv24.15.0\tunchanged' "${run_dir}/tool-snapshot.tsv"
+	! find "$run_dir" -maxdepth 1 -type d -name 'node-runtime.*' -print | grep -q .
+}
+
+@test "overlay is cleaned when managed tools block fails after activation" {
+	local shadow_bin="${TEST_TEMP_DIR}/shadow/bin"
+	local managed="${TEST_TEMP_DIR}/managed/node"
+	local run_dir="${TEST_TEMP_DIR}/run-overlay-fail"
+	link_core_utils "$shadow_bin"
+	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
+	write_fake_node "$managed" "v24.15.0" "managed"
+	mkdir -p "${TEST_TEMP_DIR}/home/.npm-global/bin"
+	cat >"${TEST_TEMP_DIR}/home/.npm-global/bin/npm" <<'EOF'
+#!/usr/bin/env bash
+exit 42
+EOF
+	chmod +x "${TEST_TEMP_DIR}/home/.npm-global/bin/npm"
+
+	run env HOME="${TEST_TEMP_DIR}/home" PATH="$shadow_bin" DOTFILES_MANAGED_NODE_BIN="$managed" DOTFILES_UPDATE_RUN_DIR="$run_dir" bash "$UPDATE_WSL" --section tools
+	[[ "$status" -eq 0 ]]
+	grep -q $'INFO\tWSL\tNode runtime for managed tools\t' "${run_dir}/wsl-results.tsv"
+	grep -q $'FAIL\tWSL\t' "${run_dir}/wsl-results.tsv"
+	! find "$run_dir" -maxdepth 1 -type d -name 'node-runtime.*' -print | grep -q .
 }
 
 @test "update tools with no compatible runtime records one Node diagnostic and skips npm family" {
@@ -290,6 +312,51 @@ EOF
 	[[ "$status" -eq 0 ]]
 	grep -q $'pnpm\t11.3.0\t11.3.0\tunchanged' "${run_dir}/tool-snapshot.tsv"
 	grep -q $'INFO\tWSL\tpnpm method\tcorepack' "${run_dir}/wsl-results.tsv"
+}
+
+@test "npm prefix probing runs under managed overlay, not contaminated Node" {
+	local shadow_bin="${TEST_TEMP_DIR}/shadow-prefix/bin"
+	local prefix="${TEST_TEMP_DIR}/npm-prefix-probe"
+	local managed="${TEST_TEMP_DIR}/managed-prefix/node"
+	local run_dir="${TEST_TEMP_DIR}/run-prefix-probe"
+	local trace="${TEST_TEMP_DIR}/prefix-trace.log"
+	link_core_utils "$shadow_bin"
+	mkdir -p "$(dirname "$managed")" "${prefix}/bin"
+	cat >"${shadow_bin}/node" <<'EOF'
+#!/usr/bin/env bash
+if [[ "${1:-}" == "--version" ]]; then
+  echo "v20.18.2"
+  exit 0
+fi
+echo "shadow-node-ran:${1:-}" >> "${NODE_RUNTIME_TRACE}"
+exit 88
+EOF
+	chmod +x "${shadow_bin}/node"
+	cat >"$managed" <<EOF
+#!/usr/bin/env bash
+if [[ "\${1:-}" == "--version" ]]; then
+  echo "v24.15.0"
+  exit 0
+fi
+echo "managed-node-ran:\${1:-}" >> "\${NODE_RUNTIME_TRACE}"
+if [[ "\$(basename "\${1:-}")" == "npm" && "\${2:-}" == "config" && "\${3:-}" == "get" && "\${4:-}" == "prefix" ]]; then
+  echo "${prefix}"
+  exit 0
+fi
+exit 0
+EOF
+	chmod +x "$managed"
+	cat >"${prefix}/bin/npm" <<'EOF'
+#!/usr/bin/env node
+// fake npm; handled by fake managed node.
+EOF
+	chmod +x "${prefix}/bin/npm"
+
+	run env PATH="$shadow_bin" NODE_RUNTIME_TRACE="$trace" DOTFILES_MANAGED_NODE_BIN="$managed" bash -c "set -euo pipefail; set -- --section none; DOTFILES_UPDATE_RUN_DIR='${run_dir}'; source '${UPDATE_WSL}'; overlay=\$(node_runtime_create_overlay '${run_dir}' '${managed}'); export PATH=\"\$(node_runtime_controlled_path \"\$overlay\" '${prefix}' '${shadow_bin}')\"; unset NPM_CONFIG_PREFIX DOTFILES_NPM_PREFIX; test \"\$(user_npm_prefix)\" = '${prefix}'; node_runtime_cleanup_overlay \"\$overlay\""
+	[[ "$status" -eq 0 ]]
+	grep -q 'managed-node-ran:.*/npm' "$trace"
+	! grep -q 'shadow-node-ran' "$trace"
+	! find "$run_dir" -maxdepth 1 -type d -name 'node-runtime.*' -print | grep -q .
 }
 
 @test "update-check reports compatible, recoverable, and unrecoverable Node states without overlay" {

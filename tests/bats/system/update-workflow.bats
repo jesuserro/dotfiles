@@ -1486,6 +1486,9 @@ PY
 	[[ "${output}" == *"Node runtime for managed tools: switched from v20.18.2"* ]]
 	[[ "${output}" != *"GitNexus: skipped because Node runtime is incompatible"* ]]
 	[[ "${output}" == *"Completed with 1 incident: Windows / WinGet."* ]]
+	[[ "$(grep -c $'INFO\tWSL\tNode runtime for managed tools\t' "${TEST_TEMP_DIR}/run-winget/wsl-results.tsv")" -eq 1 ]]
+	! grep -q $'FAIL\tWSL\tNode\t' "${TEST_TEMP_DIR}/run-winget/wsl-results.tsv"
+	! find "${TEST_TEMP_DIR}/run-winget" -maxdepth 1 -type d -name 'node-runtime.*' -print | grep -q .
 }
 
 @test "make update mock surfaces wsl --update failure and never uses shutdown" {

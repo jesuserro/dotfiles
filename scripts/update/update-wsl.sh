@@ -404,6 +404,7 @@ run_tools() {
 		active_version="$(node --version 2>/dev/null || true)"
 		if [[ "$active_node" != "${overlay}/node" ]] || ! node_runtime_version_satisfies "$active_version" "$NODE_RUNTIME_MIN_MAJOR"; then
 			PATH="$original_path"
+			node_runtime_cleanup_overlay "$overlay"
 			result_fail "WSL" "Node" "managed runtime overlay did not activate cleanly; expected ${overlay}/node -> ${NODE_RUNTIME_MANAGED_PATH}, got ${active_node:-missing} ${active_version:-unknown}"
 			tool_snapshot_add "Node.js" "$NODE_RUNTIME_EFFECTIVE_VERSION" "$NODE_RUNTIME_EFFECTIVE_VERSION"
 			return 0
@@ -426,11 +427,13 @@ run_tools() {
 	if is_truthy "${DOTFILES_UPDATE_MOCK:-}"; then
 		result_ok "WSL" "Node / AI tools" "mocked"
 		PATH="$original_path"
+		node_runtime_cleanup_overlay "$overlay"
 		return 0
 	fi
 	if ! command -v npm >/dev/null 2>&1; then
 		result_fail "WSL" "npm" "npm not found after Node validation"
 		PATH="$original_path"
+		node_runtime_cleanup_overlay "$overlay"
 		return 0
 	fi
 
@@ -462,6 +465,7 @@ run_tools() {
 	fi
 	if [[ "$switched" -eq 1 ]]; then
 		PATH="$original_path"
+		node_runtime_cleanup_overlay "$overlay"
 	fi
 }
 
