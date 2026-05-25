@@ -2,10 +2,14 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/update/lib/environment.sh
+source "${SCRIPT_DIR}/lib/environment.sh"
 # shellcheck source=scripts/update/lib/results.sh
 source "${SCRIPT_DIR}/lib/results.sh"
 # shellcheck source=scripts/update/lib/logging.sh
 source "${SCRIPT_DIR}/lib/logging.sh"
+# shellcheck source=scripts/update/lib/docker_desktop_credentials.sh
+source "${SCRIPT_DIR}/lib/docker_desktop_credentials.sh"
 
 ACTION="${1:-status}"
 shift || true
@@ -187,6 +191,14 @@ update)
 			result_info "WSL" "Excalidraw Docker" "$note"
 		fi
 		exit 0
+	fi
+	if ! check_docker_credentials_for_images "$CANVAS_IMAGE" "$MCP_IMAGE"; then
+		msg="${DOCKER_CREDENTIALS_LAST_MESSAGE}"
+		warn "$msg"
+		if [[ -n "${RESULTS_FILE:-}" ]]; then
+			result_fail "WSL" "Excalidraw Docker credentials" "$msg"
+		fi
+		exit 1
 	fi
 	mkdir -p "$LOG_DIR"
 	run_step "WSL" "Excalidraw canvas image" "${LOG_DIR}/excalidraw-canvas-pull.log" "$d" pull "$CANVAS_IMAGE"

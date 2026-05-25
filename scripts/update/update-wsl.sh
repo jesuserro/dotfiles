@@ -175,6 +175,138 @@ npm_dist_tag_version() {
 	npm view "${package_name}@${dist_tag}" version 2>/dev/null | head -n 1 | tr -d '\r'
 }
 
+pnpm_version_line() {
+	pnpm --version 2>/dev/null | head -n 1 | tr -d '\r'
+}
+
+pnpm_major() {
+	local version="${1:-}"
+	version="${version#v}"
+	printf '%s\n' "${version%%.*}"
+}
+
+pnpm_version_is_major_11() {
+	local version="$1" major
+	major="$(pnpm_major "$version")"
+	[[ "$major" =~ ^[0-9]+$ && "$major" -eq 11 ]]
+}
+
+user_npm_prefix() {
+	local configured="${NPM_CONFIG_PREFIX:-${DOTFILES_NPM_PREFIX:-}}" npm_prefix
+	if [[ -n "$configured" ]]; then
+		printf '%s\n' "$configured"
+		return 0
+	fi
+	npm_prefix="$(npm config get prefix 2>/dev/null | head -n 1 | tr -d '\r' || true)"
+	case "$npm_prefix" in
+	"" | /usr | /usr/ | /usr/local | /usr/local/)
+		printf '%s\n' "$HOME/.npm-global"
+		;;
+	*)
+		if [[ -d "$npm_prefix" && ! -w "$npm_prefix" ]]; then
+			printf '%s\n' "$HOME/.npm-global"
+		else
+			printf '%s\n' "$npm_prefix"
+		fi
+		;;
+	esac
+}
+
+remove_flow_created_pnpm_shims() {
+	local prefix_bin="$1" marker="$2" shim
+	[[ -f "$marker" ]] || return 0
+	while IFS= read -r shim; do
+		[[ -n "$shim" ]] || continue
+		case "$shim" in
+		"$prefix_bin"/pnpm | "$prefix_bin"/pnpm.CMD | "$prefix_bin"/pnpm.cmd | "$prefix_bin"/pnpm.ps1 | "$prefix_bin"/pnpx | "$prefix_bin"/pnpx.CMD | "$prefix_bin"/pnpx.cmd | "$prefix_bin"/pnpx.ps1)
+			rm -f "$shim"
+			;;
+		esac
+	done <"$marker"
+}
+
+record_pnpm_result() {
+	local before="$1" after="$2" method="$3"
+	record_version_transition "WSL" "pnpm" "$before" "$after"
+	if [[ "$method" == "npm-global fallback" ]]; then
+		result_warn "WSL" "pnpm method" "npm-global fallback after Corepack validation failed"
+		warn "pnpm method: npm-global fallback after Corepack validation failed"
+	else
+		result_info "WSL" "pnpm method" "$method"
+		info "pnpm method: $method"
+	fi
+}
+
+update_pnpm_major_11() {
+	local npm_prefix prefix_bin before after method marker corepack_bin corepack_log fallback_log
+	before="$(pnpm_version_line || true)"
+	npm_prefix="$(user_npm_prefix)"
+	prefix_bin="${npm_prefix}/bin"
+	mkdir -p "$prefix_bin" "${npm_prefix}/lib/node_modules"
+	export PATH="${prefix_bin}:$PATH"
+	corepack_log="${LOG_DIR}/wsl-pnpm-corepack.log"
+	fallback_log="${LOG_DIR}/wsl-pnpm-fallback.log"
+	marker="${LOG_DIR}/wsl-pnpm-created-shims.txt"
+	: >"$marker"
+
+	if ! command -v npm >/dev/null 2>&1; then
+		result_fail "WSL" "pnpm" "npm not found; cannot update Corepack or pnpm"
+		tool_snapshot_add "pnpm" "$before" ""
+		return 0
+	fi
+	if ! npm --version >/dev/null 2>&1; then
+		result_fail "WSL" "pnpm" "npm is not functional; cannot update Corepack or pnpm"
+		tool_snapshot_add "pnpm" "$before" ""
+		return 0
+	fi
+
+	run_npm_step "WSL" "Corepack" "${LOG_DIR}/wsl-corepack.log" npm install -g --prefix="$npm_prefix" corepack@latest
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" ]]; then
+		after="$(pnpm_version_line || true)"
+		record_version_transition "WSL" "pnpm" "$before" "$after"
+		result_fail "WSL" "pnpm" "Corepack update failed; pnpm major 11 convergence skipped"
+		return 0
+	fi
+
+	corepack_bin="${prefix_bin}/corepack"
+	if [[ ! -x "$corepack_bin" ]]; then
+		result_fail "WSL" "pnpm" "updated Corepack not found at ${corepack_bin}"
+		after="$(pnpm_version_line || true)"
+		record_version_transition "WSL" "pnpm" "$before" "$after"
+		return 0
+	fi
+
+	{
+		printf 'prefix=%s\n' "$npm_prefix"
+		printf 'corepack=%s\n' "$corepack_bin"
+		for shim in pnpm pnpm.CMD pnpm.cmd pnpm.ps1 pnpx pnpx.CMD pnpx.cmd pnpx.ps1; do
+			if [[ ! -e "${prefix_bin}/${shim}" ]]; then
+				printf '%s\n' "${prefix_bin}/${shim}" >>"$marker"
+			fi
+		done
+		"$corepack_bin" enable pnpm --install-directory "$prefix_bin"
+		"$corepack_bin" prepare pnpm@latest-11 --activate
+	} >"$corepack_log" 2>&1 && RUN_STEP_LAST_RESULT_STATUS="OK" || RUN_STEP_LAST_RESULT_STATUS="FAIL"
+
+	after="$(pnpm_version_line || true)"
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "OK" && -n "$after" ]] && pnpm_version_is_major_11 "$after"; then
+		record_pnpm_result "$before" "$after" "corepack"
+		return 0
+	fi
+
+	result_warn "WSL" "pnpm Corepack" "Corepack did not produce a functional pnpm 11; falling back to npm global"
+	warn "pnpm Corepack did not produce a functional pnpm 11; falling back to npm global"
+	remove_flow_created_pnpm_shims "$prefix_bin" "$marker"
+	run_npm_step "WSL" "pnpm fallback" "$fallback_log" npm install -g --prefix="$npm_prefix" "pnpm@^11"
+	after="$(pnpm_version_line || true)"
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" || -z "$after" ]] || ! pnpm_version_is_major_11 "$after"; then
+		record_version_transition "WSL" "pnpm" "$before" "$after"
+		result_fail "WSL" "pnpm" "fallback npm install did not produce a functional pnpm 11"
+		return 0
+	fi
+	record_pnpm_result "$before" "$after" "npm-global fallback"
+}
+
 update_global_npm_tool_if_needed() {
 	local area="$1" name="$2" log_file="$3" npm_prefix="$4" package_name="$5" dist_tag="$6"
 	shift 6
@@ -276,11 +408,7 @@ run_tools() {
 	else
 		result_fail "WSL" "GitNexus" "install finished but gitnexus not found in PATH"
 	fi
-	if command -v corepack >/dev/null 2>&1; then
-		run_versioned_step run_step "WSL" "pnpm" "${LOG_DIR}/wsl-pnpm.log" pnpm --version -- corepack prepare pnpm@latest --activate
-	else
-		result_skip "WSL" "pnpm" "corepack not found; skipped"
-	fi
+	update_pnpm_major_11
 	local agent_tools_script="${DOTFILES_ROOT}/scripts/install-agent-tools.sh"
 	if [[ -x "$agent_tools_script" ]]; then
 		local actionlint_before actionlint_after osv_before osv_after agent_tools_results

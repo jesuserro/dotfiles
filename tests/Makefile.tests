@@ -344,6 +344,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/install-azure-cli.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-mcp-github.bats)
 	@$(call run_bats,$(BATS_DIR)/system/update-workflow.bats)
+	@$(call run_bats,$(BATS_DIR)/system/docker-desktop-credentials.bats)
 	@$(call run_bats,$(BATS_DIR)/system/excalidraw-docker.bats)
 	@$(call run_bats,$(BATS_DIR)/system/dry-run-guard.bats)
 	@$(call run_bats,$(BATS_DIR)/system/azure-tools.bats)

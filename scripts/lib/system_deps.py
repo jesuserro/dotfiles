@@ -74,8 +74,8 @@ def _action_for_package(package):
         },
         "pnpm": {
             "kind": "manual",
-            "summary": "Activate pnpm through Corepack instead of managing it separately in this repo.",
-            "command": "corepack prepare pnpm@latest --activate",
+            "summary": "Activate pnpm major 11 through updated Corepack in the user npm prefix.",
+            "command": 'npm install -g --prefix="$HOME/.npm-global" corepack@latest && "$HOME/.npm-global/bin/corepack" prepare pnpm@latest-11 --activate',
         },
         "codex": {
             "kind": "installer",
@@ -177,10 +177,11 @@ def _action_for_package(package):
             "command": "Consult the upstream installation guide for the canonical curl-based installer.",
         }
     if install_method == "corepack":
+        spec = f"{command}@latest-11" if command == "pnpm" else f"{command}@latest"
         return {
             "kind": "manual",
             "summary": "Activate this CLI through Corepack once Node.js/Corepack are available.",
-            "command": f"corepack prepare {command}@latest --activate",
+            "command": f"corepack prepare {spec} --activate",
         }
     if install_method == "windows":
         return {

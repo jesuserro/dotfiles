@@ -11,6 +11,7 @@
 | `make update-wsl` | Ejecuta APT, Node/tooling IA, OpenCode, shell, uv, MCPs e imágenes Docker |
 | `make update-projects` | Actualiza proyectos personales como `~/proyectos/jesuserro` y RenderCV |
 | `make update-check` | Diagnóstico no mutante de requisitos de actualización y MCPs |
+| `make install-docker-desktop-helper` | Repara explícitamente los symlinks del credential helper de Docker Desktop en WSL |
 | `make excalidraw-start` | Arranca el canvas Docker de Excalidraw bajo demanda |
 | `make excalidraw-stop` | Detiene el canvas si está activo |
 | `make excalidraw-status` | Muestra estado de Docker/canvas y URL |
@@ -41,6 +42,12 @@ La política del repo exige Node `>=22`. `make install-node-stack` instala NodeS
 
 `make update-wsl` valida la versión de Node antes de actualizar GitNexus. Si el runtime no cumple el engine, el resumen muestra una incidencia visible.
 
+## pnpm
+
+La política de mantenimiento converge `pnpm` a major 11. `make update-wsl` actualiza primero Corepack en el prefijo npm de usuario y activa `pnpm@latest-11` desde rutas user-space, sin escribir en `/usr/bin` ni modificar ficheros de shell.
+
+El éxito se valida siempre ejecutando `pnpm --version`. Si Corepack actualizado no deja un `pnpm` 11 funcional, el flujo registra un `WARN` y usa fallback explícito con `npm install -g --prefix=<prefijo-usuario> "pnpm@^11"`. El snapshot mantiene versiones limpias; el método final aparece como mensaje separado.
+
 ## Excalidraw MCP
 
 Excalidraw ya no usa checkout local ni `dist/index.js`. La modalidad canónica es Docker upstream:
@@ -53,6 +60,14 @@ El canvas se arranca solo bajo demanda con `make excalidraw-start` y se abre en 
 Los clientes MCP Docker publican el servidor avanzado con el nombre lógico `excalidraw_canvas` y conectan con el canvas mediante `EXPRESS_SERVER_URL=http://host.docker.internal:3210`. El nombre genérico `excalidraw` queda reservado para cualquier superficie simple que pueda exponer un cliente; no debe usarse para edición agentiva avanzada. `make update` puede descargar imágenes con `make excalidraw-update`, pero nunca deja el canvas arrancado.
 
 Si Docker Desktop está apagado durante `make update`, ese bloque opcional aparece como `SKIP` y no cuenta como incidencia por sí solo. Cuando Docker vuelva a estar disponible, puedes refrescar Excalidraw aparte con `make excalidraw-update`.
+
+En WSL, Docker puede necesitar un credential helper configurado en `${DOCKER_CONFIG:-$HOME/.docker}/config.json`. `make update` y `make excalidraw-update` diagnostican si una imagen concreta requiere un helper como `docker-credential-desktop.exe` o `docker-credential-desktop` y el comando exacto no está en `PATH`; no reparan esa configuración de forma silenciosa. Para crear los symlinks user-space bajo `~/.local/bin`, ejecuta:
+
+```bash
+make install-docker-desktop-helper
+```
+
+El reparador respeta `credsStore` y `credHelpers`, no edita `config.json`, y crea el nombre exacto que Docker intentará ejecutar para la configuración activa. Si Docker Desktop está instalado en una ruta no estándar, define `DOCKER_DESKTOP_CREDENTIAL_HELPER_SOURCE` con la ruta del ejecutable helper de Windows.
 
 El acceso a ficheros del MCP queda deliberadamente acotado: los clientes lanzan el contenedor efímero con `EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw` y un bind mount estrecho de `/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw` a `/workspace/excalidraw`. Esto mantiene la protección de path traversal y evita montar todo `vault_trabajo`.
 

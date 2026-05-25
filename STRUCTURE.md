@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-24 13:12:38
+**Generated:** 2026-05-25 17:29:18
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -899,6 +899,7 @@
 │   │   └── 🐍 system_deps.py
 │   ├── 📁 update
 │   │   ├── 📁 lib
+│   │   │   ├── 🔧 docker_desktop_credentials.sh
 │   │   │   ├── 🔧 environment.sh
 │   │   │   ├── 🔧 logging.sh
 │   │   │   └── 🔧 results.sh
@@ -948,6 +949,7 @@
 │   ├── 🔧 install-azure-cli.sh
 │   ├── 🔧 install-check.sh
 │   ├── 🔧 install-chezmoi.sh
+│   ├── 🔧 install-docker-desktop-helper.sh
 │   ├── 🔧 install-dotfiles.sh
 │   ├── 🔧 install-external.sh
 │   ├── 🔧 install-fonts.sh
@@ -1004,6 +1006,7 @@
 │   │   ├── 📁 system
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
+│   │   │   ├── 📄 docker-desktop-credentials.bats
 │   │   │   ├── 📄 dry-run-guard.bats
 │   │   │   ├── 📄 excalidraw-docker.bats
 │   │   │   ├── 📄 install-agent-tools.bats

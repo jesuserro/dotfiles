@@ -169,7 +169,7 @@ Chezmoi templates are not passed raw to `shellcheck` or `shfmt`; those tools do 
 - `node` / `npm`: install together with `make install-node-stack` (NodeSource 24.x, Node `>=22` for GitNexus)
 - `azure-cli`: `make install-azure-cli` (opt-in, Debian/Ubuntu/WSL via Microsoft's official Azure CLI repository). It is not part of `make install`; `az login` remains manual.
 - `corepack`: ships with the Node stack; validate with `corepack --version`
-- `pnpm`: `corepack prepare pnpm@latest --activate`
+- `pnpm`: `npm install --global corepack@latest` then `corepack prepare pnpm@latest-11 --activate`
 - `codex`: `npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest`
 - `gitnexus`: `npm install -g --prefix="$HOME/.npm-global" gitnexus@latest`
 - `@ast-grep/cli`: `make install-agent-tools` or `npm install -g --prefix="$HOME/.npm-global" @ast-grep/cli@latest`

@@ -27,7 +27,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-fonts install-uv install-sops install-chezmoi install-node-stack install-azure-cli install-agent-tools install-mcp-github set-default-shell-zsh ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-fonts install-uv install-sops install-chezmoi install-node-stack install-docker-desktop-helper install-azure-cli install-agent-tools install-mcp-github set-default-shell-zsh ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -90,6 +90,12 @@ install-chezmoi:
 # idempotent.
 install-node-stack:
 	@bash $(DOTFILES_DIR)/scripts/install-node-stack.sh
+
+# Explicit WSL repair for Docker Desktop credential helpers referenced by
+# ~/.docker/config.json. It only creates symlinks under ~/.local/bin and never
+# edits Docker config.
+install-docker-desktop-helper:
+	@bash $(DOTFILES_DIR)/scripts/install-docker-desktop-helper.sh
 
 # Optional, opt-in installer for Azure CLI (az) using Microsoft's official
 # Debian/Ubuntu repository. Intentionally NOT part of `make install`: Azure is

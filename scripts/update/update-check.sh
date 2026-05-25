@@ -5,9 +5,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 # shellcheck source=scripts/update/lib/environment.sh
 source "${SCRIPT_DIR}/lib/environment.sh"
+# shellcheck source=scripts/update/lib/docker_desktop_credentials.sh
+source "${SCRIPT_DIR}/lib/docker_desktop_credentials.sh"
 
 status() {
 	printf '%-6s %s\n' "$1" "$2"
+}
+
+docker_check_cmd() {
+	if command -v docker >/dev/null 2>&1; then
+		printf 'docker\n'
+	elif command -v docker.exe >/dev/null 2>&1; then
+		printf 'docker.exe\n'
+	else
+		return 1
+	fi
 }
 
 echo "==> Dotfiles update readiness"
@@ -33,8 +45,19 @@ if command -v node >/dev/null 2>&1; then
 else
 	status WARN "node missing for GitNexus. Ejecuta: make install-node-stack"
 fi
-if command -v docker >/dev/null 2>&1 || command -v docker.exe >/dev/null 2>&1; then
+if docker_cmd="$(docker_check_cmd)"; then
 	status OK "Docker CLI available for Excalidraw image operations"
+	if "$docker_cmd" version >/dev/null 2>&1; then
+		if check_docker_credentials_for_images \
+			"ghcr.io/yctimlin/mcp_excalidraw-canvas:latest" \
+			"ghcr.io/yctimlin/mcp_excalidraw:latest"; then
+			status OK "${DOCKER_CREDENTIALS_LAST_MESSAGE}"
+		else
+			status WARN "${DOCKER_CREDENTIALS_LAST_MESSAGE}"
+		fi
+	else
+		status WARN "Docker daemon does not respond; credential helper check deferred until Docker is available"
+	fi
 else
 	status WARN "Docker CLI unavailable; Excalidraw image update will be skipped"
 fi
