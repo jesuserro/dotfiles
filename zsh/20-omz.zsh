@@ -34,7 +34,6 @@ plugins=(
   uv
   virtualenv
   vi-mode
-  z
   zsh-autosuggestions
   zsh-completions
   zsh-history-substring-search

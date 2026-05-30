@@ -103,7 +103,7 @@ EOF
 	}
 	grep -q '^gitnexus:analyze$' "$trace"
 	grep -q 'gitnexus-node:.*/node-runtime\.[^:]*\/node:v24.15.0' "$trace"
-	! grep -q 'gitnexus-node:.*v20.18.2' "$trace"
+	assert_file_not_contains "$trace" 'gitnexus-node:.*v20.18.2'
 }
 
 @test "gnx-analyze-here fails before GitNexus analyze when no compatible Node is available" {
@@ -140,6 +140,6 @@ EOF
 	[[ "$status" -eq 1 ]]
 	[[ "$output" == *"make update-check"* ]]
 	if [[ -f "$trace" ]]; then
-		! grep -q '^gitnexus:analyze$' "$trace"
+		assert_file_not_contains "$trace" '^gitnexus:analyze$'
 	fi
 }

@@ -1268,7 +1268,7 @@ EOF
 @test "update-wsl shell section updates Oh My Zsh through zsh script from Bash" {
 	local fake_home="${TEST_TEMP_DIR}/home"
 	local stub_dir="${TEST_TEMP_DIR}/shell-bin"
-	mkdir -p "${fake_home}/.oh-my-zsh/tools" "${fake_home}/.oh-my-zsh/custom/plugins/z/.git" "${fake_home}/.oh-my-zsh/custom/plugins/zsh-autosuggestions/.git" "$stub_dir"
+	mkdir -p "${fake_home}/.oh-my-zsh/tools" "${fake_home}/.oh-my-zsh/custom/plugins/autoupdate/.git" "${fake_home}/.oh-my-zsh/custom/plugins/zsh-autosuggestions/.git" "$stub_dir"
 	cat >"${fake_home}/.oh-my-zsh/tools/upgrade.sh" <<'EOF'
 #!/usr/bin/env bash
 echo "omz upgraded with ZSH=$ZSH"
@@ -1291,7 +1291,8 @@ EOF
 	[[ "$status" -eq 0 ]]
 	grep -q 'omz upgraded' "${TEST_TEMP_DIR}/run-shell/logs/wsl-omz.log"
 	grep -q $'OK\tWSL\tOh My Zsh\tcompleted' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
-	grep -q $'OK\tWSL\tOh My Zsh plugin z\tcompleted' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
+	grep -q $'OK\tWSL\tOh My Zsh plugin autoupdate\tcompleted' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
+	grep -qv $'OK\tWSL\tOh My Zsh plugin z\t' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
 	[[ "$output" != *"failed with exit 0"* ]]
 }
 
@@ -1512,8 +1513,8 @@ PY
 	[[ "${output}" != *"GitNexus: skipped because Node runtime is incompatible"* ]]
 	[[ "${output}" == *"Completed successfully"* ]]
 	[[ "$(grep -c $'INFO\tWSL\tNode runtime for managed tools\t' "${TEST_TEMP_DIR}/run-winget/wsl-results.tsv")" -eq 1 ]]
-	! grep -q $'FAIL\tWSL\tNode\t' "${TEST_TEMP_DIR}/run-winget/wsl-results.tsv"
-	! find "${TEST_TEMP_DIR}/run-winget" -maxdepth 1 -type d -name 'node-runtime.*' -print | grep -q .
+	assert_file_not_contains "${TEST_TEMP_DIR}/run-winget/wsl-results.tsv" $'FAIL\tWSL\tNode\t'
+	assert_find_no_results "node runtime overlay cleanup after winget failure" "${TEST_TEMP_DIR}/run-winget" -maxdepth 1 -type d -name 'node-runtime.*'
 }
 
 @test "make update mock surfaces wsl --update failure and never uses shutdown" {
@@ -1663,14 +1664,14 @@ EOF
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-node20" "${DOTFILES_DIR}/scripts/update/update-wsl.sh" --section tools
 	[[ "${status}" -eq 0 ]]
 	grep -q $'INFO\tWSL\tNode runtime for managed tools\tswitched from v20.18.2' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
-	! grep -q $'FAIL\tWSL\tNode\t' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
-	! grep -q 'GitNexus.*skipped because Node runtime is incompatible' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
-	! grep -q 'GitNexus.*usable' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
+	assert_file_not_contains "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv" $'FAIL\tWSL\tNode\t'
+	assert_file_not_contains "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv" 'GitNexus.*skipped because Node runtime is incompatible'
+	assert_file_not_contains "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv" 'GitNexus.*usable'
 }
 
 @test "update PowerShell script invokes wsl --update and never wsl --shutdown" {
 	grep -q 'Run-NativeLogged "WSL update" "windows-wsl-update.log" "wsl" @("--update") "unicode"' "${DOTFILES_DIR}/scripts/update/update-windows.ps1"
-	! grep -Eq '^.*Run-Logged.*wsl --shutdown|^[[:space:]]*wsl --shutdown' "${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	assert_file_not_matches "${DOTFILES_DIR}/scripts/update/update-windows.ps1" '^.*Run-Logged.*wsl --shutdown|^[[:space:]]*wsl --shutdown'
 }
 
 @test "ups command is absent from aliases and Make targets" {

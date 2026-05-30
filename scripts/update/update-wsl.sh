@@ -495,7 +495,7 @@ run_shell() {
 	fi
 	local custom_dir="${ZSH_CUSTOM:-${zsh_dir}/custom}"
 	local plugin
-	for plugin in powerlevel10k autoupdate z zsh-autosuggestions zsh-completions zsh-history-substring-search zsh-syntax-highlighting; do
+	for plugin in powerlevel10k autoupdate zsh-autosuggestions zsh-completions zsh-history-substring-search zsh-syntax-highlighting; do
 		case "$plugin" in
 		powerlevel10k)
 			update_git_checkout "WSL" "Oh My Zsh custom powerlevel10k" "${custom_dir}/themes/powerlevel10k" "${LOG_DIR}/wsl-omz-powerlevel10k.log"

@@ -383,6 +383,8 @@ bats-zsh:
 	@$(call run_bats,$(BATS_DIR)/zsh/rc_symlinks.bats)
 	@echo "$(BLUE)==>$NC Running Oh My Zsh plugin list tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/omz_plugins.bats)
+	@echo "$(BLUE)==>$NC Running zoxide module tests..."
+	@$(call run_bats,$(BATS_DIR)/zsh/zoxide.bats)
 	@echo "$(BLUE)==>$NC Running Powerlevel10k cache key tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/p10k_cache_keys.bats)
 

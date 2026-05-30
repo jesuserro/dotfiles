@@ -127,6 +127,7 @@ manual command.
 ## Current operational examples
 
 - APT baseline: `git`, `zsh`, `tmux`, `python3`, `python3-pip`, `bubblewrap`, `ripgrep`, `fd-find`, `age`.
+- APT optional (shell): `zoxide` — directory jumper via `zsh/25-zoxide.zsh`; install with `make deps-install DEPS_INSTALL_ARGS=--include-optional`.
 - APT test/lint/security tooling: `bats`, `shellcheck`, `shfmt`, `yamllint`, `gitleaks` (required: true, see "Test/lint dependencies" below).
 - Non-APT tooling: `chezmoi`, `sops`, `uv`, `node`, `npm`, `corepack`, `pnpm`, `codex`, `gitnexus`, `@ast-grep/cli`, `actionlint`, `osv-scanner`, `opencode`, `docker`.
 - WSL/Windows-side: `wslpath`, `powershell.exe`, `wt.exe`.

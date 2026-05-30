@@ -117,18 +117,100 @@ skip_if_command_missing() {
 	fi
 }
 
+assert_fail() {
+	printf '%s\n' "$*" >&2
+	return 1
+}
+
 assert_file_contains() {
 	local file="$1"
 	local pattern="$2"
-	if ! grep -q "$pattern" "$file"; then
-		flunk "Expected file '$file' to contain '$pattern'"
+	local output status
+	set +e
+	output="$(grep -n -- "$pattern" "$file" 2>&1)"
+	status=$?
+	set -e
+	if [[ "$status" -ne 0 ]]; then
+		assert_fail "Expected file '$file' to contain '$pattern'; grep status ${status}: ${output}"
 	fi
 }
 
 assert_file_not_contains() {
 	local file="$1"
 	local pattern="$2"
-	if grep -q "$pattern" "$file"; then
-		flunk "Expected file '$file' NOT to contain '$pattern'"
+	local output status
+	[[ -e "$file" ]] || return 0
+	set +e
+	output="$(grep -n -- "$pattern" "$file" 2>&1)"
+	status=$?
+	set -e
+	if [[ "$status" -eq 0 ]]; then
+		assert_fail "Expected file '$file' NOT to contain '$pattern', but found: ${output}"
+	elif [[ "$status" -ne 1 ]]; then
+		assert_fail "Could not search file '$file' for '$pattern'; grep status ${status}: ${output}"
+	fi
+}
+
+assert_file_not_matches() {
+	local file="$1"
+	local regex="$2"
+	local output status
+	[[ -e "$file" ]] || return 0
+	set +e
+	output="$(grep -En -- "$regex" "$file" 2>&1)"
+	status=$?
+	set -e
+	if [[ "$status" -eq 0 ]]; then
+		assert_fail "Expected file '$file' NOT to match regex '$regex', but found: ${output}"
+	elif [[ "$status" -ne 1 ]]; then
+		assert_fail "Could not search file '$file' for regex '$regex'; grep status ${status}: ${output}"
+	fi
+}
+
+assert_tree_not_matches() {
+	local regex="$1"
+	shift
+	local output status
+	set +e
+	output="$(grep -Rni -- "$regex" "$@" 2>&1)"
+	status=$?
+	set -e
+	if [[ "$status" -eq 0 ]]; then
+		assert_fail "Expected paths NOT to match regex '$regex', but found: ${output}"
+	elif [[ "$status" -ne 1 ]]; then
+		assert_fail "Could not recursively search for regex '$regex'; grep status ${status}: ${output}"
+	fi
+}
+
+assert_find_no_results() {
+	local description="$1"
+	shift
+	local output status
+	set +e
+	output="$(find "$@" -print 2>&1)"
+	status=$?
+	set -e
+	if [[ "$status" -ne 0 ]]; then
+		assert_fail "Find failed while checking '${description}'; status ${status}: ${output}"
+	fi
+	if [[ -n "$output" ]]; then
+		assert_fail "Expected no results for '${description}', but found: ${output}"
+	fi
+}
+
+assert_find_output_not_matches() {
+	local description="$1"
+	local regex="$2"
+	shift 2
+	local output status
+	set +e
+	output="$(find "$@" -print 2>&1)"
+	status=$?
+	set -e
+	if [[ "$status" -ne 0 ]]; then
+		assert_fail "Find failed while checking '${description}'; status ${status}: ${output}"
+	fi
+	if printf '%s\n' "$output" | grep -Eq -- "$regex"; then
+		assert_fail "Expected find output for '${description}' NOT to match regex '$regex', but found: ${output}"
 	fi
 }

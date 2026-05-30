@@ -12,5 +12,5 @@ setup() {
 }
 
 @test "chezmoiignore does not whitelist proyectos/store-etl paths" {
-	! grep -q 'proyectos/store-etl' "${DOTFILES_DIR}/.chezmoiignore"
+	assert_file_not_contains "${DOTFILES_DIR}/.chezmoiignore" 'proyectos/store-etl'
 }
