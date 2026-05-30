@@ -163,13 +163,13 @@ main() {
 		[[ -n "${file}" && -f "${DOTFILES_DIR}/${file}" ]] || continue
 		case "${file}" in
 		*.tmpl) ;;
-		*.sh | *.bash | *.bats | bin/mcp-*-launcher | local/bin/prompt-*)
+		*.sh | *.bash | *.bats | bin/mcp-*-launcher | local/bin/ai-prompt | local/bin/prompt-*)
 			printf '%s\n' "${DOTFILES_DIR}/${file}" >>"${shellcheck_files}"
 			;;
 		esac
 		case "${file}" in
 		*.tmpl | *.bats) ;;
-		*.sh | *.bash | bin/mcp-*-launcher | local/bin/prompt-*)
+		*.sh | *.bash | bin/mcp-*-launcher | local/bin/ai-prompt | local/bin/prompt-*)
 			printf '%s\n' "${DOTFILES_DIR}/${file}" >>"${shfmt_files}"
 			;;
 		esac

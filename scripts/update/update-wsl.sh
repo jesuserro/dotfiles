@@ -5,6 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 # shellcheck source=scripts/update/lib/environment.sh
 source "${SCRIPT_DIR}/lib/environment.sh"
+# shellcheck source=scripts/update/lib/node_runtime.sh
+source "${SCRIPT_DIR}/lib/node_runtime.sh"
 # shellcheck source=scripts/update/lib/results.sh
 source "${SCRIPT_DIR}/lib/results.sh"
 # shellcheck source=scripts/update/lib/logging.sh
@@ -128,21 +130,23 @@ run_apt() {
 }
 
 ensure_node_runtime() {
-	local version major
-	if ! command -v node >/dev/null 2>&1; then
+	local path version major min_major
+	min_major="$(node_runtime_min_major)"
+	path="$(command -v node 2>/dev/null || true)"
+	if [[ -z "$path" ]]; then
 		tool_snapshot_add "Node.js" "" ""
 		result_fail "WSL" "Node" "node not found; run make install-node-stack"
 		return 1
 	fi
 	version="$(node --version 2>/dev/null || true)"
 	major="$(node_major "$version")"
-	if [[ -z "$major" || "$major" -lt 22 ]]; then
+	if [[ -z "$major" || "$major" -lt "$min_major" ]]; then
 		tool_snapshot_add "Node.js" "$version" "$version"
-		result_fail "WSL" "Node" "Node ${version:-unknown} is below required >=22; GitNexus update skipped; run make install-node-stack"
+		result_fail "WSL" "Node" "Node ${version:-unknown} at ${path} is below required >=${min_major}; run make install-node-stack"
 		return 1
 	fi
 	tool_snapshot_add "Node.js" "$version" "$version"
-	result_ok "WSL" "Node" "runtime ${version} satisfies >=22"
+	result_ok "WSL" "Node" "runtime ${version} at ${path} satisfies >=${min_major}"
 	return 0
 }
 
@@ -173,6 +177,138 @@ global_npm_package_version() {
 npm_dist_tag_version() {
 	local package_name="$1" dist_tag="$2"
 	npm view "${package_name}@${dist_tag}" version 2>/dev/null | head -n 1 | tr -d '\r'
+}
+
+pnpm_version_line() {
+	pnpm --version 2>/dev/null | head -n 1 | tr -d '\r'
+}
+
+pnpm_major() {
+	local version="${1:-}"
+	version="${version#v}"
+	printf '%s\n' "${version%%.*}"
+}
+
+pnpm_version_is_major_11() {
+	local version="$1" major
+	major="$(pnpm_major "$version")"
+	[[ "$major" =~ ^[0-9]+$ && "$major" -eq 11 ]]
+}
+
+user_npm_prefix() {
+	local configured="${NPM_CONFIG_PREFIX:-${DOTFILES_NPM_PREFIX:-}}" npm_prefix
+	if [[ -n "$configured" ]]; then
+		printf '%s\n' "$configured"
+		return 0
+	fi
+	npm_prefix="$(npm config get prefix 2>/dev/null | head -n 1 | tr -d '\r' || true)"
+	case "$npm_prefix" in
+	"" | /usr | /usr/ | /usr/local | /usr/local/)
+		printf '%s\n' "$HOME/.npm-global"
+		;;
+	*)
+		if [[ -d "$npm_prefix" && ! -w "$npm_prefix" ]]; then
+			printf '%s\n' "$HOME/.npm-global"
+		else
+			printf '%s\n' "$npm_prefix"
+		fi
+		;;
+	esac
+}
+
+remove_flow_created_pnpm_shims() {
+	local prefix_bin="$1" marker="$2" shim
+	[[ -f "$marker" ]] || return 0
+	while IFS= read -r shim; do
+		[[ -n "$shim" ]] || continue
+		case "$shim" in
+		"$prefix_bin"/pnpm | "$prefix_bin"/pnpm.CMD | "$prefix_bin"/pnpm.cmd | "$prefix_bin"/pnpm.ps1 | "$prefix_bin"/pnpx | "$prefix_bin"/pnpx.CMD | "$prefix_bin"/pnpx.cmd | "$prefix_bin"/pnpx.ps1)
+			rm -f "$shim"
+			;;
+		esac
+	done <"$marker"
+}
+
+record_pnpm_result() {
+	local before="$1" after="$2" method="$3"
+	record_version_transition "WSL" "pnpm" "$before" "$after"
+	if [[ "$method" == "npm-global fallback" ]]; then
+		result_warn "WSL" "pnpm method" "npm-global fallback after Corepack validation failed"
+		warn "pnpm method: npm-global fallback after Corepack validation failed"
+	else
+		result_info "WSL" "pnpm method" "$method"
+		info "pnpm method: $method"
+	fi
+}
+
+update_pnpm_major_11() {
+	local npm_prefix prefix_bin before after method marker corepack_bin corepack_log fallback_log
+	before="$(pnpm_version_line || true)"
+	npm_prefix="$(user_npm_prefix)"
+	prefix_bin="${npm_prefix}/bin"
+	mkdir -p "$prefix_bin" "${npm_prefix}/lib/node_modules"
+	export PATH="${prefix_bin}:$PATH"
+	corepack_log="${LOG_DIR}/wsl-pnpm-corepack.log"
+	fallback_log="${LOG_DIR}/wsl-pnpm-fallback.log"
+	marker="${LOG_DIR}/wsl-pnpm-created-shims.txt"
+	: >"$marker"
+
+	if ! command -v npm >/dev/null 2>&1; then
+		result_fail "WSL" "pnpm" "npm not found; cannot update Corepack or pnpm"
+		tool_snapshot_add "pnpm" "$before" ""
+		return 0
+	fi
+	if ! npm --version >/dev/null 2>&1; then
+		result_fail "WSL" "pnpm" "npm is not functional; cannot update Corepack or pnpm"
+		tool_snapshot_add "pnpm" "$before" ""
+		return 0
+	fi
+
+	run_npm_step "WSL" "Corepack" "${LOG_DIR}/wsl-corepack.log" npm install -g --prefix="$npm_prefix" corepack@latest
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" ]]; then
+		after="$(pnpm_version_line || true)"
+		record_version_transition "WSL" "pnpm" "$before" "$after"
+		result_fail "WSL" "pnpm" "Corepack update failed; pnpm major 11 convergence skipped"
+		return 0
+	fi
+
+	corepack_bin="${prefix_bin}/corepack"
+	if [[ ! -x "$corepack_bin" ]]; then
+		result_fail "WSL" "pnpm" "updated Corepack not found at ${corepack_bin}"
+		after="$(pnpm_version_line || true)"
+		record_version_transition "WSL" "pnpm" "$before" "$after"
+		return 0
+	fi
+
+	{
+		printf 'prefix=%s\n' "$npm_prefix"
+		printf 'corepack=%s\n' "$corepack_bin"
+		for shim in pnpm pnpm.CMD pnpm.cmd pnpm.ps1 pnpx pnpx.CMD pnpx.cmd pnpx.ps1; do
+			if [[ ! -e "${prefix_bin}/${shim}" ]]; then
+				printf '%s\n' "${prefix_bin}/${shim}" >>"$marker"
+			fi
+		done
+		"$corepack_bin" enable pnpm --install-directory "$prefix_bin"
+		"$corepack_bin" prepare pnpm@latest-11 --activate
+	} >"$corepack_log" 2>&1 && RUN_STEP_LAST_RESULT_STATUS="OK" || RUN_STEP_LAST_RESULT_STATUS="FAIL"
+
+	after="$(pnpm_version_line || true)"
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "OK" && -n "$after" ]] && pnpm_version_is_major_11 "$after"; then
+		record_pnpm_result "$before" "$after" "corepack"
+		return 0
+	fi
+
+	result_warn "WSL" "pnpm Corepack" "Corepack did not produce a functional pnpm 11; falling back to npm global"
+	warn "pnpm Corepack did not produce a functional pnpm 11; falling back to npm global"
+	remove_flow_created_pnpm_shims "$prefix_bin" "$marker"
+	run_npm_step "WSL" "pnpm fallback" "$fallback_log" npm install -g --prefix="$npm_prefix" "pnpm@^11"
+	after="$(pnpm_version_line || true)"
+	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" || -z "$after" ]] || ! pnpm_version_is_major_11 "$after"; then
+		record_version_transition "WSL" "pnpm" "$before" "$after"
+		result_fail "WSL" "pnpm" "fallback npm install did not produce a functional pnpm 11"
+		return 0
+	fi
+	record_pnpm_result "$before" "$after" "npm-global fallback"
 }
 
 update_global_npm_tool_if_needed() {
@@ -249,20 +385,55 @@ ingest_agent_tools_results() {
 
 run_tools() {
 	section "Node and AI tools"
-	local npm_prefix="${NPM_CONFIG_PREFIX:-$HOME/.npm-global}"
-	export PATH="$npm_prefix/bin:$PATH"
+	local npm_prefix="${NPM_CONFIG_PREFIX:-${DOTFILES_NPM_PREFIX:-$HOME/.npm-global}}"
+	local original_path="$PATH" overlay="" switched=0
 	mkdir -p "$npm_prefix/bin" "$npm_prefix/lib/node_modules"
 
-	if ! ensure_node_runtime; then
-		result_warn "WSL" "GitNexus" "skipped because Node runtime is incompatible; run make install-node-stack"
+	node_runtime_probe
+	if [[ "$NODE_RUNTIME_EFFECTIVE_OK" -eq 1 ]]; then
+		export PATH="$npm_prefix/bin:$PATH"
+		tool_snapshot_add "Node.js" "$NODE_RUNTIME_EFFECTIVE_VERSION" "$NODE_RUNTIME_EFFECTIVE_VERSION"
+		result_ok "WSL" "Node" "runtime ${NODE_RUNTIME_EFFECTIVE_VERSION} at ${NODE_RUNTIME_EFFECTIVE_PATH} satisfies >=${NODE_RUNTIME_MIN_MAJOR}"
+	elif [[ "$NODE_RUNTIME_MANAGED_OK" -eq 1 ]]; then
+		overlay="$(node_runtime_create_overlay "$RUN_DIR" "$NODE_RUNTIME_MANAGED_PATH")"
+		export PATH
+		PATH="$(node_runtime_controlled_path "$overlay" "$npm_prefix" "$original_path")"
+		switched=1
+		local active_node active_version
+		active_node="$(command -v node 2>/dev/null || true)"
+		active_version="$(node --version 2>/dev/null || true)"
+		if [[ "$active_node" != "${overlay}/node" ]] || ! node_runtime_version_satisfies "$active_version" "$NODE_RUNTIME_MIN_MAJOR"; then
+			PATH="$original_path"
+			node_runtime_cleanup_overlay "$overlay"
+			result_fail "WSL" "Node" "managed runtime overlay did not activate cleanly; expected ${overlay}/node -> ${NODE_RUNTIME_MANAGED_PATH}, got ${active_node:-missing} ${active_version:-unknown}"
+			tool_snapshot_add "Node.js" "$NODE_RUNTIME_EFFECTIVE_VERSION" "$NODE_RUNTIME_EFFECTIVE_VERSION"
+			return 0
+		fi
+		info "Node runtime for managed tools: switched from ${NODE_RUNTIME_EFFECTIVE_VERSION:-missing} (${NODE_RUNTIME_EFFECTIVE_ORIGIN}) to ${NODE_RUNTIME_MANAGED_VERSION} (${NODE_RUNTIME_MANAGED_PATH})"
+		result_info "WSL" "Node runtime for managed tools" "switched from ${NODE_RUNTIME_EFFECTIVE_VERSION:-missing} (${NODE_RUNTIME_EFFECTIVE_ORIGIN}) to ${NODE_RUNTIME_MANAGED_VERSION} (${NODE_RUNTIME_MANAGED_PATH})"
+		tool_snapshot_add "Node.js" "$NODE_RUNTIME_EFFECTIVE_VERSION" "$NODE_RUNTIME_EFFECTIVE_VERSION"
+		tool_snapshot_add "Node.js managed tools" "$NODE_RUNTIME_MANAGED_VERSION" "$NODE_RUNTIME_MANAGED_VERSION"
+	else
+		local effective_desc
+		if [[ -n "$NODE_RUNTIME_EFFECTIVE_PATH" ]]; then
+			effective_desc="${NODE_RUNTIME_EFFECTIVE_VERSION:-unknown} at ${NODE_RUNTIME_EFFECTIVE_PATH} (${NODE_RUNTIME_EFFECTIVE_ORIGIN})"
+		else
+			effective_desc="missing"
+		fi
+		result_fail "WSL" "Node" "effective runtime ${effective_desc} is below required >=${NODE_RUNTIME_MIN_MAJOR}; no compatible managed runtime available at ${NODE_RUNTIME_MANAGED_PATH}: ${NODE_RUNTIME_MANAGED_ERROR:-unknown}; run make install-node-stack"
+		tool_snapshot_add "Node.js" "$NODE_RUNTIME_EFFECTIVE_VERSION" "$NODE_RUNTIME_EFFECTIVE_VERSION"
 		return 0
 	fi
 	if is_truthy "${DOTFILES_UPDATE_MOCK:-}"; then
 		result_ok "WSL" "Node / AI tools" "mocked"
+		PATH="$original_path"
+		node_runtime_cleanup_overlay "$overlay"
 		return 0
 	fi
 	if ! command -v npm >/dev/null 2>&1; then
 		result_fail "WSL" "npm" "npm not found after Node validation"
+		PATH="$original_path"
+		node_runtime_cleanup_overlay "$overlay"
 		return 0
 	fi
 
@@ -276,11 +447,7 @@ run_tools() {
 	else
 		result_fail "WSL" "GitNexus" "install finished but gitnexus not found in PATH"
 	fi
-	if command -v corepack >/dev/null 2>&1; then
-		run_versioned_step run_step "WSL" "pnpm" "${LOG_DIR}/wsl-pnpm.log" pnpm --version -- corepack prepare pnpm@latest --activate
-	else
-		result_skip "WSL" "pnpm" "corepack not found; skipped"
-	fi
+	update_pnpm_major_11
 	local agent_tools_script="${DOTFILES_ROOT}/scripts/install-agent-tools.sh"
 	if [[ -x "$agent_tools_script" ]]; then
 		local actionlint_before actionlint_after osv_before osv_after agent_tools_results
@@ -295,6 +462,10 @@ run_tools() {
 			tool_snapshot_add "actionlint" "$actionlint_before" "$actionlint_after"
 			tool_snapshot_add "osv-scanner" "$osv_before" "$osv_after"
 		fi
+	fi
+	if [[ "$switched" -eq 1 ]]; then
+		PATH="$original_path"
+		node_runtime_cleanup_overlay "$overlay"
 	fi
 }
 

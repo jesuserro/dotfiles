@@ -42,11 +42,30 @@ Layers describe *purpose*; default **activation** for global agents follows the 
 
 ```bash
 make update      # Updates GitNexus CLI after validating Node >=22
+make update-check # Read-only Node/runtime precheck before re-indexing
 gnx-serve        # Start local server
 gnx-analyze-here # Analyze current repo
 gnx-map          # Analyze + serve
 gnx-wiki-here    # Generate wiki (requires OPENAI_API_KEY)
 ```
+
+### GitNexus Node precheck
+
+Before re-indexing a stale repo from Cursor, Codex, OpenCode, or another agent-launched shell, run:
+
+```bash
+make update-check
+```
+
+If it reports an effective Node below `>=22` from an IDE path such as `.cursor-server`, but also reports a managed compatible runtime, prefer the managed helper:
+
+```bash
+gnx-analyze-here
+```
+
+`gnx-analyze-here` loads the shared Node runtime policy, respects `DOTFILES_MANAGED_NODE_BIN`, and uses a temporary PATH overlay when the shell was launched with an incompatible IDE Node first in `PATH`.
+
+If no compatible managed runtime is available, install or repair the Node stack first (`make install-node-stack`). `make ai-doctor` includes `make update-check`, so it surfaces this warning before agents start a longer GitNexus analyze run.
 
 ## Filesystem MCP
 
@@ -154,7 +173,7 @@ STRICT=1 make ai-cursor-check
 - `docs/MCP_TAXONOMY.md` — Taxonomy and evolution notes
 - `docs/adr/0001-mcp-governance.md` — ADR (includes supersession notes)
 - `docs/OPENCODE.md` — Operational guide
-- `ai/assets/skills/mcp-governance/SKILL.md` — Skill for agents
+- `ai/assets/skills/ops/mcp-governance/SKILL.md` — Skill for agents
 
 ## Runtime vs Connection
 

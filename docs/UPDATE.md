@@ -6,11 +6,13 @@
 
 | Comando | Uso |
 |---|---|
-| `make update` | Rutina diaria completa: abre Windows PowerShell en otra pestaña y ejecuta WSL, con resumen consolidado |
+| `make update` | Rutina diaria completa: abre Windows PowerShell en otra pestaña y ejecuta WSL, con resumen Linux |
 | `make update-windows` | Ejecuta WinGet y `wsl --update` desde PowerShell/Windows |
 | `make update-wsl` | Ejecuta APT, Node/tooling IA, OpenCode, shell, uv, MCPs e imágenes Docker |
 | `make update-projects` | Actualiza proyectos personales como `~/proyectos/jesuserro` y RenderCV |
 | `make update-check` | Diagnóstico no mutante de requisitos de actualización y MCPs |
+| `make update-ai-skills` | Actualiza manualmente la selección opt-in de skills externos; no forma parte de `make update` |
+| `make install-docker-desktop-helper` | Repara explícitamente los symlinks del credential helper de Docker Desktop en WSL |
 | `make excalidraw-start` | Arranca el canvas Docker de Excalidraw bajo demanda |
 | `make excalidraw-stop` | Detiene el canvas si está activo |
 | `make excalidraw-status` | Muestra estado de Docker/canvas y URL |
@@ -31,7 +33,9 @@
 
 Desde Ubuntu/WSL, `make update` crea un directorio de ejecución en una ruta visible por Windows y WSL. La pestaña WSL ejecuta el mantenimiento Linux; una nueva pestaña PowerShell ejecuta WinGet y `wsl --update`.
 
-PowerShell escribe logs y un resultado TSV parseable. Al final, WSL espera ese resultado e imprime un resumen consolidado. Un fallo de WinGet, por ejemplo código `1603`, queda reflejado como incidencia aunque la pestaña se haya abierto correctamente.
+PowerShell escribe logs, `windows-results.tsv` y su propio resumen final. WSL no espera a `windows.done` ni bloquea su resumen por el estado de Windows; como máximo informa que la actualización Windows se abrió en una ventana separada.
+
+La consola PowerShell muestra primero `WinGet packages to upgrade`, con la tabla de paquetes pendientes, y guarda el detalle completo en logs. La instalación usa `winget upgrade --all --include-unknown --silent --accept-package-agreements --accept-source-agreements --disable-interactivity`; si WinGet devuelve errores parciales, Windows los registra como `WARN` y mantiene el log completo como fuente de detalle.
 
 `wsl --shutdown` no se ejecuta automáticamente. Si `wsl --update` indica que conviene reiniciar WSL, el resumen lo muestra como acción posterior para ejecutar manualmente desde PowerShell cuando la sesión WSL haya terminado.
 
@@ -39,7 +43,34 @@ PowerShell escribe logs y un resultado TSV parseable. Al final, WSL espera ese r
 
 La política del repo exige Node `>=22`. `make install-node-stack` instala NodeSource `24.x`, una fuente externa de paquetes APT firmada y configurada con `signed-by`. Esto evita depender de `nvm`/`fnm` en shells no interactivos y mantiene `node`, `npm` y `npx` disponibles para Make, MCPs y GitNexus.
 
-`make update-wsl` valida la versión de Node antes de actualizar GitNexus. Si el runtime no cumple el engine, el resumen muestra una incidencia visible.
+`make update-wsl` valida la versión de Node antes de actualizar herramientas Node/IA. Si el proceso fue lanzado desde un IDE o agente con un `PATH` sombreado por un Node incompatible, pero existe un runtime gestionado compatible, el bloque Node/tooling se ejecuta dentro de un overlay temporal que fija `node` al runtime gestionado. Esto afecta a `make update` y `make update-tools`, no al proceso padre ni al resto de bloques de actualización.
+
+El runtime gestionado por defecto es `/usr/bin/node`, coherente con NodeSource/APT. Puede sobreescribirse con `DOTFILES_MANAGED_NODE_BIN`. La major mínima puede ajustarse con `DOTFILES_NODE_MIN_MAJOR` y el prefijo user-space de npm con `DOTFILES_NPM_PREFIX`.
+
+`make update-check` diagnostica el Node efectivo, el candidato gestionado y si `make update-tools` podrá autorrecuperarse. No crea overlays, no instala Node y no modifica `PATH`, Cursor Server ni ficheros de shell.
+
+## Skills externos opt-in
+
+Matt Pocock Skills es una capa externa de fallback documentada en
+`ai/assets/external-skills/mattpocock/`. La v1 instala el catálogo completo de
+`mattpocock/skills`:
+
+```bash
+make install-mattpocock-skills
+make update-ai-skills
+```
+
+El comando subyacente es `npx skills add mattpocock/skills -y -g`. Tras instalar,
+el script elimina symlinks accidentales de Matt bajo `ai/assets/skills/` (esa ruta
+queda reservada al catálogo local canónico).
+`make update` no ejecuta este flujo. Si existe un skill local equivalente bajo
+`ai/assets/skills/`, gana el skill local.
+
+## pnpm
+
+La política de mantenimiento converge `pnpm` a major 11. `make update-wsl` actualiza primero Corepack en el prefijo npm de usuario y activa `pnpm@latest-11` desde rutas user-space, sin escribir en `/usr/bin` ni modificar ficheros de shell.
+
+`pnpm` 11 requiere Node compatible. Cuando el bloque Node/tooling usa overlay temporal, `npm`, Corepack y `pnpm` del prefijo user-space se ejecutan bajo el Node gestionado compatible. El éxito se valida siempre ejecutando `pnpm --version`. Si Corepack actualizado no deja un `pnpm` 11 funcional, el flujo registra un `WARN` y usa fallback explícito con `npm install -g --prefix=<prefijo-usuario> "pnpm@^11"`. El snapshot mantiene versiones limpias; el método final aparece como mensaje separado.
 
 ## Excalidraw MCP
 
@@ -53,6 +84,14 @@ El canvas se arranca solo bajo demanda con `make excalidraw-start` y se abre en 
 Los clientes MCP Docker publican el servidor avanzado con el nombre lógico `excalidraw_canvas` y conectan con el canvas mediante `EXPRESS_SERVER_URL=http://host.docker.internal:3210`. El nombre genérico `excalidraw` queda reservado para cualquier superficie simple que pueda exponer un cliente; no debe usarse para edición agentiva avanzada. `make update` puede descargar imágenes con `make excalidraw-update`, pero nunca deja el canvas arrancado.
 
 Si Docker Desktop está apagado durante `make update`, ese bloque opcional aparece como `SKIP` y no cuenta como incidencia por sí solo. Cuando Docker vuelva a estar disponible, puedes refrescar Excalidraw aparte con `make excalidraw-update`.
+
+En WSL, Docker puede necesitar un credential helper configurado en `${DOCKER_CONFIG:-$HOME/.docker}/config.json`. `make update` y `make excalidraw-update` diagnostican si una imagen concreta requiere un helper como `docker-credential-desktop.exe` o `docker-credential-desktop` y el comando exacto no está en `PATH`; no reparan esa configuración de forma silenciosa. Para crear los symlinks user-space bajo `~/.local/bin`, ejecuta:
+
+```bash
+make install-docker-desktop-helper
+```
+
+El reparador respeta `credsStore` y `credHelpers`, no edita `config.json`, y crea el nombre exacto que Docker intentará ejecutar para la configuración activa. Si Docker Desktop está instalado en una ruta no estándar, define `DOCKER_DESKTOP_CREDENTIAL_HELPER_SOURCE` con la ruta del ejecutable helper de Windows.
 
 El acceso a ficheros del MCP queda deliberadamente acotado: los clientes lanzan el contenedor efímero con `EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw` y un bind mount estrecho de `/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw` a `/workspace/excalidraw`. Esto mantiene la protección de path traversal y evita montar todo `vault_trabajo`.
 

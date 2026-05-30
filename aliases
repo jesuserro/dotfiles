@@ -122,11 +122,63 @@ alias cx="codex"  # Codex
 # ------------------------------------
 alias gnx-serve='gitnexus serve'                       # Iniciar servidor GitNexus local
 
+_gnx_analyze_with_managed_node() {
+  local runtime_lib="${DOTFILES_DIR:-$HOME/dotfiles}/scripts/update/lib/node_runtime.sh"
+  local npm_prefix="${NPM_CONFIG_PREFIX:-${DOTFILES_NPM_PREFIX:-$HOME/.npm-global}}"
+  local original_path="$PATH"
+  local gitnexus_bin="" overlay="" exit_code=0
+
+  if command -v gitnexus >/dev/null 2>&1; then
+    gitnexus_bin="gitnexus"
+  elif [ -x "$npm_prefix/bin/gitnexus" ]; then
+    gitnexus_bin="$npm_prefix/bin/gitnexus"
+  else
+    echo "❌ GitNexus no está instalado"
+    echo "   Ejecuta: ~/dotfiles/scripts/install-gitnexus.sh"
+    return 1
+  fi
+
+  if [ ! -r "$runtime_lib" ]; then
+    echo "⚠️  No se pudo cargar el helper de Node gestionado"
+    echo "   Ejecuta: make update-check"
+    return 1
+  fi
+
+  if [ -n "${ZSH_VERSION:-}" ]; then
+    setopt local_options no_aliases
+  fi
+  source "$runtime_lib"
+  node_runtime_probe
+
+  if [ "$NODE_RUNTIME_EFFECTIVE_OK" -eq 1 ]; then
+    "$gitnexus_bin" analyze "$@"
+    return $?
+  fi
+
+  if [ "$NODE_RUNTIME_MANAGED_OK" -ne 1 ]; then
+    echo "❌ Node.js efectivo no cumple >=${NODE_RUNTIME_MIN_MAJOR} y no hay Node gestionado compatible"
+    echo "   Ejecuta: make update-check"
+    return 1
+  fi
+
+  overlay="$(node_runtime_create_overlay "${TMPDIR:-/tmp}" "$NODE_RUNTIME_MANAGED_PATH")" || return 1
+  PATH="$(node_runtime_controlled_path "$overlay" "$npm_prefix" "$original_path")"
+  export PATH
+
+  "$gitnexus_bin" analyze "$@"
+  exit_code=$?
+
+  PATH="$original_path"
+  export PATH
+  node_runtime_cleanup_overlay "$overlay"
+  return "$exit_code"
+}
+
 # Función para analizar el repositorio actual
 gnx-analyze-here() {
   if [ -d ".git" ]; then
     echo "🔍 Analizando repositorio actual con GitNexus..."
-    gitnexus analyze
+    _gnx_analyze_with_managed_node "$@"
   else
     echo "❌ No estás en un repositorio Git"
     return 1
@@ -157,7 +209,7 @@ gnx-wiki-here() {
   # Verificar índice o crearlo
   if ! gitnexus status >/dev/null 2>&1; then
     echo "🔍 Indexando repositorio..."
-    gitnexus analyze
+    _gnx_analyze_with_managed_node
   fi
   
   # Verificar API key

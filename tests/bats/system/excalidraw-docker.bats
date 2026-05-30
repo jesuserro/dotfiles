@@ -8,6 +8,12 @@ setup() {
 	mkdir -p "${FAKE_BIN}"
 	DOCKER_LOG="${TEST_TEMP_DIR}/docker.log"
 	export DOCKER_LOG
+	DOCKER_CONFIG="${TEST_TEMP_DIR}/docker-config"
+	export DOCKER_CONFIG
+	mkdir -p "$DOCKER_CONFIG"
+	for cmd in bash python3 mktemp rm dirname pwd mkdir grep tee date tr chmod; do
+		ln -sf "$(command -v "$cmd")" "${FAKE_BIN}/${cmd}"
+	done
 	cat >"${FAKE_BIN}/docker" <<'EOF'
 #!/usr/bin/env bash
 echo "$*" >> "$DOCKER_LOG"
@@ -73,6 +79,58 @@ EOF
 	grep -q $'INFO\tWSL\tExcalidraw Docker\tRun '\''make excalidraw-update'\'' after starting Docker Desktop when needed' "$results_file"
 	run bash -c "source '${DOTFILES_DIR}/scripts/update/lib/results.sh'; result_has_incidents '$results_file'"
 	[[ "${status}" -ne 0 ]]
+}
+
+@test "excalidraw update preserves daemon-down diagnostic before credential checks" {
+	local results_file="${TEST_TEMP_DIR}/results-daemon.tsv"
+	local down_bin="${TEST_TEMP_DIR}/down-bin-with-creds"
+	mkdir -p "$down_bin"
+	cat >"${DOCKER_CONFIG}/config.json" <<'EOF'
+{"credsStore":"desktop.exe"}
+EOF
+	cat >"${down_bin}/docker" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  version) exit 1 ;;
+  pull) echo "pull should not run" >> "$DOCKER_LOG"; exit 0 ;;
+  *) exit 0 ;;
+esac
+EOF
+	chmod +x "${down_bin}/docker"
+	run env PATH="${down_bin}:/usr/bin:/bin" DOTFILES_FORCE_WSL=1 RESULTS_FILE="$results_file" bash "${DOTFILES_DIR}/scripts/update/update-excalidraw.sh" update --results "$results_file"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"Docker Desktop is not running"* ]]
+	! grep -q 'pull should not run' "${DOCKER_LOG}"
+	grep -q $'SKIP\tWSL\tExcalidraw Docker\tDocker Desktop is not running; Excalidraw images were not updated' "$results_file"
+}
+
+@test "excalidraw update fails before pulls when required helper is absent" {
+	local results_file="${TEST_TEMP_DIR}/results-creds.tsv"
+	cat >"${DOCKER_CONFIG}/config.json" <<'EOF'
+{"credHelpers":{"ghcr.io":"desktop.exe"}}
+EOF
+	run env PATH="${FAKE_BIN}" DOTFILES_FORCE_WSL=1 RESULTS_FILE="$results_file" bash "${DOTFILES_DIR}/scripts/update/update-excalidraw.sh" update --results "$results_file"
+	[[ "${status}" -ne 0 ]]
+	[[ "${output}" == *"docker-credential-desktop.exe"* ]]
+	[[ "${output}" == *"make install-docker-desktop-helper"* ]]
+	! grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw' "${DOCKER_LOG}"
+	grep -q $'FAIL\tWSL\tExcalidraw Docker credentials\tDocker credential helper unavailable from PATH:' "$results_file"
+	[[ "$(awk -F '\t' '$1=="FAIL" || $1=="WARN" || $1=="INCIDENT"{count++} END{print count + 0}' "$results_file")" -eq 1 ]]
+}
+
+@test "excalidraw update pulls when required helper is available" {
+	cat >"${DOCKER_CONFIG}/config.json" <<'EOF'
+{"credHelpers":{"ghcr.io":"desktop.exe"}}
+EOF
+	cat >"${FAKE_BIN}/docker-credential-desktop.exe" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+	chmod +x "${FAKE_BIN}/docker-credential-desktop.exe"
+	run env PATH="${FAKE_BIN}" DOTFILES_FORCE_WSL=1 bash "${DOTFILES_DIR}/scripts/update/update-excalidraw.sh" update
+	[[ "${status}" -eq 0 ]]
+	grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw-canvas:latest' "${DOCKER_LOG}"
+	grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOCKER_LOG}"
 }
 
 @test "excalidraw start fails when dedicated port is occupied" {
@@ -172,9 +230,10 @@ EOF
 	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
 	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
 	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
-	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
-	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
-	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
+	grep -q '{{ \$excalidrawWorkspaceHost }}:/workspace/excalidraw' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
+	grep -q '{{ \$excalidrawWorkspaceHost }}:/workspace/excalidraw' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
+	grep -q '{{ \$excalidrawWorkspaceHost }}:/workspace/excalidraw' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
+	grep -q 'excalidrawWorkspaceHost := default' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
 	run grep -R '/mnt/c/Users/jesus/Documents/vault_trabajo:/workspace/excalidraw' "${DOTFILES_DIR}/dot_cursor" "${DOTFILES_DIR}/dot_codex" "${DOTFILES_DIR}/dot_config/opencode"
 	[[ "${status}" -ne 0 ]]
 	run grep -R 'mcp-servers/excalidraw-mcp/dist/index.js' "${DOTFILES_DIR}/dot_cursor" "${DOTFILES_DIR}/dot_codex" "${DOTFILES_DIR}/dot_config/opencode"
@@ -215,7 +274,7 @@ EOF
 	grep -q 'ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	grep -q 'EXPRESS_SERVER_URL=http://host.docker.internal:3210' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
-	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
+	grep -q 'excalidraw_workspace_host' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	grep -q '3210:3000' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	run grep -q 'mcp-servers/excalidraw-mcp/dist/index.js' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	[[ "${status}" -ne 0 ]]

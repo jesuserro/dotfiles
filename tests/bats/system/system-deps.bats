@@ -171,7 +171,7 @@ EOF
     [[ "${output}" == *"agent-validate-changed:"* ]]
     [[ "${output}" == *"lint-actions:"* ]]
     [[ "${output}" == *"security-osv:"* ]]
-    [[ "${output}" == *"install: install-check install-apt install-node-stack install-agent-tools install-external install-dotfiles install-verify"* ]]
+    [[ "${output}" == *"install: install-check install-apt install-external install-dotfiles install-verify"* ]]
 }
 
 @test "show-system-deps-actions reports actionable guidance for missing external tools" {

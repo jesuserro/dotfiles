@@ -174,6 +174,7 @@ docker.exe mcp gateway run --dry-run --verbose
 - `chezmoi apply`
 - Aplicar plantillas MCP a HOME
 - Regenerar `mcp-secrets.env`
+- Instalar o actualizar Matt Pocock Skills; usa `make update-ai-skills` manualmente
 - Arreglar Docker MCP con Desktop cerrado
 - Rellenar `POSTGRES_DSN` vacío
 
@@ -233,6 +234,7 @@ Detalle: [CHEZMOI.md](CHEZMOI.md).
 | `ZSH_RC_APPLY=1 chezmoi apply` | Backup y reemplazo de RC custom |
 | `make ai-mcp-generate APPLY=1` | Reescribe plantillas MCP en el repo |
 | `make update` | PowerShell/WinGet, sudo, upgrade APT, npm global |
+| `make install-mattpocock-skills` / `make update-ai-skills` | Instala o actualiza el catálogo Matt completo en `~/.agents/skills/` y limpia symlinks accidentales bajo `ai/assets/skills/` |
 | `sops -d secrets.sops.yaml` | Imprime secretos en stdout — evitar |
 
 ---

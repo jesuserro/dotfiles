@@ -2,7 +2,7 @@
 
 DOTFILES_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: update update-windows update-wsl update-projects update-check
+.PHONY: update update-windows update-wsl update-projects update-check update-ai-skills
 .PHONY: update-apt update-tools update-shell update-mcp update-services
 .PHONY: excalidraw-start excalidraw-stop excalidraw-status excalidraw-update
 
@@ -20,6 +20,9 @@ update-projects:
 
 update-check:
 	@bash $(DOTFILES_DIR)/scripts/update/update-check.sh
+
+update-ai-skills:
+	@bash $(DOTFILES_DIR)/scripts/install-agent-skills.sh $(if $(filter 1 true yes on,$(DRY_RUN)),--dry-run,)
 
 update-apt update-tools update-shell update-mcp update-services:
 	@bash $(DOTFILES_DIR)/scripts/update/update-wsl.sh --section "$(@:update-%=%)"

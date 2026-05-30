@@ -11,3 +11,4 @@
 # Obsidian / mcpvault + Filesystem MCP whitelist (override in ~/.config/chezmoi/chezmoi.toml)
 [data.ai]
     obsidian_vault_path = "/mnt/c/Users/jesus/Documents/vault_trabajo"
+    excalidraw_workspace_host = "/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw"

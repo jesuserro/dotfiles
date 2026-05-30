@@ -37,14 +37,19 @@ make install SKIP_EXTERNAL=1
 # 4. Instaladores opt-in (uno por uno, idempotentes, soportan DRY_RUN=1)
 make install-chezmoi # chezmoi (twpayne/chezmoi) en ~/.local/bin (sin Go, sin sudo)
 make install-sops    # descarga sops oficial (getsops/sops v3.9.4) a ~/.local/bin
+make install-node-stack  # Node.js LTS vía NodeSource (sudo/apt; requerido para MCPs npx)
+make install-agent-tools # ast-grep, actionlint, osv-scanner (opt-in corporativo)
 make install-uv      # uv (Astral) en ~/.local/bin
 make install-zsh-stack   # Oh My Zsh + Powerlevel10k + plugins (no toca ~/.zshrc)
 make install-fonts   # MesloLGS NF para Powerlevel10k en Linux/WSL (no configura Windows Terminal)
+make install-mattpocock-skills # fallback externo opt-in: catálogo Matt completo
 
-# 5. Configurar la ruta real del vault de Obsidian (no se fuerza por defecto)
-#    Editar ~/.config/chezmoi/chezmoi.toml:
+# 5. Configurar rutas AI por máquina (vault Obsidian, workspace Excalidraw)
+#    Editar ~/.config/chezmoi/chezmoi.toml (mínimo: obsidian_vault_path).
+#    Si Excalidraw no vive en <vault>/excalidraw, añade excalidraw_workspace_host.
 #        [data.ai]
 #            obsidian_vault_path = "/ruta/real/del/vault"
+#            excalidraw_workspace_host = "/ruta/real/excalidraw"   # opcional
 
 # 6. Publicar dotfiles (chezmoi apply) — opt-in con DOTFILES_APPLY=1
 #    Crea/actualiza también los symlinks ~/.zshrc, ~/.p10k.zsh y ~/.aliases.

@@ -16,7 +16,6 @@ cleanup_old_update_runs "$(dirname "$RUN_DIR")" "$RUN_DIR"
 WSL_RESULTS="${RUN_DIR}/wsl-results.tsv"
 WINDOWS_RESULTS="${RUN_DIR}/windows-results.tsv"
 TOOL_SNAPSHOT_FILE="${RUN_DIR}/tool-snapshot.tsv"
-WINDOWS_DONE="${RUN_DIR}/windows.done"
 result_init "$WSL_RESULTS"
 tool_snapshot_init "$TOOL_SNAPSHOT_FILE"
 export TOOL_SNAPSHOT_FILE
@@ -34,8 +33,6 @@ launch_windows_update() {
 		return 0
 	fi
 	if is_truthy "${DOTFILES_UPDATE_MOCK:-}"; then
-		local mock_done
-		mock_done=1
 		case "${DOTFILES_UPDATE_MOCK_WINDOWS_RESULT:-winget-failure}" in
 		ok)
 			printf 'OK\tWindows\tWinGet\tmocked winget success\nOK\tWindows\tWSL update\tmocked wsl --update\n' >"$WINDOWS_RESULTS"
@@ -62,29 +59,21 @@ EOF
 		empty)
 			: >"$WINDOWS_RESULTS"
 			;;
-		missing)
+		missing | missing-no-done)
 			rm -f "$WINDOWS_RESULTS"
-			;;
-		missing-no-done)
-			rm -f "$WINDOWS_RESULTS"
-			mock_done=0
 			;;
 		partial-no-done)
 			printf 'OK\tWindows\tWinGet sources\tmocked partial result before hang\nOK\tWindows\tWinGet packages\tmocked partial result before hang\n' >"$WINDOWS_RESULTS"
-			mock_done=0
 			;;
 		*)
 			printf 'WARN\tWindows\tWindows mock\tunknown DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=%s\n' "${DOTFILES_UPDATE_MOCK_WINDOWS_RESULT}" >"$WINDOWS_RESULTS"
 			;;
 		esac
-		if [[ "$mock_done" -eq 1 ]]; then
-			: >"$WINDOWS_DONE"
-		fi
-		result_ok "Windows" "Windows tab" "mocked result written"
+		info "Windows update opened in separate PowerShell window; see that window for Windows results."
 		return 0
 	fi
 	if ! command -v wt.exe >/dev/null 2>&1 || ! command -v powershell.exe >/dev/null 2>&1 || ! command -v wslpath >/dev/null 2>&1; then
-		result_warn "Windows" "Windows tab" "wt.exe, powershell.exe or wslpath unavailable; Windows update not launched"
+		info "Windows update not launched: wt.exe, powershell.exe or wslpath unavailable."
 		return 0
 	fi
 	local ps1 run_win script_win
@@ -92,9 +81,9 @@ EOF
 	run_win="$(to_windows_path "$RUN_DIR")"
 	script_win="$(to_windows_path "$ps1")"
 	if wt.exe -w 0 new-tab --title "make update - Windows" powershell.exe -NoExit -ExecutionPolicy Bypass -File "$script_win" -RunDir "$run_win" \; focus-tab -t 0 >/dev/null 2>&1; then
-		result_ok "Windows" "Windows tab" "PowerShell tab launched"
+		info "Windows update opened in separate PowerShell window; see that window for Windows results."
 	else
-		result_warn "Windows" "Windows tab" "could not open PowerShell tab"
+		info "Windows update not launched: could not open PowerShell tab."
 	fi
 }
 
@@ -107,43 +96,9 @@ if [[ -f "${RUN_DIR}/wsl-results.tsv" ]]; then
 	WSL_RESULTS="${RUN_DIR}/wsl-results.tsv"
 fi
 
-windows_timed_out=0
-if [[ ! -f "$WINDOWS_DONE" ]] && is_wsl && ! is_truthy "${DOTFILES_UPDATE_SKIP_WINDOWS:-}"; then
-	section "Waiting for Windows result"
-	windows_timeout="${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-600}"
-	progress_interval="${DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL:-30}"
-	deadline=$((SECONDS + windows_timeout))
-	wait_started="$SECONDS"
-	next_progress=$((SECONDS + progress_interval))
-	while [[ ! -f "$WINDOWS_DONE" && $SECONDS -lt $deadline ]]; do
-		if [[ "$SECONDS" -ge "$next_progress" ]]; then
-			info "Waiting for Windows update result... elapsed $((SECONDS - wait_started))s / timeout ${windows_timeout}s; run dir: ${RUN_DIR}"
-			next_progress=$((SECONDS + progress_interval))
-		fi
-		sleep 1
-	done
-	if [[ ! -f "$WINDOWS_DONE" ]]; then
-		windows_timed_out=1
-	fi
-fi
-if [[ ! -s "$WINDOWS_RESULTS" ]]; then
-	printf 'WARN\tWindows\tWindows result\tNo structured Windows result was produced before timeout (%ss); run dir: %s; partial logs: %s\n' "${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-600}" "$RUN_DIR" "$LOG_DIR" >"$WINDOWS_RESULTS"
-elif [[ "$windows_timed_out" -eq 1 ]]; then
-	printf 'WARN\tWindows\tWindows result\tWindows update did not write windows.done before timeout (%ss); using partial results; run dir: %s; partial logs: %s\n' "${DOTFILES_UPDATE_WINDOWS_TIMEOUT:-600}" "$RUN_DIR" "$LOG_DIR" >>"$WINDOWS_RESULTS"
-fi
-if [[ -f "${LOG_DIR}/windows-winget-upgrade.log" ]] && ! grep -Eq $'\tWindows\tWinGet package .+\\[[^]]+\\]\t' "$WINDOWS_RESULTS"; then
-	parsed_winget="$(mktemp)"
-	if python3 "${SCRIPT_DIR}/parse-winget-log.py" "${LOG_DIR}/windows-winget-upgrade.log" >"$parsed_winget" && [[ -s "$parsed_winget" ]]; then
-		grep -v $'\tWindows\tWinGet package details\tcould not parse package-level results' "$WINDOWS_RESULTS" >"${parsed_winget}.results" || true
-		cat "$parsed_winget" >>"${parsed_winget}.results"
-		mv "${parsed_winget}.results" "$WINDOWS_RESULTS"
-	fi
-	rm -f "$parsed_winget" "${parsed_winget}.results"
-fi
-
 section "Update summary"
-result_print_concise_summary "$WINDOWS_RESULTS" "$WSL_RESULTS" "$TOOL_SNAPSHOT_FILE" "$LOG_DIR"
+result_print_concise_summary /dev/null "$WSL_RESULTS" "$TOOL_SNAPSHOT_FILE" "$LOG_DIR"
 
-if result_has_incidents "$WINDOWS_RESULTS" || result_has_incidents "$WSL_RESULTS"; then
+if result_has_incidents "$WSL_RESULTS"; then
 	exit 0
 fi

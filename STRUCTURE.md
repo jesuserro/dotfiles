@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-24 13:12:38
+**Generated:** 2026-05-30 14:22:09
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -608,6 +608,11 @@
 │   │   │   │   └── 📝 COMMAND.md
 │   │   │   ├── 📝 README.md
 │   │   │   └── ⚙️ registry.yaml
+│   │   ├── 📁 external-skills
+│   │   │   └── 📁 mattpocock
+│   │   │       ├── 📝 POLICY.md
+│   │   │       ├── 📝 README.md
+│   │   │       └── 📝 selected-skills.md
 │   │   ├── 📁 mcps
 │   │   │   └── ⚙️ MANIFEST.yaml
 │   │   ├── 📁 prompts
@@ -899,8 +904,10 @@
 │   │   └── 🐍 system_deps.py
 │   ├── 📁 update
 │   │   ├── 📁 lib
+│   │   │   ├── 🔧 docker_desktop_credentials.sh
 │   │   │   ├── 🔧 environment.sh
 │   │   │   ├── 🔧 logging.sh
+│   │   │   ├── 🔧 node_runtime.sh
 │   │   │   └── 🔧 results.sh
 │   │   ├── 🐍 parse-winget-log.py
 │   │   ├── 🔧 update-check.sh
@@ -944,10 +951,12 @@
 │   ├── 📝 git_start_feature.md
 │   ├── 🔧 git_start_feature.sh
 │   ├── 🔧 git_workflow.sh
+│   ├── 🔧 install-agent-skills.sh
 │   ├── 🔧 install-agent-tools.sh
 │   ├── 🔧 install-azure-cli.sh
 │   ├── 🔧 install-check.sh
 │   ├── 🔧 install-chezmoi.sh
+│   ├── 🔧 install-docker-desktop-helper.sh
 │   ├── 🔧 install-dotfiles.sh
 │   ├── 🔧 install-external.sh
 │   ├── 🔧 install-fonts.sh
@@ -985,6 +994,7 @@
 │   │   ├── 📁 chezmoi
 │   │   │   ├── 📄 ai-assets-warnings.bats
 │   │   │   ├── 📄 ai-runtime-uv.bats
+│   │   │   ├── 📄 excalidraw-workspace-template.bats
 │   │   │   ├── 📄 gen-secrets-strict.bats
 │   │   │   ├── 📄 smoke.bats
 │   │   │   └── 📄 store-etl-hook-removed.bats
@@ -1004,8 +1014,10 @@
 │   │   ├── 📁 system
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
+│   │   │   ├── 📄 docker-desktop-credentials.bats
 │   │   │   ├── 📄 dry-run-guard.bats
 │   │   │   ├── 📄 excalidraw-docker.bats
+│   │   │   ├── 📄 install-agent-skills.bats
 │   │   │   ├── 📄 install-agent-tools.bats
 │   │   │   ├── 📄 install-azure-cli.bats
 │   │   │   ├── 📄 install-chezmoi.bats
@@ -1018,8 +1030,11 @@
 │   │   │   ├── 📄 mcp-manifest.bats
 │   │   │   ├── 📄 mcp-render-drift.bats
 │   │   │   ├── 📄 system-deps.bats
+│   │   │   ├── 📄 update-node-runtime.bats
 │   │   │   └── 📄 update-workflow.bats
 │   │   ├── 📁 zsh
+│   │   │   ├── 📄 gitnexus_aliases.bats
+│   │   │   ├── 📄 omz_plugins.bats
 │   │   │   ├── 📄 p10k_cache_keys.bats
 │   │   │   └── 📄 rc_symlinks.bats
 │   │   └── 📄 git-ai-author.bats

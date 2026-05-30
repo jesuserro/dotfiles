@@ -10,23 +10,30 @@ COMPLETION_WAITING_DOTS="true"
 
 plugins=(
   autoupdate
-  aws
+  azure
+  chezmoi
   colored-man-pages
   colorize
-  composer
+  command-not-found
+  debian
   dirhistory
   docker
+  docker-compose
   extract
   gh
   git
+  gitignore
   history
   jsontools
-  pip
+  npm
   python
+  rsync
+  systemd
   tmux
+  urltools
+  uv
   virtualenv
   vi-mode
-  wp-cli
   z
   zsh-autosuggestions
   zsh-completions
@@ -36,6 +43,6 @@ plugins=(
 
 source "$ZSH/oh-my-zsh.sh"
 
-# Powerlevel10k (load once, after OMZ)
+# Powerlevel10k (load once, after OMZ). Chezmoi materializes ~/.p10k.zsh as a
+# symlink to $HOME/dotfiles/powerlevel10k/p10k.zsh — do not source both paths.
 [[ -f "$HOME/.p10k.zsh" ]] && source "$HOME/.p10k.zsh"
-[[ -f "$HOME/dotfiles/powerlevel10k/p10k.zsh" ]] && source "$HOME/dotfiles/powerlevel10k/p10k.zsh"

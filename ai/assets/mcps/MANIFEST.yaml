@@ -35,7 +35,7 @@ mcps:
     requires: [docker]
     secrets: []
     paths_probe:
-      - /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw
+      - chezmoi:ai.excalidraw_workspace_host
     notes: >
       Canonical runtime is yctimlin/mcp_excalidraw via Docker, launched
       ephemerally as the `excalidraw_canvas` MCP with `docker run -i --rm` by
@@ -47,7 +47,9 @@ mcps:
       EXPRESS_SERVER_URL=http://host.docker.internal:3210 and
       ENABLE_CANVAS_SYNC=true. File import/export stays sandboxed via
       EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw and a narrow bind mount from
-      /mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw to
+      Chezmoi data `ai.excalidraw_workspace_host` when set, else
+      `ai.obsidian_vault_path`/excalidraw (see .chezmoi.toml [data.ai];
+      override per machine in ~/.config/chezmoi/chezmoi.toml) to
       /workspace/excalidraw. Agents must pass internal MCP paths under
       /workspace/excalidraw, not WSL /mnt/c/... paths. The canvas host port is
       reserved as 3210 (`3210:3000` Docker mapping) so Store ETL/Dagster can

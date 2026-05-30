@@ -5,7 +5,8 @@
 ## Estado actual
 
 - **Chezmoi** es el único gestor activo de dotfiles relevantes: MCPs (Cursor/Codex), secretos, config Codex, AI runtime y los RC files de la **zsh stack** (`~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`).
-- **`make install-zsh-stack`** instala únicamente runtime: Oh My Zsh + Powerlevel10k + plugins. No toca ningún RC file.
+- **`make install-zsh-stack`** instala únicamente runtime: Oh My Zsh + Powerlevel10k + plugins custom (`zsh-autosuggestions`, `zsh-completions`, etc.). No toca ningún RC file.
+- **Lista de plugins OMZ:** fuente de verdad en `zsh/20-omz.zsh` (cargado vía `dotfiles/zshrc`). No activar gestores de runtime vía OMZ (`nvm`, `pyenv`, `asdf`, `conda`, `autoenv`). El plugin `z` se mantiene por simplicidad; `zoxide` sería una mejora futura separada. FastAPI, Vite, React, TypeScript, PostgreSQL, PowerShell, Cursor y Codex no van como plugins OMZ; si hace falta, conviene aliases o funciones en `aliases` / `zsh/`.
 - **RCM (`rcup`)** queda fuera del flujo activo. Sus referencias históricas se conservan solo como contexto. No hay paso `rcup` en el bootstrap; tampoco se requiere instalar `rcm`.
 
 ---
@@ -55,11 +56,13 @@ Nunca se borra sin backup; nunca se usa `sudo`.
 El MCP **Obsidian (mcpvault)** y el whitelist del **Filesystem MCP** usan la misma ruta lógica del vault, definida en **`.chezmoi.toml`** del repo bajo **`[data.ai]`** → **`obsidian_vault_path`**. En las plantillas aparece como **`{{ .ai.obsidian_vault_path }}`** (no edites a mano las plantillas MCP productivas: regenera con `make ai-mcp-generate APPLY=1`).
 
 - **Valor por defecto en repo (casa / WSL):** `/mnt/c/Users/jesus/Documents/vault_trabajo`.
+- **Excalidraw bind mount (MCP):** `data.ai.excalidraw_workspace_host` cuando está definido; si falta en la config fusionada (p. ej. solo tienes `obsidian_vault_path` en `~/.config/chezmoi/chezmoi.toml`), las plantillas usan **`obsidian_vault_path`/excalidraw** sin fallar.
 - **Otra máquina (p. ej. oficina):** no versiones rutas corporativas en el repo; sobrescribe en **`~/.config/chezmoi/chezmoi.toml`** (Chezmoi fusiona este archivo con el del source):
 
 ```toml
 [data.ai]
     obsidian_vault_path = "/ruta/real/del/vault"
+    excalidraw_workspace_host = "/ruta/real/excalidraw"
 ```
 
 Tras cambiar el dato: **`chezmoi apply`** (o `make install-dotfiles DOTFILES_APPLY=1`) y comprueba con **`make ai-cursor-check`** (lee la ruta efectiva en `~/.cursor/mcp.json`).

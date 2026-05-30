@@ -52,6 +52,135 @@ write_global_npm_package() {
 EOF
 }
 
+write_pnpm_update_runner() {
+	local script="$1" fake_home="$2" stub_dir="$3"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+set -- --section none
+HOME="${fake_home}"
+	PATH="${stub_dir}"
+DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-pnpm"
+if [[ -z "\${PNPM_TEST_KEEP_PREFIX_ENV:-}" ]]; then
+  unset NPM_CONFIG_PREFIX DOTFILES_NPM_PREFIX
+fi
+source "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+update_pnpm_major_11
+tool_snapshot_print "${TEST_TEMP_DIR}/run-pnpm/tool-snapshot.tsv"
+EOF
+	chmod +x "$script"
+}
+
+write_pnpm_fake_npm() {
+	local stub_dir="$1"
+	for cmd in bash mkdir cat chmod dirname date tee tr head sed grep rm mktemp awk; do
+		ln -sf "$(command -v "$cmd")" "${stub_dir}/${cmd}"
+	done
+	cat >"${stub_dir}/npm" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+prefix=""
+for arg in "$@"; do
+  case "$arg" in --prefix=*) prefix="${arg#--prefix=}";; esac
+done
+if [[ -z "$prefix" ]]; then
+  prev=""
+  for arg in "$@"; do
+    if [[ "$prev" == "--prefix" ]]; then prefix="$arg"; break; fi
+    prev="$arg"
+  done
+fi
+case "${1:-}" in
+  --version) echo "11.0.0"; exit 0 ;;
+  config)
+    if [[ "${2:-}" == "get" && "${3:-}" == "prefix" ]]; then
+      echo "${PNPM_TEST_NPM_PREFIX_REPLY:-/usr/local}"
+      exit 0
+    fi
+    ;;
+  install)
+    if [[ "$*" == *"corepack@latest"* ]]; then
+      mkdir -p "${prefix}/bin"
+      cat >"${prefix}/bin/corepack" <<'COREPACK'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "$*" >> "${PNPM_TEST_COREPACK_LOG}"
+dir="$(dirname "$0")"
+prev=""
+for arg in "$@"; do
+  if [[ "$prev" == "--install-directory" ]]; then dir="$arg"; fi
+  prev="$arg"
+done
+mkdir -p "$dir"
+if [[ "$*" == *"enable pnpm"* ]]; then
+  printf '%s\n' "$dir" >"${PNPM_TEST_COREPACK_DIR_FILE}"
+fi
+if [[ "$*" == *"prepare pnpm@latest-11 --activate"* && -n "${PNPM_TEST_COREPACK_VERSION:-}" ]]; then
+  dir="$(cat "${PNPM_TEST_COREPACK_DIR_FILE}" 2>/dev/null || dirname "$0")"
+  cat >"${dir}/pnpm" <<PNPM
+#!/usr/bin/env bash
+case "\$1" in --version) echo "${PNPM_TEST_COREPACK_VERSION}";; *) exit 0;; esac
+PNPM
+  chmod +x "${dir}/pnpm"
+fi
+if [[ "$*" == *"prepare pnpm@latest-11 --activate"* && -n "${PNPM_TEST_COREPACK_BROKEN_SHIM:-}" ]]; then
+  dir="$(cat "${PNPM_TEST_COREPACK_DIR_FILE}" 2>/dev/null || dirname "$0")"
+  cat >"${dir}/pnpm" <<'PNPM'
+#!/usr/bin/env bash
+exit 42
+PNPM
+  chmod +x "${dir}/pnpm"
+fi
+exit "${PNPM_TEST_COREPACK_EXIT:-0}"
+COREPACK
+      chmod +x "${prefix}/bin/corepack"
+      echo "installed corepack"
+      exit "${PNPM_TEST_NPM_COREPACK_EXIT:-0}"
+    fi
+    if [[ "$*" == *"pnpm@^11"* ]]; then
+      mkdir -p "${prefix}/bin"
+      echo "$*" >> "${PNPM_TEST_FALLBACK_LOG}"
+      if [[ -n "${PNPM_TEST_FALLBACK_VERSION:-}" ]]; then
+        cat >"${prefix}/bin/pnpm" <<PNPM
+#!/usr/bin/env bash
+case "\$1" in --version) echo "${PNPM_TEST_FALLBACK_VERSION}";; *) exit 0;; esac
+PNPM
+        chmod +x "${prefix}/bin/pnpm"
+      fi
+      echo "installed pnpm fallback"
+      exit "${PNPM_TEST_FALLBACK_EXIT:-0}"
+    fi
+    ;;
+esac
+exit 0
+EOF
+	chmod +x "${stub_dir}/npm"
+}
+
+write_update_check_fake_bin() {
+	local stub_dir="$1" docker_mode="${2:-ok}"
+	for cmd in bash python3 mktemp rm dirname pwd mkdir grep tee date tr chmod head sed make; do
+		ln -sf "$(command -v "$cmd")" "${stub_dir}/${cmd}"
+	done
+	cat >"${stub_dir}/node" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "v24.11.1";; *) exit 0;; esac
+EOF
+	cat >"${stub_dir}/docker" <<EOF
+#!/usr/bin/env bash
+case "\$1" in
+  version)
+    [[ "${docker_mode}" == "down" ]] && exit 1
+    exit 0
+    ;;
+  ps|port|inspect) exit 0 ;;
+  pull|run) echo "unexpected mutation: docker \$*" >&2; exit 77 ;;
+  *) exit 0 ;;
+esac
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/docker"
+}
+
 @test "run_step preserves real exit codes and logs stderr for missing commands" {
 	local script="${TEST_TEMP_DIR}/run-step-check.sh"
 	cat >"$script" <<EOF
@@ -445,6 +574,178 @@ EOF
 	grep -q $'osv-scanner\t2.3.8\t2.3.8\tunchanged' "${TEST_TEMP_DIR}/normalize-snapshot.tsv"
 }
 
+@test "pnpm missing converges through user-space Corepack with clean snapshot" {
+	local fake_home="${TEST_TEMP_DIR}/home-pnpm-corepack"
+	local stub_dir="${TEST_TEMP_DIR}/pnpm-corepack-bin"
+	local script="${TEST_TEMP_DIR}/pnpm-corepack.sh"
+	mkdir -p "$fake_home" "$stub_dir"
+	write_pnpm_fake_npm "$stub_dir"
+	write_pnpm_update_runner "$script" "$fake_home" "$stub_dir"
+	run env PNPM_TEST_COREPACK_VERSION="11.4.0" PNPM_TEST_COREPACK_LOG="${TEST_TEMP_DIR}/corepack.log" PNPM_TEST_COREPACK_DIR_FILE="${TEST_TEMP_DIR}/corepack-dir" PNPM_TEST_FALLBACK_LOG="${TEST_TEMP_DIR}/fallback.log" "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q 'prepare pnpm@latest-11 --activate' "${TEST_TEMP_DIR}/corepack.log"
+	grep -q -- "--install-directory ${fake_home}/.npm-global/bin" "${TEST_TEMP_DIR}/corepack.log"
+	grep -q $'pnpm\t\t11.4.0\tinstalled' "${TEST_TEMP_DIR}/run-pnpm/tool-snapshot.tsv"
+	grep -q $'INFO\tWSL\tpnpm method\tcorepack' "${TEST_TEMP_DIR}/run-pnpm/wsl-results.tsv"
+	[[ ! -s "${TEST_TEMP_DIR}/fallback.log" ]]
+}
+
+@test "pnpm existing but broken is not considered valid" {
+	local fake_home="${TEST_TEMP_DIR}/home-pnpm-broken"
+	local stub_dir="${TEST_TEMP_DIR}/pnpm-broken-bin"
+	local script="${TEST_TEMP_DIR}/pnpm-broken.sh"
+	mkdir -p "$fake_home" "$stub_dir"
+	cat >"${stub_dir}/pnpm" <<'EOF'
+#!/usr/bin/env bash
+exit 42
+EOF
+	chmod +x "${stub_dir}/pnpm"
+	write_pnpm_fake_npm "$stub_dir"
+	write_pnpm_update_runner "$script" "$fake_home" "$stub_dir"
+	run env PNPM_TEST_COREPACK_VERSION="11.4.1" PNPM_TEST_COREPACK_LOG="${TEST_TEMP_DIR}/corepack-broken.log" PNPM_TEST_COREPACK_DIR_FILE="${TEST_TEMP_DIR}/corepack-broken-dir" PNPM_TEST_FALLBACK_LOG="${TEST_TEMP_DIR}/fallback-broken.log" "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q $'pnpm\t\t11.4.1\tinstalled' "${TEST_TEMP_DIR}/run-pnpm/tool-snapshot.tsv"
+	grep -q $'INFO\tWSL\tpnpm method\tcorepack' "${TEST_TEMP_DIR}/run-pnpm/wsl-results.tsv"
+}
+
+@test "pnpm major 10 is converged to major 11" {
+	local fake_home="${TEST_TEMP_DIR}/home-pnpm-major10"
+	local stub_dir="${TEST_TEMP_DIR}/pnpm-major10-bin"
+	local script="${TEST_TEMP_DIR}/pnpm-major10.sh"
+	mkdir -p "$fake_home" "$stub_dir"
+	cat >"${stub_dir}/pnpm" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "10.9.0";; *) exit 0;; esac
+EOF
+	chmod +x "${stub_dir}/pnpm"
+	write_pnpm_fake_npm "$stub_dir"
+	write_pnpm_update_runner "$script" "$fake_home" "$stub_dir"
+	run env PNPM_TEST_COREPACK_VERSION="11.4.2" PNPM_TEST_COREPACK_LOG="${TEST_TEMP_DIR}/corepack-major10.log" PNPM_TEST_COREPACK_DIR_FILE="${TEST_TEMP_DIR}/corepack-major10-dir" PNPM_TEST_FALLBACK_LOG="${TEST_TEMP_DIR}/fallback-major10.log" "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q $'pnpm\t10.9.0\t11.4.2\tupdated' "${TEST_TEMP_DIR}/run-pnpm/tool-snapshot.tsv"
+	grep -q 'prepare pnpm@latest-11 --activate' "${TEST_TEMP_DIR}/corepack-major10.log"
+}
+
+@test "pnpm major 11 still runs update policy through user-space Corepack" {
+	local fake_home="${TEST_TEMP_DIR}/home-pnpm-major11"
+	local stub_dir="${TEST_TEMP_DIR}/pnpm-major11-bin"
+	local script="${TEST_TEMP_DIR}/pnpm-major11.sh"
+	mkdir -p "$fake_home" "$stub_dir"
+	cat >"${stub_dir}/pnpm" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "11.2.0";; *) exit 0;; esac
+EOF
+	chmod +x "${stub_dir}/pnpm"
+	write_pnpm_fake_npm "$stub_dir"
+	write_pnpm_update_runner "$script" "$fake_home" "$stub_dir"
+	run env PNPM_TEST_COREPACK_VERSION="11.5.0" PNPM_TEST_COREPACK_LOG="${TEST_TEMP_DIR}/corepack-major11.log" PNPM_TEST_COREPACK_DIR_FILE="${TEST_TEMP_DIR}/corepack-major11-dir" PNPM_TEST_FALLBACK_LOG="${TEST_TEMP_DIR}/fallback-major11.log" "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q $'pnpm\t11.2.0\t11.5.0\tupdated' "${TEST_TEMP_DIR}/run-pnpm/tool-snapshot.tsv"
+	grep -q 'prepare pnpm@latest-11 --activate' "${TEST_TEMP_DIR}/corepack-major11.log"
+}
+
+@test "pnpm uses updated user-space Corepack instead of system Corepack" {
+	local fake_home="${TEST_TEMP_DIR}/home-pnpm-user-corepack"
+	local stub_dir="${TEST_TEMP_DIR}/pnpm-user-corepack-bin"
+	local script="${TEST_TEMP_DIR}/pnpm-user-corepack.sh"
+	mkdir -p "$fake_home" "$stub_dir"
+	cat >"${stub_dir}/corepack" <<'EOF'
+#!/usr/bin/env bash
+echo "system corepack should not run" >&2
+exit 93
+EOF
+	chmod +x "${stub_dir}/corepack"
+	write_pnpm_fake_npm "$stub_dir"
+	write_pnpm_update_runner "$script" "$fake_home" "$stub_dir"
+	run env PNPM_TEST_COREPACK_VERSION="11.6.0" PNPM_TEST_COREPACK_LOG="${TEST_TEMP_DIR}/corepack-user.log" PNPM_TEST_COREPACK_DIR_FILE="${TEST_TEMP_DIR}/corepack-user-dir" PNPM_TEST_FALLBACK_LOG="${TEST_TEMP_DIR}/fallback-user.log" "$script"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" != *"system corepack should not run"* ]]
+	grep -q $'pnpm\t\t11.6.0\tinstalled' "${TEST_TEMP_DIR}/run-pnpm/tool-snapshot.tsv"
+}
+
+@test "pnpm respects NPM_CONFIG_PREFIX before DOTFILES_NPM_PREFIX" {
+	local fake_home="${TEST_TEMP_DIR}/home-pnpm-prefix-precedence"
+	local stub_dir="${TEST_TEMP_DIR}/pnpm-prefix-precedence-bin"
+	local script="${TEST_TEMP_DIR}/pnpm-prefix-precedence.sh"
+	local npm_prefix="${TEST_TEMP_DIR}/npm-prefix"
+	local dotfiles_prefix="${TEST_TEMP_DIR}/dotfiles-prefix"
+	mkdir -p "$fake_home" "$stub_dir" "$npm_prefix" "$dotfiles_prefix"
+	write_pnpm_fake_npm "$stub_dir"
+	write_pnpm_update_runner "$script" "$fake_home" "$stub_dir"
+	run env PNPM_TEST_KEEP_PREFIX_ENV=1 NPM_CONFIG_PREFIX="$npm_prefix" DOTFILES_NPM_PREFIX="$dotfiles_prefix" PNPM_TEST_COREPACK_VERSION="11.6.1" PNPM_TEST_COREPACK_LOG="${TEST_TEMP_DIR}/corepack-prefix-precedence.log" PNPM_TEST_COREPACK_DIR_FILE="${TEST_TEMP_DIR}/corepack-prefix-precedence-dir" PNPM_TEST_FALLBACK_LOG="${TEST_TEMP_DIR}/fallback-prefix-precedence.log" "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q -- "--install-directory ${npm_prefix}/bin" "${TEST_TEMP_DIR}/corepack-prefix-precedence.log"
+	[[ -x "${npm_prefix}/bin/corepack" ]]
+	[[ ! -e "${dotfiles_prefix}/bin/corepack" ]]
+}
+
+@test "pnpm respects DOTFILES_NPM_PREFIX when NPM_CONFIG_PREFIX is absent" {
+	local fake_home="${TEST_TEMP_DIR}/home-pnpm-dotfiles-prefix"
+	local stub_dir="${TEST_TEMP_DIR}/pnpm-dotfiles-prefix-bin"
+	local script="${TEST_TEMP_DIR}/pnpm-dotfiles-prefix.sh"
+	local dotfiles_prefix="${TEST_TEMP_DIR}/dotfiles-prefix-only"
+	mkdir -p "$fake_home" "$stub_dir" "$dotfiles_prefix"
+	write_pnpm_fake_npm "$stub_dir"
+	write_pnpm_update_runner "$script" "$fake_home" "$stub_dir"
+	run env -u NPM_CONFIG_PREFIX PNPM_TEST_KEEP_PREFIX_ENV=1 DOTFILES_NPM_PREFIX="$dotfiles_prefix" PNPM_TEST_COREPACK_VERSION="11.6.2" PNPM_TEST_COREPACK_LOG="${TEST_TEMP_DIR}/corepack-dotfiles-prefix.log" PNPM_TEST_COREPACK_DIR_FILE="${TEST_TEMP_DIR}/corepack-dotfiles-prefix-dir" PNPM_TEST_FALLBACK_LOG="${TEST_TEMP_DIR}/fallback-dotfiles-prefix.log" "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q -- "--install-directory ${dotfiles_prefix}/bin" "${TEST_TEMP_DIR}/corepack-dotfiles-prefix.log"
+}
+
+@test "pnpm uses npm config user-space prefix when it is explicit and writable" {
+	local fake_home="${TEST_TEMP_DIR}/home-pnpm-npm-config-prefix"
+	local stub_dir="${TEST_TEMP_DIR}/pnpm-npm-config-prefix-bin"
+	local script="${TEST_TEMP_DIR}/pnpm-npm-config-prefix.sh"
+	local npm_config_prefix="${TEST_TEMP_DIR}/npm-config-prefix"
+	mkdir -p "$fake_home" "$stub_dir" "$npm_config_prefix"
+	write_pnpm_fake_npm "$stub_dir"
+	write_pnpm_update_runner "$script" "$fake_home" "$stub_dir"
+	run env PNPM_TEST_NPM_PREFIX_REPLY="$npm_config_prefix" PNPM_TEST_COREPACK_VERSION="11.6.3" PNPM_TEST_COREPACK_LOG="${TEST_TEMP_DIR}/corepack-npm-config-prefix.log" PNPM_TEST_COREPACK_DIR_FILE="${TEST_TEMP_DIR}/corepack-npm-config-prefix-dir" PNPM_TEST_FALLBACK_LOG="${TEST_TEMP_DIR}/fallback-npm-config-prefix.log" "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q -- "--install-directory ${npm_config_prefix}/bin" "${TEST_TEMP_DIR}/corepack-npm-config-prefix.log"
+}
+
+@test "pnpm falls back to npm major 11 when Corepack validation fails" {
+	local fake_home="${TEST_TEMP_DIR}/home-pnpm-fallback"
+	local stub_dir="${TEST_TEMP_DIR}/pnpm-fallback-bin"
+	local script="${TEST_TEMP_DIR}/pnpm-fallback.sh"
+	mkdir -p "$fake_home" "$stub_dir"
+	write_pnpm_fake_npm "$stub_dir"
+	write_pnpm_update_runner "$script" "$fake_home" "$stub_dir"
+	run env PNPM_TEST_COREPACK_LOG="${TEST_TEMP_DIR}/corepack-fallback.log" PNPM_TEST_COREPACK_DIR_FILE="${TEST_TEMP_DIR}/corepack-fallback-dir" PNPM_TEST_FALLBACK_LOG="${TEST_TEMP_DIR}/fallback-fallback.log" PNPM_TEST_FALLBACK_VERSION="11.7.0" "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q 'pnpm@^11' "${TEST_TEMP_DIR}/fallback-fallback.log"
+	grep -q $'pnpm\t\t11.7.0\tinstalled' "${TEST_TEMP_DIR}/run-pnpm/tool-snapshot.tsv"
+	grep -q $'WARN\tWSL\tpnpm Corepack\tCorepack did not produce a functional pnpm 11; falling back to npm global' "${TEST_TEMP_DIR}/run-pnpm/wsl-results.tsv"
+	grep -q $'WARN\tWSL\tpnpm method\tnpm-global fallback after Corepack validation failed' "${TEST_TEMP_DIR}/run-pnpm/wsl-results.tsv"
+}
+
+@test "pnpm records failure when Corepack and npm fallback both fail" {
+	local fake_home="${TEST_TEMP_DIR}/home-pnpm-fail"
+	local stub_dir="${TEST_TEMP_DIR}/pnpm-fail-bin"
+	local script="${TEST_TEMP_DIR}/pnpm-fail.sh"
+	mkdir -p "$fake_home" "$stub_dir"
+	write_pnpm_fake_npm "$stub_dir"
+	write_pnpm_update_runner "$script" "$fake_home" "$stub_dir"
+	run env PNPM_TEST_COREPACK_LOG="${TEST_TEMP_DIR}/corepack-fail.log" PNPM_TEST_COREPACK_DIR_FILE="${TEST_TEMP_DIR}/corepack-fail-dir" PNPM_TEST_FALLBACK_LOG="${TEST_TEMP_DIR}/fallback-fail.log" PNPM_TEST_FALLBACK_EXIT=42 "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q $'FAIL\tWSL\tpnpm fallback\texit 42' "${TEST_TEMP_DIR}/run-pnpm/wsl-results.tsv"
+	grep -q $'FAIL\tWSL\tpnpm\tfallback npm install did not produce a functional pnpm 11' "${TEST_TEMP_DIR}/run-pnpm/wsl-results.tsv"
+}
+
+@test "pnpm removes broken shim created by Corepack flow before fallback" {
+	local fake_home="${TEST_TEMP_DIR}/home-pnpm-cleanup"
+	local stub_dir="${TEST_TEMP_DIR}/pnpm-cleanup-bin"
+	local script="${TEST_TEMP_DIR}/pnpm-cleanup.sh"
+	mkdir -p "$fake_home" "$stub_dir"
+	write_pnpm_fake_npm "$stub_dir"
+	write_pnpm_update_runner "$script" "$fake_home" "$stub_dir"
+	run env PNPM_TEST_COREPACK_BROKEN_SHIM=1 PNPM_TEST_COREPACK_LOG="${TEST_TEMP_DIR}/corepack-cleanup.log" PNPM_TEST_COREPACK_DIR_FILE="${TEST_TEMP_DIR}/corepack-cleanup-dir" PNPM_TEST_FALLBACK_LOG="${TEST_TEMP_DIR}/fallback-cleanup.log" PNPM_TEST_FALLBACK_VERSION="11.8.0" "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q $'pnpm\t\t11.8.0\tinstalled' "${TEST_TEMP_DIR}/run-pnpm/tool-snapshot.tsv"
+	"${fake_home}/.npm-global/bin/pnpm" --version | grep -q '^11.8.0$'
+}
+
 @test "concise summary deduplicates Pandoc incident and keeps log reference" {
 	local windows="${TEST_TEMP_DIR}/windows-pandoc.tsv"
 	local wsl="${TEST_TEMP_DIR}/wsl-pandoc.tsv"
@@ -534,6 +835,14 @@ if [[ "\$1" == "install" && "\$*" == *"gitnexus@latest"* ]]; then
   cat >"${npm_prefix}/lib/node_modules/gitnexus/package.json" <<'PKG'
 {"name":"gitnexus","version":"1.6.6"}
 PKG
+fi
+if [[ "\$1" == "install" && "\$*" == *"corepack@latest"* ]]; then
+  cat >"${npm_prefix}/bin/corepack" <<'COREPACK'
+#!/usr/bin/env bash
+echo "corepack $*"
+exit 0
+COREPACK
+  chmod +x "${npm_prefix}/bin/corepack"
 fi
 echo "npm install \$*"
 exit 0
@@ -1065,8 +1374,14 @@ PY
 @test "PowerShell Windows logging keeps WSL and WinGet encoding contracts explicit" {
 	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
 	grep -q 'Run-NativeLogged "WinGet packages".*"utf8"' "$ps1"
+	grep -q '\$winGetListName = "WinGet packages to upgrade"' "$ps1"
+	grep -q 'Run-NativeLogged \$winGetListName.*"windows-winget-list.log".*"utf8" \$false \$false' "$ps1"
 	grep -q 'Run-NativeLogged "WSL status".*"unicode"' "$ps1"
 	grep -q 'Run-NativeLogged "WSL update".*"unicode"' "$ps1"
+	grep -q -- '--disable-interactivity' "$ps1"
+	grep -q 'Full WinGet upgrade log:' "$ps1"
+	grep -q 'Get-WinGetConsoleText' "$ps1"
+	grep -q 'Write-WinGetListStatus \$winGetListName' "$ps1"
 }
 
 @test "PowerShell native runner passes arguments to child processes" {
@@ -1084,6 +1399,23 @@ PY
 	[[ "$output" == *'quote"inside'* ]]
 	[[ "$output" == *"--status"* ]]
 	[[ "$output" == *"OK native argument self-test passed"* ]]
+}
+
+@test "PowerShell WinGet console filter removes spinner-only lines" {
+	command -v powershell.exe >/dev/null 2>&1 || skip "requires powershell.exe accessible from WSL (Windows interop)"
+	command -v wslpath >/dev/null 2>&1 || skip "requires wslpath to pass repo paths to powershell.exe"
+	run powershell.exe -NoProfile -Command 'exit 0'
+	if [[ "$status" -ne 0 ]]; then
+		skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+	fi
+	run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "${DOTFILES_DIR}/scripts/update/update-windows.ps1")" -SelfTestWinGetConsoleText
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Pandoc"* ]]
+	[[ "$output" == *"OK WinGet console text self-test passed"* ]]
+	[[ "$output" != *$'\n-\n'* ]]
+	[[ "$output" != *$'\n\\\n'* ]]
+	[[ "$output" != *$'\n|\n'* ]]
+	[[ "$output" != *$'\n/\n'* ]]
 }
 
 @test "PowerShell native argument serializer avoids reserved Args parameter" {
@@ -1134,7 +1466,8 @@ PY
 	make_node_stub "$stub_dir" "v24.15.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Pandoc failed with installer exit code 1603"* ]]
+	[[ "${output}" != *"Pandoc failed with installer exit code 1603"* ]]
+	[[ "${output}" == *"Windows update opened in separate PowerShell window; see that window for Windows results."* ]]
 	[[ "${output}" != *"Personal projects are not part of make update"* ]]
 	[[ -f "${TEST_TEMP_DIR}/run/windows-results.tsv" ]]
 	[[ -f "${TEST_TEMP_DIR}/run/wsl-results.tsv" ]]
@@ -1149,6 +1482,7 @@ PY
 	[[ "${output}" != *"WSL update: mocked wsl --update"* ]]
 	[[ "${output}" != *"Pandoc failed"* ]]
 	[[ "${output}" != *"Waiting for Windows update result"* ]]
+	[[ "${output}" != *"Windows / Windows result"* ]]
 	[[ "${output}" != *"> Services"* ]]
 	[[ "${output}" != *"> Update summary"* ]]
 	[[ "${output}" == *"=== Update summary ="* ]]
@@ -1161,10 +1495,10 @@ PY
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=winget-fallback-with-parseable-log DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-winget-details" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" != *"WinGet packages: exit -1978335188"* ]]
-	[[ "${output}" == *"Windows / WinGet / Pandoc: upgrade failed with code 1603"* ]]
+	[[ "${output}" != *"Windows / WinGet / Pandoc: upgrade failed with code 1603"* ]]
 	[[ "${output}" != *"WinGet package Microsoft Teams [Microsoft.Teams]: updated successfully"* ]]
 	[[ "${output}" != *"could not parse package-level results"* ]]
-	[[ "${output}" == *"Completed with 1 incident: Windows / WinGet / Pandoc."* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 }
 
 @test "make update mock surfaces WinGet package failure without aborting WSL" {
@@ -1172,11 +1506,14 @@ PY
 	make_node_stub "$stub_dir" "v20.18.2"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=winget-failure DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-winget" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Windows / WinGet: Pandoc failed with installer exit code 1603"* ]]
+	[[ "${output}" != *"Windows / WinGet: Pandoc failed with installer exit code 1603"* ]]
 	[[ "${output}" != *"WSL update: mocked wsl --update"* ]]
-	[[ "${output}" == *"Node v20.18.2 is below required >=22"* ]]
-	[[ "${output}" == *"GitNexus: skipped because Node runtime is incompatible"* ]]
-	[[ "${output}" == *"Completed with 3 incidents"* ]]
+	[[ "${output}" == *"Node runtime for managed tools: switched from v20.18.2"* ]]
+	[[ "${output}" != *"GitNexus: skipped because Node runtime is incompatible"* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
+	[[ "$(grep -c $'INFO\tWSL\tNode runtime for managed tools\t' "${TEST_TEMP_DIR}/run-winget/wsl-results.tsv")" -eq 1 ]]
+	! grep -q $'FAIL\tWSL\tNode\t' "${TEST_TEMP_DIR}/run-winget/wsl-results.tsv"
+	! find "${TEST_TEMP_DIR}/run-winget" -maxdepth 1 -type d -name 'node-runtime.*' -print | grep -q .
 }
 
 @test "make update mock surfaces wsl --update failure and never uses shutdown" {
@@ -1184,31 +1521,33 @@ PY
 	make_node_stub "$stub_dir" "v24.15.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=wsl-failure DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-wsl-fail" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Windows / WSL update: wsl --update failed with exit 1"* ]]
-	[[ "${output}" == *"Completed with 1 incident: Windows / WSL update."* ]]
+	[[ "${output}" != *"Windows / WSL update: wsl --update failed with exit 1"* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 	run grep -Eq 'Run-Logged.*wsl --shutdown|^[[:space:]]*wsl --shutdown' "${DOTFILES_DIR}/scripts/update"/*.sh "${DOTFILES_DIR}/scripts/update"/*.ps1
 	[[ "${status}" -ne 0 ]]
 }
 
-@test "make update mock does not wait indefinitely when Windows result is missing" {
+@test "make update mock does not wait for missing Windows result" {
 	local stub_dir="${TEST_TEMP_DIR}/node24-missing"
 	make_node_stub "$stub_dir" "v24.15.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_FORCE_WSL=1 DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=missing-no-done DOTFILES_UPDATE_WINDOWS_TIMEOUT=2 DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-missing" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Waiting for Windows update result... elapsed"* ]]
-	[[ "${output}" == *"No structured Windows result was produced before timeout (2s)"* ]]
-	[[ "${output}" == *"Completed with 1 incident: Windows / Windows result."* ]]
+	[[ "${output}" != *"Waiting for Windows result"* ]]
+	[[ "${output}" != *"Waiting for Windows update result"* ]]
+	[[ "${output}" != *"windows.done before timeout"* ]]
+	[[ "${output}" != *"Windows / Windows result"* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 }
 
-@test "make update reports partial Windows results when done marker is missing" {
+@test "make update ignores partial Windows results while Linux summary closes" {
 	local stub_dir="${TEST_TEMP_DIR}/node24-partial"
 	make_node_stub "$stub_dir" "v24.15.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_FORCE_WSL=1 DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=partial-no-done DOTFILES_UPDATE_WINDOWS_TIMEOUT=2 DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-partial" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" != *"WinGet sources: mocked partial result before hang"* ]]
 	[[ "${output}" != *"WinGet packages: mocked partial result before hang"* ]]
-	[[ "${output}" == *"Windows update did not write windows.done before timeout (2s); using partial results"* ]]
-	[[ "${output}" == *"Completed with 1 incident: Windows / Windows result."* ]]
+	[[ "${output}" != *"Windows update did not write windows.done before timeout"* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 }
 
 @test "make update mock consolidates multiple Windows incidents" {
@@ -1216,11 +1555,9 @@ PY
 	make_node_stub "$stub_dir" "v24.15.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=multi-failure DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-multi" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Windows / WinGet: Pandoc failed with installer exit code 1603"* ]]
-	[[ "${output}" == *"Windows / WSL update: wsl --update failed with exit 1"* ]]
-	[[ "${output}" == *"Completed with 2 incidents:"* ]]
-	[[ "${output}" == *"Windows / WinGet"* ]]
-	[[ "${output}" == *"Windows / WSL update"* ]]
+	[[ "${output}" != *"Windows / WinGet: Pandoc failed with installer exit code 1603"* ]]
+	[[ "${output}" != *"Windows / WSL update: wsl --update failed with exit 1"* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 }
 
 @test "update run retention preserves current and recent runs while removing old overflow" {
@@ -1247,13 +1584,13 @@ EOF
 	[[ "$output" == *"Removed"* ]]
 }
 
-@test "update-check warns on Node 20 and prints install action" {
+@test "update-check reports recoverable Node 20 shadowing" {
 	local stub_dir="${TEST_TEMP_DIR}/node20-check"
 	make_node_stub "$stub_dir" "v20.18.2"
 	run env PATH="${stub_dir}:/usr/bin:/bin" "${DOTFILES_DIR}/scripts/update/update-check.sh"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Node v20.18.2 is below required >=22 for GitNexus"* ]]
-	[[ "${output}" == *"Ejecuta: make install-node-stack"* ]]
+	[[ "${output}" == *"Node.js effective runtime is below required >=22: v20.18.2 (${stub_dir}/node, unknown-shadowing)"* ]]
+	[[ "${output}" == *"Managed compatible runtime available for update tools"* ]]
 }
 
 @test "update-check accepts Node 22 and Node 24" {
@@ -1261,22 +1598,73 @@ EOF
 	make_node_stub "$stub_dir" "v22.12.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" "${DOTFILES_DIR}/scripts/update/update-check.sh"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Node v22.12.0 satisfies >=22"* ]]
+	[[ "${output}" == *"Node.js effective runtime: v22.12.0 (${stub_dir}/node)"* ]]
 
 	local stub_dir24="${TEST_TEMP_DIR}/node24-check"
 	make_node_stub "$stub_dir24" "v24.11.1"
 	run env PATH="${stub_dir24}:/usr/bin:/bin" "${DOTFILES_DIR}/scripts/update/update-check.sh"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Node v24.11.1 satisfies >=22"* ]]
+	[[ "${output}" == *"Node.js effective runtime: v24.11.1 (${stub_dir24}/node)"* ]]
 }
 
-@test "update-wsl does not declare GitNexus success under Node 20" {
+@test "update-check ignores Docker Desktop helper for unrelated registry" {
+	local fake_home="${TEST_TEMP_DIR}/home-update-check-unrelated"
+	local stub_dir="${TEST_TEMP_DIR}/update-check-unrelated-bin"
+	local docker_config="${TEST_TEMP_DIR}/update-check-unrelated-docker"
+	mkdir -p "$fake_home" "$stub_dir" "$docker_config"
+	write_update_check_fake_bin "$stub_dir" ok
+	cat >"${docker_config}/config.json" <<'EOF'
+{"credHelpers":{"registry.example.com":"desktop.exe"}}
+EOF
+	local before
+	before="$(<"${docker_config}/config.json")"
+	run env HOME="$fake_home" PATH="$stub_dir" DOTFILES_FORCE_WSL=1 DOCKER_CONFIG="$docker_config" bash "${DOTFILES_DIR}/scripts/update/update-check.sh"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Docker config has no credential helper requirement for requested images"* ]]
+	[[ "$output" != *"make install-docker-desktop-helper"* ]]
+	[[ ! -e "${fake_home}/.local/bin/docker-credential-desktop.exe" ]]
+	[[ "$(<"${docker_config}/config.json")" == "$before" ]]
+}
+
+@test "update-check reports missing helper for Excalidraw registry" {
+	local fake_home="${TEST_TEMP_DIR}/home-update-check-ghcr"
+	local stub_dir="${TEST_TEMP_DIR}/update-check-ghcr-bin"
+	local docker_config="${TEST_TEMP_DIR}/update-check-ghcr-docker"
+	mkdir -p "$fake_home" "$stub_dir" "$docker_config"
+	write_update_check_fake_bin "$stub_dir" ok
+	cat >"${docker_config}/config.json" <<'EOF'
+{"credHelpers":{"ghcr.io":"desktop.exe"}}
+EOF
+	run env HOME="$fake_home" PATH="$stub_dir" DOTFILES_FORCE_WSL=1 DOCKER_CONFIG="$docker_config" bash "${DOTFILES_DIR}/scripts/update/update-check.sh"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"docker-credential-desktop.exe"* ]]
+	[[ "$output" == *"make install-docker-desktop-helper"* ]]
+}
+
+@test "update-check defers credential helper warning when Docker daemon is down" {
+	local fake_home="${TEST_TEMP_DIR}/home-update-check-daemon"
+	local stub_dir="${TEST_TEMP_DIR}/update-check-daemon-bin"
+	local docker_config="${TEST_TEMP_DIR}/update-check-daemon-docker"
+	mkdir -p "$fake_home" "$stub_dir" "$docker_config"
+	write_update_check_fake_bin "$stub_dir" down
+	cat >"${docker_config}/config.json" <<'EOF'
+{"credHelpers":{"ghcr.io":"desktop.exe"}}
+EOF
+	run env HOME="$fake_home" PATH="$stub_dir" DOTFILES_FORCE_WSL=1 DOCKER_CONFIG="$docker_config" bash "${DOTFILES_DIR}/scripts/update/update-check.sh"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Docker daemon does not respond"* ]]
+	[[ "$output" == *"Docker does not respond"* ]]
+	[[ "$output" != *"make install-docker-desktop-helper"* ]]
+}
+
+@test "update-wsl recovers managed tools under Node 20 shadowing" {
 	local stub_dir="${TEST_TEMP_DIR}/node20-wsl"
 	make_node_stub "$stub_dir" "v20.18.2"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-node20" "${DOTFILES_DIR}/scripts/update/update-wsl.sh" --section tools
 	[[ "${status}" -eq 0 ]]
-	grep -q 'Node v20.18.2 is below required >=22' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
-	grep -q 'GitNexus.*skipped because Node runtime is incompatible' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
+	grep -q $'INFO\tWSL\tNode runtime for managed tools\tswitched from v20.18.2' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
+	! grep -q $'FAIL\tWSL\tNode\t' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
+	! grep -q 'GitNexus.*skipped because Node runtime is incompatible' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
 	! grep -q 'GitNexus.*usable' "${TEST_TEMP_DIR}/run-node20/wsl-results.tsv"
 }
 
