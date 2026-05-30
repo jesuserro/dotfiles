@@ -8,6 +8,3 @@ tmux select-pane -t 1
 tmux -2 attach-session -d
 
 # Borrar todo: pkill -f tmux
-
-
- 

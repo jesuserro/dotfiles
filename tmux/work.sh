@@ -2,7 +2,6 @@
 
 source ~/dotfiles/tmux/common/header.sh
 
-
 # Total screen
 tmux rename-window "One"
 
@@ -24,11 +23,7 @@ tmux split-window -v -p 35 && sleep $tiempo # Crea t2
 # Ofertas
 # tmux new-window -t 5 -n 'Ofertas'
 # tmux send -t $session:Ofertas "cd /var/www/ofertas.cdrst.local" ENTER
-# tmux split-window -v -p 35 && sleep $tiempo 
+# tmux split-window -v -p 35 && sleep $tiempo
 # tmux send-keys -t 5 'ssh -oHostKeyAlgorithms=+ssh-dss jesus@89.17.208.189' C-m && sleep $tiempo
 
-
 source ~/dotfiles/tmux/common/footer.sh
-
-
- 

@@ -6,13 +6,13 @@
 set -euo pipefail
 
 _resolve_dotfiles_root() {
-    if [[ -n "${MCP_DOTFILES_ROOT:-}" ]]; then
-        printf '%s\n' "${MCP_DOTFILES_ROOT}"
-        return 0
-    fi
-    local script_dir
-    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-    printf '%s\n' "${script_dir}"
+	if [[ -n "${MCP_DOTFILES_ROOT:-}" ]]; then
+		printf '%s\n' "${MCP_DOTFILES_ROOT}"
+		return 0
+	fi
+	local script_dir
+	script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+	printf '%s\n' "${script_dir}"
 }
 
 _HOME="${HOME:-$(eval echo ~)}"
@@ -20,46 +20,46 @@ _DOTFILES_ROOT="$(_resolve_dotfiles_root)"
 _OBSIDIAN_VAULT="${MCP_OBSIDIAN_VAULT_PATH:-/mnt/c/Users/jesus/Documents/vault_trabajo}"
 
 ALLOWED_ROOTS=(
-    "${_DOTFILES_ROOT}"
-    "${_HOME}/proyectos"
-    "${_HOME}/.config"
-    "${_OBSIDIAN_VAULT}"
+	"${_DOTFILES_ROOT}"
+	"${_HOME}/proyectos"
+	"${_HOME}/.config"
+	"${_OBSIDIAN_VAULT}"
 )
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-    echo "MCP Filesystem Launcher"
-    echo ""
-    echo "Usage: $0 [additional_paths...]"
-    echo ""
-    echo "Allowed roots (always included):"
-    for root in "${ALLOWED_ROOTS[@]}"; do
-        echo "  - $root"
-    done
-    exit 0
+	echo "MCP Filesystem Launcher"
+	echo ""
+	echo "Usage: $0 [additional_paths...]"
+	echo ""
+	echo "Allowed roots (always included):"
+	for root in "${ALLOWED_ROOTS[@]}"; do
+		echo "  - $root"
+	done
+	exit 0
 fi
 
 ALL_PATHS=("${ALLOWED_ROOTS[@]}")
 
 for arg in "$@"; do
-    abs_path=$(realpath -L "$arg" 2>/dev/null) || true
-    if [[ -z "$abs_path" ]]; then
-        echo "WARNING: Cannot resolve path '$arg' - not adding to allowed paths" >&2
-        continue
-    fi
-    is_allowed=false
-    for root in "${ALLOWED_ROOTS[@]}"; do
-        if [[ "$abs_path" == "$root" || "$abs_path" == "$root"/* ]]; then
-            is_allowed=true
-            break
-        fi
-    done
-    if [[ "$is_allowed" == true ]]; then
-        if [[ ! " ${ALL_PATHS[*]} " =~ " ${abs_path} " ]]; then
-            ALL_PATHS+=("$abs_path")
-        fi
-    else
-        echo "WARNING: Path '$abs_path' (from '$arg') is not within allowed roots, ignoring" >&2
-    fi
+	abs_path=$(realpath -L "$arg" 2>/dev/null) || true
+	if [[ -z "$abs_path" ]]; then
+		echo "WARNING: Cannot resolve path '$arg' - not adding to allowed paths" >&2
+		continue
+	fi
+	is_allowed=false
+	for root in "${ALLOWED_ROOTS[@]}"; do
+		if [[ "$abs_path" == "$root" || "$abs_path" == "$root"/* ]]; then
+			is_allowed=true
+			break
+		fi
+	done
+	if [[ "$is_allowed" == true ]]; then
+		if [[ ! " ${ALL_PATHS[*]} " =~ " ${abs_path} " ]]; then
+			ALL_PATHS+=("$abs_path")
+		fi
+	else
+		echo "WARNING: Path '$abs_path' (from '$arg') is not within allowed roots, ignoring" >&2
+	fi
 done
 
 exec npx -y "@modelcontextprotocol/server-filesystem" "${ALL_PATHS[@]}"
