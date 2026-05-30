@@ -36,6 +36,11 @@ Canonical knowledge for “how we build” lives in the **project repo** and **v
 
 If several apply, follow the pipeline order in section 7 unless the user narrows scope.
 
+External fallback skills, such as the opt-in Matt Pocock full catalog documented
+under `ai/assets/external-skills/`, are used only when no local dotfiles skill
+covers the task. If a local skill overlaps with an external one, the local
+skill wins. `make update` does not install or update external skills.
+
 ### Dotfiles operations (this repo)
 
 When the task is **installing**, **updating**, or **troubleshooting** this dotfiles repository (Chezmoi, SOPS, `make update`, MCPs in HOME), use these global skills — not project-local skills:

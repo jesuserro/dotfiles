@@ -22,7 +22,11 @@ ai/
 
 ## Estructura en el sistema
 
-**Fuente canónica**: `ai/assets/skills/` — editar aquí.
+**Fuente canónica local**: `ai/assets/skills/` — editar aquí.
+
+**Fuentes externas opt-in**: `ai/assets/external-skills/` — solo política,
+selección y documentación. No contiene skills vendorizados ni sustituye los
+skills locales.
 
 **Surfaces derivadas**: symlinked via `chezmoi apply`:
 
@@ -37,7 +41,9 @@ ai/
 ~/.codex/skills/            # surface linked to the shared skills hub
 ```
 
-No editar en surfaces. Todos los cambios en `ai/assets/skills/`.
+No editar en surfaces. Todos los cambios de skills locales van en
+`ai/assets/skills/`. Las capas externas fallback se gobiernan desde
+`ai/assets/external-skills/`.
 
 ## Taxonomía visible de skills
 
@@ -58,8 +64,13 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 
 1. Clonar o copiar el skill en `ai/assets/skills/<category>/<skill-name>/`
 2. El skill debe contener `SKILL.md` (formato Cursor/Codex) o equivalente
-3. Si clonas un repo externo: `git clone <url> ai/assets/skills/<category>/<skill-name>` y luego `rm -rf ai/assets/skills/<category>/<skill-name>/.git` para trackear los archivos
-4. Tras `chezmoi apply`, el script `run_after_11_link_ai_assets` publica los skills a cada agente
+3. Tras `chezmoi apply`, el script `run_after_11_link_ai_assets` publica los skills a cada agente
+
+Los skills externos de fallback no se clonan en `ai/assets/skills/`. La capa
+Matt Pocock (catálogo completo) vive documentada en
+`ai/assets/external-skills/mattpocock/` y se instala o actualiza solo con
+`make install-mattpocock-skills` o `make update-ai-skills`. `make update` no la
+ejecuta. En solapes, gana el skill local bajo `ai/assets/skills/`.
 
 ### Skills instalados
 

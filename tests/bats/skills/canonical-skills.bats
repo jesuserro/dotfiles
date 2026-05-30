@@ -50,3 +50,13 @@ teardown() {
 	grep -q 'ai/assets/skills/gitnexus/' "${DOTFILES_DIR}/AGENTS.md"
 	run ! grep -q '\.claude/skills/gitnexus/' "${DOTFILES_DIR}/AGENTS.md"
 }
+
+@test "Matt Pocock skills are documented as external fallback only" {
+	[[ -f "${DOTFILES_DIR}/ai/assets/external-skills/mattpocock/POLICY.md" ]]
+	[[ -f "${DOTFILES_DIR}/ai/assets/external-skills/mattpocock/selected-skills.md" ]]
+	[[ ! -d "${DOTFILES_DIR}/ai/assets/skills/mattpocock" ]]
+	grep -q 'Prefer local dotfiles skills under `ai/assets/skills/`' "${DOTFILES_DIR}/ai/assets/external-skills/mattpocock/POLICY.md"
+	grep -q 'When a local skill and a Matt skill overlap, the local skill wins' "${DOTFILES_DIR}/ai/assets/external-skills/mattpocock/POLICY.md"
+	grep -q 'full `mattpocock/skills` catalog' "${DOTFILES_DIR}/ai/assets/external-skills/mattpocock/selected-skills.md"
+	grep -q 'npx skills add mattpocock/skills -y -g' "${DOTFILES_DIR}/ai/assets/external-skills/mattpocock/selected-skills.md"
+}

@@ -4,9 +4,11 @@ Canonical source of global skills for AI agents.
 
 ## Purpose
 
-This directory contains **global, project-agnostic skills** that apply across multiple projects. Skills here are transversal knowledge: coding conventions, process guidelines, architectural patterns, and technical standards.
+This directory contains **global, project-agnostic local skills** that apply across multiple projects. Skills here are transversal knowledge: coding conventions, process guidelines, architectural patterns, and technical standards.
 
 **This is the single source of truth** for global skills within this dotfiles repository.
+External fallback sources are documented outside this tree, under
+`ai/assets/external-skills/`, and must not be vendored here.
 
 ## Canonical Source
 
@@ -20,6 +22,11 @@ ai/assets/skills/           <- Source of truth (here)
 ```
 
 Do not edit files in surface directories (`dot_config/opencode/skills/`, etc.) directly. Changes belong here.
+
+Do not add `ai/assets/skills/mattpocock/`. Matt Pocock Skills are an opt-in
+external full-catalog fallback documented under
+`ai/assets/external-skills/mattpocock/`; local dotfiles skills always take
+precedence on overlaps.
 
 ## Categories
 

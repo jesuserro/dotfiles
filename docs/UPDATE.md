@@ -11,6 +11,7 @@
 | `make update-wsl` | Ejecuta APT, Node/tooling IA, OpenCode, shell, uv, MCPs e imágenes Docker |
 | `make update-projects` | Actualiza proyectos personales como `~/proyectos/jesuserro` y RenderCV |
 | `make update-check` | Diagnóstico no mutante de requisitos de actualización y MCPs |
+| `make update-ai-skills` | Actualiza manualmente la selección opt-in de skills externos; no forma parte de `make update` |
 | `make install-docker-desktop-helper` | Repara explícitamente los symlinks del credential helper de Docker Desktop en WSL |
 | `make excalidraw-start` | Arranca el canvas Docker de Excalidraw bajo demanda |
 | `make excalidraw-stop` | Detiene el canvas si está activo |
@@ -47,6 +48,23 @@ La política del repo exige Node `>=22`. `make install-node-stack` instala NodeS
 El runtime gestionado por defecto es `/usr/bin/node`, coherente con NodeSource/APT. Puede sobreescribirse con `DOTFILES_MANAGED_NODE_BIN`. La major mínima puede ajustarse con `DOTFILES_NODE_MIN_MAJOR` y el prefijo user-space de npm con `DOTFILES_NPM_PREFIX`.
 
 `make update-check` diagnostica el Node efectivo, el candidato gestionado y si `make update-tools` podrá autorrecuperarse. No crea overlays, no instala Node y no modifica `PATH`, Cursor Server ni ficheros de shell.
+
+## Skills externos opt-in
+
+Matt Pocock Skills es una capa externa de fallback documentada en
+`ai/assets/external-skills/mattpocock/`. La v1 instala el catálogo completo de
+`mattpocock/skills`:
+
+```bash
+make install-mattpocock-skills
+make update-ai-skills
+```
+
+El comando subyacente es `npx skills add mattpocock/skills -y -g`. Tras instalar,
+el script elimina symlinks accidentales de Matt bajo `ai/assets/skills/` (esa ruta
+queda reservada al catálogo local canónico).
+`make update` no ejecuta este flujo. Si existe un skill local equivalente bajo
+`ai/assets/skills/`, gana el skill local.
 
 ## pnpm
 

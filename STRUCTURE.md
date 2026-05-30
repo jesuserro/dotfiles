@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-30 11:25:47
+**Generated:** 2026-05-30 12:58:02
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -608,6 +608,11 @@
 │   │   │   │   └── 📝 COMMAND.md
 │   │   │   ├── 📝 README.md
 │   │   │   └── ⚙️ registry.yaml
+│   │   ├── 📁 external-skills
+│   │   │   └── 📁 mattpocock
+│   │   │       ├── 📝 POLICY.md
+│   │   │       ├── 📝 README.md
+│   │   │       └── 📝 selected-skills.md
 │   │   ├── 📁 mcps
 │   │   │   └── ⚙️ MANIFEST.yaml
 │   │   ├── 📁 prompts
@@ -946,6 +951,7 @@
 │   ├── 📝 git_start_feature.md
 │   ├── 🔧 git_start_feature.sh
 │   ├── 🔧 git_workflow.sh
+│   ├── 🔧 install-agent-skills.sh
 │   ├── 🔧 install-agent-tools.sh
 │   ├── 🔧 install-azure-cli.sh
 │   ├── 🔧 install-check.sh
@@ -1010,6 +1016,7 @@
 │   │   │   ├── 📄 docker-desktop-credentials.bats
 │   │   │   ├── 📄 dry-run-guard.bats
 │   │   │   ├── 📄 excalidraw-docker.bats
+│   │   │   ├── 📄 install-agent-skills.bats
 │   │   │   ├── 📄 install-agent-tools.bats
 │   │   │   ├── 📄 install-azure-cli.bats
 │   │   │   ├── 📄 install-chezmoi.bats
@@ -1025,6 +1032,7 @@
 │   │   │   ├── 📄 update-node-runtime.bats
 │   │   │   └── 📄 update-workflow.bats
 │   │   ├── 📁 zsh
+│   │   │   ├── 📄 gitnexus_aliases.bats
 │   │   │   ├── 📄 p10k_cache_keys.bats
 │   │   │   └── 📄 rc_symlinks.bats
 │   │   └── 📄 git-ai-author.bats

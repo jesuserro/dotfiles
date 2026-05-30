@@ -40,6 +40,7 @@ make install-sops    # descarga sops oficial (getsops/sops v3.9.4) a ~/.local/bi
 make install-uv      # uv (Astral) en ~/.local/bin
 make install-zsh-stack   # Oh My Zsh + Powerlevel10k + plugins (no toca ~/.zshrc)
 make install-fonts   # MesloLGS NF para Powerlevel10k en Linux/WSL (no configura Windows Terminal)
+make install-mattpocock-skills # fallback externo opt-in: catálogo Matt completo
 
 # 5. Configurar la ruta real del vault de Obsidian (no se fuerza por defecto)
 #    Editar ~/.config/chezmoi/chezmoi.toml:

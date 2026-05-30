@@ -27,7 +27,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-fonts install-uv install-sops install-chezmoi install-node-stack install-docker-desktop-helper install-azure-cli install-agent-tools install-mcp-github set-default-shell-zsh ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-fonts install-uv install-sops install-chezmoi install-node-stack install-docker-desktop-helper install-azure-cli install-agent-tools install-mattpocock-skills install-mcp-github set-default-shell-zsh ai-cursor-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -111,6 +111,12 @@ install-azure-cli:
 # checksum verification. Supports DRY_RUN=1.
 install-agent-tools:
 	@bash $(DOTFILES_DIR)/scripts/install-agent-tools.sh $(if $(filter 1 true yes on,$(DRY_RUN)),--dry-run,)
+
+# Optional, opt-in installer for the selected external Matt Pocock Skills
+# fallback layer. v1 installs the full mattpocock/skills catalog. This is
+# intentionally not part of `make install` or `make update`.
+install-mattpocock-skills:
+	@bash $(DOTFILES_DIR)/scripts/install-agent-skills.sh $(if $(filter 1 true yes on,$(DRY_RUN)),--dry-run,)
 
 # Optional, opt-in materializer for the GitHub MCP wrapper at
 # ~/.local/bin/codex-mcp-github. The wrapper sources ~/.secrets/codex.env at

@@ -68,6 +68,11 @@ else
 fi
 
 echo ""
+echo "==> Optional AI skills (guidance only)"
+install_label INFO "Matt Pocock external fallback skills are opt-in: make install-mattpocock-skills"
+install_label INFO "Daily make update does not install or update external skills; use make update-ai-skills manually."
+
+echo ""
 echo "==> Zsh stack (Oh My Zsh / Powerlevel10k / plugins) — detection only"
 ZSH_DIR_PROBE="${ZSH:-${HOME}/.oh-my-zsh}"
 P10K_DIR_PROBE="${ZSH_CUSTOM:-${ZSH_DIR_PROBE}/custom}/themes/powerlevel10k"

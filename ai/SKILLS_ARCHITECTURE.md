@@ -22,21 +22,28 @@ dotfiles/
         ops/
         postgres/
         python/
+      external-skills/     ← EXTERNAL FALLBACK POLICY (no vendored skills)
 ```
 
 **All changes to skills belong here.** Surface directories (symlinked or generated) are derived, not sources.
+External skill policy and selection notes belong in `ai/assets/external-skills/`;
+external skills themselves are not vendored into `ai/assets/skills/`.
 
 ## Source vs Surface
 
 | Path | Role | Edit Here? |
 |------|------|------------|
 | `ai/assets/skills/` | Canonical source | **Yes** |
+| `ai/assets/external-skills/` | External fallback policy and selected-source notes | **Yes, docs only** |
 | `~/.config/ai/skills/` | XDG hub (symlinked) | No |
 | `dot_config/opencode/skills/` | OpenCode surface (symlinked) | No |
 | `~/.cursor/skills-cursor/` | Cursor surface (symlinked) | No |
 | `~/.codex/skills/` | Codex surface (symlinked) | No |
 
 Do not edit files in surface directories. Changes belong in `ai/assets/skills/` and are distributed via `chezmoi apply`.
+Do not place external fallback skills under `ai/assets/skills/`; document them
+under `ai/assets/external-skills/` and install them through explicit opt-in
+targets.
 
 ## Principles
 
@@ -190,15 +197,23 @@ Global skills must not contain secrets. Use:
 
 ## Future Integrations
 
-### Adding External Skills
+### Adding External Skill Sources
 
-External skills can be cloned and tracked:
+External skill sources are documented under `ai/assets/external-skills/`. They
+are fallback layers, not part of the canonical local skill tree.
+
+For Matt Pocock Skills, v1 installs the full `mattpocock/skills` catalog through
+explicit opt-in targets:
 
 ```bash
-cd ~/dotfiles/ai/assets/skills
-git clone <external-repo> <category>/<skill-name>
-rm -rf <category>/<skill-name>/.git
+make install-mattpocock-skills
+make update-ai-skills
 ```
+
+Underlying command: `npx skills add mattpocock/skills -y -g`.
+
+`make update` must not install or update external skills by default. If a local
+dotfiles skill overlaps with an external skill, the local skill wins.
 
 ### Platform-Specific Adapters
 
