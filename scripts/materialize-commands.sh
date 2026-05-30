@@ -10,11 +10,11 @@ REGISTRY_FILE="${DOTFILES_DIR}/ai/assets/commands/registry.yaml"
 HOME_ROOT="${COMMANDS_HOME_ROOT:-${HOME}}"
 MANAGED_MARKER="managed-by: dotfiles-global-commands"
 
-log_info()  { echo "[INFO] $*"; }
+log_info() { echo "[INFO] $*"; }
 log_error() { echo "[ERROR] $*" >&2; }
 
 show_help() {
-    cat <<EOF
+	cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
 
 Materializes build/commands/* into runtime command directories.
@@ -35,39 +35,39 @@ EOF
 }
 
 main() {
-    local skip_generate=false
+	local skip_generate=false
 
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            -h|--help)
-                show_help
-                exit 0
-                ;;
-            --skip-generate)
-                skip_generate=true
-                shift
-                ;;
-            *)
-                log_error "Unknown option: $1"
-                show_help
-                exit 1
-                ;;
-        esac
-    done
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+		-h | --help)
+			show_help
+			exit 0
+			;;
+		--skip-generate)
+			skip_generate=true
+			shift
+			;;
+		*)
+			log_error "Unknown option: $1"
+			show_help
+			exit 1
+			;;
+		esac
+	done
 
-    if [[ "${skip_generate}" != "true" ]]; then
-        log_info "Generating build artifacts"
-        "${SCRIPT_DIR}/generate-commands.sh"
-    fi
+	if [[ "${skip_generate}" != "true" ]]; then
+		log_info "Generating build artifacts"
+		"${SCRIPT_DIR}/generate-commands.sh"
+	fi
 
-    if [[ ! -d "${BUILD_DIR}" ]]; then
-        log_error "Build directory not found: ${BUILD_DIR}"
-        exit 1
-    fi
+	if [[ ! -d "${BUILD_DIR}" ]]; then
+		log_error "Build directory not found: ${BUILD_DIR}"
+		exit 1
+	fi
 
-    log_info "Materializing commands into ${HOME_ROOT}"
+	log_info "Materializing commands into ${HOME_ROOT}"
 
-    python3 - "${REGISTRY_FILE}" "${BUILD_DIR}" "${HOME_ROOT}" "${MANAGED_MARKER}" <<'PYEOF'
+	python3 - "${REGISTRY_FILE}" "${BUILD_DIR}" "${HOME_ROOT}" "${MANAGED_MARKER}" <<'PYEOF'
 import os
 import shutil
 import sys
@@ -136,7 +136,7 @@ for platform, config in platforms.items():
             print(f"[INFO] Removed obsolete managed artifact: {destination}")
 PYEOF
 
-    log_info "Materialization complete"
+	log_info "Materialization complete"
 }
 
 main "$@"

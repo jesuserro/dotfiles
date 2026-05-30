@@ -14,60 +14,60 @@ echo -e "${BLUE}🧪 Probando detección de python3 y make tests...${NC}"
 
 # Verificar python3
 echo -e "${YELLOW}🐍 Verificando python3...${NC}"
-if command -v python3 &> /dev/null; then
-    echo -e "${GREEN}✅ python3 encontrado: $(python3 --version)${NC}"
+if command -v python3 &>/dev/null; then
+	echo -e "${GREEN}✅ python3 encontrado: $(python3 --version)${NC}"
 else
-    echo -e "${RED}❌ python3 no encontrado${NC}"
+	echo -e "${RED}❌ python3 no encontrado${NC}"
 fi
 
 # Verificar python
 echo -e "${YELLOW}🐍 Verificando python...${NC}"
-if command -v python &> /dev/null; then
-    echo -e "${GREEN}✅ python encontrado: $(python --version)${NC}"
+if command -v python &>/dev/null; then
+	echo -e "${GREEN}✅ python encontrado: $(python --version)${NC}"
 else
-    echo -e "${RED}❌ python no encontrado${NC}"
+	echo -e "${RED}❌ python no encontrado${NC}"
 fi
 
 # Verificar make
 echo -e "${YELLOW}🔨 Verificando make...${NC}"
-if command -v make &> /dev/null; then
-    echo -e "${GREEN}✅ make encontrado: $(make --version | head -n1)${NC}"
+if command -v make &>/dev/null; then
+	echo -e "${GREEN}✅ make encontrado: $(make --version | head -n1)${NC}"
 else
-    echo -e "${RED}❌ make no encontrado${NC}"
+	echo -e "${RED}❌ make no encontrado${NC}"
 fi
 
 # Verificar si existe Makefile con targets de test
 echo -e "${YELLOW}📄 Verificando Makefile...${NC}"
 if [ -f "Makefile" ]; then
-    echo -e "${GREEN}✅ Makefile encontrado${NC}"
-    
-    if grep -q "^tests:" Makefile; then
-        echo -e "${GREEN}✅ Target 'tests:' encontrado en Makefile${NC}"
-    else
-        echo -e "${YELLOW}⚠️  Target 'tests:' no encontrado${NC}"
-    fi
-    
-    if grep -q "^test:" Makefile; then
-        echo -e "${GREEN}✅ Target 'test:' encontrado en Makefile${NC}"
-    else
-        echo -e "${YELLOW}⚠️  Target 'test:' no encontrado${NC}"
-    fi
+	echo -e "${GREEN}✅ Makefile encontrado${NC}"
+
+	if grep -q "^tests:" Makefile; then
+		echo -e "${GREEN}✅ Target 'tests:' encontrado en Makefile${NC}"
+	else
+		echo -e "${YELLOW}⚠️  Target 'tests:' no encontrado${NC}"
+	fi
+
+	if grep -q "^test:" Makefile; then
+		echo -e "${GREEN}✅ Target 'test:' encontrado en Makefile${NC}"
+	else
+		echo -e "${YELLOW}⚠️  Target 'test:' no encontrado${NC}"
+	fi
 else
-    echo -e "${YELLOW}⚠️  Makefile no encontrado${NC}"
+	echo -e "${YELLOW}⚠️  Makefile no encontrado${NC}"
 fi
 
 # Verificar archivos de Python
 echo -e "${YELLOW}📄 Verificando archivos de Python...${NC}"
 if [ -f "pyproject.toml" ]; then
-    echo -e "${GREEN}✅ pyproject.toml encontrado${NC}"
+	echo -e "${GREEN}✅ pyproject.toml encontrado${NC}"
 else
-    echo -e "${YELLOW}⚠️  pyproject.toml no encontrado${NC}"
+	echo -e "${YELLOW}⚠️  pyproject.toml no encontrado${NC}"
 fi
 
 if [ -f "requirements.txt" ]; then
-    echo -e "${GREEN}✅ requirements.txt encontrado${NC}"
+	echo -e "${GREEN}✅ requirements.txt encontrado${NC}"
 else
-    echo -e "${YELLOW}⚠️  requirements.txt no encontrado${NC}"
+	echo -e "${YELLOW}⚠️  requirements.txt no encontrado${NC}"
 fi
 
-echo -e "${BLUE}🎉 Verificación completada${NC}" 
+echo -e "${BLUE}🎉 Verificación completada${NC}"

@@ -17,22 +17,22 @@ ADAPTERS_DIR="${DOTFILES_DIR}/ai/adapters"
 BUILD_DIR="${DOTFILES_DIR}/build/commands"
 MANAGED_MARKER="managed-by: dotfiles-global-commands"
 
-log_info()  { echo "[INFO] $*"; }
-log_warn()  { echo "[WARN] $*" >&2; }
+log_info() { echo "[INFO] $*"; }
+log_warn() { echo "[WARN] $*" >&2; }
 log_error() { echo "[ERROR] $*" >&2; }
 
 check_dependencies() {
-    if ! python3 -c "import yaml" 2>/dev/null; then
-        log_error "Python yaml module is required but not installed."
-        exit 1
-    fi
+	if ! python3 -c "import yaml" 2>/dev/null; then
+		log_error "Python yaml module is required but not installed."
+		exit 1
+	fi
 }
 
 list_commands() {
-    log_info "Available commands in registry:"
-    echo ""
+	log_info "Available commands in registry:"
+	echo ""
 
-    python3 - "${REGISTRY_FILE}" <<'PYEOF'
+	python3 - "${REGISTRY_FILE}" <<'PYEOF'
 import sys
 import yaml
 
@@ -45,14 +45,14 @@ for cmd in data.get("commands", []):
     enabled = "enabled" if cmd.get("enabled") else "disabled"
     print(f"  - {cmd_id} [{platforms}] ({enabled})")
 PYEOF
-    echo ""
+	echo ""
 }
 
 generate_commands() {
-    local target_command="${1:-}"
-    local clean_build="${2:-false}"
+	local target_command="${1:-}"
+	local clean_build="${2:-false}"
 
-    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" "${BUILD_DIR}" "${target_command}" "${clean_build}" "${MANAGED_MARKER}" <<'PYEOF'
+	python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" "${BUILD_DIR}" "${target_command}" "${clean_build}" "${MANAGED_MARKER}" <<'PYEOF'
 import os
 import shutil
 import sys
@@ -142,7 +142,7 @@ PYEOF
 }
 
 show_help() {
-    cat <<EOF
+	cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
 
 Generates command artifacts from canonical source into build/commands/.
@@ -182,68 +182,68 @@ EOF
 }
 
 main() {
-    local target_command=""
-    local do_validate=false
+	local target_command=""
+	local do_validate=false
 
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            -h|--help)
-                show_help
-                exit 0
-                ;;
-            -c|--command)
-                if [[ $# -lt 2 ]]; then
-                    log_error "Missing value for $1"
-                    exit 1
-                fi
-                target_command="$2"
-                shift 2
-                ;;
-            -l|--list)
-                check_dependencies
-                list_commands
-                exit 0
-                ;;
-            -v|--validate)
-                do_validate=true
-                shift
-                ;;
-            *)
-                log_error "Unknown option: $1"
-                show_help
-                exit 1
-                ;;
-        esac
-    done
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+		-h | --help)
+			show_help
+			exit 0
+			;;
+		-c | --command)
+			if [[ $# -lt 2 ]]; then
+				log_error "Missing value for $1"
+				exit 1
+			fi
+			target_command="$2"
+			shift 2
+			;;
+		-l | --list)
+			check_dependencies
+			list_commands
+			exit 0
+			;;
+		-v | --validate)
+			do_validate=true
+			shift
+			;;
+		*)
+			log_error "Unknown option: $1"
+			show_help
+			exit 1
+			;;
+		esac
+	done
 
-    check_dependencies
+	check_dependencies
 
-    if [[ ! -f "${REGISTRY_FILE}" ]]; then
-        log_error "Registry not found: ${REGISTRY_FILE}"
-        exit 1
-    fi
+	if [[ ! -f "${REGISTRY_FILE}" ]]; then
+		log_error "Registry not found: ${REGISTRY_FILE}"
+		exit 1
+	fi
 
-    if [[ "${do_validate}" == "true" ]]; then
-        log_info "Running validation..."
-        if ! "${SCRIPT_DIR}/validate-commands-structure.sh" >/dev/null; then
-            log_error "Validation failed. Fix errors before generating."
-            exit 1
-        fi
-        log_info "Validation passed."
-    fi
+	if [[ "${do_validate}" == "true" ]]; then
+		log_info "Running validation..."
+		if ! "${SCRIPT_DIR}/validate-commands-structure.sh" >/dev/null; then
+			log_error "Validation failed. Fix errors before generating."
+			exit 1
+		fi
+		log_info "Validation passed."
+	fi
 
-    log_info "Generating commands into ${BUILD_DIR}"
-    echo ""
+	log_info "Generating commands into ${BUILD_DIR}"
+	echo ""
 
-    if [[ -n "${target_command}" ]]; then
-        generate_commands "${target_command}" false
-    else
-        generate_commands "" true
-    fi
+	if [[ -n "${target_command}" ]]; then
+		generate_commands "${target_command}" false
+	else
+		generate_commands "" true
+	fi
 
-    echo ""
-    log_info "Generation complete."
-    log_info "To materialize into runtime destinations, run: ./scripts/materialize-commands.sh"
+	echo ""
+	log_info "Generation complete."
+	log_info "To materialize into runtime destinations, run: ./scripts/materialize-commands.sh"
 }
 
 main "$@"

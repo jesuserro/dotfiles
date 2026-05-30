@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-30 21:39:49
+**Generated:** 2026-05-30 23:49:00
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -12,6 +12,7 @@
 │   ├── 📄 run_after_12_materialize_ai_commands.sh.tmpl
 │   ├── 📄 run_after_13_link_git_ai_wrapper.sh.tmpl
 │   ├── 📄 run_after_14_link_prompt_launchers.sh.tmpl
+│   ├── 📄 run_after_15_link_tmux_dotfiles.sh.tmpl
 │   └── 📄 run_before_00_backup_rc_files.sh.tmpl
 ├── 📁 .claude
 ├── 📁 .cursor
@@ -23,39 +24,6 @@
 │       ├── ⚙️ release.yml
 │       └── ⚙️ test.yml
 ├── 📁 .gitnexus
-│   ├── 📁 csv
-│   │   ├── 📊 annotation.csv
-│   │   ├── 📊 class.csv
-│   │   ├── 📊 codeelement.csv
-│   │   ├── 📊 community.csv
-│   │   ├── 📊 const.csv
-│   │   ├── 📊 constructor.csv
-│   │   ├── 📊 delegate.csv
-│   │   ├── 📊 enum.csv
-│   │   ├── 📊 file.csv
-│   │   ├── 📊 folder.csv
-│   │   ├── 📊 function.csv
-│   │   ├── 📊 impl.csv
-│   │   ├── 📊 interface.csv
-│   │   ├── 📊 macro.csv
-│   │   ├── 📊 method.csv
-│   │   ├── 📊 module.csv
-│   │   ├── 📊 namespace.csv
-│   │   ├── 📊 process.csv
-│   │   ├── 📊 property.csv
-│   │   ├── 📊 record.csv
-│   │   ├── 📊 relations.csv
-│   │   ├── 📊 route.csv
-│   │   ├── 📊 section.csv
-│   │   ├── 📊 static.csv
-│   │   ├── 📊 struct.csv
-│   │   ├── 📊 template.csv
-│   │   ├── 📊 tool.csv
-│   │   ├── 📊 trait.csv
-│   │   ├── 📊 typealias.csv
-│   │   ├── 📊 typedef.csv
-│   │   ├── 📊 union.csv
-│   │   └── 📊 variable.csv
 │   ├── 📁 parse-cache
 │   │   └── ⚙️ index.json
 │   ├── 📁 wiki
@@ -1046,8 +1014,6 @@
 │   │   │   └── 📄 prompt-launchers.bats
 │   │   ├── 📁 skills
 │   │   │   └── 📄 canonical-skills.bats
-│   │   ├── 📁 tmux
-│   │   │   └── 📄 tmux-dotfiles.bats
 │   │   ├── 📁 system
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
@@ -1069,6 +1035,8 @@
 │   │   │   ├── 📄 system-deps.bats
 │   │   │   ├── 📄 update-node-runtime.bats
 │   │   │   └── 📄 update-workflow.bats
+│   │   ├── 📁 tmux
+│   │   │   └── 📄 tmux-dotfiles.bats
 │   │   ├── 📁 zsh
 │   │   │   ├── 📄 gitnexus_aliases.bats
 │   │   │   ├── 📄 omz_plugins.bats
@@ -1121,6 +1089,7 @@
 ├── 📄 symlink_dot_codex_mcp
 ├── 📄 symlink_dot_p10k.zsh.tmpl
 ├── 📄 symlink_dot_secrets_codex.env
+├── 📄 symlink_dot_tmux.conf.tmpl
 ├── 📄 symlink_dot_zshrc.tmpl
 ├── 📄 tmux.conf
 ├── 🔨 update.mk

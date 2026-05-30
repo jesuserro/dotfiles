@@ -2,12 +2,12 @@
 
 # Función para imprimir líneas divisorias
 print_line() {
-    printf "%-78s\n" "" | tr ' ' "-"
+	printf "%-78s\n" "" | tr ' ' "-"
 }
 
 # Función para imprimir filas con formato
 print_row() {
-    printf "| %-25s | %-50s |\n" "$1" "$2"
+	printf "| %-25s | %-50s |\n" "$1" "$2"
 }
 
 # Obtener información del PC
@@ -49,9 +49,9 @@ print_line
 print_row "IP Local" "$(hostname -I | awk '{print $1}')"
 print_row "IP Pública" "$(curl -s https://api.ipify.org)"
 print_row "Interfaz Red (eth0)" "$(ip addr | grep -Ee 'inet.*eth0' | awk '{print $2}')"
-if ping -c 3 google.com &> /dev/null; then
-    print_row "Conectividad" "$(echo -e "\e[32mConectado\e[0m")"
+if ping -c 3 google.com &>/dev/null; then
+	print_row "Conectividad" "$(echo -e "\e[32mConectado\e[0m")"
 else
-    print_row "Conectividad" "$(echo -e "\e[31mDesconectado\e[0m")"
+	print_row "Conectividad" "$(echo -e "\e[31mDesconectado\e[0m")"
 fi
 print_line

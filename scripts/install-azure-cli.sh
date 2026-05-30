@@ -147,12 +147,12 @@ ensure_release_supported() {
 
 is_dedicated_azure_cli_source_name() {
 	case "$(basename "$1")" in
-		azure-cli.list | azure-cli.sources | microsoft-azure-cli.list | *azure-cli*.list | *azure-cli*.sources)
-			return 0
-			;;
-		*)
-			return 1
-			;;
+	azure-cli.list | azure-cli.sources | microsoft-azure-cli.list | *azure-cli*.list | *azure-cli*.sources)
+		return 0
+		;;
+	*)
+		return 1
+		;;
 	esac
 }
 
@@ -194,7 +194,7 @@ handle_existing_azure_cli_sources() {
 	if [[ ${found} -eq 0 ]]; then
 		return 0
 	fi
-	if (( dedicated == 1 && manual == 0 )) && ! dry && ! install_is_truthy "${AZURE_CLI_CLEAN_INVALID_SOURCE:-}"; then
+	if ((dedicated == 1 && manual == 0)) && ! dry && ! install_is_truthy "${AZURE_CLI_CLEAN_INVALID_SOURCE:-}"; then
 		echo "       Para limpiar fuentes dedicadas antiguas: AZURE_CLI_CLEAN_INVALID_SOURCE=1 bash scripts/install-azure-cli.sh"
 	fi
 }
