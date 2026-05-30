@@ -2,64 +2,20 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.05.30_1427] - 2026-05-30
+## [v2026.05.30_2121] - 2026-05-30
 
 ## Changes
 ### Added
-- 2026-05-30 14:22 [052df82](https://github.com/jesuserro/dotfiles/commit/052df82) feat(ohmyzsh): update zsh stack installation and plugin management (Cursor Agent)
-  - Clarified the functionality of `make install-zsh-stack`, specifying that it installs only the runtime components without modifying RC files.
-  - Added a detailed list of Oh My Zsh plugins in `zsh/20-omz.zsh`, including new plugins and removal of unnecessary ones.
-  - Updated documentation in `CHEZMOI.md` to reflect changes in plugin management and installation processes.
-- 2026-05-30 14:05 [9ca82b2](https://github.com/jesuserro/dotfiles/commit/9ca82b2) feat(excalidraw): enhance Excalidraw workspace configuration and integration (Cursor Agent)
-  - Added `excalidraw_workspace_host` to `.chezmoi.toml` for customizable Excalidraw workspace paths.
-  - Updated `MANIFEST.yaml` and various template files to utilize the new workspace host variable, replacing hardcoded paths.
-  - Modified installation process in `install.mk` to clarify opt-in nature of Node and agent tools.
-- 2026-05-30 12:58 [0c0995e](https://github.com/jesuserro/dotfiles/commit/0c0995e) feat(skills): introduce opt-in support for Matt Pocock external skills (Cursor Agent)
-  - Added `install-mattpocock-skills` and `update-ai-skills` targets to `install.mk` and `update.mk` for managing external skills.
-  - Updated documentation to clarify the fallback policy for external skills and their installation process.
-  - Enhanced `AGENT_WORKFLOW_FOR_AGENTS.md`, `README.md`, and other relevant files to reflect the new external skills structure and usage.
-- 2026-05-30 11:38 [056c197](https://github.com/jesuserro/dotfiles/commit/056c197) feat(gitnexus): implement managed Node runtime analysis helper (Cursor Agent)
-  - Added a new function `_gnx_analyze_with_managed_node` to streamline the analysis process with GitNexus, ensuring compatibility with managed Node runtimes.
-  - Updated `gnx-analyze-here` and `gnx-wiki-here` functions to utilize the new helper for improved runtime management.
-  - Revised documentation in `SKILL.md` and `MCP_QUICKREF.md` to emphasize the use of the managed helper for running GitNexus commands, enhancing user guidance on Node runtime compatibility.
-- 2026-05-30 11:25 [5d795bc](https://github.com/jesuserro/dotfiles/commit/5d795bc) feat(ai-doctor): introduce read-only agent readiness check (Cursor Agent)
-  - Added `make ai-doctor` command to perform a comprehensive readiness check for agents, including dependency inventory, update readiness, AI/MCP checks, skills validation, and a secret scan using `gitleaks`.
-  - Updated documentation to reflect the new command and its purpose in ensuring agent readiness before implementation.
-  - Refactored related scripts to integrate the new checks and improve overall validation processes.
-- 2026-05-30 10:54 [7d8be06](https://github.com/jesuserro/dotfiles/commit/7d8be06) feat(update-windows): enhance self-testing and logging for WinGet console output (Cursor Agent)
-  - Added a new switch parameter for self-testing WinGet console text filtering, improving validation of output.
-  - Introduced a function to write the status of WinGet package updates, enhancing logging clarity.
-  - Updated the `Run-NativeLogged` function to include an optional parameter for controlling step display during execution.
-- 2026-05-25 20:16 [42412f7](https://github.com/jesuserro/dotfiles/commit/42412f7) feat(node-runtime): implement controlled Node runtime management for update tooling (Cursor Agent)
-  - Introduced a new `node_runtime.sh` library to manage Node.js runtime checks and overlays for update scripts.
-  - Enhanced `update-check.sh` and `update-wsl.sh` to utilize the new Node runtime management functions, allowing for better handling of incompatible Node versions.
-  - Added support for environment variables to customize Node runtime behavior, including minimum major version and managed Node binary path.
-- 2026-05-25 17:29 [bb2a679](https://github.com/jesuserro/dotfiles/commit/bb2a679) feat(docker): add Docker Desktop credential helper installation and validation (Cursor Agent)
-  - Introduced a new `install-docker-desktop-helper` target in `install.mk` to create symlinks for Docker Desktop credential helpers in WSL.
-  - Enhanced the `update` scripts to check for Docker credential helpers and validate their availability before performing image operations.
-  - Updated documentation to include instructions for the new helper installation and its role in managing Docker credentials.
+- 2026-05-30 14:37 [dc7f286](https://github.com/jesuserro/dotfiles/commit/dc7f286) feat(zoxide): integrate zoxide for directory navigation and update documentation (Cursor Agent)
+  - Added zoxide integration in the zsh configuration to replace the OMZ plugin `z`.
+  - Updated documentation in `CHEZMOI.md`, `INSTALL.md`, and `SYSTEM_DEPENDENCIES.md` to include zoxide installation instructions and its role as a directory jumper.
+  - Enhanced test suite to include tests for the zoxide module and updated plugin management to reflect the removal of the `z` plugin.
 
 ### Fixed
-- 2026-05-25 20:16 [5d0adb4](https://github.com/jesuserro/dotfiles/commit/5d0adb4) fix(update-wsl): ensure cleanup of Node runtime overlay on failure conditions (Cursor Agent)
-  - Added `node_runtime_cleanup_overlay` calls in `update-wsl.sh` to remove the Node runtime overlay when activation fails or when npm is not found.
-  - Implemented a new function in `node_runtime.sh` to handle the cleanup of Node runtime overlays.
-  - Enhanced tests to verify that overlays are correctly cleaned up in failure scenarios, ensuring no residual overlays remain.
-
-### Documentation
-- 2026-05-30 14:27 [774445f](https://github.com/jesuserro/dotfiles/commit/774445f) docs(releases): added changelog for improving zsh stack installation and plugin management (Cursor Agent)
-- 2026-05-30 11:28 [2079e2a](https://github.com/jesuserro/dotfiles/commit/2079e2a) docs(gitnexus): update runtime precheck instructions and clarify usage (Cursor Agent)
-  - Added a new section on runtime precheck in `gitnexus-cli` documentation to guide users on running `make update-check` before re-indexing.
-  - Updated references in `gitnexus-guide` and `MCP_QUICKREF` to emphasize the importance of checking Node runtime compatibility.
-  - Clarified troubleshooting steps for slow analysis under Cursor and the need for managed Node paths.
-
-### Refactored
-- 2026-05-30 10:47 [5d71340](https://github.com/jesuserro/dotfiles/commit/5d71340) refactor(update-scripts): streamline Windows update handling and logging (Cursor Agent)
-  - Removed the use of a temporary `windows.done` file to track completion, simplifying the update flow.
-  - Enhanced logging by adding a new function to parse and display WinGet console output, improving visibility of package upgrade results.
-  - Updated the `Run-NativeLogged` function to include an optional parameter for controlling output display, allowing for more flexible logging behavior.
-
-### Other
-- 2026-05-25 21:23 [a04fd7e](https://github.com/jesuserro/dotfiles/commit/a04fd7e) build(doc): removed `PLAN_000009.md:Zone.Identifier` (Cursor Agent)
+- 2026-05-30 21:18 [c61ea8e](https://github.com/jesuserro/dotfiles/commit/c61ea8e) fix(tests): enhance assertions in test suite for better validation (Cursor Agent)
+  - Updated test assertions to use more descriptive functions like `assert_file_not_contains` and `assert_find_no_results`, improving clarity and maintainability.
+  - Modified documentation in `AGENTS.md` and `CLAUDE.md` to reflect updated indexing information.
+  - Ensured consistency in test cases by replacing direct grep commands with assertion functions across various test files, enhancing the robustness of the test suite.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
