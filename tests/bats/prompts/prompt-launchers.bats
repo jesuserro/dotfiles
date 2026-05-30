@@ -182,7 +182,7 @@ EOF
 }
 
 @test "ai-prompt render with stdin errors clearly when no input is provided" {
-    run env AI_PROMPTS_VAULT_ROOT="${VAULT_ROOT}" bash "${AI_PROMPT_LAUNCHER}" render review-diff --stdin
+    run bash -lc "AI_PROMPTS_VAULT_ROOT='${VAULT_ROOT}' '${AI_PROMPT_LAUNCHER}' render review-diff --stdin </dev/null"
     [[ "${status}" -ne 0 ]]
     [[ "${output}" == *"STDIN requested but no stdin pipe or redirection was provided."* || "${output}" == *"STDIN requested but no input was received."* ]]
     [[ "${output}" == *"printf 'text"* ]]

@@ -833,6 +833,7 @@
 │   ├── 📝 SECRETS_EXAMPLES.md
 │   ├── 📝 SYSTEM_DEPENDENCIES.md
 │   ├── 📝 TESTING.md
+│   ├── 📝 TMUX.md
 │   ├── 📝 TOKEN_GITHUB_GH.md
 │   ├── 📝 UPDATE.md
 │   ├── 📝 VAULT_PROJECT_WIKI_FLOW.md
@@ -1045,6 +1046,8 @@
 │   │   │   └── 📄 prompt-launchers.bats
 │   │   ├── 📁 skills
 │   │   │   └── 📄 canonical-skills.bats
+│   │   ├── 📁 tmux
+│   │   │   └── 📄 tmux-dotfiles.bats
 │   │   ├── 📁 system
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
@@ -1079,9 +1082,6 @@
 │   │   ├── 🔧 footer.sh
 │   │   └── 🔧 header.sh
 │   ├── 🔧 home.sh
-│   ├── 🔧 localidades.sh
-│   ├── 🔧 nges.sh
-│   ├── 🔧 ofertas.sh
 │   └── 🔧 work.sh
 ├── 📁 vim
 │   └── 📁 autoload
