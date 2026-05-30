@@ -1374,12 +1374,14 @@ PY
 @test "PowerShell Windows logging keeps WSL and WinGet encoding contracts explicit" {
 	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
 	grep -q 'Run-NativeLogged "WinGet packages".*"utf8"' "$ps1"
-	grep -q 'Run-NativeLogged "WinGet packages to upgrade".*"utf8"' "$ps1"
+	grep -q '\$winGetListName = "WinGet packages to upgrade"' "$ps1"
+	grep -q 'Run-NativeLogged \$winGetListName.*"windows-winget-list.log".*"utf8" \$false \$false' "$ps1"
 	grep -q 'Run-NativeLogged "WSL status".*"unicode"' "$ps1"
 	grep -q 'Run-NativeLogged "WSL update".*"unicode"' "$ps1"
 	grep -q -- '--disable-interactivity' "$ps1"
 	grep -q 'Full WinGet upgrade log:' "$ps1"
 	grep -q 'Get-WinGetConsoleText' "$ps1"
+	grep -q 'Write-WinGetListStatus \$winGetListName' "$ps1"
 }
 
 @test "PowerShell native runner passes arguments to child processes" {
@@ -1397,6 +1399,23 @@ PY
 	[[ "$output" == *'quote"inside'* ]]
 	[[ "$output" == *"--status"* ]]
 	[[ "$output" == *"OK native argument self-test passed"* ]]
+}
+
+@test "PowerShell WinGet console filter removes spinner-only lines" {
+	command -v powershell.exe >/dev/null 2>&1 || skip "requires powershell.exe accessible from WSL (Windows interop)"
+	command -v wslpath >/dev/null 2>&1 || skip "requires wslpath to pass repo paths to powershell.exe"
+	run powershell.exe -NoProfile -Command 'exit 0'
+	if [[ "$status" -ne 0 ]]; then
+		skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+	fi
+	run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "${DOTFILES_DIR}/scripts/update/update-windows.ps1")" -SelfTestWinGetConsoleText
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Pandoc"* ]]
+	[[ "$output" == *"OK WinGet console text self-test passed"* ]]
+	[[ "$output" != *$'\n-\n'* ]]
+	[[ "$output" != *$'\n\\\n'* ]]
+	[[ "$output" != *$'\n|\n'* ]]
+	[[ "$output" != *$'\n/\n'* ]]
 }
 
 @test "PowerShell native argument serializer avoids reserved Args parameter" {
