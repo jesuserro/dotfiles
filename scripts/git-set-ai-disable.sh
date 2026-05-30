@@ -46,7 +46,10 @@ remove_git_path_key() {
 
     local tmp_file
     tmp_file=$(mktemp)
-    trap "rm -f '$tmp_file'" EXIT
+    cleanup_tmp_file() {
+        rm -f -- "$tmp_file"
+    }
+    trap cleanup_tmp_file EXIT
 
     python3 <<PYEOF
 import json
@@ -75,6 +78,7 @@ with open("$tmp_file", 'w', encoding='utf-8') as f:
 import shutil
 shutil.move("$tmp_file", settings_file)
 PYEOF
+    trap - EXIT
 }
 
 # On WSL, git.path may have been written only to the Windows host settings; a stale copy

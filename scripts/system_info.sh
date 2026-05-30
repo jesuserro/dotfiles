@@ -2,7 +2,7 @@
 
 # Función para imprimir líneas divisorias
 print_line() {
-    printf "%-78s\n" | tr ' ' "-"
+    printf "%-78s\n" "" | tr ' ' "-"
 }
 
 # Función para imprimir filas con formato

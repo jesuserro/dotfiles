@@ -94,7 +94,7 @@ categorize_commits() {
   echo "$content" > "$tmp_content"
   while IFS= read -r line; do
     case "$line" in
-      "- "*"feat"*|"- "*"feature"*)
+      "- "*feature*|"- "*feat*)
         echo "$line" >> "$feat_file" ;;
       "- "*"fix"*)
         echo "$line" >> "$fix_file" ;;
@@ -266,4 +266,4 @@ main() {
 }
 
 # Ejecutar función principal
-main 
+main

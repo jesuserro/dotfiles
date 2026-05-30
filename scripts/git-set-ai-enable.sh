@@ -52,7 +52,10 @@ update_settings() {
 
     local tmp_file
     tmp_file=$(mktemp)
-    trap "rm -f '$tmp_file'" EXIT
+    cleanup_tmp_file() {
+        rm -f -- "$tmp_file"
+    }
+    trap cleanup_tmp_file EXIT
 
     python3 <<PYEOF
 import json
@@ -77,6 +80,7 @@ with open("$tmp_file", 'w', encoding='utf-8') as f:
 import shutil
 shutil.move("$tmp_file", settings_file)
 PYEOF
+    trap - EXIT
 
     echo "Updated git.path to: $git_path"
     echo "(in editor User settings: $CURSOR_SETTINGS)"
