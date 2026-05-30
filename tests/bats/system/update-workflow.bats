@@ -1374,8 +1374,12 @@ PY
 @test "PowerShell Windows logging keeps WSL and WinGet encoding contracts explicit" {
 	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
 	grep -q 'Run-NativeLogged "WinGet packages".*"utf8"' "$ps1"
+	grep -q 'Run-NativeLogged "WinGet packages to upgrade".*"utf8"' "$ps1"
 	grep -q 'Run-NativeLogged "WSL status".*"unicode"' "$ps1"
 	grep -q 'Run-NativeLogged "WSL update".*"unicode"' "$ps1"
+	grep -q -- '--disable-interactivity' "$ps1"
+	grep -q 'Full WinGet upgrade log:' "$ps1"
+	grep -q 'Get-WinGetConsoleText' "$ps1"
 }
 
 @test "PowerShell native runner passes arguments to child processes" {
@@ -1443,7 +1447,8 @@ PY
 	make_node_stub "$stub_dir" "v24.15.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Pandoc failed with installer exit code 1603"* ]]
+	[[ "${output}" != *"Pandoc failed with installer exit code 1603"* ]]
+	[[ "${output}" == *"Windows update opened in separate PowerShell window; see that window for Windows results."* ]]
 	[[ "${output}" != *"Personal projects are not part of make update"* ]]
 	[[ -f "${TEST_TEMP_DIR}/run/windows-results.tsv" ]]
 	[[ -f "${TEST_TEMP_DIR}/run/wsl-results.tsv" ]]
@@ -1458,6 +1463,7 @@ PY
 	[[ "${output}" != *"WSL update: mocked wsl --update"* ]]
 	[[ "${output}" != *"Pandoc failed"* ]]
 	[[ "${output}" != *"Waiting for Windows update result"* ]]
+	[[ "${output}" != *"Windows / Windows result"* ]]
 	[[ "${output}" != *"> Services"* ]]
 	[[ "${output}" != *"> Update summary"* ]]
 	[[ "${output}" == *"=== Update summary ="* ]]
@@ -1470,10 +1476,10 @@ PY
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=winget-fallback-with-parseable-log DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-winget-details" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" != *"WinGet packages: exit -1978335188"* ]]
-	[[ "${output}" == *"Windows / WinGet / Pandoc: upgrade failed with code 1603"* ]]
+	[[ "${output}" != *"Windows / WinGet / Pandoc: upgrade failed with code 1603"* ]]
 	[[ "${output}" != *"WinGet package Microsoft Teams [Microsoft.Teams]: updated successfully"* ]]
 	[[ "${output}" != *"could not parse package-level results"* ]]
-	[[ "${output}" == *"Completed with 1 incident: Windows / WinGet / Pandoc."* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 }
 
 @test "make update mock surfaces WinGet package failure without aborting WSL" {
@@ -1481,11 +1487,11 @@ PY
 	make_node_stub "$stub_dir" "v20.18.2"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=winget-failure DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-winget" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Windows / WinGet: Pandoc failed with installer exit code 1603"* ]]
+	[[ "${output}" != *"Windows / WinGet: Pandoc failed with installer exit code 1603"* ]]
 	[[ "${output}" != *"WSL update: mocked wsl --update"* ]]
 	[[ "${output}" == *"Node runtime for managed tools: switched from v20.18.2"* ]]
 	[[ "${output}" != *"GitNexus: skipped because Node runtime is incompatible"* ]]
-	[[ "${output}" == *"Completed with 1 incident: Windows / WinGet."* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 	[[ "$(grep -c $'INFO\tWSL\tNode runtime for managed tools\t' "${TEST_TEMP_DIR}/run-winget/wsl-results.tsv")" -eq 1 ]]
 	! grep -q $'FAIL\tWSL\tNode\t' "${TEST_TEMP_DIR}/run-winget/wsl-results.tsv"
 	! find "${TEST_TEMP_DIR}/run-winget" -maxdepth 1 -type d -name 'node-runtime.*' -print | grep -q .
@@ -1496,31 +1502,33 @@ PY
 	make_node_stub "$stub_dir" "v24.15.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=wsl-failure DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-wsl-fail" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Windows / WSL update: wsl --update failed with exit 1"* ]]
-	[[ "${output}" == *"Completed with 1 incident: Windows / WSL update."* ]]
+	[[ "${output}" != *"Windows / WSL update: wsl --update failed with exit 1"* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 	run grep -Eq 'Run-Logged.*wsl --shutdown|^[[:space:]]*wsl --shutdown' "${DOTFILES_DIR}/scripts/update"/*.sh "${DOTFILES_DIR}/scripts/update"/*.ps1
 	[[ "${status}" -ne 0 ]]
 }
 
-@test "make update mock does not wait indefinitely when Windows result is missing" {
+@test "make update mock does not wait for missing Windows result" {
 	local stub_dir="${TEST_TEMP_DIR}/node24-missing"
 	make_node_stub "$stub_dir" "v24.15.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_FORCE_WSL=1 DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=missing-no-done DOTFILES_UPDATE_WINDOWS_TIMEOUT=2 DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-missing" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Waiting for Windows update result... elapsed"* ]]
-	[[ "${output}" == *"No structured Windows result was produced before timeout (2s)"* ]]
-	[[ "${output}" == *"Completed with 1 incident: Windows / Windows result."* ]]
+	[[ "${output}" != *"Waiting for Windows result"* ]]
+	[[ "${output}" != *"Waiting for Windows update result"* ]]
+	[[ "${output}" != *"windows.done before timeout"* ]]
+	[[ "${output}" != *"Windows / Windows result"* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 }
 
-@test "make update reports partial Windows results when done marker is missing" {
+@test "make update ignores partial Windows results while Linux summary closes" {
 	local stub_dir="${TEST_TEMP_DIR}/node24-partial"
 	make_node_stub "$stub_dir" "v24.15.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_FORCE_WSL=1 DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=partial-no-done DOTFILES_UPDATE_WINDOWS_TIMEOUT=2 DOTFILES_UPDATE_WAIT_PROGRESS_INTERVAL=1 DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-partial" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" != *"WinGet sources: mocked partial result before hang"* ]]
 	[[ "${output}" != *"WinGet packages: mocked partial result before hang"* ]]
-	[[ "${output}" == *"Windows update did not write windows.done before timeout (2s); using partial results"* ]]
-	[[ "${output}" == *"Completed with 1 incident: Windows / Windows result."* ]]
+	[[ "${output}" != *"Windows update did not write windows.done before timeout"* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 }
 
 @test "make update mock consolidates multiple Windows incidents" {
@@ -1528,11 +1536,9 @@ PY
 	make_node_stub "$stub_dir" "v24.15.0"
 	run env PATH="${stub_dir}:/usr/bin:/bin" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_MOCK_WINDOWS_RESULT=multi-failure DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-multi" make -C "${DOTFILES_DIR}" update
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"Windows / WinGet: Pandoc failed with installer exit code 1603"* ]]
-	[[ "${output}" == *"Windows / WSL update: wsl --update failed with exit 1"* ]]
-	[[ "${output}" == *"Completed with 2 incidents:"* ]]
-	[[ "${output}" == *"Windows / WinGet"* ]]
-	[[ "${output}" == *"Windows / WSL update"* ]]
+	[[ "${output}" != *"Windows / WinGet: Pandoc failed with installer exit code 1603"* ]]
+	[[ "${output}" != *"Windows / WSL update: wsl --update failed with exit 1"* ]]
+	[[ "${output}" == *"Completed successfully"* ]]
 }
 
 @test "update run retention preserves current and recent runs while removing old overflow" {

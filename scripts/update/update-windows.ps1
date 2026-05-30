@@ -13,7 +13,6 @@ if ([string]::IsNullOrWhiteSpace($RunDir)) {
 }
 $LogDir = Join-Path $RunDir "logs"
 $ResultFile = Join-Path $RunDir "windows-results.tsv"
-$DoneFile = Join-Path $RunDir "windows.done"
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 Set-Content -Path $ResultFile -Value "" -Encoding UTF8
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
@@ -52,7 +51,8 @@ function Run-NativeLogged {
     [string]$LogName,
     [string]$FileName,
     [string[]]$NativeArguments,
-    [string]$OutputEncoding = "utf8"
+    [string]$OutputEncoding = "utf8",
+    [bool]$DisplayOutput = $true
   )
   $log = Join-Path $LogDir $LogName
   $start = Get-Date
@@ -67,6 +67,7 @@ function Run-NativeLogged {
     Add-Result "WARN" $Name "$message; log: $log"
     $script:LastRunLog = $log
     $script:LastRunCode = $null
+    $script:LastRunContent = $message
     return
   }
   $psi = [System.Diagnostics.ProcessStartInfo]::new()
@@ -91,7 +92,7 @@ function Run-NativeLogged {
     $content = (($stdout, $stderr) | Where-Object { -not [string]::IsNullOrEmpty($_) }) -join [Environment]::NewLine
     $content = $content -replace "`r`n", "`n" -replace "`r", "`n"
     [System.IO.File]::WriteAllText($log, $content, [System.Text.UTF8Encoding]::new($false))
-    if (-not [string]::IsNullOrWhiteSpace($content)) {
+    if ($DisplayOutput -and (-not [string]::IsNullOrWhiteSpace($content))) {
       Write-Host $content
     }
     $elapsed = [int]((Get-Date) - $start).TotalSeconds
@@ -111,6 +112,24 @@ function Run-NativeLogged {
   }
   $script:LastRunLog = $log
   $script:LastRunCode = $code
+  $script:LastRunContent = if ($null -eq $content) { "" } else { $content }
+}
+
+function Get-WinGetConsoleText {
+  param([string]$Text)
+  if ([string]::IsNullOrWhiteSpace($Text)) { return "" }
+  $lines = New-Object System.Collections.Generic.List[string]
+  foreach ($rawLine in ($Text -replace "`r", "`n" -split "`n")) {
+    $line = ($rawLine -replace "`e\[[0-9;?]*[ -/]*[@-~]", "").TrimEnd()
+    if ([string]::IsNullOrWhiteSpace($line)) { continue }
+    if ($line -match '^[\-\|/\\]\s*$') { continue }
+    if (($line.IndexOf([char]0x2588) -ge 0) -or ($line.IndexOf([char]0x2592) -ge 0) -or ($line.IndexOf([char]0x2593) -ge 0) -or ($line.IndexOf([char]0x2591) -ge 0)) { continue }
+    if ($line -match '^\s*[#=]{5,}') { continue }
+    if ($line -match '^\s*\d+(\.\d+)?\s*(B|KB|MB|GB)\s*/\s*\d+(\.\d+)?\s*(B|KB|MB|GB)') { continue }
+    if ($line -match '^\s*\d{1,3}%\s*$') { continue }
+    $lines.Add($line)
+  }
+  return ($lines -join [Environment]::NewLine)
 }
 
 function Add-WinGetPackageResults {
@@ -161,12 +180,10 @@ if ($SelfTestNativeArguments) {
   $sourceExpected = "source${separator}update${separator}value with spaces${separator}quote`"inside"
   if (($sourceLog -notlike "*$sourceExpected*") -or ($statusLog -notlike "*--status*")) {
     Add-Result "WARN" "Argument self-test" "native arguments did not reach child process"
-    New-Item -ItemType File -Force -Path $DoneFile | Out-Null
     Write-Host "WARN native argument self-test failed"
     exit 64
   }
   Add-Result "OK" "Argument self-test" "native arguments reached child process"
-  New-Item -ItemType File -Force -Path $DoneFile | Out-Null
   Write-Host "OK native argument self-test passed"
   exit 0
 }
@@ -175,8 +192,22 @@ Write-Host "Dotfiles Windows update"
 Write-Host "Run directory: $RunDir"
 
 if (Get-Command winget -ErrorAction SilentlyContinue) {
-  Run-NativeLogged "WinGet sources" "windows-winget-source.log" "winget" @("source", "update") "utf8"
-  Run-NativeLogged "WinGet packages" "windows-winget-upgrade.log" "winget" @("upgrade", "--all", "--include-unknown", "--silent", "--accept-package-agreements", "--accept-source-agreements") "utf8"
+  Run-NativeLogged "WinGet sources" "windows-winget-source.log" "winget" @("source", "update") "utf8" $false
+  Write-Host "Full WinGet source log: $script:LastRunLog"
+
+  Run-NativeLogged "WinGet packages to upgrade" "windows-winget-list.log" "winget" @("upgrade", "--include-unknown", "--accept-source-agreements", "--disable-interactivity") "utf8" $false
+  Write-Host ""
+  Write-Host "==> WinGet packages to upgrade"
+  $packageTable = Get-WinGetConsoleText $script:LastRunContent
+  if ([string]::IsNullOrWhiteSpace($packageTable)) {
+    Write-Host "(no package list output; see log: $script:LastRunLog)"
+  } else {
+    Write-Host $packageTable
+  }
+  Write-Host "Full WinGet package list log: $script:LastRunLog"
+
+  Run-NativeLogged "WinGet packages" "windows-winget-upgrade.log" "winget" @("upgrade", "--all", "--include-unknown", "--silent", "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity") "utf8" $false
+  Write-Host "Full WinGet upgrade log: $script:LastRunLog"
   Add-WinGetPackageResults $script:LastRunLog
 } else {
   Add-Result "WARN" "WinGet" "winget not found on Windows PATH"
@@ -190,7 +221,6 @@ if (Get-Command wsl -ErrorAction SilentlyContinue) {
   Add-Result "WARN" "WSL update" "wsl command not found on Windows PATH"
 }
 
-New-Item -ItemType File -Force -Path $DoneFile | Out-Null
 Write-Host ""
 Write-Host "==> Windows summary"
 Get-Content -Path $ResultFile | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { Write-Host $_ }

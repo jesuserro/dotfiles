@@ -13,7 +13,7 @@ Use this skill when changing or diagnosing the dotfiles `make update` workflow, 
 
 ## Public Interface
 
-- `make update` — daily full flow from WSL, with Windows PowerShell tab plus WSL execution and consolidated summary
+- `make update` — daily full flow from WSL, with Windows PowerShell tab plus WSL execution and a Linux-only summary
 - `make update-windows` — WinGet plus safe `wsl --update`
 - `make update-wsl` — APT, Node/AI tools, OpenCode, shell, uv, MCPs, services
 - `make update-projects` — personal repositories such as `jesuserro` and RenderCV
@@ -33,7 +33,7 @@ Internal targets such as `update-apt`, `update-tools`, `update-shell`, `update-m
 
 ## Windows/WSL Result Contract
 
-Each full run creates a run directory with logs and TSV result files. PowerShell writes Windows results; WSL reads them before printing the final summary. WinGet package failures must appear as incidents even if the PowerShell tab launched successfully.
+Each full run creates a run directory with logs and TSV result files. PowerShell writes Windows results and prints its own summary. WSL does not wait for Windows completion and does not depend on `windows.done`; WinGet package failures belong in the Windows PowerShell summary and `windows-results.tsv`.
 
 ## Excalidraw
 

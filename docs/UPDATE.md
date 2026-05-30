@@ -6,7 +6,7 @@
 
 | Comando | Uso |
 |---|---|
-| `make update` | Rutina diaria completa: abre Windows PowerShell en otra pestaña y ejecuta WSL, con resumen consolidado |
+| `make update` | Rutina diaria completa: abre Windows PowerShell en otra pestaña y ejecuta WSL, con resumen Linux |
 | `make update-windows` | Ejecuta WinGet y `wsl --update` desde PowerShell/Windows |
 | `make update-wsl` | Ejecuta APT, Node/tooling IA, OpenCode, shell, uv, MCPs e imágenes Docker |
 | `make update-projects` | Actualiza proyectos personales como `~/proyectos/jesuserro` y RenderCV |
@@ -32,7 +32,9 @@
 
 Desde Ubuntu/WSL, `make update` crea un directorio de ejecución en una ruta visible por Windows y WSL. La pestaña WSL ejecuta el mantenimiento Linux; una nueva pestaña PowerShell ejecuta WinGet y `wsl --update`.
 
-PowerShell escribe logs y un resultado TSV parseable. Al final, WSL espera ese resultado e imprime un resumen consolidado. Un fallo de WinGet, por ejemplo código `1603`, queda reflejado como incidencia aunque la pestaña se haya abierto correctamente.
+PowerShell escribe logs, `windows-results.tsv` y su propio resumen final. WSL no espera a `windows.done` ni bloquea su resumen por el estado de Windows; como máximo informa que la actualización Windows se abrió en una ventana separada.
+
+La consola PowerShell muestra primero `WinGet packages to upgrade`, con la tabla de paquetes pendientes, y guarda el detalle completo en logs. La instalación usa `winget upgrade --all --include-unknown --silent --accept-package-agreements --accept-source-agreements --disable-interactivity`; si WinGet devuelve errores parciales, Windows los registra como `WARN` y mantiene el log completo como fuente de detalle.
 
 `wsl --shutdown` no se ejecuta automáticamente. Si `wsl --update` indica que conviene reiniciar WSL, el resumen lo muestra como acción posterior para ejecutar manualmente desde PowerShell cuando la sesión WSL haya terminado.
 
