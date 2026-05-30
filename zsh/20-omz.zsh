@@ -36,6 +36,6 @@ plugins=(
 
 source "$ZSH/oh-my-zsh.sh"
 
-# Powerlevel10k (load once, after OMZ)
+# Powerlevel10k (load once, after OMZ). Chezmoi materializes ~/.p10k.zsh as a
+# symlink to $HOME/dotfiles/powerlevel10k/p10k.zsh — do not source both paths.
 [[ -f "$HOME/.p10k.zsh" ]] && source "$HOME/.p10k.zsh"
-[[ -f "$HOME/dotfiles/powerlevel10k/p10k.zsh" ]] && source "$HOME/dotfiles/powerlevel10k/p10k.zsh"

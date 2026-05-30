@@ -25,13 +25,15 @@ Orquestar un **bootstrap inicial seguro**: diagnóstico, paquetes APT declarativ
 | `make install-check` | Solo diagnóstico (no muta). Entorno, herramientas base, más salida de `deps-check --include-optional`. |
 | `make install-apt` | Instala paquetes APT desde el inventario YAML (mismo backend que `make deps-install`). |
 | `make install-external` | Solo recomendaciones (incluye `deps-actions`); detecta Docker/wt/winget y la zsh stack de forma prudente. |
+| `make install-node-stack` | Node.js LTS vía NodeSource APT (sudo). Requerido para MCPs `npx` y GitNexus (`>=22`). **Opt-in**: fuera de `make install`. |
+| `make install-agent-tools` | ast-grep, actionlint, osv-scanner (descargas GitHub/npm). **Opt-in**: fuera de `make install`. |
 | `make install-zsh-stack` | Clona Oh My Zsh, Powerlevel10k y plugins custom solo si faltan; idempotente; no toca `~/.zshrc`. |
 | `make install-uv` | Instala **uv** (preferido para Python) con el instalador oficial de Astral. Idempotente (no reinstala si existe), respeta `DRY_RUN=1`, no toca `~/.zshrc`/`~/.bashrc`. **Opt-in**: fuera de `make install`. |
 | `make install-chezmoi` | Opt-in: binario en `~/.local/bin` (sin sudo). |
 | `make install-sops` | Opt-in: binario SOPS en `~/.local/bin`. |
 | `make install-dotfiles` | Plan chezmoi; **no aplica** por defecto. |
 | `make install-verify` | `PASS` / `WARN` / `FAIL`; `chezmoi`/`sops` ausentes = `WARN` (opt-in), no `FAIL`. |
-| `make install` | Orden: check → apt → external → dotfiles → verify. `install-zsh-stack`, `install-chezmoi`, `install-sops`, `install-uv` quedan **fuera** del orquestador (opt-in explícito). |
+| `make install` | Orden: check → apt → external → dotfiles → verify. `install-node-stack`, `install-agent-tools`, `install-zsh-stack`, `install-chezmoi`, `install-sops`, `install-uv` quedan **fuera** del orquestador (opt-in explícito). |
 
 Variables de entorno / Make (pasar como `make target VAR=value`):
 

@@ -230,9 +230,10 @@ EOF
 	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
 	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
 	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
-	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
-	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
-	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
+	grep -q '{{ \$excalidrawWorkspaceHost }}:/workspace/excalidraw' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
+	grep -q '{{ \$excalidrawWorkspaceHost }}:/workspace/excalidraw' "${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
+	grep -q '{{ \$excalidrawWorkspaceHost }}:/workspace/excalidraw' "${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
+	grep -q 'excalidrawWorkspaceHost := default' "${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
 	run grep -R '/mnt/c/Users/jesus/Documents/vault_trabajo:/workspace/excalidraw' "${DOTFILES_DIR}/dot_cursor" "${DOTFILES_DIR}/dot_codex" "${DOTFILES_DIR}/dot_config/opencode"
 	[[ "${status}" -ne 0 ]]
 	run grep -R 'mcp-servers/excalidraw-mcp/dist/index.js' "${DOTFILES_DIR}/dot_cursor" "${DOTFILES_DIR}/dot_codex" "${DOTFILES_DIR}/dot_config/opencode"
@@ -273,7 +274,7 @@ EOF
 	grep -q 'ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	grep -q 'EXPRESS_SERVER_URL=http://host.docker.internal:3210' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
-	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
+	grep -q 'excalidraw_workspace_host' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	grep -q '3210:3000' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	run grep -q 'mcp-servers/excalidraw-mcp/dist/index.js' "${DOTFILES_DIR}/ai/assets/mcps/MANIFEST.yaml"
 	[[ "${status}" -ne 0 ]]

@@ -67,3 +67,13 @@ teardown() {
 	[[ "${output}" == *"typeset -A _DOTFILES_P10K_GIT_AUTHOR_AGENT"* ]]
 	[[ "${output}" != *"bad math expression"* ]]
 }
+
+@test "20-omz loads Powerlevel10k only via ~/.p10k.zsh" {
+	run zsh -n "${DOTFILES_DIR}/zsh/20-omz.zsh"
+	[[ "${status}" -eq 0 ]]
+	run grep -c 'source.*\.p10k\.zsh' "${DOTFILES_DIR}/zsh/20-omz.zsh"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" -eq 1 ]]
+	run grep -E 'source.*dotfiles/powerlevel10k' "${DOTFILES_DIR}/zsh/20-omz.zsh"
+	[[ "${status}" -ne 0 ]]
+}

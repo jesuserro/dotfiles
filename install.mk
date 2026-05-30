@@ -151,4 +151,6 @@ ai-mcp-governance:
 ai-mcp-generate:
 	@python3 $(DOTFILES_DIR)/scripts/generate-mcp-configs.py generate $(if $(filter 1 true yes on,$(APPLY)),--apply,)
 
-install: install-check install-apt install-node-stack install-agent-tools install-external install-dotfiles install-verify
+# Conservative bootstrap: APT + dotfiles plan only. Node and agent CLIs are opt-in
+# via install-node-stack and install-agent-tools (see docs/INSTALL.md).
+install: install-check install-apt install-external install-dotfiles install-verify

@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-30 12:58:02
+**Generated:** 2026-05-30 14:05:48
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -994,6 +994,7 @@
 │   │   ├── 📁 chezmoi
 │   │   │   ├── 📄 ai-assets-warnings.bats
 │   │   │   ├── 📄 ai-runtime-uv.bats
+│   │   │   ├── 📄 excalidraw-workspace-template.bats
 │   │   │   ├── 📄 gen-secrets-strict.bats
 │   │   │   ├── 📄 smoke.bats
 │   │   │   └── 📄 store-etl-hook-removed.bats

@@ -1,3 +1,4 @@
+{{- $excalidrawWorkspaceHost := default (printf "%s/excalidraw" .ai.obsidian_vault_path) (get .ai "excalidraw_workspace_host") -}}
 {
   "mcpServers": {
     "excalidraw_canvas": {
@@ -13,7 +14,7 @@
         "-e",
         "EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw",
         "-v",
-        "/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw",
+        "{{ $excalidrawWorkspaceHost }}:/workspace/excalidraw",
         "ghcr.io/yctimlin/mcp_excalidraw:latest"
       ],
       "env": {}

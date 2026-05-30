@@ -37,6 +37,13 @@ setup() {
 	[[ "${output}" != *"Unsupported variable name"* ]]
 }
 
+@test "make install -n does not plan install-node-stack or install-agent-tools" {
+	run env -i HOME="${HOME}" PATH="/usr/bin:/bin" make -C "${DOTFILES_DIR}" -n install
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" != *"install-node-stack.sh"* ]]
+	[[ "${output}" != *"install-agent-tools.sh"* ]]
+}
+
 @test "install-system-packages.sh forces dry-run when env has DRY-RUN=1 (safety belt)" {
 	# Pass an unsupported env variant by name; printenv inside the script reads it
 	# even though bash cannot assign to variables with hyphens directly.

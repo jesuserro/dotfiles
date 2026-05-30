@@ -67,9 +67,9 @@ _sum() {
 	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
 	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
 	grep -q 'EXCALIDRAW_EXPORT_DIR=/workspace/excalidraw' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
-	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
-	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
-	grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw:/workspace/excalidraw' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
+	grep -q '{{ \$excalidrawWorkspaceHost }}:/workspace/excalidraw' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
+	grep -q '{{ \$excalidrawWorkspaceHost }}:/workspace/excalidraw' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
+	grep -q '{{ \$excalidrawWorkspaceHost }}:/workspace/excalidraw' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
 	run ! grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo:/workspace/excalidraw' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
 	run ! grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo:/workspace/excalidraw' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
 	run ! grep -q '/mnt/c/Users/jesus/Documents/vault_trabajo:/workspace/excalidraw' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
@@ -84,6 +84,17 @@ _sum() {
 	grep -q '{{ \.ai\.obsidian_vault_path }}' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
 	grep -q '{{ \.ai\.obsidian_vault_path }}' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
 	grep -q '{{ \.ai\.obsidian_vault_path }}' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
+}
+
+@test "rendered MCP configs use Chezmoi excalidraw workspace variable for Excalidraw" {
+	if ! python3 -c "import yaml" 2>/dev/null; then
+		skip "PyYAML not installed"
+	fi
+	run make -C "${DOTFILES_DIR}" ai-mcp-render
+	[[ "${status}" -eq 0 ]]
+	grep -q '{{ \$excalidrawWorkspaceHost }}' "${BUILD_MCPS}/dot_cursor/mcp.json.tmpl"
+	grep -q '{{ \$excalidrawWorkspaceHost }}' "${BUILD_MCPS}/dot_codex/mcp_servers.toml.tmpl"
+	grep -q '{{ \$excalidrawWorkspaceHost }}' "${BUILD_MCPS}/dot_config/opencode/opencode.json.tmpl"
 }
 
 @test "make ai-mcp-drift exits 0 with intentional parity only" {
@@ -171,11 +182,11 @@ full = (root / 'dot_codex' / 'config.toml.tmpl').read_text(encoding='utf-8')
 frag = '[mcp_servers.__probe_merge__]\ncommand = \"true\"\nenabled = true\n'
 out = g['merge_codex_productive'](full, frag)
 import tomllib
-tomllib.loads(out)
+tomllib.loads(g['strip_chezmoi_template_preamble'](out))
 assert 'model =' in out
 assert '[plugins.' in out
 assert '__probe_merge__' in out
-assert 'excalidraw' not in out
+assert 'excalidrawWorkspaceHost' in out
 "
 	[[ "${status}" -eq 0 ]]
 }

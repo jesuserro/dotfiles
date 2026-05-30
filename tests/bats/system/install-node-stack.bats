@@ -381,10 +381,11 @@ EOF
 	[[ "${output}" != *"Plan:"* ]]
 }
 
-@test "install-node-stack target exists in install.mk and is part of 'install:'" {
+@test "install-node-stack target exists in install.mk but is not chained from install" {
 	run grep -E "^install-node-stack:" "${DOTFILES_DIR}/install.mk"
 	[[ "${status}" -eq 0 ]]
 	run grep -E "^install:" "${DOTFILES_DIR}/install.mk"
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"install-node-stack"* ]]
+	[[ "${output}" != *"install-node-stack"* ]]
+	[[ "${output}" != *"install-agent-tools"* ]]
 }
