@@ -13,13 +13,14 @@ BATS_HELPERS := $(BATS_DIR)/helpers/common.bash
 SHELL_SCRIPTS := $(shell find $(DOTFILES_DIR) -name '*.sh' -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/')
 SHELL_LAUNCHERS := $(shell find $(DOTFILES_DIR)/bin -name 'mcp-*-launcher' -type f 2>/dev/null || true)
 PROMPT_LAUNCHERS := $(shell find $(DOTFILES_DIR)/local/bin -name 'prompt-*' -type f 2>/dev/null || true)
+AI_PROMPT_CLI := $(wildcard $(DOTFILES_DIR)/local/bin/ai-prompt)
 SHELL_TESTS := $(shell find $(TESTS_DIR) -name '*.bats' -type f | grep -v '/\.git/')
 YAML_FILES := $(shell find $(DOTFILES_DIR) \( -name '*.yaml' -o -name '*.yml' \) -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/' | grep -v '/secrets\.sops\.yaml$$')
 GITHUB_WORKFLOWS := $(shell find $(DOTFILES_DIR)/.github/workflows \( -name '*.yaml' -o -name '*.yml' \) -type f 2>/dev/null || true)
 OSV_INPUTS := $(shell find $(DOTFILES_DIR) \( -name 'package-lock.json' -o -name 'pnpm-lock.yaml' -o -name 'yarn.lock' -o -name 'requirements*.txt' -o -name 'pyproject.toml' -o -name 'uv.lock' -o -name 'go.mod' -o -name 'Cargo.lock' -o -name 'composer.lock' \) -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/')
 
 # All shell files to lint
-SHELL_FILES := $(SHELL_SCRIPTS) $(SHELL_LAUNCHERS) $(PROMPT_LAUNCHERS) $(SHELL_TESTS)
+SHELL_FILES := $(SHELL_SCRIPTS) $(SHELL_LAUNCHERS) $(PROMPT_LAUNCHERS) $(AI_PROMPT_CLI) $(SHELL_TESTS)
 
 # bats tests
 BATS_DIR := $(TESTS_DIR)/bats
@@ -39,7 +40,7 @@ NC := \033[0m
 .PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts bats-skills
 .PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands
 .PHONY: deps-check deps-install deps-actions bats-system bats-zsh test-deps-check
-.PHONY: quality-check security-check agent-validate agent-validate-changed lint-shellcheck lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
+.PHONY: quality-check security-check agent-validate agent-validate-changed ai-doctor lint-shellcheck lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
 
 help:
 	@echo "Testing targets for dotfiles"
@@ -52,6 +53,7 @@ help:
 	@echo "  make security-check - Agent security checks: gitleaks + osv-scanner"
 	@echo "  make agent-validate - quality-check + security-check"
 	@echo "  make agent-validate-changed - Practical agent gate for files changed since HEAD + security"
+	@echo "  make ai-doctor - Read-only agent readiness: deps, update, AI/MCP, skills, commands, gitleaks"
 	@echo "  make test-bats    - Run bats tests only (preflight included)"
 	@echo "  make test-chezmoi - Run chezmoi smoke tests only"
 	@echo "  make test-commands- Run commands tests only"
@@ -153,6 +155,30 @@ agent-validate: quality-check security-check
 agent-validate-changed:
 	@bash $(DOTFILES_DIR)/scripts/agent-validate-changed.sh
 
+ai-doctor:
+	@echo "$(BLUE)==>$(NC) AI doctor: dependency inventory"
+	@$(MAKE) --no-print-directory deps-check DEPS_CHECK_ARGS=--include-optional
+	@echo ""
+	@echo "$(BLUE)==>$(NC) AI doctor: update readiness"
+	@$(MAKE) --no-print-directory update-check
+	@echo ""
+	@echo "$(BLUE)==>$(NC) AI doctor: Cursor/AI/MCP readiness"
+	@$(MAKE) --no-print-directory ai-cursor-check
+	@echo ""
+	@echo "$(BLUE)==>$(NC) AI doctor: MCP governance"
+	@$(MAKE) --no-print-directory ai-mcp-governance
+	@echo ""
+	@echo "$(BLUE)==>$(NC) AI doctor: skills structure"
+	@bash $(DOTFILES_DIR)/scripts/validate-skills-structure.sh
+	@echo ""
+	@echo "$(BLUE)==>$(NC) AI doctor: commands structure"
+	@bash $(DOTFILES_DIR)/scripts/validate-commands-structure.sh
+	@echo ""
+	@echo "$(BLUE)==>$(NC) AI doctor: secret scan"
+	@$(MAKE) --no-print-directory security-gitleaks
+	@echo ""
+	@echo "$(GREEN)==>$(NC) AI doctor completed"
+
 lint-shellcheck:
 	@echo "$(BLUE)==>$(NC) Running shellcheck..."
 	@if ! command -v shellcheck >/dev/null 2>&1; then \
@@ -235,7 +261,7 @@ security-gitleaks:
 		exit 1; \
 	fi
 	@gitleaks detect --source "$(DOTFILES_DIR)" --no-git --redact --no-banner
-	@echo "$(GREEN)==>$NC gitleaks passed"
+	@echo "$(GREEN)==>$(NC) gitleaks passed"
 
 security-osv:
 	@echo "$(BLUE)==>$(NC) Running osv-scanner..."

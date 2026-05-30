@@ -154,7 +154,7 @@ STRICT=1 make ai-cursor-check
 - `docs/MCP_TAXONOMY.md` — Taxonomy and evolution notes
 - `docs/adr/0001-mcp-governance.md` — ADR (includes supersession notes)
 - `docs/OPENCODE.md` — Operational guide
-- `ai/assets/skills/mcp-governance/SKILL.md` — Skill for agents
+- `ai/assets/skills/ops/mcp-governance/SKILL.md` — Skill for agents
 
 ## Runtime vs Connection
 

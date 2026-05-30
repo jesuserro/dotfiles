@@ -52,6 +52,7 @@ make test-lint
 
 ### Agent quality and security checks
 ```bash
+make ai-doctor
 make quality-check
 make security-check
 make agent-validate-changed
@@ -80,6 +81,7 @@ make fmt-shell
 | `make test` | Preflight + lint + all bats + MCP template JSON validation |
 | `make test-fast` | Preflight + lint + bats without `chezmoi/*` tests |
 | `make test-lint` | shellcheck + shfmt + yamllint |
+| `make ai-doctor` | Read-only agent readiness: dependencies, update readiness, AI/MCPs, skills, commands and `gitleaks` |
 | `make quality-check` | Full strict repository quality audit: shellcheck + shfmt check + yamllint + actionlint (`-shellcheck=`) when workflows exist |
 | `make security-check` | gitleaks working-tree scan + osv-scanner when supported manifests/lockfiles exist |
 | `make agent-validate-changed` | Practical agent gate: changed shell/YAML/workflow files + relevant focused tests + full security scan |
@@ -101,6 +103,8 @@ make fmt-shell
 | actionlint | Workflow diagnostics | Yes |
 | gitleaks | Secret findings | Yes |
 | osv-scanner | Vulnerability findings | Yes |
+
+`make ai-doctor` is the read-only readiness check for agents before implementation. It does not replace targeted tests for the area being changed; it aggregates environment, AI/MCP, skills, commands and `gitleaks` checks so secret leaks are caught before handing off changes.
 
 `make quality-check` and `make agent-validate` are full-repository audits. They are intentionally strict, and can surface existing shellcheck/shfmt debt until that cleanup is handled separately.
 

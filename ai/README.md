@@ -56,9 +56,9 @@ El directorio `ai/adapters/` documenta el wiring específico de cada agente. Con
 
 ## Añadir skills
 
-1. Clonar o copiar el skill en `ai/assets/skills/<nombre-skill>/`
+1. Clonar o copiar el skill en `ai/assets/skills/<category>/<skill-name>/`
 2. El skill debe contener `SKILL.md` (formato Cursor/Codex) o equivalente
-3. Si clonas un repo externo: `git clone <url> ai/assets/skills/<nombre>` y luego `rm -rf ai/assets/skills/<nombre>/.git` para trackear los archivos
+3. Si clonas un repo externo: `git clone <url> ai/assets/skills/<category>/<skill-name>` y luego `rm -rf ai/assets/skills/<category>/<skill-name>/.git` para trackear los archivos
 4. Tras `chezmoi apply`, el script `run_after_11_link_ai_assets` publica los skills a cada agente
 
 ### Skills instalados
