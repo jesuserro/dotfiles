@@ -42,7 +42,7 @@ teardown() {
 	grep -q "CANONICAL_SECRETS_FILE" "${WRAPPER}"
 	grep -q ".config/mcp-secrets.env" "${WRAPPER}"
 	# Must NOT inline any token value (only the variable names).
-	! grep -E "(ghp_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{10,})" "${WRAPPER}"
+	assert_file_not_matches "${WRAPPER}" "(ghp_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{10,})"
 }
 
 @test "install-mcp-github is idempotent (rerun reports already present)" {

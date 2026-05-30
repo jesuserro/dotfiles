@@ -41,7 +41,7 @@ teardown() {
 	[[ "${status}" -eq 0 ]]
 	grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw-canvas:latest' "${DOCKER_LOG}"
 	grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOCKER_LOG}"
-	! grep -q 'run -d' "${DOCKER_LOG}"
+	assert_file_not_contains "${DOCKER_LOG}" 'run -d'
 }
 
 @test "excalidraw start uses canvas container and is idempotent-compatible" {
@@ -100,7 +100,7 @@ EOF
 	run env PATH="${down_bin}:/usr/bin:/bin" DOTFILES_FORCE_WSL=1 RESULTS_FILE="$results_file" bash "${DOTFILES_DIR}/scripts/update/update-excalidraw.sh" update --results "$results_file"
 	[[ "${status}" -eq 0 ]]
 	[[ "${output}" == *"Docker Desktop is not running"* ]]
-	! grep -q 'pull should not run' "${DOCKER_LOG}"
+	assert_file_not_contains "${DOCKER_LOG}" 'pull should not run'
 	grep -q $'SKIP\tWSL\tExcalidraw Docker\tDocker Desktop is not running; Excalidraw images were not updated' "$results_file"
 }
 
@@ -113,7 +113,7 @@ EOF
 	[[ "${status}" -ne 0 ]]
 	[[ "${output}" == *"docker-credential-desktop.exe"* ]]
 	[[ "${output}" == *"make install-docker-desktop-helper"* ]]
-	! grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw' "${DOCKER_LOG}"
+	assert_file_not_contains "${DOCKER_LOG}" 'pull ghcr.io/yctimlin/mcp_excalidraw'
 	grep -q $'FAIL\tWSL\tExcalidraw Docker credentials\tDocker credential helper unavailable from PATH:' "$results_file"
 	[[ "$(awk -F '\t' '$1=="FAIL" || $1=="WARN" || $1=="INCIDENT"{count++} END{print count + 0}' "$results_file")" -eq 1 ]]
 }
@@ -264,7 +264,7 @@ EOF
 	[[ "${status}" -eq 0 ]]
 	grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw-canvas:latest' "${DOCKER_LOG}"
 	grep -q 'pull ghcr.io/yctimlin/mcp_excalidraw:latest' "${DOCKER_LOG}"
-	! grep -q 'run -d' "${DOCKER_LOG}"
+	assert_file_not_contains "${DOCKER_LOG}" 'run -d'
 }
 
 @test "Excalidraw manifest uses Docker image and no local checkout" {

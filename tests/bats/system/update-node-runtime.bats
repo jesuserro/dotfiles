@@ -203,9 +203,9 @@ run_runtime_probe() {
 	run env HOME="${TEST_TEMP_DIR}/home" PATH="$shadow_bin" DOTFILES_MANAGED_NODE_BIN="$managed" DOTFILES_UPDATE_MOCK=1 DOTFILES_UPDATE_RUN_DIR="$run_dir" bash "$UPDATE_WSL" --section tools
 	[[ "$status" -eq 0 ]]
 	[[ "$(grep -c $'INFO\tWSL\tNode runtime for managed tools\t' "${run_dir}/wsl-results.tsv")" -eq 1 ]]
-	! grep -q $'FAIL\tWSL\tNode\t' "${run_dir}/wsl-results.tsv"
+	assert_file_not_contains "${run_dir}/wsl-results.tsv" $'FAIL\tWSL\tNode\t'
 	grep -q $'Node.js managed tools\tv24.15.0\tv24.15.0\tunchanged' "${run_dir}/tool-snapshot.tsv"
-	! find "$run_dir" -maxdepth 1 -type d -name 'node-runtime.*' -print | grep -q .
+	assert_find_no_results "node runtime overlay cleanup after managed tools recovery" "$run_dir" -maxdepth 1 -type d -name 'node-runtime.*'
 }
 
 @test "overlay is cleaned when managed tools block fails after activation" {
@@ -226,7 +226,7 @@ EOF
 	[[ "$status" -eq 0 ]]
 	grep -q $'INFO\tWSL\tNode runtime for managed tools\t' "${run_dir}/wsl-results.tsv"
 	grep -q $'FAIL\tWSL\t' "${run_dir}/wsl-results.tsv"
-	! find "$run_dir" -maxdepth 1 -type d -name 'node-runtime.*' -print | grep -q .
+	assert_find_no_results "node runtime overlay cleanup after managed tools failure" "$run_dir" -maxdepth 1 -type d -name 'node-runtime.*'
 }
 
 @test "update tools with no compatible runtime records one Node diagnostic and skips npm family" {
@@ -240,7 +240,7 @@ EOF
 	run env HOME="${TEST_TEMP_DIR}/home" PATH="$shadow_bin" DOTFILES_MANAGED_NODE_BIN="$managed" DOTFILES_UPDATE_RUN_DIR="$run_dir" bash "$UPDATE_WSL" --section tools
 	[[ "$status" -eq 0 ]]
 	[[ "$(grep -c $'FAIL\tWSL\tNode\t' "${run_dir}/wsl-results.tsv")" -eq 1 ]]
-	! grep -Eq $'\tWSL\t(npm|Corepack|pnpm)' "${run_dir}/wsl-results.tsv"
+	assert_file_not_matches "${run_dir}/wsl-results.tsv" $'\tWSL\t(npm|Corepack|pnpm)'
 }
 
 @test "pnpm major 11 flow runs under overlay with clean semver snapshot and separate method" {
@@ -355,8 +355,8 @@ EOF
 	run env PATH="$shadow_bin" NODE_RUNTIME_TRACE="$trace" DOTFILES_MANAGED_NODE_BIN="$managed" bash -c "set -euo pipefail; set -- --section none; DOTFILES_UPDATE_RUN_DIR='${run_dir}'; source '${UPDATE_WSL}'; overlay=\$(node_runtime_create_overlay '${run_dir}' '${managed}'); export PATH=\"\$(node_runtime_controlled_path \"\$overlay\" '${prefix}' '${shadow_bin}')\"; unset NPM_CONFIG_PREFIX DOTFILES_NPM_PREFIX; test \"\$(user_npm_prefix)\" = '${prefix}'; node_runtime_cleanup_overlay \"\$overlay\""
 	[[ "$status" -eq 0 ]]
 	grep -q 'managed-node-ran:.*/npm' "$trace"
-	! grep -q 'shadow-node-ran' "$trace"
-	! find "$run_dir" -maxdepth 1 -type d -name 'node-runtime.*' -print | grep -q .
+	assert_file_not_contains "$trace" 'shadow-node-ran'
+	assert_find_no_results "node runtime overlay cleanup after npm prefix probing" "$run_dir" -maxdepth 1 -type d -name 'node-runtime.*'
 }
 
 @test "update-check reports compatible, recoverable, and unrecoverable Node states without overlay" {
@@ -371,7 +371,7 @@ EOF
 	run env HOME="${TEST_TEMP_DIR}/home" PATH="$bin" DOTFILES_MANAGED_NODE_BIN="$managed" DOTFILES_UPDATE_ROOT="$run_dir" bash "$UPDATE_CHECK"
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"OK     Node.js effective runtime: v24.15.0 (${bin}/node)"* ]]
-	! find "$TEST_TEMP_DIR" -type l -name node | grep -q 'node-runtime'
+	assert_find_output_not_matches "update-check must not create node-runtime overlay symlink" 'node-runtime' "$TEST_TEMP_DIR" -type l -name node
 
 	write_fake_node "${bin}/node" "v20.18.2" "effective"
 	run env HOME="${TEST_TEMP_DIR}/home" PATH="$bin" DOTFILES_MANAGED_NODE_BIN="$managed" DOTFILES_UPDATE_ROOT="$run_dir" bash "$UPDATE_CHECK"
@@ -383,5 +383,5 @@ EOF
 	run env HOME="${TEST_TEMP_DIR}/home" PATH="$bin" DOTFILES_MANAGED_NODE_BIN="$managed" DOTFILES_UPDATE_ROOT="$run_dir" bash "$UPDATE_CHECK"
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"FAIL   Node.js effective runtime is below required >=22 and no compatible managed runtime is available"* ]]
-	! find "$TEST_TEMP_DIR" -path '*node-runtime*' -print | grep -q .
+	assert_find_no_results "update-check must not create node-runtime overlay paths" "$TEST_TEMP_DIR" -path '*node-runtime*'
 }

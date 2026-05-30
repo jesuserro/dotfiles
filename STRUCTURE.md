@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-30 14:37:34
+**Generated:** 2026-05-30 21:18:02
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -13,6 +13,7 @@
 │   ├── 📄 run_after_13_link_git_ai_wrapper.sh.tmpl
 │   ├── 📄 run_after_14_link_prompt_launchers.sh.tmpl
 │   └── 📄 run_before_00_backup_rc_files.sh.tmpl
+├── 📁 .claude
 ├── 📁 .cursor
 │   ├── 📁 plans
 │   └── 📁 rules
