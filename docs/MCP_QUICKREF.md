@@ -57,17 +57,13 @@ Before re-indexing a stale repo from Cursor, Codex, OpenCode, or another agent-l
 make update-check
 ```
 
-If it reports an effective Node below `>=22` from an IDE path such as `.cursor-server`, but also reports a managed compatible runtime such as `/usr/bin/node`, run GitNexus with the managed runtime first in `PATH`:
+If it reports an effective Node below `>=22` from an IDE path such as `.cursor-server`, but also reports a managed compatible runtime, prefer the managed helper:
 
 ```bash
-env PATH="/usr/bin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH" gitnexus analyze
+gnx-analyze-here
 ```
 
-Use the same pattern for a quick smoke test:
-
-```bash
-env PATH="/usr/bin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH" gitnexus --version
-```
+`gnx-analyze-here` loads the shared Node runtime policy, respects `DOTFILES_MANAGED_NODE_BIN`, and uses a temporary PATH overlay when the shell was launched with an incompatible IDE Node first in `PATH`.
 
 If no compatible managed runtime is available, install or repair the Node stack first (`make install-node-stack`). `make ai-doctor` includes `make update-check`, so it surfaces this warning before agents start a longer GitNexus analyze run.
 

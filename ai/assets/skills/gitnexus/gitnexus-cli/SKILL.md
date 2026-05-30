@@ -5,7 +5,7 @@ description: "Use when the user needs to run GitNexus CLI commands like analyze/
 
 # GitNexus CLI Commands
 
-All commands work via `npx` — no global install required.
+Commands can run through `npx` when needed. In dotfiles/WSL, prefer the managed helper for analyze runs.
 
 ## Commands
 
@@ -17,18 +17,18 @@ On dotfiles/WSL, run the read-only precheck before re-indexing:
 make update-check
 ```
 
-If it warns that the effective Node runtime comes from Cursor/VS Code and is below the repo policy (`>=22`), but reports a managed compatible runtime such as `/usr/bin/node`, run GitNexus with that managed runtime first in `PATH`:
+If it warns that the effective Node runtime comes from Cursor/VS Code and is below the repo policy (`>=22`), but reports a managed compatible runtime, use the dotfiles helper:
 
 ```bash
-env PATH="/usr/bin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH" gitnexus analyze
+gnx-analyze-here
 ```
 
-This avoids `gitnexus analyze` or `npx gitnexus analyze` running under an IDE-injected Node 20 process. If no managed compatible runtime is available, reconcile Node with `make install-node-stack` before re-indexing.
+This loads the shared Node runtime policy, respects `DOTFILES_MANAGED_NODE_BIN`, and avoids `gitnexus analyze` or `npx gitnexus analyze` running under an IDE-injected Node 20 process. If no managed compatible runtime is available, reconcile Node with `make install-node-stack` before re-indexing.
 
 ### analyze — Build or refresh the index
 
 ```bash
-npx gitnexus analyze
+gnx-analyze-here
 ```
 
 Run from the project root. This parses all source files, builds the knowledge graph, writes it to `.gitnexus/`, and generates CLAUDE.md / AGENTS.md context files.
