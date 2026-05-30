@@ -1268,7 +1268,7 @@ EOF
 @test "update-wsl shell section updates Oh My Zsh through zsh script from Bash" {
 	local fake_home="${TEST_TEMP_DIR}/home"
 	local stub_dir="${TEST_TEMP_DIR}/shell-bin"
-	mkdir -p "${fake_home}/.oh-my-zsh/tools" "${fake_home}/.oh-my-zsh/custom/plugins/z/.git" "${fake_home}/.oh-my-zsh/custom/plugins/zsh-autosuggestions/.git" "$stub_dir"
+	mkdir -p "${fake_home}/.oh-my-zsh/tools" "${fake_home}/.oh-my-zsh/custom/plugins/autoupdate/.git" "${fake_home}/.oh-my-zsh/custom/plugins/zsh-autosuggestions/.git" "$stub_dir"
 	cat >"${fake_home}/.oh-my-zsh/tools/upgrade.sh" <<'EOF'
 #!/usr/bin/env bash
 echo "omz upgraded with ZSH=$ZSH"
@@ -1291,7 +1291,8 @@ EOF
 	[[ "$status" -eq 0 ]]
 	grep -q 'omz upgraded' "${TEST_TEMP_DIR}/run-shell/logs/wsl-omz.log"
 	grep -q $'OK\tWSL\tOh My Zsh\tcompleted' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
-	grep -q $'OK\tWSL\tOh My Zsh plugin z\tcompleted' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
+	grep -q $'OK\tWSL\tOh My Zsh plugin autoupdate\tcompleted' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
+	grep -qv $'OK\tWSL\tOh My Zsh plugin z\t' "${TEST_TEMP_DIR}/run-shell/wsl-results.tsv"
 	[[ "$output" != *"failed with exit 0"* ]]
 }
 

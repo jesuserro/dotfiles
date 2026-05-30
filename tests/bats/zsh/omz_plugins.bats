@@ -22,7 +22,7 @@ extract_plugins_block() {
 	expected=(
 		autoupdate azure chezmoi colored-man-pages colorize command-not-found
 		debian dirhistory docker docker-compose extract gh git gitignore history
-		jsontools npm python rsync systemd tmux urltools uv virtualenv vi-mode z
+		jsontools npm python rsync systemd tmux urltools uv virtualenv vi-mode
 		zsh-autosuggestions zsh-completions zsh-history-substring-search
 		zsh-syntax-highlighting
 	)
@@ -37,7 +37,7 @@ extract_plugins_block() {
 @test "plugins array excludes rejected runtime and legacy plugins" {
 	local block rejected plugin
 	block="$(extract_plugins_block)"
-	rejected=(aws composer wp-cli postgres nvm pyenv asdf conda autoenv pip)
+	rejected=(aws composer wp-cli postgres nvm pyenv asdf conda autoenv pip z zoxide)
 	for plugin in "${rejected[@]}"; do
 		if echo "$block" | grep -qE "^[[:space:]]+${plugin}[[:space:]]*$"; then
 			echo "unexpected plugin: ${plugin}" >&2

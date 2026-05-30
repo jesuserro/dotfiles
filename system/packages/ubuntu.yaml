@@ -42,6 +42,11 @@ packages:
     required: false
     capability: docs
     note: Used by scripts/treegen.sh to regenerate STRUCTURE.md.
+  - package: zoxide
+    command: zoxide
+    required: false
+    capability: shell
+    note: Directory jumper; replaces OMZ plugin z. Install with make deps-install DEPS_INSTALL_ARGS=--include-optional.
   - package: shellcheck
     command: shellcheck
     required: true

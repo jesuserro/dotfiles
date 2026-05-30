@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-30 14:22:09
+**Generated:** 2026-05-30 14:37:34
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -841,6 +841,7 @@
 │   ├── 📝 branch_feature_12-adding-make-install.md
 │   ├── 📝 branch_feature_15-adding-refactors-and-enhancements.md
 │   ├── 📝 branch_feature_16-enhancing-ups-command.md
+│   ├── 📝 branch_feature_17-adding-nuevas-herramientas-ia.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
@@ -1036,7 +1037,8 @@
 │   │   │   ├── 📄 gitnexus_aliases.bats
 │   │   │   ├── 📄 omz_plugins.bats
 │   │   │   ├── 📄 p10k_cache_keys.bats
-│   │   │   └── 📄 rc_symlinks.bats
+│   │   │   ├── 📄 rc_symlinks.bats
+│   │   │   └── 📄 zoxide.bats
 │   │   └── 📄 git-ai-author.bats
 │   └── 📄 Makefile.tests
 ├── 📁 tmux
@@ -1056,6 +1058,7 @@
 │   ├── 🔧 00-env.zsh
 │   ├── 🔧 10-path.zsh
 │   ├── 🔧 20-omz.zsh
+│   ├── 🔧 25-zoxide.zsh
 │   ├── 🔧 30-python.zsh
 │   ├── 🔧 50-aliases-dotfiles.zsh
 │   ├── 🔧 55-aliases-azure.zsh
