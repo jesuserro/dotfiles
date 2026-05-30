@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-30 21:18:02
+**Generated:** 2026-05-30 21:39:49
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -23,6 +23,39 @@
 │       ├── ⚙️ release.yml
 │       └── ⚙️ test.yml
 ├── 📁 .gitnexus
+│   ├── 📁 csv
+│   │   ├── 📊 annotation.csv
+│   │   ├── 📊 class.csv
+│   │   ├── 📊 codeelement.csv
+│   │   ├── 📊 community.csv
+│   │   ├── 📊 const.csv
+│   │   ├── 📊 constructor.csv
+│   │   ├── 📊 delegate.csv
+│   │   ├── 📊 enum.csv
+│   │   ├── 📊 file.csv
+│   │   ├── 📊 folder.csv
+│   │   ├── 📊 function.csv
+│   │   ├── 📊 impl.csv
+│   │   ├── 📊 interface.csv
+│   │   ├── 📊 macro.csv
+│   │   ├── 📊 method.csv
+│   │   ├── 📊 module.csv
+│   │   ├── 📊 namespace.csv
+│   │   ├── 📊 process.csv
+│   │   ├── 📊 property.csv
+│   │   ├── 📊 record.csv
+│   │   ├── 📊 relations.csv
+│   │   ├── 📊 route.csv
+│   │   ├── 📊 section.csv
+│   │   ├── 📊 static.csv
+│   │   ├── 📊 struct.csv
+│   │   ├── 📊 template.csv
+│   │   ├── 📊 tool.csv
+│   │   ├── 📊 trait.csv
+│   │   ├── 📊 typealias.csv
+│   │   ├── 📊 typedef.csv
+│   │   ├── 📊 union.csv
+│   │   └── 📊 variable.csv
 │   ├── 📁 parse-cache
 │   │   └── ⚙️ index.json
 │   ├── 📁 wiki
@@ -775,8 +808,7 @@
 │   │   ├── 📝 azure-tooling.md
 │   │   └── 📝 dotfiles-install.md
 │   ├── 📁 plans
-│   │   ├── 📝 PLAN_000009.md
-│   │   └── 📄 PLAN_000009.md:Zone.Identifier
+│   │   └── 📝 PLAN_000009.md
 │   ├── 📁 wiki
 │   ├── 📝 AGENT_WORKFLOW_LOOP.md
 │   ├── 📝 AI_PROMPTS_SYSTEM.md

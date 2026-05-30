@@ -14,7 +14,7 @@ setup() {
 	grep -q 'command -v uv' "$TMPL"
 	grep -q 'uv pip install' "$TMPL"
 	grep -q '.requirements.sha256' "$TMPL"
-	run ! grep -q 'pip install -r' "$TMPL"
+	assert_file_not_contains "$TMPL" 'pip install -r'
 }
 
 @test "ai runtime hook skips when uv missing" {

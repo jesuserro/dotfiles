@@ -74,7 +74,7 @@ help:
 	@echo "  make validate-commands  - Validate command structure"
 	@echo "  make materialize-commands - Materialize commands into runtime paths"
 	@echo ""
-	@echo "  make test-ci      - Run all tests with CI output (JUnit/XML)"
+	@echo "  make test-ci      - Run the GitHub Actions CI subset"
 	@echo ""
 
 # ============================================
@@ -389,7 +389,7 @@ bats-zsh:
 	@$(call run_bats,$(BATS_DIR)/zsh/p10k_cache_keys.bats)
 
 # ============================================
-# CI targets (JUnit/XML output)
+# CI targets (human-readable GitHub Actions subset)
 # ============================================
 
 test-ci: test-lint test-bats-ci test-chezmoi

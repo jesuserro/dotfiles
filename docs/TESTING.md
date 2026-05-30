@@ -15,21 +15,18 @@
 ## Installation
 
 ```bash
-make install
+make install SKIP_EXTERNAL=1
 ```
 
 **Requirements:**
 - Linux or WSL
-- `git` (to clone bats-core)
-- `apt-get` **OR** `go` (for shfmt)
+- `apt-get` for the APT-backed validation baseline
 
 **Installs:**
-- `bats-core` — cloned to `/tmp`, installed to `~/.local`
-- `shellcheck`, `shfmt`, `yamllint`, `gitleaks` — via `make deps-install`
-- `actionlint`, `osv-scanner`, `@ast-grep/cli` — via `make install-agent-tools`, which is also part of `make install`
+- `bats`, `shellcheck`, `shfmt`, `yamllint`, `gitleaks` — via the APT baseline used by `make install` / `make deps-install`
+- `actionlint`, `osv-scanner`, `@ast-grep/cli` — via the opt-in `make install-agent-tools`
 
 **Limitations:**
-- Does not install Go automatically (needs system Go or manual install)
 - On non-Debian systems, install APT-backed validation tools manually
 - Assumes `~/.local/bin` is in PATH
 
@@ -88,10 +85,9 @@ make fmt-shell
 | `make agent-validate` | Full repository validation: quality-check + security-check |
 | `make test-bats` | All bats tests (includes chezmoi hooks) |
 | `make test-chezmoi` | Chezmoi bats + `chezmoi-templates` |
-| `make test-ci` | Lint + CI bats subset + chezmoi (GitHub Actions) |
+| `make test-ci` | GitHub Actions CI subset: lint + MCP/chezmoi/skills Bats covered by `.github/workflows/test.yml` |
 | `make test-install` | Install dependencies |
 | `make fmt-shell` | Format shell scripts |
-| `make test-ci` | Full suite with JUnit/XML output (for CI) |
 
 ## Lint Policy
 
@@ -120,7 +116,7 @@ Gitleaks uses the default rules plus the repo-local `.gitleaks.toml`. The only c
 |--------|--------|----------|
 | `make test` | Human-readable | Local development |
 | `make test-bats` | Human-readable | Local debugging |
-| `make test-ci` | JUnit/XML | CI/CD pipelines |
+| `make test-ci` | Human-readable CI subset | GitHub Actions parity |
 
 ## Coverage
 
@@ -170,7 +166,7 @@ Gitleaks uses the default rules plus the repo-local `.gitleaks.toml`. The only c
 
 ## CI
 
-Pull requests ejecutan [`.github/workflows/test.yml`](../.github/workflows/test.yml): `make ai-mcp-governance` y `make test-ci` (lint, MCP/launchers, chezmoi hooks, skills canónicos).
+Pull requests ejecutan [`.github/workflows/test.yml`](../.github/workflows/test.yml): `make ai-mcp-governance` y `make test-ci`. Ese target es el subset de CI actual: lint tolerante, MCP/launchers, hooks Chezmoi seleccionados y skills canónicos. Para la suite local más amplia usa `make test-fast` o `make test`.
 
 ## Next candidates
 
