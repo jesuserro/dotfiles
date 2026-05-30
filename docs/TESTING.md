@@ -104,7 +104,7 @@ make fmt-shell
 | gitleaks | Secret findings | Yes |
 | osv-scanner | Vulnerability findings | Yes |
 
-`make ai-doctor` is the read-only readiness check for agents before implementation. It does not replace targeted tests for the area being changed; it aggregates environment, AI/MCP, skills, commands and `gitleaks` checks so secret leaks are caught before handing off changes.
+`make ai-doctor` is the read-only readiness check for agents before implementation. It does not replace targeted tests for the area being changed; it aggregates environment, AI/MCP, skills, commands and `gitleaks` checks so secret leaks are caught before handing off changes. Because it includes `make update-check`, it also surfaces Node runtime shadowing before long GitNexus re-indexing commands.
 
 `make quality-check` and `make agent-validate` are full-repository audits. They are intentionally strict, and can surface existing shellcheck/shfmt debt until that cleanup is handled separately.
 

@@ -42,11 +42,34 @@ Layers describe *purpose*; default **activation** for global agents follows the 
 
 ```bash
 make update      # Updates GitNexus CLI after validating Node >=22
+make update-check # Read-only Node/runtime precheck before re-indexing
 gnx-serve        # Start local server
 gnx-analyze-here # Analyze current repo
 gnx-map          # Analyze + serve
 gnx-wiki-here    # Generate wiki (requires OPENAI_API_KEY)
 ```
+
+### GitNexus Node precheck
+
+Before re-indexing a stale repo from Cursor, Codex, OpenCode, or another agent-launched shell, run:
+
+```bash
+make update-check
+```
+
+If it reports an effective Node below `>=22` from an IDE path such as `.cursor-server`, but also reports a managed compatible runtime such as `/usr/bin/node`, run GitNexus with the managed runtime first in `PATH`:
+
+```bash
+env PATH="/usr/bin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH" gitnexus analyze
+```
+
+Use the same pattern for a quick smoke test:
+
+```bash
+env PATH="/usr/bin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH" gitnexus --version
+```
+
+If no compatible managed runtime is available, install or repair the Node stack first (`make install-node-stack`). `make ai-doctor` includes `make update-check`, so it surfaces this warning before agents start a longer GitNexus analyze run.
 
 ## Filesystem MCP
 

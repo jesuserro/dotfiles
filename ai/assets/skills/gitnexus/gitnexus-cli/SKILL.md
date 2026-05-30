@@ -9,6 +9,22 @@ All commands work via `npx` — no global install required.
 
 ## Commands
 
+### Runtime precheck
+
+On dotfiles/WSL, run the read-only precheck before re-indexing:
+
+```bash
+make update-check
+```
+
+If it warns that the effective Node runtime comes from Cursor/VS Code and is below the repo policy (`>=22`), but reports a managed compatible runtime such as `/usr/bin/node`, run GitNexus with that managed runtime first in `PATH`:
+
+```bash
+env PATH="/usr/bin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH" gitnexus analyze
+```
+
+This avoids `gitnexus analyze` or `npx gitnexus analyze` running under an IDE-injected Node 20 process. If no managed compatible runtime is available, reconcile Node with `make install-node-stack` before re-indexing.
+
 ### analyze — Build or refresh the index
 
 ```bash
@@ -22,7 +38,7 @@ Run from the project root. This parses all source files, builds the knowledge gr
 | `--force`      | Force full re-index even if up to date                           |
 | `--embeddings` | Enable embedding generation for semantic search (off by default) |
 
-**When to run:** First time in a project, after major code changes, or when `gitnexus://repo/{name}/context` reports the index is stale.
+**When to run:** First time in a project, after major code changes, or when `gitnexus://repo/{name}/context` reports the index is stale. In dotfiles, prefer the runtime precheck above before re-indexing from Cursor or another agent-launched shell.
 
 ### status — Check index freshness
 
@@ -78,5 +94,6 @@ Lists all repositories registered in `~/.gitnexus/registry.json`. The MCP `list_
 ## Troubleshooting
 
 - **"Not inside a git repository"**: Run from a directory inside a git repo
+- **Analyze is slow or appears stuck under Cursor**: Run `make update-check`; if Node is shadowed by Cursor v20, re-run with the managed Node first in `PATH`
 - **Index is stale after re-analyzing**: Restart the IDE to reload the MCP server
 - **Embeddings slow**: Omit `--embeddings` (it's off by default) or set `OPENAI_API_KEY` for faster API-based embedding
