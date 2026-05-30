@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-30 14:05:48
+**Generated:** 2026-05-30 14:22:09
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -1034,6 +1034,7 @@
 │   │   │   └── 📄 update-workflow.bats
 │   │   ├── 📁 zsh
 │   │   │   ├── 📄 gitnexus_aliases.bats
+│   │   │   ├── 📄 omz_plugins.bats
 │   │   │   ├── 📄 p10k_cache_keys.bats
 │   │   │   └── 📄 rc_symlinks.bats
 │   │   └── 📄 git-ai-author.bats

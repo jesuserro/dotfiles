@@ -10,23 +10,30 @@ COMPLETION_WAITING_DOTS="true"
 
 plugins=(
   autoupdate
-  aws
+  azure
+  chezmoi
   colored-man-pages
   colorize
-  composer
+  command-not-found
+  debian
   dirhistory
   docker
+  docker-compose
   extract
   gh
   git
+  gitignore
   history
   jsontools
-  pip
+  npm
   python
+  rsync
+  systemd
   tmux
+  urltools
+  uv
   virtualenv
   vi-mode
-  wp-cli
   z
   zsh-autosuggestions
   zsh-completions
