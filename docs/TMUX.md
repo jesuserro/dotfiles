@@ -4,6 +4,14 @@ Tmux actúa como **sesión persistente de trabajo** dentro de Ubuntu/WSL. Window
 
 ## Lanzar el workspace dotfiles
 
+Tras `chezmoi apply`, el comando canónico (en PATH vía `~/.local/bin`):
+
+```bash
+tmux-dotfiles
+```
+
+Fallback directo al script del repo:
+
 ```bash
 ~/dotfiles/bin/tmux-dotfiles
 ```
@@ -18,7 +26,7 @@ El comando:
 Override del repo:
 
 ```bash
-DOTFILES_DIR=/ruta/al/repo ~/dotfiles/bin/tmux-dotfiles
+DOTFILES_DIR=/ruta/al/repo tmux-dotfiles
 ```
 
 ## Detach y reattach
@@ -26,8 +34,9 @@ DOTFILES_DIR=/ruta/al/repo ~/dotfiles/bin/tmux-dotfiles
 | Acción | Atajo / comando |
 |--------|-----------------|
 | Detach (dejar tmux en segundo plano) | `Ctrl+b` luego `d` |
-| Reattach | `~/dotfiles/bin/tmux-dotfiles` |
+| Reattach | `tmux-dotfiles` |
 | Reattach alternativo | `tmux attach-session -t dotfiles` |
+| Ayuda | `tmux-dotfiles --help` |
 
 ## Cambiar de panel
 
@@ -41,16 +50,19 @@ DOTFILES_DIR=/ruta/al/repo ~/dotfiles/bin/tmux-dotfiles
 | Método | Fiabilidad | Notas |
 |--------|------------|-------|
 | `Ctrl+Shift+V` en Windows Terminal | **Fiable** | Recomendado para pegar desde el portapapeles de Windows |
-| Botón derecho | Depende de WT | Configuración de Windows Terminal (`pasteOnRightClick`, etc.) |
+| Botón derecho | Depende de WT | Configuración de Windows Terminal (`pasteOnRightClick`, etc.) y de `mouse on` en tmux |
 | Selección + ratón con `mouse on` | Variable | Tmux puede interceptar clicks; no promete pegado universal con botón derecho |
 
 Copiar **desde** tmux hacia el portapapeles de Windows en WSL puede usar los bindings de `tmux.conf` (por ejemplo `y` en copy-mode cuando `clip.exe` está disponible).
 
 ## Configuración actual
 
-- `~/.tmux.conf` apunta al [`tmux.conf`](../tmux.conf) del repo (symlink manual hoy).
+- `~/.tmux.conf` es un symlink gestionado por Chezmoi hacia [`tmux.conf`](../tmux.conf) del repo (`symlink_dot_tmux.conf.tmpl`).
 - Incluye `mouse on`, índices base 1 y renumber de ventanas.
-- Chezmoi **no** gobierna aún tmux; la materialización formal puede venir en una fase posterior.
+- `~/.tmux.conf.local` está reservado para overrides locales (`source -q` al final de `tmux.conf`); Chezmoi **no** lo crea todavía — créalo manualmente si lo necesitas.
+- `~/.local/bin/tmux-dotfiles` se publica con `run_after_15_link_tmux_dotfiles` tras `chezmoi apply`.
+
+Si ya tienes un `~/.tmux.conf` regular con contenido custom, el hook `run_before_00_backup_rc_files` aborta el apply de forma segura. Para permitir backup y reemplazo: `ZSH_RC_APPLY=1 make install-dotfiles DOTFILES_APPLY=1` (el flag histórico cubre también `.tmux.conf`; ver [CHEZMOI.md](CHEZMOI.md)).
 
 ## Alcance de workspaces
 

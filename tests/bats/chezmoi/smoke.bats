@@ -41,6 +41,27 @@ teardown() {
 	[[ -f "$DOTFILES_DIR/.chezmoiscripts/run_after_14_link_prompt_launchers.sh.tmpl" ]]
 }
 
+@test "run_after_15_link_tmux_dotfiles exists and publishes bin/tmux-dotfiles" {
+	local tmpl="$DOTFILES_DIR/.chezmoiscripts/run_after_15_link_tmux_dotfiles.sh.tmpl"
+	[[ -f "$tmpl" ]]
+	grep -q 'ln -sf' "$tmpl"
+	grep -q 'bin/tmux-dotfiles' "$tmpl"
+	grep -q '\.local/bin' "$tmpl"
+	grep -q 'LOCAL_BIN}/tmux-dotfiles' "$tmpl"
+}
+
+@test "symlink_dot_tmux.conf points to repo tmux.conf" {
+	local tmpl="$DOTFILES_DIR/symlink_dot_tmux.conf.tmpl"
+	[[ -f "$tmpl" ]]
+	grep -q '{{ .chezmoi.homeDir }}/dotfiles/tmux.conf' "$tmpl"
+}
+
+@test "run_before_00 backup hook covers tmux.conf" {
+	local tmpl="$DOTFILES_DIR/.chezmoiscripts/run_before_00_backup_rc_files.sh.tmpl"
+	grep -q '.tmux.conf' "$tmpl"
+	grep -q 'tmux.conf' "$tmpl"
+}
+
 @test "run_after_13 git-ai: template and lib use ln -sf and ~/.local/bin" {
 	local tmpl="$DOTFILES_DIR/.chezmoiscripts/run_after_13_link_git_ai_wrapper.sh.tmpl"
 	local lib="$DOTFILES_DIR/scripts/lib/git-ai-common.sh"
