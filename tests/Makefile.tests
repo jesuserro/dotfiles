@@ -423,6 +423,7 @@ bats-gitnexus:
 bats-docs:
 	@echo "$(BLUE)==>$NC Running documentation contract tests..."
 	@$(call run_bats,$(BATS_DIR)/docs/operations-cheatsheet.bats)
+	@$(call run_bats,$(BATS_DIR)/docs/documentation-consistency.bats)
 
 bats-zsh:
 	@echo "$(BLUE)==>$NC Running zsh stack RC symlink tests..."
