@@ -120,7 +120,7 @@ format_origin() {
 	fi
 }
 
-while IFS=$'\t' read -r requirement package command platform capability manager install_method note source_file; do
+while IFS=$'\t' read -r requirement package command _platform _capability manager install_method _note _source_file; do
 	[[ -n "${package}" ]] || continue
 	subject="$(format_subject "${package}" "${command}")"
 	origin="$(format_origin "${manager}" "${install_method}")"

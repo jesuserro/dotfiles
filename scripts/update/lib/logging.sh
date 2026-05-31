@@ -198,6 +198,7 @@ run_npm_step() {
 	fi
 	ok "${name} (${elapsed}s)"
 	result_ok "$area" "$name" "completed in ${elapsed}s"
+	# shellcheck disable=SC2034 # exported-by-source contract: update-wsl.sh reads this after run_npm_step
 	RUN_STEP_LAST_RESULT_STATUS="OK"
 	return 0
 }

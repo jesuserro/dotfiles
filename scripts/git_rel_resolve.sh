@@ -10,10 +10,6 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # Sin color
 
-# 📦 Configuración básica
-DEV_BRANCH="dev"
-MAIN_BRANCH="main"
-
 # 🔍 Procesar argumentos
 process_arguments() {
 	while [[ $# -gt 0 ]]; do

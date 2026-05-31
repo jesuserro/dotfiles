@@ -23,8 +23,6 @@ CODEX_CONFIG="${HOME_ROOT}/.codex/config.toml"
 OPENCODE_CONFIG="${HOME_ROOT}/.config/opencode/opencode.json"
 
 CURSOR_TMPL="${DOTFILES_ROOT}/dot_cursor/mcp.json.tmpl"
-CODEX_TMPL="${DOTFILES_ROOT}/dot_codex/config.toml.tmpl"
-OPENCODE_TMPL="${DOTFILES_ROOT}/dot_config/opencode/opencode.json.tmpl"
 SKILLS_SRC="${DOTFILES_ROOT}/ai/assets/skills"
 REGISTRY="${DOTFILES_ROOT}/ai/assets/commands/registry.yaml"
 VALIDATE_SKILLS="${DOTFILES_ROOT}/scripts/validate-skills-structure.sh"
@@ -509,7 +507,7 @@ echo "==> 2. Skills (repo + validate-skills-structure)"
 if [[ -d "${SKILLS_SRC}" ]]; then
 	categories=0
 	skill_md=0
-	while IFS= read -r -d '' d; do
+	while IFS= read -r -d '' _skill_dir; do
 		categories=$((categories + 1))
 	done < <(find "${SKILLS_SRC}" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null || true)
 	skill_md="$(find "${SKILLS_SRC}" -name 'SKILL.md' -type f 2>/dev/null | wc -l | tr -d ' ')"

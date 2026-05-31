@@ -123,7 +123,7 @@ fi
 
 shown=0
 
-while IFS=$'\t' read -r requirement package command platform capability manager install_method action_kind action_summary action_command source_file; do
+while IFS=$'\t' read -r requirement package command _platform _capability manager install_method _action_kind action_summary action_command _source_file; do
 	[[ -n "${package}" ]] || continue
 
 	present=0
