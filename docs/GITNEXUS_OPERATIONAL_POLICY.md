@@ -84,6 +84,14 @@ Ejemplos válidos:
 
 Procedimiento: `make update-check` → confirmar no hay MCPs vivos → `gnx-analyze-here` → revisar diff en `AGENTS.md`/`CLAUDE.md` antes de commit.
 
+Para refrescar solo el índice (`.gitnexus/`) sin regenerar los bloques en `AGENTS.md` / `CLAUDE.md`:
+
+```bash
+gnx-analyze-here -- --skip-agents-md
+```
+
+Si se ejecuta `gnx-analyze-here` sin ese flag, GitNexus puede sobrescribir la sección entre `<!-- gitnexus:start/end -->` con texto upstream (incluido `npx gitnexus analyze`). Revisar el diff manualmente antes de commit. Los tests en `tests/bats/docs/agents-claude-gitnexus-blocks.bats` detectan regresiones en esos bloques.
+
 ---
 
 ## Referencias
