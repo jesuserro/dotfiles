@@ -25,28 +25,32 @@ On dotfiles/WSL, run the read-only precheck before any human-initiated re-index:
 make update-check
 ```
 
-If it warns that the effective Node runtime comes from Cursor/VS Code and is below the repo policy (`>=22`), but reports a managed compatible runtime, a **human** may use:
-
-```bash
-gnx-analyze-here
-```
-
-This loads the shared Node runtime policy, respects `DOTFILES_MANAGED_NODE_BIN`, and avoids raw analyze CLI or npx invocations under an IDE-injected Node 20 process. If no managed compatible runtime is available, reconcile Node with `make install-node-stack` before re-indexing.
+If it warns that the effective Node runtime comes from Cursor/VS Code and is below the repo policy (`>=22`), but reports a managed compatible runtime, a **human** may use `gnx-analyze-here` (not raw `gitnexus analyze` or `npx gitnexus`). If no managed compatible runtime is available, reconcile Node with `make install-node-stack` before re-indexing.
 
 ### analyze — Build or refresh the index (human only)
 
+**Agents:** use `make gitnexus-status` only; do not auto-refresh on STALE.
+
+**Humans (dotfiles default):** refresh index without touching versioned agent blocks:
+
 ```bash
-gnx-analyze-here
+make gitnexus-status
+# Close Cursor / disable GitNexus MCP if live processes or lock in use; re-run status
+gnx-analyze-here -- --skip-agents-md
+make gitnexus-status
 ```
 
-**Agents must not run this without explicit user approval.** Run from the project root. Parses source files, builds the knowledge graph, writes `.gitnexus/`, and may regenerate `CLAUDE.md` / `AGENTS.md` context blocks.
+`gnx-analyze-here` loads the shared Node runtime policy and avoids IDE Node 20 / npx. **`--skip-agents-md`** skips regenerating `AGENTS.md` / `CLAUDE.md`. See `docs/GITNEXUS_OPERATIONAL_POLICY.md`.
 
-| Flag           | Effect                                                           |
-| -------------- | ---------------------------------------------------------------- |
-| `--force`      | Force full re-index even if up to date                           |
-| `--embeddings` | Enable embedding generation for semantic search (off by default) |
+| Flag               | Effect                                                           |
+| ------------------ | ---------------------------------------------------------------- |
+| `--skip-agents-md` | Index only; do not rewrite `AGENTS.md` / `CLAUDE.md` blocks      |
+| `--force`          | Force full re-index even if up to date                           |
+| `--embeddings`     | Enable embedding generation for semantic search (off by default) |
 
-**When a human runs it:** First time in a project, after major code changes, or when MCP / `make gitnexus-status` reports STALE — only after closing live GitNexus MCP processes.
+**Exception:** `gnx-analyze-here` without `--skip-agents-md` may regenerate `<!-- gitnexus:* -->` blocks — review diff and run `agents-claude-gitnexus-blocks.bats` before commit.
+
+**When a human runs it:** After explicit need (not STALE alone), with no live GitNexus MCP processes holding `.gitnexus/lbug`.
 
 ### status — Check index freshness
 
@@ -92,9 +96,11 @@ Manual fallback: `gitnexus list`. The MCP `list_repos` tool provides the same in
 ## Troubleshooting
 
 - **"Not inside a git repository"**: Run from a directory inside a git repo
-- **Analyze is slow or appears stuck under Cursor**: Run `make update-check`; if Node is shadowed by Cursor v20, human re-runs with `gnx-analyze-here`
-- **Index is stale after re-analyzing**: Restart the IDE to reload the MCP server
-- **Lock on `.gitnexus/lbug`**: Run `make gitnexus-status`; wait for MCP processes; never delete `lbug` automatically
+- **Index stale (agents)**: Run `make gitnexus-status`; do not run analyze; ask Jesús for human refresh
+- **Human refresh (dotfiles)**: `make gitnexus-status` → close MCP if needed → `gnx-analyze-here -- --skip-agents-md` → `make gitnexus-status` again
+- **Analyze is slow or appears stuck under Cursor**: Run `make update-check`; human uses `gnx-analyze-here`, not `gitnexus analyze` or `npx gitnexus`
+- **Index is stale after re-analyzing**: Restart Cursor / MCP client to reload the index
+- **Lock on `.gitnexus/lbug`**: Run `make gitnexus-status`; close Cursor or disable GitNexus MCP; never delete `lbug` automatically
 - **Embeddings slow**: Omit `--embeddings` (it's off by default) or set `OPENAI_API_KEY` for faster API-based embedding
 
 ## npx fallback (exceptional manual use only)

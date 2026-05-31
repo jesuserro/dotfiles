@@ -75,22 +75,46 @@ El problema: shells de agentes en IDE suelen tener `node` de `.cursor-server` (<
 
 ## Cuándo refrescar el índice (solo humano)
 
-Ejemplos válidos:
+**`STALE` en `make gitnexus-status` no implica refresh automático.** Los agentes deben seguir con MCP read-only o pedir decisión humana; nunca ejecutar analyze por staleness sola.
+
+Ejemplos válidos para que un humano refresque:
 
 - Cambio grande de arquitectura o muchos símbolos nuevos.
-- MCP o `make gitnexus-status` reporta índice **STALE** y el trabajo lo requiere.
-- Antes de análisis de impacto importante que dependa del grafo actualizado.
-- **Después** de cerrar procesos MCP que puedan retener lock en `lbug`.
+- Índice **STALE** o **NO_INDEX** y el trabajo concreto depende del grafo actualizado.
+- Antes de un análisis de impacto humano que requiera índice al día.
 
-Procedimiento: `make update-check` → confirmar no hay MCPs vivos → `gnx-analyze-here` → revisar diff en `AGENTS.md`/`CLAUDE.md` antes de commit.
+**No ejecutar analyze** si `make gitnexus-status` lista procesos `gitnexus mcp` / `analyze` / `ladybug`, o si el lock en `.gitnexus/lbug` está en uso: cerrar Cursor, desactivar el MCP GitNexus o esperar a que terminen y repetir status hasta que no haya procesos vivos. La presencia de `lbug` con MCP activo es habitual y no autoriza borrar el lock.
 
-Para refrescar solo el índice (`.gitnexus/`) sin regenerar los bloques en `AGENTS.md` / `CLAUDE.md`:
+### Procedimiento humano de refresh (dotfiles)
+
+Comando **canónico** — solo índice en `.gitnexus/`, sin tocar bloques versionados:
 
 ```bash
+make update-check
+make gitnexus-status
+# Si hay procesos MCP o lock en uso: cerrar Cursor / desactivar MCP GitNexus; repetir status
 gnx-analyze-here -- --skip-agents-md
+make gitnexus-status
+git status --short -- .gitnexus AGENTS.md CLAUDE.md docs/wiki
+bats tests/bats/docs/agents-claude-gitnexus-blocks.bats
 ```
 
-Si se ejecuta `gnx-analyze-here` sin ese flag, GitNexus puede sobrescribir la sección entre `<!-- gitnexus:start/end -->` con texto upstream (incluido `npx gitnexus analyze`). Revisar el diff manualmente antes de commit. Los tests en `tests/bats/docs/agents-claude-gitnexus-blocks.bats` detectan regresiones en esos bloques.
+- **`--skip-agents-md`** evita regenerar `AGENTS.md` y `CLAUDE.md`. Es la ruta por defecto en este repo.
+- Usar terminal con aliases cargados (`gnx-analyze-here`), no `gitnexus analyze` ni `npx gitnexus` desde shells de IDE.
+- **No borrar** `.gitnexus/lbug` automáticamente.
+- Tras un refresh exitoso, **reiniciar Cursor** (o el cliente MCP) si las herramientas siguen viendo índice viejo.
+
+### Excepción: regenerar bloques AGENTS/CLAUDE
+
+Solo si el humano **quiere** actualizar la sección `<!-- gitnexus:start/end -->`:
+
+```bash
+gnx-analyze-here
+```
+
+GitNexus puede sobrescribir esos bloques con texto upstream (incluido referencias a `npx gitnexus analyze`). Revisar diff manualmente antes de commit. Los tests en `tests/bats/docs/agents-claude-gitnexus-blocks.bats` detectan regresiones.
+
+Versión corta operativa: [OPERATIONS_CHEATSHEET.md §8](OPERATIONS_CHEATSHEET.md).
 
 ---
 

@@ -163,6 +163,19 @@ Referencia agentes: [MCP_QUICKREF.md](MCP_QUICKREF.md).
 
 Política completa: [GITNEXUS_OPERATIONAL_POLICY.md](GITNEXUS_OPERATIONAL_POLICY.md).
 
+### Refresh humano del índice
+
+Solo **humano**; los agentes no ejecutan analyze ni refresh por `STALE`. Sin `npx gitnexus` (ver prohibiciones §8). Con `--skip-agents-md` no se tocan los bloques `<!-- gitnexus:* -->` en `AGENTS.md` / `CLAUDE.md`.
+
+```bash
+make gitnexus-status
+# cerrar Cursor/MCP si hay procesos vivos o lock activo
+gnx-analyze-here -- --skip-agents-md
+make gitnexus-status
+git status --short -- .gitnexus AGENTS.md CLAUDE.md docs/wiki
+make bats-docs
+```
+
 ---
 
 ## 9. Skills

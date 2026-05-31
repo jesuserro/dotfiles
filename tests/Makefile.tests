@@ -442,6 +442,7 @@ bats-docs:
 	@$(call run_bats,$(BATS_DIR)/docs/operations-cheatsheet.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/documentation-consistency.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/agents-claude-gitnexus-blocks.bats)
+	@$(call run_bats,$(BATS_DIR)/docs/gitnexus-human-refresh-procedure.bats)
 
 bats-zsh:
 	@echo "$(BLUE)==>$NC Running zsh stack RC symlink tests..."
