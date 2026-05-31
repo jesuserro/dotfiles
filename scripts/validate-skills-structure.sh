@@ -73,6 +73,17 @@ check_has_recognizable_section() {
 	return 1
 }
 
+is_skip_dir() {
+	case "$1" in
+	references | render | templates | assets | examples | scripts | .venv)
+		return 0
+		;;
+	*)
+		return 1
+		;;
+	esac
+}
+
 check_skill() {
 	local skill_path="$1"
 	local skill_name
@@ -135,8 +146,7 @@ scan_directory() {
 		skill_name="${prefix}$(basename "${skill_path}")"
 
 		# Skip internal subdirectories
-		local skip_dirs=("references" "render" "templates" "assets" "examples" "scripts" ".venv")
-		if [[ " ${skip_dirs[*]} " =~ " $(basename "${skill_path}") " ]]; then
+		if is_skip_dir "$(basename "${skill_path}")"; then
 			continue
 		fi
 
@@ -150,7 +160,7 @@ scan_directory() {
 				[[ -d "${subdir}" ]] || continue
 				local subdir_name
 				subdir_name=$(basename "${subdir}")
-				if [[ ! " ${skip_dirs[*]} " =~ " ${subdir_name} " ]]; then
+				if ! is_skip_dir "${subdir_name}"; then
 					has_subdirs=true
 					break
 				fi

@@ -18,6 +18,9 @@ setup() {
 	MOCK_NPX="$TEST_TEMP_DIR/npx"
 	cat >"$MOCK_NPX" <<'MOCK_EOF'
 #!/usr/bin/env bash
+if [[ -n "${MOCK_NPX_ARGS_FILE:-}" ]]; then
+	printf '%s\n' "$@" >"$MOCK_NPX_ARGS_FILE"
+fi
 exit 0
 MOCK_EOF
 	chmod +x "$MOCK_NPX"
@@ -88,6 +91,24 @@ bats_require_minimum_version 1.5.0
 	# Uses mock npx to avoid blocking
 	run run_with_mock_npx /nonexistent/path
 	[[ "$output" == *"WARNING"* ]]
+}
+
+@test "duplicate allowed path with spaces and regex metacharacters is passed once" {
+	[[ -x "$LAUNCHER" ]] || skip "Launcher not executable"
+
+	special_dir="$MOCK_ROOT/allowed dir/[literal].plus+star*"
+	mkdir -p "$special_dir"
+	args_file="$TEST_TEMP_DIR/npx-args.txt"
+
+	run env \
+		MCP_DOTFILES_ROOT="$MOCK_ROOT" \
+		MOCK_NPX_ARGS_FILE="$args_file" \
+		PATH="$TEST_TEMP_DIR:$PATH" \
+		bash "$LAUNCHER" "$special_dir" "$special_dir"
+
+	[[ "$status" -eq 0 ]]
+	[[ -f "$args_file" ]]
+	[[ "$(grep -Fx -- "$special_dir" "$args_file" | wc -l)" -eq 1 ]]
 }
 
 @test "whitelist check uses proper directory boundary" {

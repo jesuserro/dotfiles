@@ -43,7 +43,15 @@ for arg in "$@"; do
         fi
     done
     if [[ "$is_allowed" == true ]]; then
-        if [[ ! " ${ALL_PATHS[*]} " =~ " ${abs_path} " ]]; then
+        path_already_added=false
+        for existing_path in "${ALL_PATHS[@]}"; do
+            if [[ "$existing_path" == "$abs_path" ]]; then
+                path_already_added=true
+                break
+            fi
+        done
+
+        if [[ "$path_already_added" == false ]]; then
             ALL_PATHS+=("$abs_path")
         fi
     else
