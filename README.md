@@ -107,6 +107,7 @@ dotfiles/
 ```
 
 ```bash
+make help        # targets by risk (read-only vs human/mutating)
 make test-fast
 make ai-doctor
 ```

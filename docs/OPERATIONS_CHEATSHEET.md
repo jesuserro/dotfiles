@@ -8,6 +8,7 @@ Referencia corta por escenario. Detalle en [OPERATIONS.md](OPERATIONS.md), [CHEZ
 
 | Capa | Herramientas | Qué hace |
 |------|--------------|----------|
+| **Descubrimiento** | `make help` | Índice CLI de targets por riesgo (read-only vs humano/mutante) |
 | **Bootstrap** | `make install*`, `make deps-*` | Paquetes y opt-ins en máquina nueva |
 | **Materialización** | `chezmoi status` / `diff` / apply acotado | Publica plantillas y secretos en HOME |
 | **Mantenimiento** | `make update`, checks read-only | Sistema, npm, imágenes MCP — **no** sustituye Chezmoi |
