@@ -26,6 +26,8 @@ from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Set, Tupl
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHEZMOI_PREAMBLE_LINE = re.compile(r"^\{\{-.*?-\}\}\s*$")
+CHEZMOI_WHOLE_LINE = re.compile(r"^\{\{.*\}\}\s*$")
+CHEZMOI_INLINE = re.compile(r"\{\{[^}]+\}\}")
 DEFAULT_MANIFEST = REPO_ROOT / "ai" / "assets" / "mcps" / "MANIFEST.yaml"
 BUILD_MCPS = REPO_ROOT / "build" / "mcps"
 OUT_CURSOR = BUILD_MCPS / "dot_cursor" / "mcp.json.tmpl"
@@ -35,7 +37,7 @@ OUT_DRIFT_JSON = BUILD_MCPS / "drift-report.json"
 BACKUP_ROOT = BUILD_MCPS / "backups"
 
 TMPL_CURSOR = REPO_ROOT / "dot_cursor" / "mcp.json.tmpl"
-TMPL_CODEX = REPO_ROOT / "dot_codex" / "config.toml.tmpl"
+TMPL_CODEX = REPO_ROOT / "dot_codex" / "private_config.toml.tmpl"
 TMPL_OPENCODE = REPO_ROOT / "dot_config" / "opencode" / "opencode.json.tmpl"
 
 # Literal Chezmoi template fragments (do not pass through str.format)
@@ -61,6 +63,23 @@ def strip_chezmoi_template_preamble(text: str) -> str:
             continue
         break
     return "".join(lines[i:])
+
+
+def sanitize_template_for_toml(text: str) -> str:
+    """Drop Chezmoi directive lines and replace inline {{ ... }} for tomllib validation."""
+    text = strip_chezmoi_template_preamble(text)
+    quoted_with_template = re.compile(r'"[^"]*\{\{[^}]+\}\}[^"]*"')
+    out: List[str] = []
+    for line in text.splitlines():
+        if CHEZMOI_WHOLE_LINE.match(line.strip()):
+            continue
+        line = quoted_with_template.sub('"__chezmoi__"', line)
+        line = CHEZMOI_INLINE.sub('"__chezmoi__"', line)
+        out.append(line)
+    body = "\n".join(out)
+    if body and not body.endswith("\n"):
+        body += "\n"
+    return body
 
 
 def _need_yaml():
@@ -790,10 +809,20 @@ def parse_opencode_template(path: Path) -> Dict[str, NormConfig]:
     return {str(k): normalize_opencode_entry(v) for k, v in mcp.items() if isinstance(v, dict)}
 
 
+def _extract_codex_mcp_fragment(full_toml: str) -> str:
+    """Return only [mcp_servers.*] blocks (before [plugins.*]) for drift parsing."""
+    m0 = _RE_MCP_SERVERS_HEADER.search(full_toml)
+    if not m0:
+        raise ValueError("Codex template: no [mcp_servers.*] section found")
+    m1 = _RE_PLUGINS_HEADER.search(full_toml, m0.start())
+    end = m1.start() if m1 else len(full_toml)
+    return full_toml[m0.start() : end]
+
+
 def parse_codex_mcp_servers(path: Path) -> Dict[str, NormConfig]:
     import tomllib  # noqa: PLC0415
 
-    raw = strip_chezmoi_template_preamble(path.read_text(encoding="utf-8"))
+    raw = _extract_codex_mcp_fragment(path.read_text(encoding="utf-8"))
     doc = tomllib.loads(raw)
     root = doc.get("mcp_servers")
     if not isinstance(root, dict):
@@ -1158,7 +1187,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
         json.loads(strip_chezmoi_template_preamble(TMPL_OPENCODE.read_text(encoding="utf-8")))
         import tomllib  # noqa: PLC0415
 
-        tomllib.loads(strip_chezmoi_template_preamble(TMPL_CODEX.read_text(encoding="utf-8")))
+        tomllib.loads(sanitize_template_for_toml(TMPL_CODEX.read_text(encoding="utf-8")))
     except Exception as exc:  # noqa: BLE001
         print(f"FAIL post-write validation: {exc}", file=sys.stderr)
         return 1

@@ -30,7 +30,7 @@ Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si ha
 | Target en HOME | Origen en repo |
 |----------------|----------------|
 | `~/.cursor/mcp.json` | `dot_cursor/mcp.json.tmpl` |
-| `~/.codex/config.toml` | `dot_codex/config.toml.tmpl` |
+| `~/.codex/config.toml` | `dot_codex/private_config.toml.tmpl` |
 | `~/.config/mcp-secrets.env` | Generado desde `secrets.sops.yaml` (SOPS) — nombre neutro |
 | `~/.secrets/codex.env` | Symlink → `~/.config/mcp-secrets.env` (legacy, mantener por compatibilidad) |
 | `~/.config/ai/runtime/` | Runtime (venv) — ver `ai/README.md` |
@@ -293,17 +293,38 @@ Si `status` lista entradas **`R`** en rutas como `.chezmoiscripts/00_backup_rc_f
     exclude = ["scripts"]
 ```
 
-### Codex — drift que requiere decisión
+### Codex — gobernanza versionada (apply acotado)
 
-`~/.codex/config.toml` puede aparecer como **`MM`** si hay preferencias locales activas (modelo, `model_reasoning_effort`, permisos `600` vs `644`, `[projects."…"] trust_level`, etc.) que no coinciden con [`dot_codex/config.toml.tmpl`](../dot_codex/config.toml.tmpl).
+Política vigente: **preferencias HOME + parametrización Chezmoi mínima**. Los bloques MCP ya están alineados vía plantilla; el drift histórico estaba en la cabecera (modelo, reasoning, `trust_level`, permisos).
 
-**No aplicar a ciegas** con un `chezmoi apply` global. Opciones futuras (elegir una explícitamente):
+| Clave | Default versionado (`.chezmoi.toml` → `[data.codex]`) | Override local |
+|-------|------------------------------------------------------|----------------|
+| `model` | `"gpt-5.5"` | `[data.codex]` en `~/.config/chezmoi/chezmoi.toml` |
+| `model_reasoning_effort` | `"high"` | idem |
+| `dotfiles_trust_level` | `"trusted"` para `{{ .chezmoi.sourceDir }}` | omitir clave o vaciar para no emitir `[projects."…"]` |
 
-1. **Repo gana** — aplicar la plantilla actual (solo `~/.codex/config.toml` si quieres acotar).
-2. **HOME gana** — subir tus preferencias al template y luego apply de esa ruta.
-3. **Drift local permanente** — documentar y no aplicar nunca esa ruta desde Chezmoi.
+Plantilla: [`dot_codex/private_config.toml.tmpl`](../dot_codex/private_config.toml.tmpl). Permisos destino: **`600`** vía prefijo Chezmoi `private_` en el nombre de source (convención canónica; no usar `.chezmoiattributes` para este fichero).
 
-Este flujo de auditoría **no resuelve Codex**; solo lo señala.
+**No usar `chezmoi apply` global a ciegas** para Codex. Tras cambios en repo o en datos Chezmoi, aplicar **solo** esa ruta:
+
+```bash
+chezmoi --source="$HOME/dotfiles" diff ~/.codex/config.toml
+chezmoi --source="$HOME/dotfiles" apply ~/.codex/config.toml
+stat -c '%a %n' ~/.codex/config.toml   # esperado: 600
+```
+
+Ejemplo override en otra máquina (p. ej. oficina con otro modelo):
+
+```toml
+[data.codex]
+    model = "gpt-5.4"
+    model_reasoning_effort = "medium"
+    dotfiles_trust_level = "trusted"
+```
+
+Los defaults versionados viven en [`.chezmoi.toml`](../.chezmoi.toml) (`[data.codex]`). Chezmoi fusiona ese bloque con tu config local cuando ambos existen; si solo tienes `~/.config/chezmoi/chezmoi.toml`, añade `[data.codex]` allí o confía en los defaults embebidos en la plantilla (`gpt-5.5`, `high`, `trust_level = trusted` salvo que definas `dotfiles_trust_level = ""` para omitir el bloque `[projects]`).
+
+`make chezmoi-drift-report` señala drift Codex pero **no aplica**; el apply acotado lo ejecuta Jesús manualmente.
 
 ### Launchers MCP materializados
 

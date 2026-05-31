@@ -46,13 +46,16 @@ else
 	note "Launchers not present in HOME yet — skip diff."
 fi
 
-section "Codex — manual decision required (out of scope for automated apply)"
-note "~/.codex/config.toml may show MM (model, reasoning, permissions, trust_level)."
-note "Do not run a global chezmoi apply until you choose:"
-note "  1) Repo wins — apply template as-is"
-note "  2) HOME wins — update dot_codex/config.toml.tmpl then apply that path only"
-note "  3) Permanent local drift — document and never apply ~/.codex/config.toml"
-note "Details: docs/CHEZMOI.md — Drift aceptado y auditoría"
+section "Codex — versioned policy; acotado apply manual if drift"
+note "~/.codex/config.toml may show MM until you apply that path only (never global apply)."
+note "Policy: HOME prefs + Chezmoi data.codex defaults (model, reasoning, trust_level)."
+note "Template: dot_codex/private_config.toml.tmpl (private_ prefix → mode 600 on apply)."
+note "Override per machine in ~/.config/chezmoi/chezmoi.toml under [data.codex]."
+note "Manual (Jesús only):"
+note "  chezmoi --source=\"${SOURCE}\" diff ~/.codex/config.toml"
+note "  chezmoi --source=\"${SOURCE}\" apply ~/.codex/config.toml"
+note "  stat -c '%a %n' ~/.codex/config.toml"
+note "Details: docs/CHEZMOI.md — Codex governance"
 
 section "Optional: hide phantom script R entries (local only, not versioned)"
 note 'Add to ~/.config/chezmoi/chezmoi.toml: [status] exclude = ["scripts"]'

@@ -54,7 +54,7 @@ vim ai/runtime/mcp/requirements.txt
 
 **MCP store-etl (Cursor):** gestionar `.cursor/mcp.json` en el repositorio **store-etl** (no en dotfiles). Dotfiles publica MCPs globales y `store_etl_ops`; ver [CHEZMOI.md](CHEZMOI.md).
 
-**Codex:** editar `dot_codex/config.toml.tmpl`
+**Codex:** editar `dot_codex/private_config.toml.tmpl`
 
 Ejemplo para Cursor (`dot_cursor/mcp.json.tmpl`):
 
@@ -66,7 +66,7 @@ Ejemplo para Cursor (`dot_cursor/mcp.json.tmpl`):
 }
 ```
 
-Ejemplo para Codex (`dot_codex/config.toml.tmpl`):
+Ejemplo para Codex (`dot_codex/private_config.toml.tmpl`):
 
 ```toml
 [mcp_servers.mi_mcp]
@@ -114,7 +114,7 @@ chezmoi --source=$HOME/dotfiles apply
 | Venv            | —                          | `~/.config/ai/runtime/.venv`  |
 | Hub skills      | `ai/assets/skills/`       | `~/.config/ai/skills` (symlink) |
 | Config Cursor   | `dot_cursor/mcp.json.tmpl` | `~/.cursor/mcp.json`          |
-| Config Codex    | `dot_codex/config.toml.tmpl` | `~/.codex/config.toml`     |
+| Config Codex    | `dot_codex/private_config.toml.tmpl` | `~/.codex/config.toml`     |
 | Config OpenCode | `dot_config/opencode/`     | `~/.config/opencode/` (XDG)   |
 
 > **Nota arquitectónica:** Cada tool usa su convención nativa (Cursor/Codex → `~/.`, OpenCode → XDG). No forces simetría visual. Ver [docs/OPENCODE.md](./OPENCODE.md) para detalles.

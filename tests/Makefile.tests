@@ -360,6 +360,7 @@ bats-chezmoi:
 	@echo "$(BLUE)==>$NC Running chezmoi tests..."
 	@$(call run_bats,$(BATS_DIR)/chezmoi/smoke.bats)
 	@$(call run_bats,$(BATS_DIR)/chezmoi/drift-report.bats)
+	@$(call run_bats,$(BATS_DIR)/chezmoi/codex-config-governance.bats)
 	@$(call run_bats,$(BATS_DIR)/chezmoi/gen-secrets-strict.bats)
 	@$(call run_bats,$(BATS_DIR)/chezmoi/store-etl-hook-removed.bats)
 	@$(call run_bats,$(BATS_DIR)/chezmoi/ai-runtime-uv.bats)

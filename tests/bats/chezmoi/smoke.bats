@@ -152,7 +152,7 @@ json.loads(content)
 " 2>/dev/null || skip "Template contains complex chezmoi syntax"
 }
 
-@test "dot_codex/config.toml.tmpl has valid toml structure" {
+@test "dot_codex/private_config.toml.tmpl has valid toml structure" {
 	skip_if_command_missing "python3"
 
 	python3 -c "
@@ -165,7 +165,7 @@ except ImportError:
     except ImportError:
         skip('toml parser not available')
 
-with open('$DOTFILES_DIR/dot_codex/config.toml.tmpl', 'r') as f:
+with open('$DOTFILES_DIR/dot_codex/private_config.toml.tmpl', 'r') as f:
     content = f.read()
 
 # Remove chezmoi template syntax
@@ -188,11 +188,11 @@ tomllib.loads(content)
 }
 
 @test "Codex MCP config has filesystem defined" {
-	grep -q "filesystem" "$DOTFILES_DIR/dot_codex/config.toml.tmpl"
+	grep -q "filesystem" "$DOTFILES_DIR/dot_codex/private_config.toml.tmpl"
 }
 
 @test "Codex MCP config has sequential-thinking defined" {
-	grep -q "sequential-thinking" "$DOTFILES_DIR/dot_codex/config.toml.tmpl"
+	grep -q "sequential-thinking" "$DOTFILES_DIR/dot_codex/private_config.toml.tmpl"
 }
 
 @test "secrets script uses sops" {

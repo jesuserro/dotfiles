@@ -32,10 +32,10 @@ setup() {
 	assert_file_not_matches "${REPORT}" 'npm\s+install'
 }
 
-@test "chezmoi-drift-report documents Codex as manual decision" {
+@test "chezmoi-drift-report documents Codex governance and acotado apply" {
 	grep -q 'Codex' "${REPORT}"
-	grep -qE 'manual|decision|MM' "${REPORT}"
-	grep -q 'dot_codex/config.toml.tmpl' "${REPORT}" ||
+	grep -qE 'acotado|versioned|data\.codex|MM' "${REPORT}"
+	grep -q 'dot_codex/private_config.toml.tmpl' "${REPORT}" ||
 		grep -q '~/.codex/config.toml' "${REPORT}"
 }
 
@@ -45,10 +45,11 @@ setup() {
 	grep -q 'not a global' "${REPORT}" || grep -q 'global chezmoi apply' "${REPORT}"
 }
 
-@test "docs/CHEZMOI.md documents drift audit and defers Codex" {
+@test "docs/CHEZMOI.md documents drift audit and Codex governance" {
 	local doc="${DOTFILES_DIR}/docs/CHEZMOI.md"
 	grep -q 'Drift aceptado y auditoría' "${doc}"
 	grep -q 'make chezmoi-drift-report' "${doc}"
 	grep -q 'Codex' "${doc}"
+	grep -q 'data.codex' "${doc}"
 	grep -q 'chezmoi apply' "${doc}"
 }

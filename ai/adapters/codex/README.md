@@ -7,7 +7,7 @@ Wiring específico para integrar el hub AI con Codex.
 | Destino | Origen |
 |---------|--------|
 | `~/.codex/skills` | `~/.config/ai/skills` |
-| `~/.codex/config.toml` | `dot_codex/config.toml.tmpl` |
+| `~/.codex/config.toml` | `dot_codex/private_config.toml.tmpl` |
 
 ## Variables
 
