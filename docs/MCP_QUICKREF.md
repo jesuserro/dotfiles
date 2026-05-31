@@ -2,6 +2,8 @@
 
 **For AI agents working with this dotfiles repository**
 
+> **Dotfiles day-to-day (Chezmoi drift, update, agent limits):** [OPERATIONS_CHEATSHEET.md](./OPERATIONS_CHEATSHEET.md)
+
 ## Canonical intent (SSOT)
 
 - **`ai/assets/mcps/MANIFEST.yaml`** — single source of truth for **which** MCPs exist and **how** they are intended on **cursor**, **codex**, and **opencode** (all compatible servers **enabled by default** unless a surface has a documented `enabled: false` + `reason`).

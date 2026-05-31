@@ -1,6 +1,10 @@
 # Operaciones diarias (dotfiles)
 
-Guía humana principal para operar este repositorio en Ubuntu/WSL2. Para instalación inicial paso a paso, ver [INSTALL.md](INSTALL.md). Para Chezmoi y secretos en profundidad, ver [CHEZMOI.md](CHEZMOI.md) y [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
+Guía humana principal para operar este repositorio en Ubuntu/WSL2.
+
+> **Operación diaria (chuleta):** [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md) — flujos casa/oficina, drift Chezmoi, apply acotado, MCP, GitNexus y límites para agentes.
+
+Para instalación inicial paso a paso, ver [INSTALL.md](INSTALL.md). Para Chezmoi y secretos en profundidad, ver [CHEZMOI.md](CHEZMOI.md) y [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
 
 > **Legacy:** RCM (`rcup`) fue el gestor histórico de symlinks. **No es operativo.** El flujo canónico es **Chezmoi** + **SOPS/age**.
 
@@ -239,26 +243,18 @@ Detalle: [CHEZMOI.md](CHEZMOI.md).
 
 ---
 
-## Chuleta (≤20 comandos)
+## Chuleta rápida
+
+La chuleta operativa canónica (casa/oficina, apply acotado, agentes) está en **[OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)**.
+
+Comandos de referencia rápida (sin sustituir la chuleta):
 
 ```bash
 cd ~/dotfiles && git pull
+make chezmoi-drift-report
 chezmoi --source="$HOME/dotfiles" status
-chezmoi --source="$HOME/dotfiles" apply
-source ~/.zshrc
-sops secrets.sops.yaml
-chezmoi --source="$HOME/dotfiles" apply -i scripts
+make update-check && make update          # humano
 make ai-cursor-check
 make ai-mcp-governance
-make ai-mcp-generate APPLY=1
-make install-check
-make deps-check
 make test-fast
-make update
-docker.exe mcp version
-grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env
-make install-dotfiles DOTFILES_APPLY=1
-ZSH_RC_APPLY=1 chezmoi apply ~/.p10k.zsh
-chezmoi status -i scripts -x ''
-make install-verify
 ```

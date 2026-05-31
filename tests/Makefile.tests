@@ -45,7 +45,7 @@ BLUE := \033[0;34m
 NC := \033[0m
 
 .PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts bats-skills bats-tmux bats-gitnexus
-.PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands validate-skills-structure
+.PHONY: test-ci test-bats-ci bats-docs test-commands generate-commands validate-commands materialize-commands validate-skills-structure
 .PHONY: deps-check deps-install deps-actions bats-system bats-zsh bats-gitnexus test-deps-check
 .PHONY: quality-check security-check agent-validate agent-validate-changed ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
 
@@ -420,6 +420,10 @@ bats-gitnexus:
 	@echo "$(BLUE)==>$NC Running GitNexus alias tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/gitnexus_aliases.bats)
 
+bats-docs:
+	@echo "$(BLUE)==>$NC Running documentation contract tests..."
+	@$(call run_bats,$(BATS_DIR)/docs/operations-cheatsheet.bats)
+
 bats-zsh:
 	@echo "$(BLUE)==>$NC Running zsh stack RC symlink tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/rc_symlinks.bats)
@@ -438,7 +442,7 @@ test-ci: test-lint test-bats-ci test-chezmoi
 	@echo ""
 	@echo "$(GREEN)==>$NC CI tests completed"
 
-test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance bats-chezmoi bats-skills bats-gitnexus
+test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance bats-chezmoi bats-skills bats-gitnexus bats-docs
 
 # ============================================
 # Combined tests

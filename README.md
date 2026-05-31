@@ -70,11 +70,14 @@ Detalle: [docs/INSTALL.md](docs/INSTALL.md) · operación diaria: [docs/OPERATIO
 
 ```bash
 cd ~/dotfiles && git pull
+make chezmoi-drift-report
 chezmoi --source="$HOME/dotfiles" status
-chezmoi --source="$HOME/dotfiles" apply
+# apply acotado solo si hace falta — ver docs/OPERATIONS_CHEATSHEET.md
 source ~/.zshrc
-# opcional: make update
+make update-check && make update   # humano; opcional
 ```
+
+Detalle: [docs/OPERATIONS_CHEATSHEET.md](docs/OPERATIONS_CHEATSHEET.md).
 
 ---
 
@@ -82,7 +85,8 @@ source ~/.zshrc
 
 | Doc | Contenido |
 |-----|-----------|
-| **[docs/OPERATIONS.md](docs/OPERATIONS.md)** | Guía operativa principal (flujos, secretos, MCPs, riesgos, chuleta) |
+| **[docs/OPERATIONS_CHEATSHEET.md](docs/OPERATIONS_CHEATSHEET.md)** | Chuleta diaria casa/oficina, drift Chezmoi, apply acotado, agentes |
+| **[docs/OPERATIONS.md](docs/OPERATIONS.md)** | Guía operativa principal (flujos, secretos, MCPs, riesgos) |
 | [docs/INSTALL.md](docs/INSTALL.md) | Bootstrap e instalación inicial |
 | [docs/CHEZMOI.md](docs/CHEZMOI.md) | Chezmoi, SOPS, symlinks RC, scripts, `ZSH_RC_APPLY` |
 | [docs/SECRETS_EXAMPLES.md](docs/SECRETS_EXAMPLES.md) | Ejemplos de secretos (GitHub, Postgres, MinIO) |
