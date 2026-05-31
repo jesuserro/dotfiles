@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-30 23:49:00
+**Generated:** 2026-05-31 09:36:04
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -15,6 +15,20 @@
 │   ├── 📄 run_after_15_link_tmux_dotfiles.sh.tmpl
 │   └── 📄 run_before_00_backup_rc_files.sh.tmpl
 ├── 📁 .claude
+│   └── 📁 skills
+│       └── 📁 gitnexus
+│           ├── 📁 gitnexus-cli
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-debugging
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-exploring
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-guide
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-impact-analysis
+│           │   └── 📝 SKILL.md
+│           └── 📁 gitnexus-refactoring
+│               └── 📝 SKILL.md
 ├── 📁 .cursor
 │   ├── 📁 plans
 │   └── 📁 rules
@@ -844,6 +858,8 @@
 │   ├── 📝 branch_feature_15-adding-refactors-and-enhancements.md
 │   ├── 📝 branch_feature_16-enhancing-ups-command.md
 │   ├── 📝 branch_feature_17-adding-nuevas-herramientas-ia.md
+│   ├── 📝 branch_feature_18-adding-mejoras-de-auditor_a.md
+│   ├── 📝 branch_feature_19-resolver-shellchecks.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
@@ -1013,7 +1029,8 @@
 │   │   ├── 📁 prompts
 │   │   │   └── 📄 prompt-launchers.bats
 │   │   ├── 📁 skills
-│   │   │   └── 📄 canonical-skills.bats
+│   │   │   ├── 📄 canonical-skills.bats
+│   │   │   └── 📄 validate-skills-structure.bats
 │   │   ├── 📁 system
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
