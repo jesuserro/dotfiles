@@ -15,7 +15,7 @@ For any task involving code understanding, debugging, impact analysis, or refact
 2. **Match your task to a skill below** and **read that skill file**
 3. **Follow the skill's workflow and checklist**
 
-> If step 1 warns the index is stale, run `make update-check` first. If an IDE/agent has shadowed `node` with an incompatible runtime, use the managed Node path described in `gitnexus-cli` before running `gitnexus analyze`.
+> If step 1 warns the index is stale, run `make gitnexus-status`. Do not auto-refresh; ask Jesús before `gnx-analyze-here`.
 
 ## Skills
 

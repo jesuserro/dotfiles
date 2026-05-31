@@ -180,6 +180,41 @@ scan_directory() {
 	done
 }
 
+check_no_symlinks() {
+	local symlinks=()
+	local link
+
+	while IFS= read -r -d '' link || [[ -n "${link:-}" ]]; do
+		symlinks+=("${link}")
+	done < <(find "${SKILLS_DIR}" -type l -print0 2>/dev/null)
+
+	if [[ ${#symlinks[@]} -eq 0 ]]; then
+		return 0
+	fi
+
+	echo "ERROR: Symlinks are not allowed under ai/assets/skills/"
+	for link in "${symlinks[@]}"; do
+		echo "  ✗ ${link} -> $(readlink "${link}" 2>/dev/null || echo '?')"
+	done
+	echo ""
+	echo "Remove external/vendor symlinks from the canonical tree."
+	echo "Matt Pocock Skills are opt-in external catalog: make install-mattpocock-skills"
+	((ERRORS++))
+	return 1
+}
+
+check_no_mattpocock_vendor() {
+	if [[ ! -e "${SKILLS_DIR}/mattpocock" ]]; then
+		return 0
+	fi
+
+	echo "ERROR: ai/assets/skills/mattpocock/ is not allowed in the canonical tree"
+	echo "  Matt Pocock Skills are external opt-in only."
+	echo "  Remove ai/assets/skills/mattpocock/ and use: make install-mattpocock-skills"
+	((ERRORS++))
+	return 1
+}
+
 echo "========================================"
 echo "SKILL STRUCTURE VALIDATION"
 echo "========================================"
@@ -187,6 +222,22 @@ echo ""
 
 if [[ ! -d "${SKILLS_DIR}" ]]; then
 	echo "ERROR: Skills directory not found: ${SKILLS_DIR}"
+	exit 1
+fi
+
+echo "Governance checks"
+check_no_symlinks || true
+check_no_mattpocock_vendor || true
+echo ""
+
+if [[ ${ERRORS} -gt 0 ]]; then
+	echo "========================================"
+	echo "SUMMARY"
+	echo "========================================"
+	echo "Errors:   ${ERRORS}"
+	echo "Warnings: ${WARNINGS}"
+	echo ""
+	echo "Validation FAILED"
 	exit 1
 fi
 

@@ -337,7 +337,7 @@ def collect_paths_from_mcp_json(data, home: str):
 
 
 cursor_t = dotfiles / "dot_cursor" / "mcp.json.tmpl"
-codex_t = dotfiles / "dot_codex" / "config.toml.tmpl"
+codex_t = dotfiles / "dot_codex" / "private_config.toml.tmpl"
 opencode_t = dotfiles / "dot_config" / "opencode" / "opencode.json.tmpl"
 
 cursor_tpl_n = 0

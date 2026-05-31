@@ -7,7 +7,7 @@ setup() {
 	GEN="${DOTFILES_DIR}/scripts/generate-mcp-configs.py"
 	BUILD_MCPS="${DOTFILES_DIR}/build/mcps"
 	TMPL_CURSOR="${DOTFILES_DIR}/dot_cursor/mcp.json.tmpl"
-	TMPL_CODEX="${DOTFILES_DIR}/dot_codex/config.toml.tmpl"
+	TMPL_CODEX="${DOTFILES_DIR}/dot_codex/private_config.toml.tmpl"
 	TMPL_OPENCODE="${DOTFILES_DIR}/dot_config/opencode/opencode.json.tmpl"
 }
 

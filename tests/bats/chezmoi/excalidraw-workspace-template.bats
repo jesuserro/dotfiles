@@ -53,7 +53,7 @@ assert_excalidraw_mount() {
 	local cfg="${TEST_TEMP_DIR}/chezmoi-explicit.toml"
 	write_chezmoi_config "${cfg}" "/tmp/vault" "/custom/excalidraw"
 
-	for tmpl in dot_cursor/mcp.json.tmpl dot_codex/config.toml.tmpl dot_config/opencode/opencode.json.tmpl; do
+	for tmpl in dot_cursor/mcp.json.tmpl dot_codex/private_config.toml.tmpl dot_config/opencode/opencode.json.tmpl; do
 		run render_template "${cfg}" "${tmpl}"
 		[[ "${status}" -eq 0 ]]
 		assert_excalidraw_mount "${output}" "/custom/excalidraw"
@@ -64,7 +64,7 @@ assert_excalidraw_mount() {
 	local cfg="${TEST_TEMP_DIR}/chezmoi-fallback.toml"
 	write_chezmoi_config "${cfg}" "/tmp/vault"
 
-	for tmpl in dot_cursor/mcp.json.tmpl dot_codex/config.toml.tmpl dot_config/opencode/opencode.json.tmpl; do
+	for tmpl in dot_cursor/mcp.json.tmpl dot_codex/private_config.toml.tmpl dot_config/opencode/opencode.json.tmpl; do
 		run render_template "${cfg}" "${tmpl}"
 		[[ "${status}" -eq 0 ]]
 		assert_excalidraw_mount "${output}" "/tmp/vault/excalidraw"

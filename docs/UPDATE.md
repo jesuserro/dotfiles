@@ -2,6 +2,8 @@
 
 `make update` es la interfaz pública de mantenimiento diario de dotfiles. Sustituye al comando histórico `ups`, que ya no existe.
 
+> Si acabas de `git pull` o merge, revisa primero drift Chezmoi con `make chezmoi-drift-report` (ver [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)). Antes de `make update`, ejecuta `make update-check` (read-only).
+
 ## Comandos públicos
 
 | Comando | Uso |

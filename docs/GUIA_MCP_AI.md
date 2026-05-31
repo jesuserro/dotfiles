@@ -2,16 +2,43 @@
 
 Comandos de terminal para trabajar con MCPs y el hub AI en dotfiles.
 
+> **Operación diaria:** [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md). Drift y apply acotado: [CHEZMOI.md](CHEZMOI.md). MCP en repo: [MCP_QUICKREF.md](MCP_QUICKREF.md).
+
 ---
 
 ## 1. Aplicar cambios (después de pull o editar dotfiles)
 
+Tras `git pull` o merge, **no uses `chezmoi apply` global como primer paso**. Revisa drift y aplica solo lo necesario:
+
 ```bash
 cd ~/dotfiles
-chezmoi --source=$HOME/dotfiles apply
+make chezmoi-drift-report
+chezmoi --source="$HOME/dotfiles" status
+chezmoi --source="$HOME/dotfiles" diff
 ```
 
-Crea/actualiza: `~/.cursor/mcp.json`, `~/.codex/config.toml`, `~/.config/ai/`, venv, skills.
+**Materializar superficies MCP** (si el diff o el reporte lo indican):
+
+```bash
+chezmoi --source="$HOME/dotfiles" apply \
+  ~/.cursor/mcp.json \
+  ~/.config/opencode/opencode.json \
+  ~/.codex/config.toml
+```
+
+**Materializar launchers MCP:**
+
+```bash
+chezmoi --source="$HOME/dotfiles" apply \
+  ~/.local/share/chezmoi/bin/mcp-git-launcher \
+  ~/.local/share/chezmoi/bin/mcp-postgres-launcher \
+  ~/.local/share/chezmoi/bin/mcp-gitnexus-launcher \
+  ~/.local/share/chezmoi/bin/mcp-filesystem-launcher
+```
+
+Runtime AI (`~/.config/ai/`, venv, skills enlazados): aplica solo si el diff lo muestra (hooks `run_after_*`); ver [CHEZMOI.md](CHEZMOI.md).
+
+`chezmoi apply` **global** queda para **bootstrap inicial** (`make install-dotfiles DOTFILES_APPLY=1`) o intervención humana consciente tras revisar el diff completo.
 
 ---
 
@@ -54,7 +81,7 @@ vim ai/runtime/mcp/requirements.txt
 
 **MCP store-etl (Cursor):** gestionar `.cursor/mcp.json` en el repositorio **store-etl** (no en dotfiles). Dotfiles publica MCPs globales y `store_etl_ops`; ver [CHEZMOI.md](CHEZMOI.md).
 
-**Codex:** editar `dot_codex/config.toml.tmpl`
+**Codex:** editar `dot_codex/private_config.toml.tmpl`
 
 Ejemplo para Cursor (`dot_cursor/mcp.json.tmpl`):
 
@@ -66,7 +93,7 @@ Ejemplo para Cursor (`dot_cursor/mcp.json.tmpl`):
 }
 ```
 
-Ejemplo para Codex (`dot_codex/config.toml.tmpl`):
+Ejemplo para Codex (`dot_codex/private_config.toml.tmpl`):
 
 ```toml
 [mcp_servers.mi_mcp]
@@ -77,9 +104,7 @@ enabled = true
 
 ### Paso 4: Aplicar
 
-```bash
-chezmoi --source=$HOME/dotfiles apply
-```
+Tras `make ai-mcp-governance` y `make ai-mcp-generate APPLY=1`, publica en HOME con apply acotado (§1), no apply global a ciegas.
 
 ---
 
@@ -89,7 +114,9 @@ chezmoi --source=$HOME/dotfiles apply
 cd ~/dotfiles
 git clone https://github.com/owner/skill-repo.git ai/assets/skills/nombre-skill
 rm -rf ai/assets/skills/nombre-skill/.git
-chezmoi --source=$HOME/dotfiles apply
+make chezmoi-drift-report
+chezmoi --source="$HOME/dotfiles" diff
+# Aplicar solo paths AI/skills que indique el diff (hooks run_after_11, etc.)
 ```
 
 El script `run_after_11_link_ai_assets` publica el hub canónico de skills en `~/.config/ai/skills/` y expone ese mismo canon en `~/.claude/skills/`, `~/.cursor/skills-cursor/`, `~/.codex/skills/` y `~/.config/opencode/skills/`.
@@ -100,7 +127,8 @@ El script `run_after_11_link_ai_assets` publica el hub canónico de skills en `~
 
 ```bash
 rm -rf ~/.config/ai/runtime/.venv
-chezmoi --source=$HOME/dotfiles apply
+chezmoi --source="$HOME/dotfiles" diff ~/.config/ai/runtime
+chezmoi --source="$HOME/dotfiles" apply ~/.config/ai/runtime
 ```
 
 ---
@@ -114,7 +142,7 @@ chezmoi --source=$HOME/dotfiles apply
 | Venv            | —                          | `~/.config/ai/runtime/.venv`  |
 | Hub skills      | `ai/assets/skills/`       | `~/.config/ai/skills` (symlink) |
 | Config Cursor   | `dot_cursor/mcp.json.tmpl` | `~/.cursor/mcp.json`          |
-| Config Codex    | `dot_codex/config.toml.tmpl` | `~/.codex/config.toml`     |
+| Config Codex    | `dot_codex/private_config.toml.tmpl` | `~/.codex/config.toml`     |
 | Config OpenCode | `dot_config/opencode/`     | `~/.config/opencode/` (XDG)   |
 
 > **Nota arquitectónica:** Cada tool usa su convención nativa (Cursor/Codex → `~/.`, OpenCode → XDG). No forces simetría visual. Ver [docs/OPENCODE.md](./OPENCODE.md) para detalles.

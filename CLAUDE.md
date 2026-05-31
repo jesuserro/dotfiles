@@ -3,7 +3,7 @@
 
 This project is indexed by GitNexus as **dotfiles** (3154 symbols, 3648 relationships, 60 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
-> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+> If any GitNexus tool warns the index is stale, run `make gitnexus-status`. Agents must not auto-refresh; ask Jesús before `gnx-analyze-here`. See `docs/GITNEXUS_OPERATIONAL_POLICY.md`.
 
 ## Always Do
 

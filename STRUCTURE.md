@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-31 09:36:04
+**Generated:** 2026-05-31 13:11:54
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -638,6 +638,7 @@
 │   │   │   ├── 📄 .keep
 │   │   │   └── 📝 README.md
 │   │   └── 📁 skills
+│   │       ├── 📁 _test_symlink_governance -> /tmp/tmp.6PbMhdD4II
 │   │       ├── 📁 diagrams
 │   │       │   ├── 📁 conventions
 │   │       │   │   └── 📁 excalidraw-architecture
@@ -797,6 +798,7 @@
 │   ├── 📝 CAMBIAR_TOKEN_GITHUB.md
 │   ├── 📝 CHEZMOI.md
 │   ├── 📝 COMMANDS_ARCHITECTURE.md
+│   ├── 📝 GITNEXUS_OPERATIONAL_POLICY.md
 │   ├── 📝 GIT_AI_AUTHOR.md
 │   ├── 📝 GIT_AI_CURSOR_SETTINGS.md
 │   ├── 📝 GIT_REL_INCIDENT.md
@@ -810,6 +812,7 @@
 │   ├── 📝 MIGRATION_MCP_ITER3.md
 │   ├── 📝 OPENCODE.md
 │   ├── 📝 OPERATIONS.md
+│   ├── 📝 OPERATIONS_CHEATSHEET.md
 │   ├── 📝 PROMPT_LAUNCHERS.md
 │   ├── 📝 README.md
 │   ├── 📝 SECRETS_EXAMPLES.md
@@ -821,7 +824,7 @@
 │   ├── 📝 VAULT_PROJECT_WIKI_FLOW.md
 │   └── 📝 VERIFICAR_MCP_STORE_ETL.md
 ├── 📁 dot_codex
-│   └── 📄 config.toml.tmpl
+│   └── 📄 private_config.toml.tmpl
 ├── 📁 dot_config
 │   ├── 📁 codex
 │   │   └── 📁 prompts
@@ -861,6 +864,7 @@
 │   ├── 📝 branch_feature_18-adding-mejoras-de-auditor_a.md
 │   ├── 📝 branch_feature_19-resolver-shellchecks.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
+│   ├── 📝 branch_feature_20-refactoring-chezmoi.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
 │   ├── 📝 branch_feature_5-adding-mcps-globales-especializados.md
@@ -940,6 +944,7 @@
 │   ├── 🔧 ai-cursor-check.sh
 │   ├── 🔧 check-azure-tools.sh
 │   ├── 🔧 check-system-deps.sh
+│   ├── 🔧 chezmoi-drift-report.sh
 │   ├── 🔧 generate-commands.sh
 │   ├── 🐍 generate-mcp-configs.py
 │   ├── 🔧 git-set-ai-author.sh
@@ -970,6 +975,7 @@
 │   ├── 📝 git_start_feature.md
 │   ├── 🔧 git_start_feature.sh
 │   ├── 🔧 git_workflow.sh
+│   ├── 🔧 gitnexus-status.sh
 │   ├── 🔧 install-agent-skills.sh
 │   ├── 🔧 install-agent-tools.sh
 │   ├── 🔧 install-azure-cli.sh
@@ -989,6 +995,7 @@
 │   ├── 🔧 install-verify.sh
 │   ├── 🔧 install-zsh-stack.sh
 │   ├── 🔧 materialize-commands.sh
+│   ├── 🔧 mcp-launcher-contract-check.sh
 │   ├── 🔧 set-default-shell-zsh.sh
 │   ├── 🔧 show-system-deps-actions.sh
 │   ├── 🔧 show_branches_with_dates.sh
@@ -1013,18 +1020,29 @@
 │   │   ├── 📁 chezmoi
 │   │   │   ├── 📄 ai-assets-warnings.bats
 │   │   │   ├── 📄 ai-runtime-uv.bats
+│   │   │   ├── 📄 codex-config-governance.bats
+│   │   │   ├── 📄 drift-report.bats
 │   │   │   ├── 📄 excalidraw-workspace-template.bats
 │   │   │   ├── 📄 gen-secrets-strict.bats
 │   │   │   ├── 📄 smoke.bats
 │   │   │   └── 📄 store-etl-hook-removed.bats
 │   │   ├── 📁 commands
 │   │   │   └── 📄 validate-commands.bats
+│   │   ├── 📁 docs
+│   │   │   ├── 📄 agents-claude-gitnexus-blocks.bats
+│   │   │   ├── 📄 documentation-consistency.bats
+│   │   │   ├── 📄 gitnexus-human-refresh-procedure.bats
+│   │   │   ├── 📄 make-help.bats
+│   │   │   └── 📄 operations-cheatsheet.bats
+│   │   ├── 📁 gitnexus
+│   │   │   └── 📄 gitnexus-status.bats
 │   │   ├── 📁 helpers
 │   │   │   └── 🔧 common.bash
 │   │   ├── 📁 mcp
 │   │   │   ├── 📄 chezmoi-mcp-launcher-templates.bats
 │   │   │   ├── 📄 filesystem-launcher.bats
 │   │   │   ├── 📄 git-launcher.bats
+│   │   │   ├── 📄 mcp-launcher-contract-check.bats
 │   │   │   └── 📄 validate-governance.bats
 │   │   ├── 📁 prompts
 │   │   │   └── 📄 prompt-launchers.bats
@@ -1050,6 +1068,7 @@
 │   │   │   ├── 📄 mcp-manifest.bats
 │   │   │   ├── 📄 mcp-render-drift.bats
 │   │   │   ├── 📄 system-deps.bats
+│   │   │   ├── 📄 update-governance.bats
 │   │   │   ├── 📄 update-node-runtime.bats
 │   │   │   └── 📄 update-workflow.bats
 │   │   ├── 📁 tmux

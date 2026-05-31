@@ -44,44 +44,61 @@ YELLOW := \033[1;33m
 BLUE := \033[0;34m
 NC := \033[0m
 
-.PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts bats-skills bats-tmux
-.PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands
-.PHONY: deps-check deps-install deps-actions bats-system bats-zsh test-deps-check
+.PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts bats-skills bats-tmux bats-gitnexus
+.PHONY: test-ci test-bats-ci bats-docs test-commands generate-commands validate-commands materialize-commands validate-skills-structure
+.PHONY: deps-check deps-install deps-actions bats-system bats-zsh bats-gitnexus test-deps-check
 .PHONY: quality-check security-check agent-validate agent-validate-changed ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
 
 help:
-	@echo "Testing targets for dotfiles"
+	@echo "Dotfiles — make targets"
 	@echo ""
-	@echo "  make test         - Full suite: preflight + lint + bats + MCP template JSON checks"
-	@echo "  make test-fast    - Preflight + lint + bats without chezmoi/* tests"
-	@echo "  make test-deps-check - Fail-fast check for bats/shellcheck/shfmt/zsh in PATH"
-	@echo "  make test-lint    - Run shellcheck, zsh -n, shfmt and yamllint checks (fail if tool missing)"
-	@echo "  make quality-check - Agent quality checks: shellcheck, zsh -n, shfmt, yamllint, actionlint"
-	@echo "  make security-check - Agent security checks: gitleaks + osv-scanner"
-	@echo "  make agent-validate - quality-check + security-check"
-	@echo "  make agent-validate-changed - Practical agent gate for files changed since HEAD + security"
-	@echo "  make ai-doctor - Read-only agent readiness: deps, update, AI/MCP, skills, commands, gitleaks"
-	@echo "  make test-bats    - Run bats tests only (preflight included)"
-	@echo "  make test-chezmoi - Run chezmoi smoke tests only"
-	@echo "  make test-commands- Run commands tests only"
-	@echo "  make test-install - Install test dependencies"
-	@echo "  make fmt-shell    - Format shell scripts with shfmt"
-	@echo "  make deps-check   - Check declarative system dependencies"
-	@echo "  make deps-install - Install declarative system dependencies on Ubuntu/Debian"
-	@echo "  make deps-actions - Show recommended actions for missing dependencies"
-	@echo "  make install-agent-tools - Install non-APT agent validation/security CLIs"
-	@echo "  make ai-cursor-check - Cursor/MCP/skills readiness (repo root; target in install.mk; covered by bats-system)"
-	@echo "  make ai-mcp-validate - Validate ai/assets/mcps/MANIFEST.yaml (PyYAML required)"
-	@echo "  make ai-mcp-render   - Dry-run MCP configs to build/mcps/ (PyYAML required)"
-	@echo "  make ai-mcp-drift    - Drift report vs templates (PyYAML required)"
-	@echo "  make ai-mcp-governance - validate + render + drift (non-mutating; PyYAML required)"
-	@echo "  make ai-mcp-generate - Plan only; use APPLY=1 to write productive MCP templates (PyYAML required)"
+	@echo "Daily cheatsheet: docs/OPERATIONS_CHEATSHEET.md"
+	@echo "More detail: docs/UPDATE.md, docs/TESTING.md, docs/INSTALL.md"
 	@echo ""
-	@echo "  make generate-commands  - Generate command artifacts"
-	@echo "  make validate-commands  - Validate command structure"
-	@echo "  make materialize-commands - Materialize commands into runtime paths"
+	@echo "== Safe for agents / read-only =="
+	@echo "  make chezmoi-drift-report        Chezmoi drift report; never applies"
+	@echo "  make mcp-launcher-contract-check MCP launcher contract; HOME drift is warning"
+	@echo "  make gitnexus-status             GitNexus index/lock/Node status; read-only"
+	@echo "  make validate-skills-structure   Validate canonical skills tree"
+	@echo "  make ai-mcp-governance           Validate/render/check MCP governance"
+	@echo "  make ai-mcp-validate             Validate MANIFEST.yaml (PyYAML required)"
+	@echo "  make ai-mcp-render               Dry-run MCP configs to build/mcps/"
+	@echo "  make ai-mcp-drift                Drift report vs MCP templates"
+	@echo "  make ai-cursor-check             Check Cursor/MCP readiness in HOME"
+	@echo "  make update-check                Read-only update/runtime diagnostics"
+	@echo "  make ai-doctor                   Read-only AI readiness checks"
+	@echo "  make agent-validate-changed      Validate changed files for agents"
+	@echo "  make deps-check                  Check declarative system dependencies"
+	@echo "  make deps-actions                Show actions for missing dependencies"
+	@echo "  make test-chezmoi                Chezmoi smoke tests"
+	@echo "  make test-bats-ci                CI bats subset (pre-PR parity)"
 	@echo ""
-	@echo "  make test-ci      - Run the GitHub Actions CI subset"
+	@echo "== Human / mutating / network =="
+	@echo "  make update                      HUMAN: updates WSL/Windows tools; uses network"
+	@echo "  make install                     HUMAN: bootstrap/install flow; see docs/INSTALL.md"
+	@echo "  make deps-install                HUMAN: install APT dependencies (sudo)"
+	@echo "  make install-agent-tools         HUMAN: install non-APT validation CLIs"
+	@echo "  make install-mattpocock-skills   HUMAN unless DRY_RUN=1; external skills catalog"
+	@echo "  make update-ai-skills            HUMAN: opt-in external skills catalog; use DRY_RUN=1 for preview"
+	@echo "  make ai-mcp-generate APPLY=1     HUMAN: rewrites MCP templates in repo"
+	@echo "  chezmoi apply                    HUMAN: not normal daily flow; see docs/CHEZMOI.md"
+	@echo ""
+	@echo "== Tests and quality =="
+	@echo "  make test                        Full suite: preflight + lint + bats + templates"
+	@echo "  make test-fast                   Lint + bats without chezmoi/* tests"
+	@echo "  make test-ci                     GitHub Actions CI subset"
+	@echo "  make test-lint                   shellcheck, zsh -n, shfmt, yamllint"
+	@echo "  make test-bats                   All bats tests (preflight included)"
+	@echo "  make test-commands               Commands tests only"
+	@echo "  make test-deps-check             Fail-fast check for bats/shellcheck/shfmt/zsh"
+	@echo "  make quality-check               Strict quality audit (shellcheck, shfmt, yamllint, actionlint)"
+	@echo "  make security-check              gitleaks + osv-scanner"
+	@echo "  make agent-validate              quality-check + security-check"
+	@echo "  make fmt-shell                   Format shell scripts with shfmt"
+	@echo "  make test-install                Install test dependencies (may use network)"
+	@echo "  make generate-commands           Generate command artifacts"
+	@echo "  make validate-commands           Validate command structure"
+	@echo "  make materialize-commands        Materialize commands into runtime paths"
 	@echo ""
 
 # ============================================
@@ -336,7 +353,7 @@ bats-helpers:
 	fi
 	@echo "$(GREEN)==>$NC Helpers OK"
 
-bats-mcp: bats-filesystem bats-chezmoi-mcp-launchers bats-git bats-governance
+bats-mcp: bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance
 	@echo "$(GREEN)==>$NC MCP tests passed"
 
 bats-filesystem:
@@ -346,6 +363,10 @@ bats-filesystem:
 bats-chezmoi-mcp-launchers:
 	@echo "$(BLUE)==>$NC Running chezmoi MCP launcher template tests..."
 	@$(call run_bats,$(BATS_DIR)/mcp/chezmoi-mcp-launcher-templates.bats)
+
+bats-mcp-launcher-contract:
+	@echo "$(BLUE)==>$NC Running MCP launcher contract tests..."
+	@$(call run_bats,$(BATS_DIR)/mcp/mcp-launcher-contract-check.bats)
 
 bats-git:
 	@echo "$(BLUE)==>$NC Running git-launcher tests..."
@@ -358,6 +379,8 @@ bats-governance:
 bats-chezmoi:
 	@echo "$(BLUE)==>$NC Running chezmoi tests..."
 	@$(call run_bats,$(BATS_DIR)/chezmoi/smoke.bats)
+	@$(call run_bats,$(BATS_DIR)/chezmoi/drift-report.bats)
+	@$(call run_bats,$(BATS_DIR)/chezmoi/codex-config-governance.bats)
 	@$(call run_bats,$(BATS_DIR)/chezmoi/gen-secrets-strict.bats)
 	@$(call run_bats,$(BATS_DIR)/chezmoi/store-etl-hook-removed.bats)
 	@$(call run_bats,$(BATS_DIR)/chezmoi/ai-runtime-uv.bats)
@@ -366,6 +389,8 @@ bats-chezmoi:
 bats-skills:
 	@echo "$(BLUE)==>$NC Running canonical skills tests..."
 	@$(call run_bats,$(BATS_DIR)/skills/canonical-skills.bats)
+	@echo "$(BLUE)==>$NC Running validate-skills-structure tests..."
+	@$(call run_bats,$(BATS_DIR)/skills/validate-skills-structure.bats)
 
 bats-commands:
 	@echo "$(BLUE)==>$NC Running commands tests..."
@@ -394,6 +419,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/install-azure-cli.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-mcp-github.bats)
 	@$(call run_bats,$(BATS_DIR)/system/update-workflow.bats)
+	@$(call run_bats,$(BATS_DIR)/system/update-governance.bats)
 	@$(call run_bats,$(BATS_DIR)/system/docker-desktop-credentials.bats)
 	@$(call run_bats,$(BATS_DIR)/system/excalidraw-docker.bats)
 	@$(call run_bats,$(BATS_DIR)/system/dry-run-guard.bats)
@@ -401,6 +427,22 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/ai-cursor-check.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-manifest.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-render-drift.bats)
+	@$(call run_bats,$(BATS_DIR)/system/install-agent-skills.bats)
+
+bats-gitnexus:
+	@echo "$(BLUE)==>$NC Running GitNexus operational status tests..."
+	@$(call run_bats,$(BATS_DIR)/gitnexus/gitnexus-status.bats)
+	@echo "$(BLUE)==>$NC Running GitNexus alias tests..."
+	@$(call run_bats,$(BATS_DIR)/zsh/gitnexus_aliases.bats)
+
+bats-docs:
+	@echo "$(BLUE)==>$NC Running documentation contract tests..."
+	@$(call run_bats,$(BATS_DIR)/system/update-governance.bats)
+	@$(call run_bats,$(BATS_DIR)/docs/make-help.bats)
+	@$(call run_bats,$(BATS_DIR)/docs/operations-cheatsheet.bats)
+	@$(call run_bats,$(BATS_DIR)/docs/documentation-consistency.bats)
+	@$(call run_bats,$(BATS_DIR)/docs/agents-claude-gitnexus-blocks.bats)
+	@$(call run_bats,$(BATS_DIR)/docs/gitnexus-human-refresh-procedure.bats)
 
 bats-zsh:
 	@echo "$(BLUE)==>$NC Running zsh stack RC symlink tests..."
@@ -420,7 +462,7 @@ test-ci: test-lint test-bats-ci test-chezmoi
 	@echo ""
 	@echo "$(GREEN)==>$NC CI tests completed"
 
-test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-git bats-governance bats-chezmoi bats-skills
+test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance bats-chezmoi bats-skills bats-gitnexus bats-docs
 
 # ============================================
 # Combined tests
@@ -523,6 +565,15 @@ validate-commands:
 		$(DOTFILES_DIR)/scripts/validate-commands-structure.sh; \
 	else \
 		echo "$(RED)==>$NC validate-commands-structure.sh not found or not executable"; \
+		exit 1; \
+	fi
+
+validate-skills-structure:
+	@echo "$(BLUE)==>$NC Validating skills structure..."
+	@if [ -x "$(DOTFILES_DIR)/scripts/validate-skills-structure.sh" ]; then \
+		$(DOTFILES_DIR)/scripts/validate-skills-structure.sh; \
+	else \
+		echo "$(RED)==>$NC validate-skills-structure.sh not found or not executable"; \
 		exit 1; \
 	fi
 

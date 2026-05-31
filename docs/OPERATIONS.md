@@ -1,6 +1,10 @@
 # Operaciones diarias (dotfiles)
 
-Guía humana principal para operar este repositorio en Ubuntu/WSL2. Para instalación inicial paso a paso, ver [INSTALL.md](INSTALL.md). Para Chezmoi y secretos en profundidad, ver [CHEZMOI.md](CHEZMOI.md) y [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
+Guía humana principal para operar este repositorio en Ubuntu/WSL2.
+
+> **Operación diaria (chuleta):** [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md) — flujos casa/oficina, drift Chezmoi, apply acotado, MCP, GitNexus y límites para agentes.
+
+Para instalación inicial paso a paso, ver [INSTALL.md](INSTALL.md). Para Chezmoi y secretos en profundidad, ver [CHEZMOI.md](CHEZMOI.md) y [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
 
 > **Legacy:** RCM (`rcup`) fue el gestor histórico de symlinks. **No es operativo.** El flujo canónico es **Chezmoi** + **SOPS/age**.
 
@@ -19,7 +23,7 @@ Guía humana principal para operar este repositorio en Ubuntu/WSL2. Para instala
 | Cambiaste… | Acción |
 |------------|--------|
 | `~/dotfiles/zshrc`, `aliases`, módulos en `zsh/` | Editar en el repo → **`source ~/.zshrc`** (symlinks ya apuntan al repo) |
-| Plantillas `dot_*`, `secrets.sops.yaml`, skills/commands en repo gestionados por Chezmoi | **`chezmoi --source=$HOME/dotfiles apply`** |
+| Plantillas `dot_*`, `secrets.sops.yaml`, skills/commands en repo gestionados por Chezmoi | Revisar drift → **`chezmoi apply` acotado** a los paths indicados (ver [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)); apply global solo bootstrap o intervención humana consciente |
 | Secretos cifrados | **`sops secrets.sops.yaml`** → regenerar env (apply o `apply -i scripts`) |
 | Herramientas del sistema (Windows/WSL, APT, npm global, OMZ, MCPs) | **`make update`** (no sustituye Chezmoi) |
 
@@ -62,19 +66,28 @@ Detalle de bootstrap: [INSTALL.md](INSTALL.md).
 
 ## Máquina existente (actualizar dotfiles)
 
+Flujo diario canónico: **[OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)** (casa/oficina, apply acotado).
+
 ```bash
 cd ~/dotfiles
 git pull
 
+make chezmoi-drift-report
 chezmoi --source="$HOME/dotfiles" status
-chezmoi --source="$HOME/dotfiles" diff    # si hay dudas
+chezmoi --source="$HOME/dotfiles" diff
 
-chezmoi --source="$HOME/dotfiles" apply
+# Apply acotado solo si el reporte o diff lo indican (MCP, Codex, launchers…)
+# Ver OPERATIONS_CHEATSHEET.md §5–6
+
 source ~/.zshrc
-
 make ai-cursor-check
-make ai-mcp-governance    # si tocaste MANIFEST o plantillas MCP
+make ai-mcp-governance    # si tocaste MANIFEST o plantillas MCP en el repo
 ```
+
+**`chezmoi apply` global no es el flujo normal** tras `git pull`. Reservado para:
+
+- **Bootstrap inicial:** `make install-dotfiles DOTFILES_APPLY=1`
+- **Recuperación controlada:** humano que revisó `chezmoi diff` completo y acepta el blast radius
 
 `make update` es opcional y separado: actualiza sistema/herramientas, no aplica cambios de plantillas en HOME.
 
@@ -137,9 +150,12 @@ make ai-mcp-generate APPLY=1    # escribe dot_cursor/, dot_codex/, dot_config/
 Flujo en **HOME** (Cursor/Codex/OpenCode):
 
 ```bash
-chezmoi --source="$HOME/dotfiles" apply
-# o parcial:
-# chezmoi apply ~/.cursor/mcp.json ~/.codex/config.toml ~/.config/opencode/opencode.json
+make chezmoi-drift-report
+chezmoi --source="$HOME/dotfiles" diff \
+  ~/.cursor/mcp.json ~/.codex/config.toml ~/.config/opencode/opencode.json
+
+chezmoi --source="$HOME/dotfiles" apply \
+  ~/.cursor/mcp.json ~/.codex/config.toml ~/.config/opencode/opencode.json
 
 make ai-cursor-check
 ```
@@ -178,7 +194,7 @@ docker.exe mcp gateway run --dry-run --verbose
 - Arreglar Docker MCP con Desktop cerrado
 - Rellenar `POSTGRES_DSN` vacío
 
-Tras `make update`, recarga la shell si cambió PATH: `source ~/.zshrc`. Si cambiaste plantillas o secretos en el repo, usa `chezmoi apply` aparte.
+Tras `make update`, recarga la shell si cambió PATH: `source ~/.zshrc`. Si cambiaste plantillas o secretos en el repo, revisa drift y usa **apply acotado** (ver [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)), no apply global por defecto.
 
 Ver [UPDATE.md](UPDATE.md).
 
@@ -189,12 +205,13 @@ Ver [UPDATE.md](UPDATE.md).
 ```bash
 chezmoi --source="$HOME/dotfiles" status
 chezmoi --source="$HOME/dotfiles" diff
-chezmoi --source="$HOME/dotfiles" apply
+make chezmoi-drift-report
+# apply acotado a paths concretos — ver OPERATIONS_CHEATSHEET.md
 ```
 
-Wrapper: `make install-dotfiles DOTFILES_APPLY=1`.
+Apply global consciente (bootstrap / recuperación): `make install-dotfiles DOTFILES_APPLY=1` o `chezmoi --source="$HOME/dotfiles" apply` **solo** tras revisar el diff completo.
 
-**Config local** (`~/.config/chezmoi/chezmoi.toml`, no versionada): fusiona datos como `obsidian_vault_path`. Opcionalmente, para ocultar ruido de scripts antiguos en el estado Chezmoi:
+**Config local** (`~/.config/chezmoi/chezmoi.toml`, no versionada): fusiona datos como `obsidian_vault_path`. Opcionalmente, para ocultar en `status`/`diff` las líneas `R` de hooks (comodidad local, no obligatorio):
 
 ```toml
 [status]
@@ -204,7 +221,7 @@ Wrapper: `make install-dotfiles DOTFILES_APPLY=1`.
     exclude = ["scripts"]
 ```
 
-Los scripts reales del repo usan prefijos `run_before_*` / `run_after_*`. Entradas `R` de nombres viejos en status son fantasmas del estado local, no targets aplicables.
+Los `R` de `.chezmoiscripts` son entradas **Run**: hooks `run_before_*` / `run_after_*` que Chezmoi ejecutaría en un `apply`. No son ficheros borrados. Interprétalos con `make chezmoi-drift-report`; no uses `chezmoi apply` global solo para limpiarlos.
 
 Auditar scripts explícitamente: `chezmoi status -i scripts -x ''`.
 
@@ -239,26 +256,18 @@ Detalle: [CHEZMOI.md](CHEZMOI.md).
 
 ---
 
-## Chuleta (≤20 comandos)
+## Chuleta rápida
+
+La chuleta operativa canónica (casa/oficina, apply acotado, agentes) está en **[OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)**.
+
+Comandos de referencia rápida (sin sustituir la chuleta):
 
 ```bash
 cd ~/dotfiles && git pull
+make chezmoi-drift-report
 chezmoi --source="$HOME/dotfiles" status
-chezmoi --source="$HOME/dotfiles" apply
-source ~/.zshrc
-sops secrets.sops.yaml
-chezmoi --source="$HOME/dotfiles" apply -i scripts
+make update-check && make update          # humano
 make ai-cursor-check
 make ai-mcp-governance
-make ai-mcp-generate APPLY=1
-make install-check
-make deps-check
 make test-fast
-make update
-docker.exe mcp version
-grep -E '^export POSTGRES_DSN=.' ~/.config/mcp-secrets.env
-make install-dotfiles DOTFILES_APPLY=1
-ZSH_RC_APPLY=1 chezmoi apply ~/.p10k.zsh
-chezmoi status -i scripts -x ''
-make install-verify
 ```

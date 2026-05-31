@@ -12,3 +12,9 @@
 [data.ai]
     obsidian_vault_path = "/mnt/c/Users/jesus/Documents/vault_trabajo"
     excalidraw_workspace_host = "/mnt/c/Users/jesus/Documents/vault_trabajo/excalidraw"
+
+# Codex agent preferences (override in ~/.config/chezmoi/chezmoi.toml per machine)
+[data.codex]
+    model = "gpt-5.5"
+    model_reasoning_effort = "high"
+    dotfiles_trust_level = "trusted"

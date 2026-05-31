@@ -2,7 +2,8 @@
 
 ## Operaciones
 
-- **[OPERATIONS.md](OPERATIONS.md)** — Guía operativa principal: modelo mental (bootstrap / Chezmoi / update), máquina nueva o existente, secretos, MCPs, validaciones y chuleta de comandos.
+- **[OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)** — Chuleta diaria: casa/oficina, drift Chezmoi, apply acotado, MCP, GitNexus, agentes.
+- **[OPERATIONS.md](OPERATIONS.md)** — Guía operativa principal: modelo mental (bootstrap / Chezmoi / update), máquina nueva o existente, secretos, MCPs y validaciones.
 
 ## Instalación
 

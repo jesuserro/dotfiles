@@ -53,6 +53,16 @@ bats_require_minimum_version 1.5.0
 	done
 }
 
+@test "git/postgres bin launchers use tabs (avoid HOME whitespace-only drift)" {
+	for name in git postgres; do
+		local f="${BIN}/mcp-${name}-launcher"
+		[[ -f "$f" ]]
+		if grep -q $'\t' "$f"; then
+			! grep -q '^    ' "$f"
+		fi
+	done
+}
+
 @test "filesystem template uses portable chezmoi paths not hardcoded dotfiles user" {
 	local f="${TMPL_DIR}/executable_mcp-filesystem-launcher.tmpl"
 	assert_file_not_matches "$f" '"/home/jesus/dotfiles"'

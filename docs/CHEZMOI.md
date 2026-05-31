@@ -30,7 +30,7 @@ Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si ha
 | Target en HOME | Origen en repo |
 |----------------|----------------|
 | `~/.cursor/mcp.json` | `dot_cursor/mcp.json.tmpl` |
-| `~/.codex/config.toml` | `dot_codex/config.toml.tmpl` |
+| `~/.codex/config.toml` | `dot_codex/private_config.toml.tmpl` |
 | `~/.config/mcp-secrets.env` | Generado desde `secrets.sops.yaml` (SOPS) — nombre neutro |
 | `~/.secrets/codex.env` | Symlink → `~/.config/mcp-secrets.env` (legacy, mantener por compatibilidad) |
 | `~/.config/ai/runtime/` | Runtime (venv) — ver `ai/README.md` |
@@ -137,7 +137,7 @@ Archivo **no versionado** que Chezmoi fusiona con `.chezmoi.toml` del repo. Usos
 
 - `[source] path` — ruta del repo si no quieres pasar `--source` cada vez.
 - `[data.ai] obsidian_vault_path` — ruta del vault en esta máquina.
-- **`[status] exclude` / `[diff] exclude`** — opcional; por ejemplo `exclude = ["scripts"]` oculta en `chezmoi status` entradas fantasma de scripts renombrados en el estado local (nombres viejos `00_*` / `10_*`). **No es requisito global del repo**; es comodidad por máquina.
+- **`[status] exclude` / `[diff] exclude`** — opcional; por ejemplo `exclude = ["scripts"]` oculta en `chezmoi status` las líneas `R` de hooks (ver § Scripts y columna `R`). **No es requisito global del repo**; es comodidad por máquina si el ruido molesta.
 
 Para auditar scripts de verdad:
 
@@ -241,6 +241,149 @@ El launcher `mcp-postgres-launcher` usa `@modelcontextprotocol/server-postgres` 
 
 - **Global (dotfiles):** `~/.cursor/mcp.json` incluye todos los MCP del `MANIFEST.yaml` (incl. `store_etl_ops` como wrapper operativo del repo dotfiles).
 - **Proyecto store-etl:** la configuración Cursor **`.cursor/mcp.json` del repositorio `store-etl`** es responsabilidad de ese proyecto (no se materializa desde dotfiles; el hook `run_after_10_link_store_etl_mcp` fue retirado). Los secretos legacy `~/.config/store-etl/secrets.env` siguen generándose solo como compatibilidad desde SOPS.
+
+---
+
+## Drift aceptado y auditoría
+
+`chezmoi status` **no tiene por qué estar vacío**. Parte del drift es esperado o requiere decisión manual antes de un `apply` global.
+
+### Cómo leer `chezmoi status`
+
+Cada línea usa dos columnas de estado (`xy path`): estado en **source** (repo/plantilla) y en **destino** (HOME).
+
+| Símbolo | Significado habitual |
+|---------|----------------------|
+| `M` | Modificado respecto al último estado aplicado |
+| `R` | **Scripts** (p. ej. bajo `.chezmoiscripts/`): **Run** — se ejecutarán en el próximo `apply`. No significa “removed”. |
+| `MM` | Source y destino divergen (revisar diff antes de apply) |
+
+Comandos de **solo lectura** (seguros para auditar):
+
+```bash
+chezmoi --source="$HOME/dotfiles" status
+chezmoi --source="$HOME/dotfiles" diff
+chezmoi --source="$HOME/dotfiles" diff \
+  ~/.local/share/chezmoi/bin/mcp-git-launcher \
+  ~/.local/share/chezmoi/bin/mcp-postgres-launcher
+chezmoi --source="$HOME/dotfiles" status -i scripts -x ''
+```
+
+Reporte resumido en el repo (no muta HOME, no ejecuta `apply`):
+
+```bash
+make chezmoi-drift-report
+```
+
+### Scripts `.chezmoiscripts` y columna `R` (`Run`)
+
+En Chezmoi, **`R` significa Run**: el hook se ejecutará en el próximo `chezmoi apply`. No es “removed” como en `git status`.
+
+Los hooks del repo usan prefijos `run_before_*` / `run_after_*` y sufijo `.tmpl`, por ejemplo:
+
+- `run_before_00_backup_rc_files.sh.tmpl`
+- `run_after_00_gen_secrets.sh.tmpl`, `run_after_10_*`, … `run_after_15_*`
+
+En `chezmoi status` aparecen con **nombre normalizado** (sin prefijo `run_before_` / `run_after_` ni `.tmpl`), por ejemplo:
+
+| Línea en `status` | Plantilla en el repo |
+|-------------------|----------------------|
+| `R .chezmoiscripts/00_backup_rc_files.sh` | `run_before_00_backup_rc_files.sh.tmpl` |
+| `R .chezmoiscripts/00_gen_secrets.sh` | `run_after_00_gen_secrets.sh.tmpl` |
+| `R .chezmoiscripts/10_setup_ai_runtime.sh` | `run_after_10_setup_ai_runtime.sh.tmpl` |
+| … | `run_after_11_*` … `run_after_15_*` |
+
+Esas rutas **no tienen por qué existir como ficheros en `~/.chezmoiscripts/`**; Chezmoi las lista como scripts a ejecutar, no como dotfiles materializados en HOME.
+
+- **No uses `chezmoi apply` global** solo para “quitar” esas líneas: un apply global **ejecutaría** los hooks (backup RC, SOPS, runtime AI, symlinks, etc.).
+- **No uses `chezmoi forget`** para silenciarlas; no corrige la semántica y puede provocar re-ejecuciones no deseadas.
+- **No confundas** `.chezmoiscripts/00_gen_secrets.sh` en status con drift de secretos: el artefacto canónico en HOME es `~/.config/mcp-secrets.env` (SOPS). Un `R` en el script no indica por sí solo que `secrets.sops.yaml` esté mal.
+- Para auditar solo scripts: `chezmoi status -i scripts -x ''`.
+- Resumen legible: `make chezmoi-drift-report` (marca entradas esperadas como aceptadas).
+- Comodidad local (opcional, **no versionado**) si el ruido en `status` molesta:
+
+```toml
+[status]
+    exclude = ["scripts"]
+
+[diff]
+    exclude = ["scripts"]
+```
+
+Tras `exclude`, sigue pudiendo auditar con `chezmoi status -i scripts -x ''`.
+
+### Codex — gobernanza versionada (apply acotado)
+
+Política vigente: **preferencias HOME + parametrización Chezmoi mínima**. Los bloques MCP ya están alineados vía plantilla; el drift histórico estaba en la cabecera (modelo, reasoning, `trust_level`, permisos).
+
+| Clave | Default versionado (`.chezmoi.toml` → `[data.codex]`) | Override local |
+|-------|------------------------------------------------------|----------------|
+| `model` | `"gpt-5.5"` | `[data.codex]` en `~/.config/chezmoi/chezmoi.toml` |
+| `model_reasoning_effort` | `"high"` | idem |
+| `dotfiles_trust_level` | `"trusted"` para `{{ .chezmoi.sourceDir }}` | omitir clave o vaciar para no emitir `[projects."…"]` |
+
+Plantilla: [`dot_codex/private_config.toml.tmpl`](../dot_codex/private_config.toml.tmpl). Permisos destino: **`600`** vía prefijo Chezmoi `private_` en el nombre de source (convención canónica; no usar `.chezmoiattributes` para este fichero).
+
+**No usar `chezmoi apply` global a ciegas** para Codex. Tras cambios en repo o en datos Chezmoi, aplicar **solo** esa ruta:
+
+```bash
+chezmoi --source="$HOME/dotfiles" diff ~/.codex/config.toml
+chezmoi --source="$HOME/dotfiles" apply ~/.codex/config.toml
+stat -c '%a %n' ~/.codex/config.toml   # esperado: 600
+```
+
+Ejemplo override en otra máquina (p. ej. oficina con otro modelo):
+
+```toml
+[data.codex]
+    model = "gpt-5.4"
+    model_reasoning_effort = "medium"
+    dotfiles_trust_level = "trusted"
+```
+
+Los defaults versionados viven en [`.chezmoi.toml`](../.chezmoi.toml) (`[data.codex]`). Chezmoi fusiona ese bloque con tu config local cuando ambos existen; si solo tienes `~/.config/chezmoi/chezmoi.toml`, añade `[data.codex]` allí o confía en los defaults embebidos en la plantilla (`gpt-5.5`, `high`, `trust_level = trusted` salvo que definas `dotfiles_trust_level = ""` para omitir el bloque `[projects]`).
+
+`make chezmoi-drift-report` señala drift Codex pero **no aplica**; el apply acotado lo ejecuta Jesús manualmente.
+
+### Launchers MCP materializados
+
+Contrato entre tres capas:
+
+| Capa | Ruta |
+|------|------|
+| Edición lógica (git / gitnexus / postgres) | `bin/mcp-*-launcher` |
+| Plantilla Chezmoi | `dot_local/share/chezmoi/bin/executable_mcp-*-launcher.tmpl` |
+| Materializado en HOME | `~/.local/share/chezmoi/bin/mcp-*-launcher` |
+
+**Matriz de canonicalidad**
+
+| Launcher | Repo (`bin/` vs plantilla) | HOME | Tests / uso local |
+|----------|----------------------------|------|-------------------|
+| **git** | `bin/` == plantilla (byte-a-byte) | Sigue plantilla tras `chezmoi apply` | `bin/` para bats de comportamiento |
+| **gitnexus** | `bin/` == plantilla | Sigue plantilla tras apply | `bin/` para bats |
+| **postgres** | `bin/` == plantilla | Sigue plantilla tras apply | `bin/` para bats |
+| **filesystem** | Diseño **dual**: plantilla con `{{ .chezmoi.sourceDir }}` y `{{ .ai.obsidian_vault_path }}` | Plantilla renderizada manda | `bin/` resuelve rutas en runtime (`MCP_DOTFILES_ROOT`, etc.) |
+
+**Validación read-only (repo + CI):**
+
+```bash
+make mcp-launcher-contract-check
+```
+
+Comprueba igualdad estricta `bin/` ↔ plantilla para git/gitnexus/postgres, excepción documentada para filesystem, rutas productivas en `dot_cursor` / `dot_codex` / `opencode` hacia `~/.local/share/chezmoi/bin/mcp-*` (nunca `~/dotfiles/bin/mcp-*`). El drift en HOME se reporta como **WARN** y no falla el target.
+
+También: `make bats-chezmoi-mcp-launchers` (tests bats del contrato en plantillas).
+
+**Drift HOME (manual):** `M` en `mcp-git-launcher` o `mcp-postgres-launcher` suele ser materialización antigua (tabs vs espacios). Tras sincronizar `bin/` + plantilla en el repo:
+
+```bash
+make chezmoi-drift-report   # read-only
+chezmoi --source="$HOME/dotfiles" apply \
+  ~/.local/share/chezmoi/bin/mcp-git-launcher \
+  ~/.local/share/chezmoi/bin/mcp-postgres-launcher
+```
+
+Esto **no** sustituye un `chezmoi apply` global y **no** toca Codex ni secretos.
 
 ---
 

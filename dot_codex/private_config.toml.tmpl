@@ -1,6 +1,7 @@
 {{- $excalidrawWorkspaceHost := default (printf "%s/excalidraw" .ai.obsidian_vault_path) (get .ai "excalidraw_workspace_host") -}}
-model = "gpt-5.4"
-model_reasoning_effort = "medium"
+{{- $codex := index . "codex" | default dict -}}
+model = {{ default "gpt-5.5" (index $codex "model") | quote }}
+model_reasoning_effort = {{ default "high" (index $codex "model_reasoning_effort") | quote }}
 
 # Codex internal logs (keep separate from your ETL logs/)
 log_dir = "~/.codex-logs"
@@ -152,3 +153,13 @@ enabled = true
 
 [plugins."github@openai-curated"]
 enabled = true
+
+{{- $trust := "trusted" -}}
+{{- if hasKey $codex "dotfiles_trust_level" -}}
+{{- $trust = index $codex "dotfiles_trust_level" -}}
+{{- end -}}
+{{- if $trust }}
+
+[projects."{{ .chezmoi.sourceDir }}"]
+trust_level = {{ $trust | quote }}
+{{- end }}
