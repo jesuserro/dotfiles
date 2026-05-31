@@ -56,6 +56,12 @@ setup() {
 	grep -q 'make update' "${CHEATSHEET}"
 }
 
+@test "cheatsheet documents update-ai-skills DRY_RUN preview and human refresh" {
+	grep -q 'make update-ai-skills DRY_RUN=1' "${CHEATSHEET}"
+	grep -q 'make update-ai-skills' "${CHEATSHEET}"
+	grep -q 'no forma parte de `make update`' "${CHEATSHEET}"
+}
+
 @test "docs/OPERATIONS.md links to OPERATIONS_CHEATSHEET" {
 	grep -q 'OPERATIONS_CHEATSHEET' "${OPERATIONS}"
 }

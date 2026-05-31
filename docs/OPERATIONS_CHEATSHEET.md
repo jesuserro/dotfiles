@@ -170,9 +170,11 @@ Política completa: [GITNEXUS_OPERATIONAL_POLICY.md](GITNEXUS_OPERATIONAL_POLICY
 ```bash
 make validate-skills-structure              # read-only: árbol ai/assets/skills/
 make install-mattpocock-skills DRY_RUN=1  # agente: solo simulación
+make update-ai-skills DRY_RUN=1             # agente: previsualizar refresh del catálogo externo
 ```
 
 - Instalación Matt real (`make install-mattpocock-skills` sin `DRY_RUN`): **humano**; usa red (`npx skills add`).
+- Refresh Matt (`make update-ai-skills` sin `DRY_RUN`): **humano**; usa red; **no** forma parte de `make update`.
 - Skill **local** bajo `ai/assets/skills/` gana sobre catálogo externo Matt.
 
 ---
@@ -213,6 +215,8 @@ Detalle: [TESTING.md](TESTING.md).
 |---------|----------|-----|-----------|
 | `make update-check` | No | No | Antes de `make update` o trabajo GitNexus largo |
 | `make update` | Sí | Sí | Mantenimiento diario (humano) |
+| `make update-ai-skills DRY_RUN=1` | No | No | Previsualizar actualización del catálogo externo Matt Pocock Skills |
+| `make update-ai-skills` | Sí | Sí | Refresh explícito del catálogo externo Matt; humano; no forma parte de `make update` |
 | `make chezmoi-drift-report` | No | No | Tras `git pull` / merge |
 | `make mcp-launcher-contract-check` | No | No | Cambios launchers / plantillas MCP |
 | `make gitnexus-status` | No | No | Estado índice/lock/Node |

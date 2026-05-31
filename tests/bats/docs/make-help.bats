@@ -63,3 +63,10 @@ setup() {
 	[[ "${status}" -eq 0 ]]
 	grep -Eiq 'human.*mutating|mutating.*network' <<<"${output}"
 }
+
+@test "make help mentions update-ai-skills as human opt-in with DRY_RUN preview" {
+	run make -C "${DOTFILES_DIR}" help
+	[[ "${status}" -eq 0 ]]
+	grep -q 'make update-ai-skills' <<<"${output}"
+	grep -Eiq 'human|opt-in|DRY_RUN' <<<"${output}"
+}

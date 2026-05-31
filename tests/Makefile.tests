@@ -79,6 +79,7 @@ help:
 	@echo "  make deps-install                HUMAN: install APT dependencies (sudo)"
 	@echo "  make install-agent-tools         HUMAN: install non-APT validation CLIs"
 	@echo "  make install-mattpocock-skills   HUMAN unless DRY_RUN=1; external skills catalog"
+	@echo "  make update-ai-skills            HUMAN: opt-in external skills catalog; use DRY_RUN=1 for preview"
 	@echo "  make ai-mcp-generate APPLY=1     HUMAN: rewrites MCP templates in repo"
 	@echo "  chezmoi apply                    HUMAN: not normal daily flow; see docs/CHEZMOI.md"
 	@echo ""
@@ -418,6 +419,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/install-azure-cli.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-mcp-github.bats)
 	@$(call run_bats,$(BATS_DIR)/system/update-workflow.bats)
+	@$(call run_bats,$(BATS_DIR)/system/update-governance.bats)
 	@$(call run_bats,$(BATS_DIR)/system/docker-desktop-credentials.bats)
 	@$(call run_bats,$(BATS_DIR)/system/excalidraw-docker.bats)
 	@$(call run_bats,$(BATS_DIR)/system/dry-run-guard.bats)
@@ -435,6 +437,7 @@ bats-gitnexus:
 
 bats-docs:
 	@echo "$(BLUE)==>$NC Running documentation contract tests..."
+	@$(call run_bats,$(BATS_DIR)/system/update-governance.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/make-help.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/operations-cheatsheet.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/documentation-consistency.bats)
