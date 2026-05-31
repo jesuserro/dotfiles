@@ -30,7 +30,7 @@ teardown() {
 @test "install-chezmoi does not reinstall when chezmoi is already present in PATH" {
 	local stub_dir="${TEST_TEMP_DIR}/bin"
 	mkdir -p "${stub_dir}"
-	cat > "${stub_dir}/chezmoi" <<'EOF'
+	cat >"${stub_dir}/chezmoi" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in
 	--version) echo "chezmoi 99.9.9 (stub)";;
@@ -49,7 +49,7 @@ EOF
 @test "install-chezmoi DRY_RUN with chezmoi present still skips the download branch" {
 	local stub_dir="${TEST_TEMP_DIR}/bin"
 	mkdir -p "${stub_dir}"
-	cat > "${stub_dir}/chezmoi" <<'EOF'
+	cat >"${stub_dir}/chezmoi" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in
 	--version) echo "chezmoi 99.9.9 (stub)";;
@@ -70,7 +70,7 @@ EOF
 	# binary on disk, print the PATH hint, and exit 0.
 	local fake_home="${TEST_TEMP_DIR}/home"
 	mkdir -p "${fake_home}/.local/bin"
-	cat > "${fake_home}/.local/bin/chezmoi" <<'EOF'
+	cat >"${fake_home}/.local/bin/chezmoi" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in
 	--version) echo "chezmoi v2.70.3 (stub)";;
@@ -103,7 +103,7 @@ EOF
 
 @test "system_deps actions recommend 'make install-chezmoi' for chezmoi" {
 	local inv="${TEST_TEMP_DIR}/chezmoi.yaml"
-	cat > "${inv}" <<'EOF'
+	cat >"${inv}" <<'EOF'
 schema_version: 1
 platform: common
 manager: external

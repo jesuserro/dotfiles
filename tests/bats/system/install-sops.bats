@@ -30,7 +30,7 @@ teardown() {
 @test "install-sops does not reinstall when sops is already present in PATH" {
 	local stub_dir="${TEST_TEMP_DIR}/bin"
 	mkdir -p "${stub_dir}"
-	cat > "${stub_dir}/sops" <<'EOF'
+	cat >"${stub_dir}/sops" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in
 	--version) echo "sops 99.9.9 (stub)";;
@@ -49,7 +49,7 @@ EOF
 @test "install-sops DRY_RUN with sops present still skips the download branch" {
 	local stub_dir="${TEST_TEMP_DIR}/bin"
 	mkdir -p "${stub_dir}"
-	cat > "${stub_dir}/sops" <<'EOF'
+	cat >"${stub_dir}/sops" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in
 	--version) echo "sops 99.9.9 (stub)";;
@@ -66,7 +66,7 @@ EOF
 
 @test "system_deps actions recommend 'make install-sops' for sops" {
 	local inv="${TEST_TEMP_DIR}/sops.yaml"
-	cat > "${inv}" <<'EOF'
+	cat >"${inv}" <<'EOF'
 schema_version: 1
 platform: common
 manager: external

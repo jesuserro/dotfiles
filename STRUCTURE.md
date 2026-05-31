@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-30 21:18:02
+**Generated:** 2026-05-31 09:36:04
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -12,8 +12,23 @@
 │   ├── 📄 run_after_12_materialize_ai_commands.sh.tmpl
 │   ├── 📄 run_after_13_link_git_ai_wrapper.sh.tmpl
 │   ├── 📄 run_after_14_link_prompt_launchers.sh.tmpl
+│   ├── 📄 run_after_15_link_tmux_dotfiles.sh.tmpl
 │   └── 📄 run_before_00_backup_rc_files.sh.tmpl
 ├── 📁 .claude
+│   └── 📁 skills
+│       └── 📁 gitnexus
+│           ├── 📁 gitnexus-cli
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-debugging
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-exploring
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-guide
+│           │   └── 📝 SKILL.md
+│           ├── 📁 gitnexus-impact-analysis
+│           │   └── 📝 SKILL.md
+│           └── 📁 gitnexus-refactoring
+│               └── 📝 SKILL.md
 ├── 📁 .cursor
 │   ├── 📁 plans
 │   └── 📁 rules
@@ -775,8 +790,7 @@
 │   │   ├── 📝 azure-tooling.md
 │   │   └── 📝 dotfiles-install.md
 │   ├── 📁 plans
-│   │   ├── 📝 PLAN_000009.md
-│   │   └── 📄 PLAN_000009.md:Zone.Identifier
+│   │   └── 📝 PLAN_000009.md
 │   ├── 📁 wiki
 │   ├── 📝 AGENT_WORKFLOW_LOOP.md
 │   ├── 📝 AI_PROMPTS_SYSTEM.md
@@ -801,6 +815,7 @@
 │   ├── 📝 SECRETS_EXAMPLES.md
 │   ├── 📝 SYSTEM_DEPENDENCIES.md
 │   ├── 📝 TESTING.md
+│   ├── 📝 TMUX.md
 │   ├── 📝 TOKEN_GITHUB_GH.md
 │   ├── 📝 UPDATE.md
 │   ├── 📝 VAULT_PROJECT_WIKI_FLOW.md
@@ -843,6 +858,8 @@
 │   ├── 📝 branch_feature_15-adding-refactors-and-enhancements.md
 │   ├── 📝 branch_feature_16-enhancing-ups-command.md
 │   ├── 📝 branch_feature_17-adding-nuevas-herramientas-ia.md
+│   ├── 📝 branch_feature_18-adding-mejoras-de-auditor_a.md
+│   ├── 📝 branch_feature_19-resolver-shellchecks.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
@@ -1012,7 +1029,8 @@
 │   │   ├── 📁 prompts
 │   │   │   └── 📄 prompt-launchers.bats
 │   │   ├── 📁 skills
-│   │   │   └── 📄 canonical-skills.bats
+│   │   │   ├── 📄 canonical-skills.bats
+│   │   │   └── 📄 validate-skills-structure.bats
 │   │   ├── 📁 system
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
@@ -1034,6 +1052,8 @@
 │   │   │   ├── 📄 system-deps.bats
 │   │   │   ├── 📄 update-node-runtime.bats
 │   │   │   └── 📄 update-workflow.bats
+│   │   ├── 📁 tmux
+│   │   │   └── 📄 tmux-dotfiles.bats
 │   │   ├── 📁 zsh
 │   │   │   ├── 📄 gitnexus_aliases.bats
 │   │   │   ├── 📄 omz_plugins.bats
@@ -1047,9 +1067,6 @@
 │   │   ├── 🔧 footer.sh
 │   │   └── 🔧 header.sh
 │   ├── 🔧 home.sh
-│   ├── 🔧 localidades.sh
-│   ├── 🔧 nges.sh
-│   ├── 🔧 ofertas.sh
 │   └── 🔧 work.sh
 ├── 📁 vim
 │   └── 📁 autoload
@@ -1089,6 +1106,7 @@
 ├── 📄 symlink_dot_codex_mcp
 ├── 📄 symlink_dot_p10k.zsh.tmpl
 ├── 📄 symlink_dot_secrets_codex.env
+├── 📄 symlink_dot_tmux.conf.tmpl
 ├── 📄 symlink_dot_zshrc.tmpl
 ├── 📄 tmux.conf
 ├── 🔨 update.mk

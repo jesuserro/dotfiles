@@ -14,49 +14,50 @@ ERRORS=0
 WARNINGS=0
 
 log_error() {
-    echo "  [ERROR] $*"
-    ((ERRORS++)) || true
+	echo "  [ERROR] $*"
+	((ERRORS++)) || true
 }
 
 log_warn() {
-    echo "  [WARN] $*"
-    ((WARNINGS++)) || true
+	echo "  [WARN] $*"
+	((WARNINGS++)) || true
 }
 
 log_ok() {
-    echo "  [OK] $*"
+	echo "  [OK] $*"
 }
 
 log_info() {
-    echo "  [INFO] $*"
+	echo "  [INFO] $*"
 }
 
 check_registry_exists() {
-    echo "Checking registry..."
-    if [[ ! -f "${REGISTRY_FILE}" ]]; then
-        log_error "registry.yaml not found at ${REGISTRY_FILE}"
-        return 1
-    fi
-    log_ok "registry.yaml exists"
+	echo "Checking registry..."
+	if [[ ! -f "${REGISTRY_FILE}" ]]; then
+		log_error "registry.yaml not found at ${REGISTRY_FILE}"
+		return 1
+	fi
+	log_ok "registry.yaml exists"
 }
 
 check_yaml_valid() {
-    if ! python3 -c "import yaml" 2>/dev/null; then
-        log_warn "Python yaml module not available - skipping YAML validation"
-        return 0
-    fi
+	if ! python3 -c "import yaml" 2>/dev/null; then
+		log_warn "Python yaml module not available - skipping YAML validation"
+		return 0
+	fi
 
-    if python3 -c "import yaml; yaml.safe_load(open('${REGISTRY_FILE}'))" 2>/dev/null; then
-        log_ok "Valid YAML"
-    else
-        log_error "registry.yaml is not valid YAML"
-        return 1
-    fi
+	if python3 -c "import yaml; yaml.safe_load(open('${REGISTRY_FILE}'))" 2>/dev/null; then
+		log_ok "Valid YAML"
+	else
+		log_error "registry.yaml is not valid YAML"
+		return 1
+	fi
 }
 
 check_registry_version() {
-    local version
-    version=$(python3 - "${REGISTRY_FILE}" <<'PYEOF'
+	local version
+	version=$(
+		python3 - "${REGISTRY_FILE}" <<'PYEOF'
 import sys
 import yaml
 
@@ -65,23 +66,24 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 
 print(data.get("version", ""))
 PYEOF
-    )
+	)
 
-    if [[ -z "${version}" ]]; then
-        log_error "Missing 'version' field in registry"
-        return 1
-    fi
-    if [[ "${version}" != "1" ]]; then
-        log_warn "Registry version is ${version}, expected 1"
-    fi
-    log_ok "Registry version: ${version}"
+	if [[ -z "${version}" ]]; then
+		log_error "Missing 'version' field in registry"
+		return 1
+	fi
+	if [[ "${version}" != "1" ]]; then
+		log_warn "Registry version is ${version}, expected 1"
+	fi
+	log_ok "Registry version: ${version}"
 }
 
 check_command_ids_unique() {
-    echo "Checking command IDs..."
+	echo "Checking command IDs..."
 
-    local id_count unique_count
-    id_count=$(python3 - "${REGISTRY_FILE}" <<'PYEOF'
+	local id_count unique_count
+	id_count=$(
+		python3 - "${REGISTRY_FILE}" <<'PYEOF'
 import sys
 import yaml
 
@@ -90,9 +92,10 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 
 print(len(data.get("commands", [])))
 PYEOF
-    )
+	)
 
-    unique_count=$(python3 - "${REGISTRY_FILE}" <<'PYEOF'
+	unique_count=$(
+		python3 - "${REGISTRY_FILE}" <<'PYEOF'
 import sys
 import yaml
 
@@ -102,19 +105,19 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 ids = [command.get("id", "") for command in data.get("commands", [])]
 print(len(set(ids)))
 PYEOF
-    )
+	)
 
-    if [[ ${id_count} -ne ${unique_count} ]]; then
-        log_error "Duplicate command IDs found"
-        return 1
-    fi
-    log_ok "All command IDs are unique (${id_count} commands)"
+	if [[ ${id_count} -ne ${unique_count} ]]; then
+		log_error "Duplicate command IDs found"
+		return 1
+	fi
+	log_ok "All command IDs are unique (${id_count} commands)"
 }
 
 check_command_structure() {
-    echo "Checking command structure..."
+	echo "Checking command structure..."
 
-    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" <<'PYEOF'
+	python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" <<'PYEOF'
 import os
 import sys
 import yaml
@@ -173,9 +176,9 @@ PYEOF
 }
 
 check_command_content() {
-    echo "Checking command content..."
+	echo "Checking command content..."
 
-    python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" <<'PYEOF'
+	python3 - "${REGISTRY_FILE}" "${COMMANDS_DIR}" <<'PYEOF'
 import os
 import sys
 import yaml
@@ -211,34 +214,34 @@ PYEOF
 }
 
 check_adapters_exist() {
-    echo "Checking platform adapters..."
+	echo "Checking platform adapters..."
 
-    local missing=0
-    for platform in opencode cursor codex; do
-        local template="${ADAPTERS_DIR}/${platform}/TEMPLATE.md"
-        if [[ -f "${template}" ]]; then
-            log_ok "Adapter '${platform}' has TEMPLATE.md"
-        else
-            log_error "Adapter '${platform}' missing TEMPLATE.md: ${template}"
-            missing=1
-        fi
-    done
+	local missing=0
+	for platform in opencode cursor codex; do
+		local template="${ADAPTERS_DIR}/${platform}/TEMPLATE.md"
+		if [[ -f "${template}" ]]; then
+			log_ok "Adapter '${platform}' has TEMPLATE.md"
+		else
+			log_error "Adapter '${platform}' missing TEMPLATE.md: ${template}"
+			missing=1
+		fi
+	done
 
-    return "${missing}"
+	return "${missing}"
 }
 
 check_build_artifacts() {
-    local platform="$1"
-    local platform_dir="${BUILD_DIR}/${platform}"
+	local platform="$1"
+	local platform_dir="${BUILD_DIR}/${platform}"
 
-    echo "Checking ${platform} build artifacts..."
+	echo "Checking ${platform} build artifacts..."
 
-    if [[ ! -d "${platform_dir}" ]]; then
-        log_info "Build artifacts not generated yet for ${platform}: ${platform_dir}"
-        return 0
-    fi
+	if [[ ! -d "${platform_dir}" ]]; then
+		log_info "Build artifacts not generated yet for ${platform}: ${platform_dir}"
+		return 0
+	fi
 
-    python3 - "${REGISTRY_FILE}" "${platform}" "${platform_dir}" <<'PYEOF'
+	python3 - "${REGISTRY_FILE}" "${platform}" "${platform_dir}" <<'PYEOF'
 import os
 import re
 import sys
@@ -295,56 +298,56 @@ PYEOF
 }
 
 main() {
-    echo "========================================"
-    echo "COMMAND STRUCTURE VALIDATION"
-    echo "========================================"
-    echo ""
+	echo "========================================"
+	echo "COMMAND STRUCTURE VALIDATION"
+	echo "========================================"
+	echo ""
 
-    check_registry_exists || true
-    check_yaml_valid || true
-    check_registry_version || true
-    check_command_ids_unique || true
-    check_command_structure || true
-    check_command_content || true
+	check_registry_exists || true
+	check_yaml_valid || true
+	check_registry_version || true
+	check_command_ids_unique || true
+	check_command_structure || true
+	check_command_content || true
 
-    echo ""
-    echo "========================================"
-    echo "PLATFORM ADAPTERS CHECK"
-    echo "========================================"
-    echo ""
+	echo ""
+	echo "========================================"
+	echo "PLATFORM ADAPTERS CHECK"
+	echo "========================================"
+	echo ""
 
-    check_adapters_exist || true
+	check_adapters_exist || true
 
-    echo ""
-    echo "========================================"
-    echo "BUILD ARTIFACTS CHECK"
-    echo "========================================"
-    echo ""
+	echo ""
+	echo "========================================"
+	echo "BUILD ARTIFACTS CHECK"
+	echo "========================================"
+	echo ""
 
-    check_build_artifacts opencode || true
-    echo ""
-    check_build_artifacts cursor || true
-    echo ""
-    check_build_artifacts codex || true
+	check_build_artifacts opencode || true
+	echo ""
+	check_build_artifacts cursor || true
+	echo ""
+	check_build_artifacts codex || true
 
-    echo ""
-    echo "========================================"
-    echo "SUMMARY"
-    echo "========================================"
-    echo "Errors:   ${ERRORS}"
-    echo "Warnings: ${WARNINGS}"
-    echo ""
+	echo ""
+	echo "========================================"
+	echo "SUMMARY"
+	echo "========================================"
+	echo "Errors:   ${ERRORS}"
+	echo "Warnings: ${WARNINGS}"
+	echo ""
 
-    if [[ ${ERRORS} -gt 0 ]]; then
-        echo "Validation FAILED"
-        exit 1
-    elif [[ ${WARNINGS} -gt 0 ]]; then
-        echo "Validation PASSED with warnings"
-        exit 0
-    else
-        echo "Validation PASSED"
-        exit 0
-    fi
+	if [[ ${ERRORS} -gt 0 ]]; then
+		echo "Validation FAILED"
+		exit 1
+	elif [[ ${WARNINGS} -gt 0 ]]; then
+		echo "Validation PASSED with warnings"
+		exit 0
+	else
+		echo "Validation PASSED"
+		exit 0
+	fi
 }
 
 main "$@"

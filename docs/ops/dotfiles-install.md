@@ -12,24 +12,29 @@ Todos los targets están diseñados para ejecutarse más de una vez:
 - `install-dotfiles` no ejecuta `chezmoi apply` salvo `DOTFILES_APPLY=1`.
 - `install-zsh-stack` clona Oh My Zsh, Powerlevel10k y plugins **solo si faltan**; nunca toca `~/.zshrc` ni `~/.p10k.zsh`.
 - `install-fonts` descarga MesloLGS NF **solo si falta** y refresca fontconfig para ese directorio.
-- `make install` puede repetirse: cada paso decide si actuar.
+- `make install` puede repetirse: encadena solo el baseline y cada paso decide si actuar.
 
 ## Comandos
 
 - `make install-check` — diagnóstico (no muta). Modo normal: solo prerrequisitos duros (no Debian-like, sin `apt-get`, scripts/inventario rotos) hacen fallar; los `MISSING/WARN` instalables quedan como `PASS_WITH_WARNINGS`. Con `STRICT=1` los requeridos declarativos también `FAIL`.
 - `make install-apt` — mismo backend que `make deps-install` (inventario en [`system/packages/*.yaml`](../../system/packages/)). Usa `DRY_RUN=1` → `--dry-run`.
 - `make install-external` — recomendaciones (`make deps-actions`), Docker / `wt.exe` / `winget.exe` y detección del zsh stack. Sin instalación agresiva. Flags: `SKIP_EXTERNAL=1`, `SKIP_DOCKER=1`.
+- `make install-chezmoi` — instala Chezmoi en `~/.local/bin` (opt-in, idempotente, sin sudo).
+- `make install-sops` — instala SOPS en `~/.local/bin` (opt-in, idempotente, sin sudo, checksum verificado).
+- `make install-node-stack` — instala NodeSource 24.x con `node`, `npm` y `npx` (opt-in, sudo/APT; requerido por MCPs `npx`, GitNexus y herramientas Node gestionadas).
+- `make install-agent-tools` — instala herramientas de validación no APT (`@ast-grep/cli`, `actionlint`, `osv-scanner`). Opt-in; no forma parte de `make install`.
 - `make install-zsh-stack` — Oh My Zsh + Powerlevel10k + plugins custom (idempotente; respeta `DRY_RUN=1`). No edita `~/.zshrc`.
 - `make install-fonts` — MesloLGS NF para Powerlevel10k en Linux/WSL bajo `${XDG_DATA_HOME:-$HOME/.local/share}/fonts/MesloLGS`. No configura Windows Terminal ni VS Code; si los iconos se ven mal, selecciona `MesloLGS NF` en la aplicación host.
 - `make install-uv` — instala **uv** (preferido para Python) con el instalador oficial de Astral. Idempotente: si `uv` existe, no reinstala. `DRY_RUN=1` no descarga ni instala. Pasa `UV_NO_MODIFY_PATH=1` al instalador para no editar `~/.zshrc`/`~/.bashrc`. **Fuera** del orquestador `make install` (opt-in).
 - `make install-dotfiles` — plan chezmoi; **no ejecuta apply** salvo `DOTFILES_APPLY=1`. Con `DRY_RUN=1` solo imprime comandos.
 - `make install-verify` — versiones; Docker es `WARN`. `STRICT=1` → falla si hay `FAIL`.
-- `make install` — encadena los pasos anteriores. `make install DRY_RUN=1` no se rompe por paquetes APT pendientes; `STRICT=1 make install DRY_RUN=1` sí los exige.
+- `make install` — encadena `install-check`, `install-apt`, `install-external`, `install-dotfiles` y `install-verify`. No ejecuta `install-chezmoi`, `install-sops`, `install-node-stack`, `install-agent-tools`, `install-uv`, `install-zsh-stack` ni `install-fonts`. `make install DRY_RUN=1` no se rompe por paquetes APT pendientes; `STRICT=1 make install DRY_RUN=1` sí los exige.
 
 ## Política de seguridad
 
 - **Docker Desktop:** solo detección y `WARN`; nunca instalación silenciosa.
-- **SOPS / Age:** verificación si el inventario lo declara, pero no se generan claves ni se tocan secretos.
+- **SOPS / Age:** verificación si el inventario lo declara, pero no se generan claves ni se tocan secretos. SOPS se instala explícitamente con `make install-sops`.
+- **Node / agent tools:** `make install` no instala NodeSource ni CLIs de agente; usa `make install-node-stack` y `make install-agent-tools` cuando hagan falta.
 - **Windows host (`wt.exe`, `winget.exe`, `powershell.exe`):** solo detección desde WSL; no se asume admin ni se ejecuta `winget install`.
 - **chezmoi:** sin `DOTFILES_APPLY=1` no se aplica nada destructivo.
 - **Oh My Zsh / Powerlevel10k:** clones bajo `$HOME/.oh-my-zsh` y `$ZSH_CUSTOM/themes/powerlevel10k` solo si faltan; los RC files (`~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`) los gestiona Chezmoi vía `make install-dotfiles DOTFILES_APPLY=1`. RCM/rcup queda fuera del flujo activo.

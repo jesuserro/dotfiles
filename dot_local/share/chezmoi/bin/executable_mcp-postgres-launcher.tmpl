@@ -11,16 +11,16 @@ set -euo pipefail
 
 # Handle --help flag
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-    echo "MCP PostgreSQL Launcher"
-    echo "Usage: $0 [secrets-file]"
-    echo ""
-    echo "Environment:"
-    echo "  MCP_POSTGRES_SECRETS  Path to secrets file (default: ~/.config/mcp-secrets.env)"
-    echo "  POSTGRES_DSN         PostgreSQL connection string"
-    echo ""
-    echo "The launcher loads POSTGRES_DSN from the secrets file and executes"
-    echo "the MCP PostgreSQL server with that connection string."
-    exit 0
+	echo "MCP PostgreSQL Launcher"
+	echo "Usage: $0 [secrets-file]"
+	echo ""
+	echo "Environment:"
+	echo "  MCP_POSTGRES_SECRETS  Path to secrets file (default: ~/.config/mcp-secrets.env)"
+	echo "  POSTGRES_DSN         PostgreSQL connection string"
+	echo ""
+	echo "The launcher loads POSTGRES_DSN from the secrets file and executes"
+	echo "the MCP PostgreSQL server with that connection string."
+	exit 0
 fi
 
 # Default secrets location (project-specific)
@@ -30,9 +30,9 @@ LEGACY_SECRETS="${HOME}/.config/store-etl/secrets.env"
 
 # Use default if exists, fallback to legacy
 if [[ -f "$DEFAULT_SECRETS" ]]; then
-    DEFAULT_SECRETS="$DEFAULT_SECRETS"
+	DEFAULT_SECRETS="$DEFAULT_SECRETS"
 elif [[ -f "$LEGACY_SECRETS" ]]; then
-    DEFAULT_SECRETS="$LEGACY_SECRETS"
+	DEFAULT_SECRETS="$LEGACY_SECRETS"
 fi
 
 # Allow override via argument or environment
@@ -40,17 +40,17 @@ SECRETS_FILE="${1:-${MCP_POSTGRES_SECRETS:-$DEFAULT_SECRETS}}"
 
 # Load project-specific connection profile
 if [[ -f "$SECRETS_FILE" ]]; then
-    # shellcheck source=/dev/null
-    source "$SECRETS_FILE"
+	# shellcheck source=/dev/null
+	source "$SECRETS_FILE"
 else
-    echo "WARNING: Secrets file not found: $SECRETS_FILE" >&2
-    echo "Expected POSTGRES_DSN in environment" >&2
+	echo "WARNING: Secrets file not found: $SECRETS_FILE" >&2
+	echo "Expected POSTGRES_DSN in environment" >&2
 fi
 
 # Validate required connection parameter
 if [[ -z "${POSTGRES_DSN:-}" ]]; then
-    echo "ERROR: POSTGRES_DSN not set. Configure in: $SECRETS_FILE" >&2
-    exit 1
+	echo "ERROR: POSTGRES_DSN not set. Configure in: $SECRETS_FILE" >&2
+	exit 1
 fi
 
 # @modelcontextprotocol/server-postgres v0.6.x only accepts the database URL as argv[2]

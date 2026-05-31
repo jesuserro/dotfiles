@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# Tmux workspace launcher for the dotfiles repository.
+#
+# Usage: tmux-dotfiles
+#
+# Creates or reattaches to session "dotfiles" with a two-column layout in ~/dotfiles.
+
+set -euo pipefail
+
+readonly SESSION_NAME="dotfiles"
+readonly WINDOW_NAME="main"
+
+usage() {
+	cat <<EOF
+Tmux dotfiles workspace
+
+Usage: $(basename "$0") [-h|--help]
+
+Creates or reattaches to tmux session "${SESSION_NAME}" with window "${WINDOW_NAME}"
+split into two columns. Both panes start in the dotfiles repository.
+
+Detach from the session: Ctrl+b then d
+Reattach later: $(basename "$0") or: tmux attach-session -t ${SESSION_NAME}
+
+Environment:
+  DOTFILES_DIR  Override dotfiles repo path (default: \$HOME/dotfiles)
+EOF
+}
+
+resolve_dotfiles_root() {
+	local root="${DOTFILES_DIR:-$HOME/dotfiles}"
+
+	if [[ ! -d "${root}/.git" ]]; then
+		echo "ERROR: dotfiles repository not found at: ${root}" >&2
+		echo "Set DOTFILES_DIR to the repo root or clone to ~/dotfiles." >&2
+		exit 1
+	fi
+
+	DOTFILES_ROOT="$(cd "${root}" && pwd)"
+}
+
+attach_or_switch() {
+	if [[ -n "${TMUX:-}" ]]; then
+		tmux switch-client -t "${SESSION_NAME}"
+	else
+		exec tmux attach-session -t "${SESSION_NAME}"
+	fi
+}
+
+create_session() {
+	tmux new-session -d -s "${SESSION_NAME}" -n "${WINDOW_NAME}" -c "${DOTFILES_ROOT}"
+	tmux split-window -h -t "${SESSION_NAME}:${WINDOW_NAME}" -c "${DOTFILES_ROOT}"
+	tmux select-pane -t "${SESSION_NAME}:${WINDOW_NAME}.1"
+}
+
+main() {
+	if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+		usage
+		exit 0
+	fi
+
+	if [[ $# -gt 0 ]]; then
+		echo "ERROR: unknown argument: $1" >&2
+		echo "Run $(basename "$0") --help for usage." >&2
+		exit 1
+	fi
+
+	resolve_dotfiles_root
+
+	if tmux has-session -t "${SESSION_NAME}" 2>/dev/null; then
+		attach_or_switch
+		return 0
+	fi
+
+	create_session
+	attach_or_switch
+}
+
+main "$@"

@@ -6,22 +6,22 @@ CANONICAL_SECRETS_FILE="$HOME/.config/mcp-secrets.env"
 COMPAT_SECRETS_FILE="$HOME/.secrets/codex.env"
 SECRETS_FILE=""
 if [[ -f "$CANONICAL_SECRETS_FILE" ]]; then
-  SECRETS_FILE="$CANONICAL_SECRETS_FILE"
+	SECRETS_FILE="$CANONICAL_SECRETS_FILE"
 elif [[ -f "$COMPAT_SECRETS_FILE" ]]; then
-  SECRETS_FILE="$COMPAT_SECRETS_FILE"
+	SECRETS_FILE="$COMPAT_SECRETS_FILE"
 fi
 
 if [[ -n "$SECRETS_FILE" ]]; then
-  # shellcheck disable=SC1090
-  source "$SECRETS_FILE"
+	# shellcheck disable=SC1090
+	source "$SECRETS_FILE"
 fi
 
 token="${GITHUB_PERSONAL_ACCESS_TOKEN:-${GITHUB_TOKEN:-}}"
 if [[ -z "$token" ]]; then
-  echo "codex-mcp-github: missing GITHUB_PERSONAL_ACCESS_TOKEN (or GITHUB_TOKEN)." >&2
-  echo "                  Set it in ~/.config/mcp-secrets.env or the legacy" >&2
-  echo "                  ~/.secrets/codex.env adapter; never print the value." >&2
-  exit 2
+	echo "codex-mcp-github: missing GITHUB_PERSONAL_ACCESS_TOKEN (or GITHUB_TOKEN)." >&2
+	echo "                  Set it in ~/.config/mcp-secrets.env or the legacy" >&2
+	echo "                  ~/.secrets/codex.env adapter; never print the value." >&2
+	exit 2
 fi
 
 export GITHUB_PERSONAL_ACCESS_TOKEN="$token"

@@ -48,7 +48,7 @@ teardown() {
 
 @test "AGENTS.md references canonical gitnexus skill path" {
 	grep -q 'ai/assets/skills/gitnexus/' "${DOTFILES_DIR}/AGENTS.md"
-	run ! grep -q '\.claude/skills/gitnexus/' "${DOTFILES_DIR}/AGENTS.md"
+	assert_file_not_matches "${DOTFILES_DIR}/AGENTS.md" '\.claude/skills/gitnexus/'
 }
 
 @test "Matt Pocock skills are documented as external fallback only" {

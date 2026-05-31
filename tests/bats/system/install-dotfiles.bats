@@ -35,7 +35,7 @@ setup() {
 	local fake_root
 	fake_root="$(mktemp -d)"
 	mkdir -p "${fake_root}/system/packages" "${fake_root}/scripts/lib"
-	cat > "${fake_root}/system/packages/required.yaml" <<EOF
+	cat >"${fake_root}/system/packages/required.yaml" <<EOF
 schema_version: 1
 platform: test
 manager: apt
@@ -86,7 +86,7 @@ WRAP
 	local fake_root
 	fake_root="$(mktemp -d)"
 	mkdir -p "${fake_root}/system/packages" "${fake_root}/scripts/lib"
-	cat > "${fake_root}/system/packages/required.yaml" <<EOF
+	cat >"${fake_root}/system/packages/required.yaml" <<EOF
 schema_version: 1
 platform: test
 manager: apt
@@ -97,7 +97,7 @@ packages:
     capability: testing
     note: forced miss
 EOF
-	cat > "${fake_root}/scripts/check-system-deps.sh" <<WRAP
+	cat >"${fake_root}/scripts/check-system-deps.sh" <<WRAP
 #!/usr/bin/env bash
 exec bash '${DOTFILES_DIR}/scripts/check-system-deps.sh' --inventory '${fake_root}/system/packages/required.yaml' "\$@"
 WRAP

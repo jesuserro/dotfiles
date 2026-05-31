@@ -4,7 +4,7 @@
 
 ## Estado actual
 
-- **Chezmoi** es el único gestor activo de dotfiles relevantes: MCPs (Cursor/Codex), secretos, config Codex, AI runtime y los RC files de la **zsh stack** (`~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`).
+- **Chezmoi** es el único gestor activo de dotfiles relevantes: MCPs (Cursor/Codex), secretos, config Codex, AI runtime, los RC files de la **zsh stack** (`~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`) y **tmux** (`~/.tmux.conf`, launcher `tmux-dotfiles` en `~/.local/bin`).
 - **`make install-zsh-stack`** instala únicamente runtime: Oh My Zsh + Powerlevel10k + plugins custom (`zsh-autosuggestions`, `zsh-completions`, etc.). No toca ningún RC file.
 - **Lista de plugins OMZ:** fuente de verdad en `zsh/20-omz.zsh` (cargado vía `dotfiles/zshrc`). No activar gestores de runtime vía OMZ (`nvm`, `pyenv`, `asdf`, `conda`, `autoenv`). El salto de directorios usa **zoxide** (`zsh/25-zoxide.zsh`, paquete APT opcional en `system/packages/ubuntu.yaml`): sustituye al plugin OMZ `z`, no cargar ambos; si falta el binario el shell arranca igual; con zoxide instalado se conserva `z <patrón>` vía `zoxide init zsh`. Migración de historial manual: `zoxide import --from=z "$HOME/.z"`. FastAPI, Vite, React, TypeScript, PostgreSQL, PowerShell, Cursor y Codex no van como plugins OMZ; si hace falta, conviene aliases o funciones en `aliases` / `zsh/`.
 - **RCM (`rcup`)** queda fuera del flujo activo. Sus referencias históricas se conservan solo como contexto. No hay paso `rcup` en el bootstrap; tampoco se requiere instalar `rcm`.
@@ -17,7 +17,7 @@ En este proyecto conviven dos mecanismos para aplicar cambios. Resumen:
 
 | Mecanismo | Qué hace | Cuándo usarlo |
 |-----------|----------|----------------|
-| **`chezmoi --source=$HOME/dotfiles apply`** (alias: `make install-dotfiles DOTFILES_APPLY=1`) | Aplica las plantillas, archivos y symlinks que Chezmoi gestiona desde el repo a tu HOME: `~/.cursor/mcp.json`, `~/.codex/config.toml`, `~/.config/ai/`, secretos generados, y los symlinks `~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`. | Cuando has editado en el repo lo que Chezmoi controla. No hace falta ejecutarlo solo por haber corrido `make update` (que actualiza sistema/deps/imágenes). |
+| **`chezmoi --source=$HOME/dotfiles apply`** (alias: `make install-dotfiles DOTFILES_APPLY=1`) | Aplica las plantillas, archivos y symlinks que Chezmoi gestiona desde el repo a tu HOME: `~/.cursor/mcp.json`, `~/.codex/config.toml`, `~/.config/ai/`, secretos generados, los symlinks `~/.zshrc`, `~/.p10k.zsh`, `~/.aliases`, `~/.tmux.conf`, y el launcher `~/.local/bin/tmux-dotfiles`. | Cuando has editado en el repo lo que Chezmoi controla. No hace falta ejecutarlo solo por haber corrido `make update` (que actualiza sistema/deps/imágenes). |
 | **`source ~/.zshrc`** | Recarga en la **sesión actual** de la terminal el contenido de `~/.zshrc`: aliases, PATH, etc. No escribe archivos. | Después de `chezmoi apply` o de `make update` si cambió PATH. |
 | **`chezmoi --source=$HOME/dotfiles apply ~/.cursor/mcp.json ~/.config/opencode/opencode.json ~/.codex/config.toml`** | Propaga solo las configs MCP renderizadas de Cursor, OpenCode y Codex. | Úsalo tras cambios de plantillas MCP como el launcher de GitNexus. Mantiene el arranque estable con binarios/launchers locales en vez de `npx ...@latest` en runtime. |
 
@@ -38,14 +38,16 @@ Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si ha
 | `~/.zshrc` | `symlink_dot_zshrc.tmpl` → `$HOME/dotfiles/zshrc` |
 | `~/.p10k.zsh` | `symlink_dot_p10k.zsh.tmpl` → `$HOME/dotfiles/powerlevel10k/p10k.zsh` |
 | `~/.aliases` | `symlink_dot_aliases.tmpl` → `$HOME/dotfiles/aliases` |
+| `~/.tmux.conf` | `symlink_dot_tmux.conf.tmpl` → `$HOME/dotfiles/tmux.conf` |
+| `~/.local/bin/tmux-dotfiles` | `run_after_15_link_tmux_dotfiles` → `$HOME/dotfiles/bin/tmux-dotfiles` |
 
-### Backup seguro de RC files
+### Backup seguro de symlinks gestionados (RC + tmux)
 
-El hook `.chezmoiscripts/run_before_00_backup_rc_files.sh.tmpl` se ejecuta antes de `chezmoi apply` y aplica esta política sobre `~/.zshrc`, `~/.p10k.zsh` y `~/.aliases`:
+El hook `.chezmoiscripts/run_before_00_backup_rc_files.sh.tmpl` se ejecuta antes de `chezmoi apply` y aplica esta política sobre `~/.zshrc`, `~/.p10k.zsh`, `~/.aliases` y `~/.tmux.conf`:
 
 - Si el target no existe o ya es un symlink correcto: no-op (idempotente).
 - Si es un symlink al destino equivocado o un fichero **trivial** (vacío, solo whitespace, o exactamente `. "$HOME/.local/bin/env"` — el stub que escribe el instalador oficial de `uv`): se mueve a `~/<name>.backup.YYYYMMDD-HHMMSS` y Chezmoi crea el symlink limpio.
-- Si es un fichero regular con **contenido custom**: el hook aborta con mensaje accionable, salvo que se pase `ZSH_RC_APPLY=1`. Con el flag, se hace backup con timestamp y se reemplaza.
+- Si es un fichero regular con **contenido custom**: el hook aborta con mensaje accionable, salvo que se pase `ZSH_RC_APPLY=1`. Con el flag, se hace backup con timestamp y se reemplaza. El nombre del flag es histórico (zsh stack); **también autoriza el reemplazo de un `~/.tmux.conf` custom**.
 
 Nunca se borra sin backup; nunca se usa `sudo`.
 

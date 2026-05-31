@@ -112,17 +112,19 @@ make deps-install DEPS_INSTALL_ARGS="--dry-run --include-optional"
 
 `deps-install` only installs `apt` inventories. It ignores non-APT tooling and Windows-side/WSL environment entries even if those files are present.
 
-For a full workstation bootstrap, use `make install`: it runs the APT baseline,
-the Node.js stack needed by npm-based CLIs, and `make install-agent-tools` so
-`@ast-grep/cli`, `actionlint` and `osv-scanner` are installed without a second
-manual command.
+For a baseline workstation bootstrap, use `make install`: it runs the APT
+baseline and the non-aggressive external guidance/verification steps. Node,
+Chezmoi, SOPS, uv, Azure CLI and agent validation tools stay behind explicit
+opt-in targets such as `make install-node-stack`, `make install-chezmoi`,
+`make install-sops`, `make install-uv`, `make install-azure-cli` and
+`make install-agent-tools`.
 
 ## What gets checked vs installed
 
 - Installed by `deps-install`: `common.yaml` and `ubuntu.yaml` entries with manager `apt`.
 - Checked but not installed by `deps-install`: `tooling.yaml` and `wsl.yaml`.
 - Windows-side commands such as `wt.exe` and `powershell.exe` are declared for visibility from WSL, not for Linux-side installation.
-- Recommended but not auto-run: `show-system-deps-actions.sh` explains how to reconcile missing `external:*` and `environment:*` entries.
+- Recommended but not auto-run by `deps-install` or `make install`: `show-system-deps-actions.sh` explains how to reconcile missing `external:*` and `environment:*` entries.
 
 ## Current operational examples
 

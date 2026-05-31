@@ -122,6 +122,47 @@ alias cx="codex"  # Codex
 # ------------------------------------
 alias gnx-serve='gitnexus serve'                       # Iniciar servidor GitNexus local
 
+_gnx_analyze_log_has_lbug_lock() {
+  local log_file="$1"
+  grep -Eq 'Could not set lock|\.gitnexus/lbug|docs\.ladybugdb\.com/concurrency' "$log_file"
+}
+
+_gnx_print_lbug_lock_hint() {
+  echo ""
+  echo "⚠️  GitNexus no pudo bloquear .gitnexus/lbug."
+  echo "   Puede haber otro GitNexus MCP/analyze usando el índice, o un lock stale."
+  echo "   Diagnóstico seguro:"
+  echo "     ps aux | grep -Ei 'gitnexus|ladybug|node' | grep -v grep"
+  echo "   Si hay procesos gitnexus activos, ciérralos o espera a que terminen y reintenta."
+  echo "   Si no hay procesos activos y el fallo persiste, reinicia el IDE/MCP antes de limpiar el índice manualmente."
+}
+
+_gnx_run_gitnexus_analyze() {
+  local gitnexus_bin="$1"
+  shift
+
+  local analyze_log exit_code=0
+  analyze_log="$(mktemp "${TMPDIR:-/tmp}/gitnexus-analyze.XXXXXX")" || return 1
+
+  "$gitnexus_bin" analyze "$@" 2>&1 | tee "$analyze_log"
+  local zsh_pipeline_status="${pipestatus[1]:-}"
+  local bash_pipeline_status="${PIPESTATUS[0]:-}"
+  if [ -n "${ZSH_VERSION:-}" ]; then
+    exit_code="$zsh_pipeline_status"
+  elif [ -n "${BASH_VERSION:-}" ]; then
+    exit_code="$bash_pipeline_status"
+  else
+    exit_code=0
+  fi
+
+  if [ "$exit_code" -ne 0 ] && _gnx_analyze_log_has_lbug_lock "$analyze_log"; then
+    _gnx_print_lbug_lock_hint
+  fi
+
+  rm -f "$analyze_log"
+  return "$exit_code"
+}
+
 _gnx_analyze_with_managed_node() {
   local runtime_lib="${DOTFILES_DIR:-$HOME/dotfiles}/scripts/update/lib/node_runtime.sh"
   local npm_prefix="${NPM_CONFIG_PREFIX:-${DOTFILES_NPM_PREFIX:-$HOME/.npm-global}}"
@@ -151,7 +192,7 @@ _gnx_analyze_with_managed_node() {
   node_runtime_probe
 
   if [ "$NODE_RUNTIME_EFFECTIVE_OK" -eq 1 ]; then
-    "$gitnexus_bin" analyze "$@"
+    _gnx_run_gitnexus_analyze "$gitnexus_bin" "$@"
     return $?
   fi
 
@@ -165,7 +206,7 @@ _gnx_analyze_with_managed_node() {
   PATH="$(node_runtime_controlled_path "$overlay" "$npm_prefix" "$original_path")"
   export PATH
 
-  "$gitnexus_bin" analyze "$@"
+  _gnx_run_gitnexus_analyze "$gitnexus_bin" "$@"
   exit_code=$?
 
   PATH="$original_path"

@@ -28,7 +28,7 @@ teardown() {
 	# Stub a fake uv binary that responds to --version.
 	local stub_dir="${TEST_TEMP_DIR}/bin"
 	mkdir -p "${stub_dir}"
-	cat > "${stub_dir}/uv" <<'EOF'
+	cat >"${stub_dir}/uv" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in
 	--version) echo "uv 99.9.9 (stub)";;
@@ -48,7 +48,7 @@ EOF
 @test "install-uv DRY_RUN with uv present still skips the download branch" {
 	local stub_dir="${TEST_TEMP_DIR}/bin"
 	mkdir -p "${stub_dir}"
-	cat > "${stub_dir}/uv" <<'EOF'
+	cat >"${stub_dir}/uv" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in
 	--version) echo "uv 99.9.9 (stub)";;
@@ -65,7 +65,7 @@ EOF
 
 @test "system_deps actions recommend 'make install-uv' for uv" {
 	local inv="${TEST_TEMP_DIR}/uv.yaml"
-	cat > "${inv}" <<'EOF'
+	cat >"${inv}" <<'EOF'
 schema_version: 1
 platform: common
 manager: external

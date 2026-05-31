@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Publica tmux-dotfiles en ~/.local/bin tras chezmoi apply.
+
+set -euo pipefail
+
+SOURCE_DIR="{{ .chezmoi.sourceDir }}"
+LOCAL_BIN="{{ .chezmoi.homeDir }}/.local/bin"
+LAUNCHER="${SOURCE_DIR}/bin/tmux-dotfiles"
+
+mkdir -p "${LOCAL_BIN}"
+
+if [[ ! -f "${LAUNCHER}" ]]; then
+	echo "[run_after_15_link_tmux_dotfiles] ERROR: source launcher not found: ${LAUNCHER}" >&2
+	exit 1
+fi
+
+ln -sf "${LAUNCHER}" "${LOCAL_BIN}/tmux-dotfiles"
+
+exit 0
