@@ -293,8 +293,8 @@ git fetch origin "$DEV_BRANCH" >/dev/null 2>&1 || true
 git checkout "$MAIN_BRANCH"
 git pull origin "$MAIN_BRANCH"
 
-# Guardar el commit actual de main antes del merge (para poder obtener commits exclusivos después)
-BASE_COMMIT=$(git rev-parse HEAD)
+# Verificar que HEAD está disponible antes del merge.
+git rev-parse HEAD >/dev/null
 
 # Hacer el merge
 do_merge "$DEV_BRANCH" "$MAIN_BRANCH"

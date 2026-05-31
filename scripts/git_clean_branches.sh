@@ -45,7 +45,6 @@ safe_checkout() {
 # 🧹 Función para limpiar ramas locales
 clean_local_branches() {
 	local prefix="$1"
-	local branch_type="$2"
 	local count=0
 
 	echo -e "${BLUE}🧹 Limpiando ramas locales '${prefix}*' mergeadas en dev...${NC}"
@@ -89,7 +88,6 @@ clean_local_branches() {
 # 🧹 Función para limpiar ramas remotas
 clean_remote_branches() {
 	local prefix="$1"
-	local branch_type="$2"
 	local count=0
 
 	echo -e "${BLUE}🧹 Limpiando ramas remotas '${prefix}*' mergeadas en dev...${NC}"
