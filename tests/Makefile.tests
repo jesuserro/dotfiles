@@ -7,10 +7,16 @@ DOTFILES_DIR := $(TESTS_DIR)/..
 BATS_DIR := $(TESTS_DIR)/bats
 BATS_HELPERS := $(BATS_DIR)/helpers/common.bash
 
+# Zsh scripts are valid repo-owned scripts, but ShellCheck does not support the
+# dialect; validate them with zsh -n instead.
+ZSH_SCRIPTS := $(DOTFILES_DIR)/termux/install_plugins.sh
+SHELLCHECK_EXCLUDED_SCRIPTS := $(ZSH_SCRIPTS)
+
 # Shell scripts to lint (dotfiles-owned only, excludes third-party/vendor).
 # Chezmoi templates are deliberately excluded: shellcheck/shfmt do not
 # understand Go template delimiters reliably unless templates are rendered.
-SHELL_SCRIPTS := $(shell find $(DOTFILES_DIR) -name '*.sh' -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/')
+SHELL_SCRIPTS_ALL := $(shell find $(DOTFILES_DIR) -name '*.sh' -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/')
+SHELL_SCRIPTS := $(filter-out $(SHELLCHECK_EXCLUDED_SCRIPTS),$(SHELL_SCRIPTS_ALL))
 SHELL_LAUNCHERS := $(shell find $(DOTFILES_DIR)/bin -type f \( -name 'mcp-*-launcher' -o -name 'tmux-dotfiles' \) 2>/dev/null || true)
 PROMPT_LAUNCHERS := $(shell find $(DOTFILES_DIR)/local/bin -name 'prompt-*' -type f 2>/dev/null || true)
 AI_PROMPT_CLI := $(wildcard $(DOTFILES_DIR)/local/bin/ai-prompt)
@@ -41,16 +47,16 @@ NC := \033[0m
 .PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts bats-skills bats-tmux
 .PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands
 .PHONY: deps-check deps-install deps-actions bats-system bats-zsh test-deps-check
-.PHONY: quality-check security-check agent-validate agent-validate-changed ai-doctor lint-shellcheck lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
+.PHONY: quality-check security-check agent-validate agent-validate-changed ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
 
 help:
 	@echo "Testing targets for dotfiles"
 	@echo ""
 	@echo "  make test         - Full suite: preflight + lint + bats + MCP template JSON checks"
 	@echo "  make test-fast    - Preflight + lint + bats without chezmoi/* tests"
-	@echo "  make test-deps-check - Fail-fast check for bats/shellcheck/shfmt in PATH"
-	@echo "  make test-lint    - Run shellcheck, shfmt and yamllint checks (fail if tool missing)"
-	@echo "  make quality-check - Agent quality checks: shellcheck, shfmt, yamllint, actionlint"
+	@echo "  make test-deps-check - Fail-fast check for bats/shellcheck/shfmt/zsh in PATH"
+	@echo "  make test-lint    - Run shellcheck, zsh -n, shfmt and yamllint checks (fail if tool missing)"
+	@echo "  make quality-check - Agent quality checks: shellcheck, zsh -n, shfmt, yamllint, actionlint"
 	@echo "  make security-check - Agent security checks: gitleaks + osv-scanner"
 	@echo "  make agent-validate - quality-check + security-check"
 	@echo "  make agent-validate-changed - Practical agent gate for files changed since HEAD + security"
@@ -85,7 +91,7 @@ help:
 test-install:
 	@echo "$(BLUE)==>$NC Installing test dependencies..."
 	@command -v apt-get &>/dev/null && { \
-		sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck 2>/dev/null || true; \
+		sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck zsh 2>/dev/null || true; \
 	} || true
 	@command -v apt-get &>/dev/null && { \
 		sudo apt-get install -y -qq shfmt 2>/dev/null || true; \
@@ -111,15 +117,15 @@ test-install:
 # ============================================
 # Preflight: fail-fast for required test/lint deps
 # ============================================
-# Verifies that bats / shellcheck / shfmt are in PATH before invoking the
+# Verifies that bats / shellcheck / shfmt / zsh are in PATH before invoking the
 # corresponding suites. Avoids silent hangs and prints the actionable next
-# command. All three are declared as required APT packages in
+# command. These tools are declared as required APT packages in
 # system/packages/ubuntu.yaml, so a single 'make install SKIP_EXTERNAL=1' fixes
 # the missing ones on a fresh Ubuntu/WSL machine.
 
 test-deps-check:
 	@missing=""; \
-	for cmd in bats shellcheck shfmt; do \
+	for cmd in bats shellcheck shfmt zsh; do \
 		if ! command -v $$cmd >/dev/null 2>&1; then \
 			if [ -z "$$missing" ]; then missing="$$cmd"; else missing="$$missing $$cmd"; fi; \
 		fi; \
@@ -128,20 +134,20 @@ test-deps-check:
 		echo "Missing test dependency: $$missing"; \
 		echo "These are declared as required APT packages in system/packages/ubuntu.yaml."; \
 		echo "Run: make install SKIP_EXTERNAL=1"; \
-		echo "Or, for just the test/lint tooling: sudo apt-get install -y bats shellcheck shfmt"; \
+		echo "Or, for just the test/lint tooling: sudo apt-get install -y bats shellcheck shfmt zsh"; \
 		exit 1; \
 	fi; \
-	echo "==> Test/lint dependencies present (bats, shellcheck, shfmt)"
+	echo "==> Test/lint dependencies present (bats, shellcheck, shfmt, zsh)"
 
 # ============================================
 # Linting
 # ============================================
 
-test-lint: lint-shellcheck lint-shfmt lint-yaml
+test-lint: lint-shellcheck lint-zsh lint-shfmt lint-yaml
 	@echo ""
 	@echo "$(GREEN)==>$NC Lint completed"
 
-quality-check: lint-shellcheck lint-shfmt lint-yaml lint-actions
+quality-check: lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions
 	@echo ""
 	@echo "$(GREEN)==>$NC Quality checks completed"
 
@@ -202,6 +208,19 @@ lint-shellcheck:
 	else \
 		echo "$(GREEN)==>$NC shellcheck passed"; \
 	fi
+
+lint-zsh:
+	@echo "$(BLUE)==>$(NC) Running zsh syntax check..."
+	@if ! command -v zsh >/dev/null 2>&1; then \
+		echo "Missing test dependency: zsh"; \
+		echo "Run: make install SKIP_EXTERNAL=1"; \
+		echo "Or:  sudo apt-get install -y zsh"; \
+		exit 1; \
+	fi
+	@for f in $(ZSH_SCRIPTS); do \
+		zsh -n "$$f"; \
+		echo "$(GREEN)  OK$(NC) $$f"; \
+	done
 
 lint-shfmt:
 	@echo "$(BLUE)==>$(NC) Running shfmt check..."

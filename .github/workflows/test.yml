@@ -16,7 +16,7 @@ jobs:
       - name: Install test tooling
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq shellcheck shfmt yamllint python3 python3-yaml bats
+          sudo apt-get install -y -qq shellcheck shfmt yamllint python3 python3-yaml bats zsh
 
       - name: MCP governance
         run: make ai-mcp-governance

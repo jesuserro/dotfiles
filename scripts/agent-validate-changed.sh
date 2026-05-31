@@ -138,6 +138,7 @@ run_security_scan() {
 main() {
 	local changed_file_list="${TMP_DIR}/changed-files"
 	local shellcheck_files="${TMP_DIR}/shellcheck-files"
+	local zsh_syntax_files="${TMP_DIR}/zsh-syntax-files"
 	local shfmt_files="${TMP_DIR}/shfmt-files"
 	local yaml_files="${TMP_DIR}/yaml-files"
 	local workflow_files="${TMP_DIR}/workflow-files"
@@ -155,12 +156,19 @@ main() {
 	fi
 
 	: >"${shellcheck_files}"
+	: >"${zsh_syntax_files}"
 	: >"${shfmt_files}"
 	: >"${yaml_files}"
 	: >"${workflow_files}"
 
 	while IFS= read -r file; do
 		[[ -n "${file}" && -f "${DOTFILES_DIR}/${file}" ]] || continue
+		case "${file}" in
+		termux/install_plugins.sh)
+			printf '%s\n' "${DOTFILES_DIR}/${file}" >>"${zsh_syntax_files}"
+			continue
+			;;
+		esac
 		case "${file}" in
 		*.tmpl) ;;
 		*.sh | *.bash | *.bats | bin/mcp-*-launcher | local/bin/ai-prompt | local/bin/prompt-*)
@@ -191,6 +199,14 @@ main() {
 		xargs shellcheck -x -S warning <"${shellcheck_files}"
 	else
 		log "shellcheck skipped: no changed shell files"
+	fi
+
+	if [[ -s "${zsh_syntax_files}" ]]; then
+		require_cmd zsh "make install SKIP_EXTERNAL=1"
+		log "zsh syntax changed scripts"
+		xargs zsh -n <"${zsh_syntax_files}"
+	else
+		log "zsh syntax skipped: no changed zsh scripts"
 	fi
 
 	if [[ -s "${shfmt_files}" ]]; then
