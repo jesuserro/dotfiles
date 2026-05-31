@@ -3,6 +3,7 @@
 setup() {
 	load '../helpers/common'
 	DOTFILES_DIR="$(cd "${BATS_TEST_DIRNAME}/../../.." && pwd)"
+	ALIASES_FILE="${DOTFILES_DIR}/aliases"
 	setup_temp_dir
 }
 
@@ -71,6 +72,84 @@ write_fake_docker() {
 exit 0
 EOF
 	chmod +x "$path"
+}
+
+@test "_gnx_with_managed_node helper exists in aliases" {
+	grep -q '_gnx_with_managed_node()' "$ALIASES_FILE"
+	grep -q '_gnx_with_managed_node_impl()' "$ALIASES_FILE"
+}
+
+@test "gnx-serve is not a direct alias to gitnexus serve" {
+	run grep -E "^alias gnx-serve='gitnexus serve'" "$ALIASES_FILE"
+	[[ "$status" -ne 0 ]]
+}
+
+@test "gnx-serve uses _gnx_with_managed_node serve" {
+	grep -q 'gnx-serve()' "$ALIASES_FILE"
+	grep -q '_gnx_with_managed_node serve' "$ALIASES_FILE"
+}
+
+@test "gnx-wiki-here does not call gitnexus status or gitnexus wiki directly" {
+	awk '
+		/^gnx-wiki-here\(\)/ { in_fn = 1; next }
+		/^[a-zA-Z_][a-zA-Z0-9_-]*\(\)/ && in_fn { exit 0 }
+		in_fn && !/^[[:space:]]*echo/ && /gitnexus (status|wiki)/ { found = 1 }
+		END { exit found ? 1 : 0 }
+	' "$ALIASES_FILE"
+}
+
+@test "gnx-wiki-here uses managed node for status and wiki" {
+	grep -q '_gnx_with_managed_node status' "$ALIASES_FILE"
+	grep -q '_gnx_with_managed_node wiki' "$ALIASES_FILE"
+}
+
+@test "gnx-map does not call gitnexus serve directly" {
+	awk '
+		/^gnx-map\(\)/ { in_map = 1; next }
+		/^[a-zA-Z_][a-zA-Z0-9_-]*\(\)/ && in_map { exit 0 }
+		in_map && /gitnexus serve/ { found = 1 }
+		END { exit found ? 1 : 0 }
+	' "$ALIASES_FILE"
+}
+
+@test "gnx-serve uses managed Node overlay when effective Node is too old" {
+	if ! command -v zsh >/dev/null 2>&1; then
+		skip "zsh not in PATH"
+	fi
+
+	local zsh_bin
+	zsh_bin="$(command -v zsh)"
+	local fake_home="${TEST_TEMP_DIR}/home"
+	local shadow_bin="${TEST_TEMP_DIR}/home/.cursor-server/bin/hash"
+	local managed="${TEST_TEMP_DIR}/managed/node"
+	local npm_prefix="${TEST_TEMP_DIR}/npm-prefix"
+	local trace="${TEST_TEMP_DIR}/trace.log"
+	local repo="${TEST_TEMP_DIR}/repo"
+
+	link_core_utils "$shadow_bin"
+	write_fake_docker "${shadow_bin}/docker"
+	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
+	write_fake_node "$managed" "v24.15.0" "managed"
+	write_fake_gitnexus "${npm_prefix}/bin/gitnexus"
+	mkdir -p "$fake_home" "$repo/.git"
+
+	run env \
+		HOME="$fake_home" \
+		DOTFILES_DIR="$DOTFILES_DIR" \
+		DOTFILES_MANAGED_NODE_BIN="$managed" \
+		DOTFILES_NPM_PREFIX="$npm_prefix" \
+		NPM_CONFIG_PREFIX= \
+		GNX_ALIAS_TRACE="$trace" \
+		PATH="$shadow_bin:$npm_prefix/bin" \
+		"$zsh_bin" -c "cd '$repo' && source '$DOTFILES_DIR/aliases' && gnx-serve"
+
+	[[ "$status" -eq 0 ]] || {
+		echo "$output" >&2
+		false
+	}
+	grep -q '^gitnexus:serve$' "$trace"
+	grep -q 'gitnexus-node:.*/node-runtime\.[^:]*\/node:v24.15.0' "$trace"
+	assert_file_not_contains "$trace" 'gitnexus-node:.*v20.18.2'
 }
 
 @test "gnx-analyze-here uses managed Node overlay when effective Node is too old" {

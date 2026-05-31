@@ -60,10 +60,16 @@ Flujo recomendado:
 |------|-----|
 | `make gitnexus-status` + MCP read-only | **Agentes** — seguro |
 | `make update-check` | **Agentes** — diagnóstico Node |
-| `gnx-analyze-here` | **Solo humano** — usa overlay Node gestionado (`>=22`) |
+| `gnx-analyze-here` | **Solo humano** — overlay Node gestionado (`>=22`) |
+| `gnx-serve` | **Solo humano** — overlay Node gestionado; abre servidor local |
+| `gnx-map` | **Solo humano** — analyze + serve vía helpers gestionados |
+| `gnx-wiki-here` | **Solo humano** — overlay Node gestionado; puede usar red/LLM y escribir `docs/wiki/` |
+| `make update-wsl` | **Mantenimiento humano** — instala/actualiza CLI con overlay |
+| `scripts/install-gitnexus.sh` | **Bootstrap manual** — preferir `make update-wsl` para mantenimiento gestionado |
+| `mcp-gitnexus-launcher` | **MCP (agentes)** — sin overlay explícito; PATH ordering (`/usr/bin` antes del Node IDE) |
 | `npx gitnexus …` | **No recomendado** — puede ejecutar bajo Node v20 inyectado por Cursor/VS Code |
 
-El problema: shells de agentes en IDE suelen tener `node` de `.cursor-server` (<22). `gnx-analyze-here` carga [`node_runtime.sh`](../scripts/update/lib/node_runtime.sh) y aplica overlay; `npx gitnexus` no.
+El problema: shells de agentes en IDE suelen tener `node` de `.cursor-server` (<22). Los helpers `gnx-*` cargan [`node_runtime.sh`](../scripts/update/lib/node_runtime.sh) y aplican overlay cuando hace falta; `npx gitnexus` no.
 
 ---
 

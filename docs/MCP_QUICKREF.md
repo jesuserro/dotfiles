@@ -44,13 +44,15 @@ Layers describe *purpose*; default **activation** for global agents follows the 
 ```bash
 make gitnexus-status  # Read-only index/lock/Node status (see GITNEXUS_OPERATIONAL_POLICY.md)
 make update-check       # Read-only Node/runtime precheck before re-indexing
-gnx-serve               # Start local server (human)
+gnx-serve               # Start local server (human; managed Node)
 gnx-analyze-here        # Analyze current repo (human only; managed Node)
-gnx-map                 # Analyze + serve (human)
-gnx-wiki-here           # Generate wiki (human; requires OPENAI_API_KEY)
+gnx-map                 # Analyze + serve (human; managed Node)
+gnx-wiki-here           # Generate wiki (human; managed Node; requires OPENAI_API_KEY; may use network/LLM)
 ```
 
-**Agent policy:** [`docs/GITNEXUS_OPERATIONAL_POLICY.md`](./GITNEXUS_OPERATIONAL_POLICY.md) — agents use `make gitnexus-status` and MCP read-only; never auto-run analyze/wiki/clean/npx.
+**Agent policy:** [`docs/GITNEXUS_OPERATIONAL_POLICY.md`](./GITNEXUS_OPERATIONAL_POLICY.md) — agents use `make gitnexus-status` and MCP read-only; never auto-run analyze/wiki/serve/clean/npx.
+
+**MCP launcher:** `mcp-gitnexus-launcher` does not use the overlay helper; it relies on PATH ordering (`/usr/bin` before IDE Node). CLI maintenance: prefer `make update-wsl` over `scripts/install-gitnexus.sh`.
 
 ### GitNexus Node precheck
 
@@ -60,13 +62,9 @@ Before re-indexing a stale repo from Cursor, Codex, OpenCode, or another agent-l
 make update-check
 ```
 
-If it reports an effective Node below `>=22` from an IDE path such as `.cursor-server`, but also reports a managed compatible runtime, prefer the managed helper:
+If it reports an effective Node below `>=22` from an IDE path such as `.cursor-server`, but also reports a managed compatible runtime, prefer the managed helpers (`gnx-analyze-here`, `gnx-serve`, `gnx-wiki-here`, `gnx-map`).
 
-```bash
-gnx-analyze-here
-```
-
-`gnx-analyze-here` loads the shared Node runtime policy, respects `DOTFILES_MANAGED_NODE_BIN`, and uses a temporary PATH overlay when the shell was launched with an incompatible IDE Node first in `PATH`.
+`gnx-analyze-here`, `gnx-serve`, `gnx-wiki-here`, and `gnx-map` load the shared Node runtime policy, respect `DOTFILES_MANAGED_NODE_BIN`, and use a temporary PATH overlay when the shell was launched with an incompatible IDE Node first in `PATH`.
 
 If no compatible managed runtime is available, install or repair the Node stack first (`make install-node-stack`). `make ai-doctor` includes `make update-check`, so it surfaces this warning before agents start a longer GitNexus analyze run.
 
