@@ -666,11 +666,11 @@ if [[ "${mf}" -ge 0 && "${ct}" -ge 0 && "${ct}" -ne "${mf}" ]]; then
 fi
 
 if [[ ! -f "${CURSOR_MCP}" ]]; then
-	line MISSING "~/.cursor/mcp.json missing (chezmoi apply likely not run for Cursor MCPs)"
+	line MISSING "\$HOME/.cursor/mcp.json missing (chezmoi apply likely not run for Cursor MCPs)"
 elif [[ -n "${herr}" && "${herr}" != "missing_file" ]]; then
-	line FAIL "~/.cursor/mcp.json is not valid JSON: ${herr}"
+	line FAIL "\$HOME/.cursor/mcp.json is not valid JSON: ${herr}"
 else
-	line OK "~/.cursor/mcp.json present and valid JSON"
+	line OK "\$HOME/.cursor/mcp.json present and valid JSON"
 	if [[ "${hn}" -ge 0 && "${ct}" -gt 0 && "${hn}" -ne "${ct}" ]]; then
 		line WARN "Cursor MCP count mismatch: home=${hn} template=${ct} (re-run chezmoi apply if you changed dot_cursor/mcp.json.tmpl)"
 	fi
@@ -815,9 +815,9 @@ echo ""
 echo "==> 7. Secrets (presence and permissions only; never print values)"
 secret_presence_only "${HOME_ROOT}/.config/mcp-secrets.env" "mcp-secrets.env"
 if [[ -L "${HOME_ROOT}/.secrets/codex.env" ]] || [[ -f "${HOME_ROOT}/.secrets/codex.env" ]]; then
-	line OK "~/.secrets/codex.env present (symlink or file)"
+	line OK "\$HOME/.secrets/codex.env present (symlink or file)"
 else
-	line WARN "~/.secrets/codex.env missing (github MCP in Cursor sources this for tokens)"
+	line WARN "\$HOME/.secrets/codex.env missing (github MCP in Cursor sources this for tokens)"
 fi
 if [[ -f "${HOME_ROOT}/.config/sops/age/keys.txt" ]]; then
 	line OK "SOPS age key file present"
