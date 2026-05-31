@@ -244,6 +244,91 @@ El launcher `mcp-postgres-launcher` usa `@modelcontextprotocol/server-postgres` 
 
 ---
 
+## Drift aceptado y auditoría
+
+`chezmoi status` **no tiene por qué estar vacío**. Parte del drift es esperado o requiere decisión manual antes de un `apply` global.
+
+### Cómo leer `chezmoi status`
+
+Cada línea usa dos columnas de estado (`xy path`): estado en **source** (repo/plantilla) y en **destino** (HOME).
+
+| Símbolo | Significado habitual |
+|---------|----------------------|
+| `M` | Modificado respecto al último estado aplicado |
+| `R` | Eliminado en source o destino (según columna) |
+| `MM` | Source y destino divergen (revisar diff antes de apply) |
+
+Comandos de **solo lectura** (seguros para auditar):
+
+```bash
+chezmoi --source="$HOME/dotfiles" status
+chezmoi --source="$HOME/dotfiles" diff
+chezmoi --source="$HOME/dotfiles" diff \
+  ~/.local/share/chezmoi/bin/mcp-git-launcher \
+  ~/.local/share/chezmoi/bin/mcp-postgres-launcher
+chezmoi --source="$HOME/dotfiles" status -i scripts -x ''
+```
+
+Reporte resumido en el repo (no muta HOME, no ejecuta `apply`):
+
+```bash
+make chezmoi-drift-report
+```
+
+### Scripts `R` tras renombres (`00_*` / `10_*`)
+
+Los hooks viven en el repo como plantillas con nombres actuales:
+
+- `run_before_00_backup_rc_files.sh.tmpl`
+- `run_after_00_gen_secrets.sh.tmpl`, `run_after_10_*`, … `run_after_15_*`
+
+Si `status` lista entradas **`R`** en rutas como `.chezmoiscripts/00_backup_rc_files.sh` o `.chezmoiscripts/10_setup_ai_runtime.sh`, suelen ser **restos del estado persistente de Chezmoi** tras renombrar hooks, no archivos perdidos en el repo.
+
+- **No confundir** `run_after_00_gen_secrets.sh.tmpl` con drift de secretos en HOME: el canonico generado es `~/.config/mcp-secrets.env` (SOPS). Los `R` de scripts no indican por sí solos un problema con `secrets.sops.yaml`.
+- Para auditar hooks reales: `chezmoi status -i scripts -x ''` (ver arriba).
+- Comodidad local (opcional, **no versionado**): en `~/.config/chezmoi/chezmoi.toml`:
+
+```toml
+[status]
+    exclude = ["scripts"]
+```
+
+### Codex — drift que requiere decisión
+
+`~/.codex/config.toml` puede aparecer como **`MM`** si hay preferencias locales activas (modelo, `model_reasoning_effort`, permisos `600` vs `644`, `[projects."…"] trust_level`, etc.) que no coinciden con [`dot_codex/config.toml.tmpl`](../dot_codex/config.toml.tmpl).
+
+**No aplicar a ciegas** con un `chezmoi apply` global. Opciones futuras (elegir una explícitamente):
+
+1. **Repo gana** — aplicar la plantilla actual (solo `~/.codex/config.toml` si quieres acotar).
+2. **HOME gana** — subir tus preferencias al template y luego apply de esa ruta.
+3. **Drift local permanente** — documentar y no aplicar nunca esa ruta desde Chezmoi.
+
+Este flujo de auditoría **no resuelve Codex**; solo lo señala.
+
+### Launchers MCP materializados
+
+Contrato entre tres capas:
+
+| Capa | Ruta |
+|------|------|
+| Edición lógica (git / gitnexus / postgres) | `bin/mcp-*-launcher` |
+| Plantilla Chezmoi | `dot_local/share/chezmoi/bin/executable_mcp-*-launcher.tmpl` |
+| Materializado en HOME | `~/.local/share/chezmoi/bin/mcp-*-launcher` |
+
+- **git, gitnexus, postgres:** `bin/` y plantilla deben coincidir (`diff -q`); el test `make bats-chezmoi-mcp-launchers` lo valida.
+- **filesystem:** diseño **dual intencional** — la plantilla usa `{{ .chezmoi.sourceDir }}` y `{{ .ai.obsidian_vault_path }}`; `bin/mcp-filesystem-launcher` resuelve rutas en runtime para tests locales. No exigir igualdad byte-a-byte entre `bin/` y plantilla.
+- Drift **`M`** en `mcp-git-launcher` o `mcp-postgres-launcher` suele ser materialización antigua (p. ej. solo tabs vs espacios). Tras cambiar `bin/` + plantilla, refrescar HOME con apply **acotado** (manual):
+
+```bash
+chezmoi --source="$HOME/dotfiles" apply \
+  ~/.local/share/chezmoi/bin/mcp-git-launcher \
+  ~/.local/share/chezmoi/bin/mcp-postgres-launcher
+```
+
+Esto **no** sustituye un `chezmoi apply` global y **no** toca Codex ni secretos.
+
+---
+
 ## Validación
 
 1. `chezmoi --source=$HOME/dotfiles apply`
