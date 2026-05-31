@@ -14,7 +14,7 @@ link_core_utils() {
 	local dir="$1"
 	local cmd
 	mkdir -p "$dir"
-	for cmd in bash basename cat chmod command dirname env git grep head ln mkdir mktemp pwd rm tr; do
+	for cmd in bash basename cat chmod command dirname env git grep head ln mkdir mktemp pwd rm tee tr; do
 		if command -v "$cmd" >/dev/null 2>&1; then
 			ln -sf "$(command -v "$cmd")" "${dir}/${cmd}"
 		fi
@@ -48,7 +48,14 @@ if [[ -n "${GNX_ALIAS_TRACE:-}" ]]; then
   echo "gitnexus-node:$(command -v node):$(node --version)" >> "${GNX_ALIAS_TRACE}"
 fi
 case "${1:-}" in
-  analyze) exit 0 ;;
+  analyze)
+    if [[ -n "${GNX_FAKE_LBUG_LOCK:-}" ]]; then
+      echo "Analysis failed: COPY failed for File: IO exception: Could not set lock on file : ${PWD}/.gitnexus/lbug" >&2
+      echo "See the docs: https://docs.ladybugdb.com/concurrency" >&2
+      exit 1
+    fi
+    exit 0
+    ;;
   status) exit 1 ;;
   *) exit 0 ;;
 esac
@@ -142,4 +149,41 @@ EOF
 	if [[ -f "$trace" ]]; then
 		assert_file_not_contains "$trace" '^gitnexus:analyze$'
 	fi
+}
+
+@test "gnx-analyze-here explains LadybugDB lock failures without cleaning index" {
+	if ! command -v zsh >/dev/null 2>&1; then
+		skip "zsh not in PATH"
+	fi
+
+	local zsh_bin
+	zsh_bin="$(command -v zsh)"
+	local fake_home="${TEST_TEMP_DIR}/home"
+	local shadow_bin="${TEST_TEMP_DIR}/home/.cursor-server/bin/hash"
+	local managed="${TEST_TEMP_DIR}/managed/node"
+	local npm_prefix="${TEST_TEMP_DIR}/npm-prefix"
+	local repo="${TEST_TEMP_DIR}/repo"
+
+	link_core_utils "$shadow_bin"
+	write_fake_docker "${shadow_bin}/docker"
+	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
+	write_fake_node "$managed" "v24.15.0" "managed"
+	write_fake_gitnexus "${npm_prefix}/bin/gitnexus"
+	mkdir -p "$fake_home" "$repo/.git" "$repo/.gitnexus"
+	touch "$repo/.gitnexus/lbug"
+
+	run env \
+		HOME="$fake_home" \
+		DOTFILES_DIR="$DOTFILES_DIR" \
+		DOTFILES_MANAGED_NODE_BIN="$managed" \
+		DOTFILES_NPM_PREFIX="$npm_prefix" \
+		NPM_CONFIG_PREFIX= \
+		GNX_FAKE_LBUG_LOCK=1 \
+		PATH="$shadow_bin:$npm_prefix/bin" \
+		"$zsh_bin" -c "cd '$repo' && source '$DOTFILES_DIR/aliases' && gnx-analyze-here"
+
+	[[ "$status" -eq 1 ]]
+	[[ "$output" == *"GitNexus no pudo bloquear .gitnexus/lbug"* ]]
+	[[ "$output" == *"ps aux | grep -Ei 'gitnexus|ladybug|node' | grep -v grep"* ]]
+	[[ -f "$repo/.gitnexus/lbug" ]]
 }
