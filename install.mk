@@ -27,7 +27,7 @@ export DOTFILES_APPLY
 # Optional passthrough to the declarative APT installer (same as deps-install).
 DEPS_INSTALL_ARGS ?=
 
-.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-fonts install-uv install-sops install-chezmoi install-node-stack install-docker-desktop-helper install-azure-cli install-agent-tools install-mattpocock-skills install-mcp-github set-default-shell-zsh ai-cursor-check chezmoi-drift-report ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
+.PHONY: install-check install-apt install-external install-dotfiles install-verify install install-zsh-stack install-fonts install-uv install-sops install-chezmoi install-node-stack install-docker-desktop-helper install-azure-cli install-agent-tools install-mattpocock-skills install-mcp-github set-default-shell-zsh ai-cursor-check chezmoi-drift-report mcp-launcher-contract-check ai-mcp-validate ai-mcp-render ai-mcp-drift ai-mcp-governance ai-mcp-generate
 
 install-check:
 	@bash $(DOTFILES_DIR)/scripts/install-check.sh
@@ -134,6 +134,11 @@ ai-cursor-check:
 # Non-mutating: chezmoi status + launcher diff summary (never runs chezmoi apply).
 chezmoi-drift-report:
 	@bash $(DOTFILES_DIR)/scripts/chezmoi-drift-report.sh
+
+# Non-mutating: bin/ <-> Chezmoi launcher templates + agent template paths (HOME advisory only).
+mcp-launcher-contract-check:
+	@bash $(DOTFILES_DIR)/scripts/mcp-launcher-contract-check.sh
+	@$(MAKE) -C $(DOTFILES_DIR) bats-mcp-launcher-contract bats-chezmoi-mcp-launchers
 
 # Non-mutating: validate canonical MCP manifest (ai/assets/mcps/MANIFEST.yaml).
 ai-mcp-validate:

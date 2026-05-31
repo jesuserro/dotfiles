@@ -336,11 +336,29 @@ Contrato entre tres capas:
 | Plantilla Chezmoi | `dot_local/share/chezmoi/bin/executable_mcp-*-launcher.tmpl` |
 | Materializado en HOME | `~/.local/share/chezmoi/bin/mcp-*-launcher` |
 
-- **git, gitnexus, postgres:** `bin/` y plantilla deben coincidir (`diff -q`); el test `make bats-chezmoi-mcp-launchers` lo valida.
-- **filesystem:** diseño **dual intencional** — la plantilla usa `{{ .chezmoi.sourceDir }}` y `{{ .ai.obsidian_vault_path }}`; `bin/mcp-filesystem-launcher` resuelve rutas en runtime para tests locales. No exigir igualdad byte-a-byte entre `bin/` y plantilla.
-- Drift **`M`** en `mcp-git-launcher` o `mcp-postgres-launcher` suele ser materialización antigua (p. ej. solo tabs vs espacios). Tras cambiar `bin/` + plantilla, refrescar HOME con apply **acotado** (manual):
+**Matriz de canonicalidad**
+
+| Launcher | Repo (`bin/` vs plantilla) | HOME | Tests / uso local |
+|----------|----------------------------|------|-------------------|
+| **git** | `bin/` == plantilla (byte-a-byte) | Sigue plantilla tras `chezmoi apply` | `bin/` para bats de comportamiento |
+| **gitnexus** | `bin/` == plantilla | Sigue plantilla tras apply | `bin/` para bats |
+| **postgres** | `bin/` == plantilla | Sigue plantilla tras apply | `bin/` para bats |
+| **filesystem** | Diseño **dual**: plantilla con `{{ .chezmoi.sourceDir }}` y `{{ .ai.obsidian_vault_path }}` | Plantilla renderizada manda | `bin/` resuelve rutas en runtime (`MCP_DOTFILES_ROOT`, etc.) |
+
+**Validación read-only (repo + CI):**
 
 ```bash
+make mcp-launcher-contract-check
+```
+
+Comprueba igualdad estricta `bin/` ↔ plantilla para git/gitnexus/postgres, excepción documentada para filesystem, rutas productivas en `dot_cursor` / `dot_codex` / `opencode` hacia `~/.local/share/chezmoi/bin/mcp-*` (nunca `~/dotfiles/bin/mcp-*`). El drift en HOME se reporta como **WARN** y no falla el target.
+
+También: `make bats-chezmoi-mcp-launchers` (tests bats del contrato en plantillas).
+
+**Drift HOME (manual):** `M` en `mcp-git-launcher` o `mcp-postgres-launcher` suele ser materialización antigua (tabs vs espacios). Tras sincronizar `bin/` + plantilla en el repo:
+
+```bash
+make chezmoi-drift-report   # read-only
 chezmoi --source="$HOME/dotfiles" apply \
   ~/.local/share/chezmoi/bin/mcp-git-launcher \
   ~/.local/share/chezmoi/bin/mcp-postgres-launcher

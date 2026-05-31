@@ -72,6 +72,7 @@ help:
 	@echo "  make install-agent-tools - Install non-APT agent validation/security CLIs"
 	@echo "  make ai-cursor-check - Cursor/MCP/skills readiness (repo root; target in install.mk; covered by bats-system)"
 	@echo "  make chezmoi-drift-report - Read-only chezmoi status + launcher diff (install.mk; never apply)"
+	@echo "  make mcp-launcher-contract-check - Read-only bin/tmpl sync + agent paths (install.mk; HOME advisory)"
 	@echo "  make ai-mcp-validate - Validate ai/assets/mcps/MANIFEST.yaml (PyYAML required)"
 	@echo "  make ai-mcp-render   - Dry-run MCP configs to build/mcps/ (PyYAML required)"
 	@echo "  make ai-mcp-drift    - Drift report vs templates (PyYAML required)"
@@ -337,7 +338,7 @@ bats-helpers:
 	fi
 	@echo "$(GREEN)==>$NC Helpers OK"
 
-bats-mcp: bats-filesystem bats-chezmoi-mcp-launchers bats-git bats-governance
+bats-mcp: bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance
 	@echo "$(GREEN)==>$NC MCP tests passed"
 
 bats-filesystem:
@@ -347,6 +348,10 @@ bats-filesystem:
 bats-chezmoi-mcp-launchers:
 	@echo "$(BLUE)==>$NC Running chezmoi MCP launcher template tests..."
 	@$(call run_bats,$(BATS_DIR)/mcp/chezmoi-mcp-launcher-templates.bats)
+
+bats-mcp-launcher-contract:
+	@echo "$(BLUE)==>$NC Running MCP launcher contract tests..."
+	@$(call run_bats,$(BATS_DIR)/mcp/mcp-launcher-contract-check.bats)
 
 bats-git:
 	@echo "$(BLUE)==>$NC Running git-launcher tests..."
@@ -426,7 +431,7 @@ test-ci: test-lint test-bats-ci test-chezmoi
 	@echo ""
 	@echo "$(GREEN)==>$NC CI tests completed"
 
-test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-git bats-governance bats-chezmoi bats-skills
+test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance bats-chezmoi bats-skills
 
 # ============================================
 # Combined tests

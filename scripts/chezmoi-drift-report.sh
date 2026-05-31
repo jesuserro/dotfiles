@@ -11,6 +11,8 @@ HOME_ROOT="${HOME}"
 
 GIT_LAUNCHER="${HOME_ROOT}/.local/share/chezmoi/bin/mcp-git-launcher"
 POSTGRES_LAUNCHER="${HOME_ROOT}/.local/share/chezmoi/bin/mcp-postgres-launcher"
+GITNEXUS_LAUNCHER="${HOME_ROOT}/.local/share/chezmoi/bin/mcp-gitnexus-launcher"
+FILESYSTEM_LAUNCHER="${HOME_ROOT}/.local/share/chezmoi/bin/mcp-filesystem-launcher"
 
 section() {
 	printf '\n==> %s\n' "$1"
@@ -36,12 +38,14 @@ section "Scripts (real hooks, not phantom R entries)"
 note "Audits run_before_* / run_after_* hooks only:"
 chezmoi --source="${SOURCE}" status -i scripts -x '' 2>/dev/null || true
 
-section "Diff: MCP launchers (git, postgres)"
+section "Diff: MCP launchers (git, postgres, gitnexus, filesystem)"
 note "Whitespace-only drift is common after bin/tmpl sync; logic should match bin/."
-if [[ -e "${GIT_LAUNCHER}" || -e "${POSTGRES_LAUNCHER}" ]]; then
-	chezmoi --source="${SOURCE}" diff \
-		"${GIT_LAUNCHER}" \
-		"${POSTGRES_LAUNCHER}" 2>/dev/null || true
+launcher_paths=()
+for p in "${GIT_LAUNCHER}" "${POSTGRES_LAUNCHER}" "${GITNEXUS_LAUNCHER}" "${FILESYSTEM_LAUNCHER}"; do
+	[[ -e "${p}" ]] && launcher_paths+=("${p}")
+done
+if ((${#launcher_paths[@]} > 0)); then
+	chezmoi --source="${SOURCE}" diff "${launcher_paths[@]}" 2>/dev/null || true
 else
 	note "Launchers not present in HOME yet — skip diff."
 fi
@@ -61,10 +65,11 @@ section "Optional: hide phantom script R entries (local only, not versioned)"
 note 'Add to ~/.config/chezmoi/chezmoi.toml: [status] exclude = ["scripts"]'
 
 section "Manual apply (Jesús only — not executed by this script)"
-note 'To refresh materialized git/postgres launchers after bin/tmpl changes:'
+note 'To refresh materialized git/postgres launchers after bin/tmpl changes (typical whitespace drift):'
 note "  chezmoi --source=\"${SOURCE}\" apply \\"
 note "    ${GIT_LAUNCHER} \\"
 note "    ${POSTGRES_LAUNCHER}"
+note "Or run: make mcp-launcher-contract-check (repo strict; HOME advisory only)"
 note "This is not a global chezmoi apply."
 
 exit 0

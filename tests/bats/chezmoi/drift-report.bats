@@ -42,6 +42,8 @@ setup() {
 @test "chezmoi-drift-report mentions acotado launcher apply only as documentation" {
 	grep -q 'mcp-git-launcher' "${REPORT}"
 	grep -q 'mcp-postgres-launcher' "${REPORT}"
+	grep -q 'mcp-gitnexus-launcher' "${REPORT}"
+	grep -q 'mcp-filesystem-launcher' "${REPORT}"
 	grep -q 'not a global' "${REPORT}" || grep -q 'global chezmoi apply' "${REPORT}"
 }
 
