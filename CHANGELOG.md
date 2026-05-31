@@ -2,20 +2,85 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.05.30_2121] - 2026-05-30
+## [v2026.05.31_0936] - 2026-05-31
 
 ## Changes
 ### Added
-- 2026-05-30 14:37 [dc7f286](https://github.com/jesuserro/dotfiles/commit/dc7f286) feat(zoxide): integrate zoxide for directory navigation and update documentation (Cursor Agent)
-  - Added zoxide integration in the zsh configuration to replace the OMZ plugin `z`.
-  - Updated documentation in `CHEZMOI.md`, `INSTALL.md`, and `SYSTEM_DEPENDENCIES.md` to include zoxide installation instructions and its role as a directory jumper.
-  - Enhanced test suite to include tests for the zoxide module and updated plugin management to reflect the removal of the `z` plugin.
+- 2026-05-31 09:27 [d26cc77](https://github.com/jesuserro/dotfiles/commit/d26cc77) feat(tests): add zsh syntax validation to testing workflow (Cursor Agent)
+  - Updated the GitHub Actions workflow to install zsh alongside existing test tooling.
+  - Enhanced the agent validation script to include zsh syntax checks for specific scripts.
+  - Modified the Makefile to exclude zsh scripts from ShellCheck and added a dedicated linting target for zsh syntax validation.
+- 2026-05-30 23:19 [7ab508d](https://github.com/jesuserro/dotfiles/commit/7ab508d) feat(tmux): enhance tmux integration and backup policy for managed symlinks (Cursor Agent)
+  - Updated the backup script to include `~/.tmux.conf` in the management of symlinks, ensuring a secure backup process before applying changes.
+  - Revised documentation in `CHEZMOI.md` and `TMUX.md` to reflect the inclusion of tmux configuration and the updated backup policy.
+  - Added tests to verify the existence of the new tmux symlink template and the backup hook functionality for `tmux.conf`.
+- 2026-05-30 23:08 [1f103dd](https://github.com/jesuserro/dotfiles/commit/1f103dd) feat(tmux): add tmux configuration and testing support; remove deprecated scripts (Cursor Agent)
+  - Introduced a new `TMUX.md` documentation file and a `tmux` directory for related tests.
+  - Updated `Makefile.tests` to include `tmux-dotfiles` in the shell launchers and added a dedicated `bats-tmux` target for testing.
+  - Removed obsolete `localidades.sh`, `nges.sh`, and `ofertas.sh` scripts to streamline tmux configurations.
 
 ### Fixed
-- 2026-05-30 21:18 [c61ea8e](https://github.com/jesuserro/dotfiles/commit/c61ea8e) fix(tests): enhance assertions in test suite for better validation (Cursor Agent)
-  - Updated test assertions to use more descriptive functions like `assert_file_not_contains` and `assert_find_no_results`, improving clarity and maintainability.
-  - Modified documentation in `AGENTS.md` and `CLAUDE.md` to reflect updated indexing information.
-  - Ensured consistency in test cases by replacing direct grep commands with assertion functions across various test files, enhancing the robustness of the test suite.
+- 2026-05-31 08:36 [e8c1c75](https://github.com/jesuserro/dotfiles/commit/e8c1c75) fix(aliases): add GitNexus analyze log handling and user feedback (Cursor Agent)
+  - Introduced functions to analyze GitNexus logs for lock issues and provide user-friendly hints.
+  - Updated the analyze command to utilize the new log handling functions, improving error reporting.
+  - Added tests to verify the correct behavior of the new log handling and user feedback mechanisms.
+- 2026-05-30 21:59 [63969e6](https://github.com/jesuserro/dotfiles/commit/63969e6) fix(tests): update indexing information in AGENTS.md and CLAUDE.md; improve temporary file cleanup in scripts (Cursor Agent)
+- 2026-05-30 21:39 [e79f196](https://github.com/jesuserro/dotfiles/commit/e79f196) fix(tests): update installation and testing documentation for clarity and opt-in processes (Cursor Agent)
+  - Revised `SYSTEM_DEPENDENCIES.md` to clarify the opt-in nature of various installation targets and their roles in the baseline setup.
+  - Updated `TESTING.md` to reflect changes in the installation command, emphasizing the use of `SKIP_EXTERNAL=1` for a streamlined setup.
+  - Enhanced `dotfiles-install.md` to specify the idempotent behavior of installation commands and their non-destructive nature.
+
+### Documentation
+- 2026-05-31 09:36 [434edec](https://github.com/jesuserro/dotfiles/commit/434edec) docs(releases): added changelog for feature/19-resolver-shellchecks integration (Cursor Agent)
+  - Documented the integration of feature branch feature/19-resolver-shellchecks into the dev branch.
+  - Summarized 8 commits including enhancements to zsh syntax validation, tests for legacy scripts, and various script refactors for improved readability and error handling.
+  - Included technical details such as integration date and status.
+
+### Refactored
+- 2026-05-31 09:07 [ac2fc88](https://github.com/jesuserro/dotfiles/commit/ac2fc88) refactor(scripts): improve path addition logic and streamline directory checks (Cursor Agent)
+  - Updated the path addition logic in mcp-filesystem-launcher to use a loop for checking existing paths, enhancing clarity and preventing duplicates.
+  - Introduced a new function, is_skip_dir, to simplify directory skipping logic in validate-skills-structure.sh, improving readability and maintainability.
+  - Enhanced tests to verify the handling of duplicate paths with spaces and regex metacharacters, ensuring robust functionality.
+- 2026-05-31 08:56 [b3050de](https://github.com/jesuserro/dotfiles/commit/b3050de) refactor(scripts): update error messages to use \$HOME for clarity (Cursor Agent)
+  - Modified error and status messages in ai-cursor-check.sh to replace hardcoded paths with \$HOME, improving clarity for users.
+  - Enhanced consistency in messaging across the script, ensuring a more user-friendly experience.
+- 2026-05-31 08:54 [8f52867](https://github.com/jesuserro/dotfiles/commit/8f52867) refactor(scripts): remove unused variables and improve readability in multiple scripts (Cursor Agent)
+  - Eliminated unnecessary variable declarations in various scripts, enhancing clarity and maintainability.
+  - Standardized variable naming conventions for improved readability and consistency across the codebase.
+  - Focused on essential parameters only, streamlining the scripts for better performance and understanding.
+- 2026-05-31 08:43 [720f5ae](https://github.com/jesuserro/dotfiles/commit/720f5ae) refactor(scripts): remove unused variables in branch cleaning functions (Cursor Agent)
+  - Eliminated unnecessary variable declarations for branch types in the clean_local_branches and clean_remote_branches functions, simplifying the code.
+  - Improved clarity and maintainability of the scripts by focusing on essential parameters only.
+- 2026-05-31 08:41 [2007ea0](https://github.com/jesuserro/dotfiles/commit/2007ea0) refactor(scripts): standardize variable assignment for improved readability (Cursor Agent)
+  - Updated variable assignments in multiple scripts to use a consistent format, enhancing overall readability.
+  - Ensured clarity in the declaration of temporary variables and improved the structure of the code.
+  - Maintained functionality while focusing on a cleaner presentation across the scripts.
+- 2026-05-31 00:15 [690a69c](https://github.com/jesuserro/dotfiles/commit/690a69c) refactor(releases): added changelog for improving script readability and consistency (Cursor Agent)
+- 2026-05-31 00:09 [d9ae95c](https://github.com/jesuserro/dotfiles/commit/d9ae95c) refactor(install_plugins): standardize formatting for improved readability (Cursor Agent)
+  - Reformatted the install_plugins.sh script for consistent indentation and spacing.
+  - Enhanced overall readability by aligning code structure and improving visual clarity.
+  - Maintained functionality while ensuring a cleaner presentation of the plugin installation process.
+- 2026-05-31 00:04 [67dfaf6](https://github.com/jesuserro/dotfiles/commit/67dfaf6) refactor(scripts): standardize formatting and improve readability across various scripts (Cursor Agent)
+  - Reformatted scripts for consistent indentation and spacing, enhancing overall readability.
+  - Updated argument processing and validation sections for better clarity and maintainability.
+  - Improved error messages and user feedback throughout the scripts to ensure a more user-friendly experience.
+- 2026-05-30 23:49 [508081d](https://github.com/jesuserro/dotfiles/commit/508081d) refactor(scripts): standardize formatting and improve readability across various scripts (Cursor Agent)
+  - Reformatted scripts for consistent indentation and spacing, enhancing overall readability.
+  - Updated argument processing and validation sections for better clarity and maintainability.
+  - Improved error messages and user feedback throughout the scripts to ensure a more user-friendly experience.
+- 2026-05-30 23:39 [8c90bfd](https://github.com/jesuserro/dotfiles/commit/8c90bfd) refactor(scripts): standardize formatting and improve readability across various scripts (Cursor Agent)
+  - Reformatted scripts for consistent indentation and spacing, enhancing overall readability.
+  - Updated argument processing and validation sections for better clarity and maintainability.
+  - Improved error messages and user feedback throughout the scripts to ensure a more user-friendly experience.
+- 2026-05-30 23:24 [75b182a](https://github.com/jesuserro/dotfiles/commit/75b182a) refactor(tests): standardize formatting and improve readability in BATS test files (Cursor Agent)
+  - Reformatted test files for consistent indentation and spacing, enhancing overall readability.
+  - Updated various test scripts to ensure uniformity in style and structure across the test suite.
+  - Improved clarity in test assertions and setup/teardown functions for better maintainability.
+
+### Tests
+- 2026-05-31 09:14 [859bcc0](https://github.com/jesuserro/dotfiles/commit/859bcc0) test(tmux): add tests for shellcheck sources in legacy scripts (Cursor Agent)
+  - Introduced tests to verify the presence of shellcheck source directives in legacy tmux scripts (home.sh and work.sh).
+  - Ensured that the scripts correctly reference the common header and footer files, improving maintainability and adherence to best practices.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
