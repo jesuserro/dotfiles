@@ -2,85 +2,65 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.05.31_0936] - 2026-05-31
+## [v2026.05.31_1312] - 2026-05-31
 
 ## Changes
 ### Added
-- 2026-05-31 09:27 [d26cc77](https://github.com/jesuserro/dotfiles/commit/d26cc77) feat(tests): add zsh syntax validation to testing workflow (Cursor Agent)
-  - Updated the GitHub Actions workflow to install zsh alongside existing test tooling.
-  - Enhanced the agent validation script to include zsh syntax checks for specific scripts.
-  - Modified the Makefile to exclude zsh scripts from ShellCheck and added a dedicated linting target for zsh syntax validation.
-- 2026-05-30 23:19 [7ab508d](https://github.com/jesuserro/dotfiles/commit/7ab508d) feat(tmux): enhance tmux integration and backup policy for managed symlinks (Cursor Agent)
-  - Updated the backup script to include `~/.tmux.conf` in the management of symlinks, ensuring a secure backup process before applying changes.
-  - Revised documentation in `CHEZMOI.md` and `TMUX.md` to reflect the inclusion of tmux configuration and the updated backup policy.
-  - Added tests to verify the existence of the new tmux symlink template and the backup hook functionality for `tmux.conf`.
-- 2026-05-30 23:08 [1f103dd](https://github.com/jesuserro/dotfiles/commit/1f103dd) feat(tmux): add tmux configuration and testing support; remove deprecated scripts (Cursor Agent)
-  - Introduced a new `TMUX.md` documentation file and a `tmux` directory for related tests.
-  - Updated `Makefile.tests` to include `tmux-dotfiles` in the shell launchers and added a dedicated `bats-tmux` target for testing.
-  - Removed obsolete `localidades.sh`, `nges.sh`, and `ofertas.sh` scripts to streamline tmux configurations.
-
-### Fixed
-- 2026-05-31 08:36 [e8c1c75](https://github.com/jesuserro/dotfiles/commit/e8c1c75) fix(aliases): add GitNexus analyze log handling and user feedback (Cursor Agent)
-  - Introduced functions to analyze GitNexus logs for lock issues and provide user-friendly hints.
-  - Updated the analyze command to utilize the new log handling functions, improving error reporting.
-  - Added tests to verify the correct behavior of the new log handling and user feedback mechanisms.
-- 2026-05-30 21:59 [63969e6](https://github.com/jesuserro/dotfiles/commit/63969e6) fix(tests): update indexing information in AGENTS.md and CLAUDE.md; improve temporary file cleanup in scripts (Cursor Agent)
-- 2026-05-30 21:39 [e79f196](https://github.com/jesuserro/dotfiles/commit/e79f196) fix(tests): update installation and testing documentation for clarity and opt-in processes (Cursor Agent)
-  - Revised `SYSTEM_DEPENDENCIES.md` to clarify the opt-in nature of various installation targets and their roles in the baseline setup.
-  - Updated `TESTING.md` to reflect changes in the installation command, emphasizing the use of `SKIP_EXTERNAL=1` for a streamlined setup.
-  - Enhanced `dotfiles-install.md` to specify the idempotent behavior of installation commands and their non-destructive nature.
+- 2026-05-31 12:03 [37769f3](https://github.com/jesuserro/dotfiles/commit/37769f3) feat(gitnexus): enhance alias functionality and documentation (Cursor Agent)
+  - Removed direct alias for `gnx-serve` to ensure it utilizes the `_gnx_with_managed_node` helper for managed Node execution.
+  - Introduced new helper functions to streamline the execution of GitNexus commands with managed Node, improving compatibility and user experience.
+  - Updated documentation to reflect changes in command usage and the importance of managed Node overlays for various GitNexus operations.
+- 2026-05-31 11:59 [8990902](https://github.com/jesuserro/dotfiles/commit/8990902) feat(gitnexus): add gitnexus-status target and update documentation (Cursor Agent)
+  - Introduced a new Makefile target `gitnexus-status` for checking read-only index, lock, and Node status for agents, ensuring compliance with operational policies.
+  - Updated multiple skill documentation files to reflect the new command, emphasizing the importance of human approval for mutating operations.
+  - Enhanced the MCP_QUICKREF.md to include the new `gitnexus-status` command, providing clearer guidance for users on GitNexus operations.
+- 2026-05-31 11:52 [3e12425](https://github.com/jesuserro/dotfiles/commit/3e12425) feat(mcp): introduce mcp-launcher-contract-check for launcher validation (Cursor Agent)
+  - Added a new script `mcp-launcher-contract-check.sh` to validate the synchronization between launcher binaries and their corresponding templates, ensuring strict compliance for git, gitnexus, and postgres launchers.
+  - Updated `install.mk` to include the new Makefile target `mcp-launcher-contract-check`, allowing users to run the validation easily.
+  - Enhanced documentation in CHEZMOI.md and MCP_QUICKREF.md to explain the new contract check and its usage.
+- 2026-05-31 11:46 [f8812f7](https://github.com/jesuserro/dotfiles/commit/f8812f7) feat(codex): update configuration management and enhance documentation (Cursor Agent)
+  - Added new Codex agent preferences to `.chezmoi.toml`, allowing for model and reasoning effort customization.
+  - Renamed the Codex configuration template from `config.toml.tmpl` to `private_config.toml.tmpl` to reflect its private nature and ensure proper permissions on apply.
+  - Updated documentation in CHEZMOI.md and GUIA_MCP_AI.md to clarify the governance of Codex configurations and the importance of manual application.
+- 2026-05-31 11:36 [33f6f13](https://github.com/jesuserro/dotfiles/commit/33f6f13) feat(install): add chezmoi-drift-report target and enhance documentation (Cursor Agent)
+  - Introduced a new Makefile target `chezmoi-drift-report` for generating a read-only report of chezmoi status and launcher diffs without applying changes.
+  - Updated documentation in CHEZMOI.md to explain how to interpret `chezmoi status` and the significance of drift, including examples of read-only commands.
+  - Enhanced the tests to include checks for the new drift report functionality, ensuring proper validation of the chezmoi launchers.
+- 2026-05-31 11:29 [f8ab903](https://github.com/jesuserro/dotfiles/commit/f8ab903) feat(scripts): enhance skills validation and cleanup processes (Cursor Agent)
+  - Introduced functions to check for symlinks and the presence of the 'mattpocock' vendor directory in the skills structure, ensuring compliance with governance standards.
+  - Updated the cleanup process for Matt symlinks to utilize a more robust method for finding and removing links.
+  - Enhanced the install-agent-skills script to assert the cleanliness of the canonical skills directory post-installation.
 
 ### Documentation
-- 2026-05-31 09:36 [434edec](https://github.com/jesuserro/dotfiles/commit/434edec) docs(releases): added changelog for feature/19-resolver-shellchecks integration (Cursor Agent)
-  - Documented the integration of feature branch feature/19-resolver-shellchecks into the dev branch.
-  - Summarized 8 commits including enhancements to zsh syntax validation, tests for legacy scripts, and various script refactors for improved readability and error handling.
-  - Included technical details such as integration date and status.
-
-### Refactored
-- 2026-05-31 09:07 [ac2fc88](https://github.com/jesuserro/dotfiles/commit/ac2fc88) refactor(scripts): improve path addition logic and streamline directory checks (Cursor Agent)
-  - Updated the path addition logic in mcp-filesystem-launcher to use a loop for checking existing paths, enhancing clarity and preventing duplicates.
-  - Introduced a new function, is_skip_dir, to simplify directory skipping logic in validate-skills-structure.sh, improving readability and maintainability.
-  - Enhanced tests to verify the handling of duplicate paths with spaces and regex metacharacters, ensuring robust functionality.
-- 2026-05-31 08:56 [b3050de](https://github.com/jesuserro/dotfiles/commit/b3050de) refactor(scripts): update error messages to use \$HOME for clarity (Cursor Agent)
-  - Modified error and status messages in ai-cursor-check.sh to replace hardcoded paths with \$HOME, improving clarity for users.
-  - Enhanced consistency in messaging across the script, ensuring a more user-friendly experience.
-- 2026-05-31 08:54 [8f52867](https://github.com/jesuserro/dotfiles/commit/8f52867) refactor(scripts): remove unused variables and improve readability in multiple scripts (Cursor Agent)
-  - Eliminated unnecessary variable declarations in various scripts, enhancing clarity and maintainability.
-  - Standardized variable naming conventions for improved readability and consistency across the codebase.
-  - Focused on essential parameters only, streamlining the scripts for better performance and understanding.
-- 2026-05-31 08:43 [720f5ae](https://github.com/jesuserro/dotfiles/commit/720f5ae) refactor(scripts): remove unused variables in branch cleaning functions (Cursor Agent)
-  - Eliminated unnecessary variable declarations for branch types in the clean_local_branches and clean_remote_branches functions, simplifying the code.
-  - Improved clarity and maintainability of the scripts by focusing on essential parameters only.
-- 2026-05-31 08:41 [2007ea0](https://github.com/jesuserro/dotfiles/commit/2007ea0) refactor(scripts): standardize variable assignment for improved readability (Cursor Agent)
-  - Updated variable assignments in multiple scripts to use a consistent format, enhancing overall readability.
-  - Ensured clarity in the declaration of temporary variables and improved the structure of the code.
-  - Maintained functionality while focusing on a cleaner presentation across the scripts.
-- 2026-05-31 00:15 [690a69c](https://github.com/jesuserro/dotfiles/commit/690a69c) refactor(releases): added changelog for improving script readability and consistency (Cursor Agent)
-- 2026-05-31 00:09 [d9ae95c](https://github.com/jesuserro/dotfiles/commit/d9ae95c) refactor(install_plugins): standardize formatting for improved readability (Cursor Agent)
-  - Reformatted the install_plugins.sh script for consistent indentation and spacing.
-  - Enhanced overall readability by aligning code structure and improving visual clarity.
-  - Maintained functionality while ensuring a cleaner presentation of the plugin installation process.
-- 2026-05-31 00:04 [67dfaf6](https://github.com/jesuserro/dotfiles/commit/67dfaf6) refactor(scripts): standardize formatting and improve readability across various scripts (Cursor Agent)
-  - Reformatted scripts for consistent indentation and spacing, enhancing overall readability.
-  - Updated argument processing and validation sections for better clarity and maintainability.
-  - Improved error messages and user feedback throughout the scripts to ensure a more user-friendly experience.
-- 2026-05-30 23:49 [508081d](https://github.com/jesuserro/dotfiles/commit/508081d) refactor(scripts): standardize formatting and improve readability across various scripts (Cursor Agent)
-  - Reformatted scripts for consistent indentation and spacing, enhancing overall readability.
-  - Updated argument processing and validation sections for better clarity and maintainability.
-  - Improved error messages and user feedback throughout the scripts to ensure a more user-friendly experience.
-- 2026-05-30 23:39 [8c90bfd](https://github.com/jesuserro/dotfiles/commit/8c90bfd) refactor(scripts): standardize formatting and improve readability across various scripts (Cursor Agent)
-  - Reformatted scripts for consistent indentation and spacing, enhancing overall readability.
-  - Updated argument processing and validation sections for better clarity and maintainability.
-  - Improved error messages and user feedback throughout the scripts to ensure a more user-friendly experience.
-- 2026-05-30 23:24 [75b182a](https://github.com/jesuserro/dotfiles/commit/75b182a) refactor(tests): standardize formatting and improve readability in BATS test files (Cursor Agent)
-  - Reformatted test files for consistent indentation and spacing, enhancing overall readability.
-  - Updated various test scripts to ensure uniformity in style and structure across the test suite.
-  - Improved clarity in test assertions and setup/teardown functions for better maintainability.
-
-### Tests
-- 2026-05-31 09:14 [859bcc0](https://github.com/jesuserro/dotfiles/commit/859bcc0) test(tmux): add tests for shellcheck sources in legacy scripts (Cursor Agent)
-  - Introduced tests to verify the presence of shellcheck source directives in legacy tmux scripts (home.sh and work.sh).
-  - Ensured that the scripts correctly reference the common header and footer files, improving maintainability and adherence to best practices.
+- 2026-05-31 13:12 [85ffb69](https://github.com/jesuserro/dotfiles/commit/85ffb69) docs(releases): added changelog (Cursor Agent)
+- 2026-05-31 13:00 [dd32de4](https://github.com/jesuserro/dotfiles/commit/dd32de4) docs(gitnexus): enhance index refresh procedure and documentation (Cursor Agent)
+  - Updated the `gnx-analyze-here` command to include a `--skip-agents-md` flag for refreshing the index without modifying `AGENTS.md` and `CLAUDE.md` blocks, streamlining the process for human users.
+  - Revised `GITNEXUS_OPERATIONAL_POLICY.md` and `MCP_QUICKREF.md` to clarify the conditions under which humans should refresh the index and the implications of using the new flag.
+  - Enhanced the `OPERATIONS_CHEATSHEET.md` to provide a canonical procedure for index refresh, ensuring users follow best practices.
+- 2026-05-31 12:52 [f26b369](https://github.com/jesuserro/dotfiles/commit/f26b369) docs(cheatsheet, tests): enhance update-ai-skills documentation and testing (Cursor Agent)
+  - Updated OPERATIONS_CHEATSHEET.md to include new commands for `make update-ai-skills`, clarifying its usage for refreshing the external skills catalog and the DRY_RUN option for previews.
+  - Revised the Makefile's help section to mention `make update-ai-skills` as a human opt-in command.
+  - Added tests to ensure the documentation accurately reflects the new command and its implications for users, including checks for the DRY_RUN preview functionality.
+- 2026-05-31 12:45 [7dd0538](https://github.com/jesuserro/dotfiles/commit/7dd0538) docs(CHEZMOI, OPERATIONS): clarify script R status and enhance drift reporting (Cursor Agent)
+  - Updated CHEZMOI.md to clarify that `R` in chezmoi status indicates scripts that will run on apply, not removed files, and provided examples of normalized script names.
+  - Revised OPERATIONS.md and OPERATIONS_CHEATSHEET.md to reflect the updated understanding of script R entries, emphasizing the importance of not using global apply to clear these lines.
+  - Enhanced the chezmoi-drift-report.sh script to document the meaning of R entries and provide guidance on auditing scripts explicitly.
+- 2026-05-31 12:32 [db17cf9](https://github.com/jesuserro/dotfiles/commit/db17cf9) docs(README, cheatsheet): update help command and enhance operational documentation (Cursor Agent)
+  - Added a new entry to the README for the `make help` command, detailing targets categorized by risk (read-only vs human/mutating).
+  - Updated the OPERATIONS_CHEATSHEET.md to include a description of the `make help` command, providing clearer guidance on CLI targets.
+  - Revised the Makefile's help section to improve clarity and organization of available commands, distinguishing between safe and human/mutating operations.
+- 2026-05-31 12:17 [c4b280a](https://github.com/jesuserro/dotfiles/commit/c4b280a) docs(gitnexus): update operational instructions and enhance index refresh process (Cursor Agent)
+  - Revised instructions in AGENTS.md and CLAUDE.md to replace `npx gitnexus analyze` with `make gitnexus-status`, emphasizing the need for human approval before refreshing the index.
+  - Added a new section in GITNEXUS_OPERATIONAL_POLICY.md detailing the procedure for refreshing the index without regenerating agent blocks, including a warning about potential overwrites.
+  - Updated tests in the Makefile to include checks for the new operational guidelines regarding GitNexus blocks.
+- 2026-05-31 12:13 [3d2fe92](https://github.com/jesuserro/dotfiles/commit/3d2fe92) docs(guide): enhance MCP operational instructions and clarify apply processes (Cursor Agent)
+  - Updated GUIA_MCP_AI.md to emphasize the importance of reviewing drift before applying changes, introducing specific commands for drift reporting and selective application.
+  - Revised instructions for applying MCP configurations and launchers, ensuring users understand the need for careful review of diffs.
+  - Enhanced OPERATIONS.md to reflect the new workflow for daily operations, highlighting the significance of applying changes in a controlled manner.
+- 2026-05-31 12:10 [c2d7772](https://github.com/jesuserro/dotfiles/commit/c2d7772) docs(cheatsheet): update operational documentation and add cheatsheet reference (Cursor Agent)
+  - Enhanced the README and OPERATIONS.md to include a new operational cheatsheet for daily tasks, Chezmoi drift, and agent limits.
+  - Updated MCP_QUICKREF.md to reference the new cheatsheet, providing clearer guidance for users.
+  - Revised the UPDATE.md to emphasize the importance of checking Chezmoi drift before updates.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
