@@ -92,29 +92,86 @@ cleanup() {
 	fi
 }
 
+find_bin() {
+	if command -v find >/dev/null 2>&1; then
+		command -v find
+	elif [[ -x /usr/bin/find ]]; then
+		printf '/usr/bin/find\n'
+	fi
+}
+
 cleanup_mattpocock_repo_symlinks() {
-	local name path removed=0
+	local find_cmd path removed=0
 
 	if [[ ! -d "${CANONICAL_SKILLS_DIR}" ]]; then
 		return 0
 	fi
 
-	for name in "${MATT_ROOT_SKILL_NAMES[@]}"; do
-		path="${CANONICAL_SKILLS_DIR}/${name}"
-		[[ -L "${path}" ]] || continue
+	find_cmd="$(find_bin || true)"
+	if [[ -n "${find_cmd}" ]]; then
+		while IFS= read -r -d '' path || [[ -n "${path:-}" ]]; do
+			if dry; then
+				info "DRY_RUN: would remove Matt symlink: ${path}"
+				continue
+			fi
 
+			rm -f "${path}"
+			info "Removed Matt symlink from canonical skills tree: ${path}"
+			removed=$((removed + 1))
+		done < <("${find_cmd}" "${CANONICAL_SKILLS_DIR}" -type l -print0 2>/dev/null)
+	else
+		for name in "${MATT_ROOT_SKILL_NAMES[@]}"; do
+			path="${CANONICAL_SKILLS_DIR}/${name}"
+			[[ -L "${path}" ]] || continue
+
+			if dry; then
+				info "DRY_RUN: would remove Matt symlink: ${path}"
+				continue
+			fi
+
+			rm -f "${path}"
+			info "Removed Matt symlink from canonical skills tree: ${path}"
+			removed=$((removed + 1))
+		done
+	fi
+
+	if [[ -e "${CANONICAL_SKILLS_DIR}/mattpocock" ]]; then
 		if dry; then
-			info "DRY_RUN: would remove Matt symlink: ${path}"
-			continue
+			info "DRY_RUN: would remove vendor path: ${CANONICAL_SKILLS_DIR}/mattpocock"
+		else
+			rm -rf "${CANONICAL_SKILLS_DIR}/mattpocock"
+			info "Removed vendor path from canonical skills tree: ${CANONICAL_SKILLS_DIR}/mattpocock"
+			removed=$((removed + 1))
 		fi
-
-		rm -f "${path}"
-		info "Removed Matt symlink from canonical skills tree: ${path}"
-		removed=$((removed + 1))
-	done
+	fi
 
 	if ! dry && [[ "${removed}" -gt 0 ]]; then
-		ok "Removed ${removed} accidental Matt symlink(s) from ai/assets/skills/"
+		ok "Removed ${removed} accidental Matt artifact(s) from ai/assets/skills/"
+	fi
+}
+
+assert_canonical_skills_clean() {
+	local find_cmd link
+
+	find_cmd="$(find_bin || true)"
+	if [[ -n "${find_cmd}" ]]; then
+		while IFS= read -r -d '' link || [[ -n "${link:-}" ]]; do
+			fail "Canonical skills tree still contains symlink: ${link}"
+			exit 1
+		done < <("${find_cmd}" "${CANONICAL_SKILLS_DIR}" -type l -print0 2>/dev/null)
+	else
+		for name in "${MATT_ROOT_SKILL_NAMES[@]}"; do
+			link="${CANONICAL_SKILLS_DIR}/${name}"
+			if [[ -L "${link}" ]]; then
+				fail "Canonical skills tree still contains symlink: ${link}"
+				exit 1
+			fi
+		done
+	fi
+
+	if [[ -e "${CANONICAL_SKILLS_DIR}/mattpocock" ]]; then
+		fail "Canonical skills tree must not contain ai/assets/skills/mattpocock/"
+		exit 1
 	fi
 }
 
@@ -188,4 +245,5 @@ fi
 info "Installing Matt Pocock external skills catalog"
 "${INSTALL_CMD[@]}"
 cleanup_mattpocock_repo_symlinks
+assert_canonical_skills_clean
 ok "Matt Pocock skills catalog installed/updated"

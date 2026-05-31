@@ -186,7 +186,7 @@ EOF
 	[[ -d "${FAKE_SKILLS_ROOT}/ops" ]]
 	[[ -d "${FAKE_SKILLS_ROOT}/docs" ]]
 	[[ -d "${FAKE_SKILLS_ROOT}/gitnexus" ]]
-	[[ "${output}" == *"Removed 2 accidental Matt symlink(s)"* ]]
+	[[ "${output}" == *"Removed 2 accidental Matt artifact(s)"* ]]
 }
 
 @test "dry-run reports Matt symlink cleanup without removing them" {

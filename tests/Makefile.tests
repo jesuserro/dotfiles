@@ -45,7 +45,7 @@ BLUE := \033[0;34m
 NC := \033[0m
 
 .PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts bats-skills bats-tmux
-.PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands
+.PHONY: test-ci test-bats-ci test-commands generate-commands validate-commands materialize-commands validate-skills-structure
 .PHONY: deps-check deps-install deps-actions bats-system bats-zsh test-deps-check
 .PHONY: quality-check security-check agent-validate agent-validate-changed ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
 
@@ -366,6 +366,8 @@ bats-chezmoi:
 bats-skills:
 	@echo "$(BLUE)==>$NC Running canonical skills tests..."
 	@$(call run_bats,$(BATS_DIR)/skills/canonical-skills.bats)
+	@echo "$(BLUE)==>$NC Running validate-skills-structure tests..."
+	@$(call run_bats,$(BATS_DIR)/skills/validate-skills-structure.bats)
 
 bats-commands:
 	@echo "$(BLUE)==>$NC Running commands tests..."
@@ -401,6 +403,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/ai-cursor-check.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-manifest.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-render-drift.bats)
+	@$(call run_bats,$(BATS_DIR)/system/install-agent-skills.bats)
 
 bats-zsh:
 	@echo "$(BLUE)==>$NC Running zsh stack RC symlink tests..."
@@ -523,6 +526,15 @@ validate-commands:
 		$(DOTFILES_DIR)/scripts/validate-commands-structure.sh; \
 	else \
 		echo "$(RED)==>$NC validate-commands-structure.sh not found or not executable"; \
+		exit 1; \
+	fi
+
+validate-skills-structure:
+	@echo "$(BLUE)==>$NC Validating skills structure..."
+	@if [ -x "$(DOTFILES_DIR)/scripts/validate-skills-structure.sh" ]; then \
+		$(DOTFILES_DIR)/scripts/validate-skills-structure.sh; \
+	else \
+		echo "$(RED)==>$NC validate-skills-structure.sh not found or not executable"; \
 		exit 1; \
 	fi
 
