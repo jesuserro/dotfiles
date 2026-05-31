@@ -92,7 +92,8 @@ check_potential_conflicts() {
 	echo -e "${BLUE}🔍 Verificando conflictos potenciales entre '${source_branch}' y '${target_branch}'...${NC}"
 
 	# Obtener la lista de archivos modificados
-	local modified_files=$(git diff --name-only $target_branch...$source_branch)
+	local modified_files
+	modified_files=$(git diff --name-only $target_branch...$source_branch)
 
 	# Verificar si hay archivos que podrían causar conflictos
 	local potential_conflicts=()
@@ -159,24 +160,30 @@ generate_feature_changelog() {
 		echo -e "${YELLOW}📝 Generando changelog de la feature después del merge...${NC}"
 
 		# Crear directorio de releases si no existe
-		local releases_dir="$(git rev-parse --show-toplevel)/releases"
+		local releases_dir
+		releases_dir="$(git rev-parse --show-toplevel)/releases"
 		if [ ! -d "$releases_dir" ]; then
 			mkdir -p "$releases_dir"
 		fi
 
 		# Crear nombre de archivo seguro para la feature
-		local safe_branch_name=$(echo "$feature_branch" | sed 's/[^a-zA-Z0-9._-]/_/g')
+		local safe_branch_name
+		safe_branch_name=$(echo "$feature_branch" | sed 's/[^a-zA-Z0-9._-]/_/g')
 		local changelog_file="$releases_dir/branch_${safe_branch_name}.md"
 
 		# Obtener fecha y hora actual
-		local current_date=$(date +%Y-%m-%d)
-		local current_time=$(date +%H:%M)
+		local current_date
+		current_date=$(date +%Y-%m-%d)
+		local current_time
+		current_time=$(date +%H:%M)
 
 		# Obtener información de la feature usando el commit base antes del merge
-		local total_commits=$(git rev-list --count "${base_commit}..${feature_branch}" 2>/dev/null || echo "0")
+		local total_commits
+		total_commits=$(git rev-list --count "${base_commit}..${feature_branch}" 2>/dev/null || echo "0")
 
 		# Generar contenido del changelog (commits exclusivos de la feature usando el commit base)
-		local changelog_content=$(git log --pretty=format:"- %h %ad %an %s" --date=format:"%Y-%m-%d %H:%M" "${base_commit}..${feature_branch}" 2>/dev/null || echo "# No se pudieron obtener commits exclusivos")
+		local changelog_content
+		changelog_content=$(git log --pretty=format:"- %h %ad %an %s" --date=format:"%Y-%m-%d %H:%M" "${base_commit}..${feature_branch}" 2>/dev/null || echo "# No se pudieron obtener commits exclusivos")
 
 		# Crear archivo de changelog
 		cat >"$changelog_file" <<EOF

@@ -117,17 +117,26 @@ categorize_commits() {
 	local content="$1"
 
 	# Crear archivos temporales para cada categoría
-	local feat_file=$(mktemp)
-	local fix_file=$(mktemp)
-	local docs_file=$(mktemp)
-	local style_file=$(mktemp)
-	local refactor_file=$(mktemp)
-	local test_file=$(mktemp)
-	local chore_file=$(mktemp)
-	local other_file=$(mktemp)
+	local feat_file
+	feat_file=$(mktemp)
+	local fix_file
+	fix_file=$(mktemp)
+	local docs_file
+	docs_file=$(mktemp)
+	local style_file
+	style_file=$(mktemp)
+	local refactor_file
+	refactor_file=$(mktemp)
+	local test_file
+	test_file=$(mktemp)
+	local chore_file
+	chore_file=$(mktemp)
+	local other_file
+	other_file=$(mktemp)
 
 	# Procesar cada línea (el formato ahora es: "- YYYY-MM-DD HH:MM `hash` tipo(scope): mensaje")
-	local tmp_content=$(mktemp)
+	local tmp_content
+	tmp_content=$(mktemp)
 	echo "$content" >"$tmp_content"
 	while IFS= read -r line; do
 		# Extraer el tipo del commit que viene después del backtick de cierre y antes de (
@@ -221,11 +230,14 @@ generate_individual_changelog() {
 	echo -e "${YELLOW}📄 Generando changelog individual: ${release_file}${NC}"
 
 	# Obtener fecha del tag
-	local tag_date=$(git log -1 --format="%ad" --date=short "$tag" 2>/dev/null || date +%Y-%m-%d)
+	local tag_date
+	tag_date=$(git log -1 --format="%ad" --date=short "$tag" 2>/dev/null || date +%Y-%m-%d)
 
 	# Generar contenido del changelog
-	local changelog_content=$(generate_changelog_content "$from_tag" "$tag")
-	local categorized_content=$(categorize_commits "$changelog_content")
+	local changelog_content
+	changelog_content=$(generate_changelog_content "$from_tag" "$tag")
+	local categorized_content
+	categorized_content=$(categorize_commits "$changelog_content")
 
 	# Crear archivo de release
 	cat >"$release_file" <<EOF
@@ -251,10 +263,12 @@ update_main_changelog() {
 	echo -e "${YELLOW}📋 Actualizando CHANGELOG.md principal...${NC}"
 
 	# Crear archivo temporal para el nuevo contenido
-	local temp_file=$(mktemp)
+	local temp_file
+	temp_file=$(mktemp)
 
 	# Obtener lista de releases recientes (ordenados por fecha, más recientes primero)
-	local recent_releases=$(find "$RELEASES_DIR" -name "*.md" -type f | sort -r | head -n "$MAX_RECENT_RELEASES")
+	local recent_releases
+	recent_releases=$(find "$RELEASES_DIR" -name "*.md" -type f | sort -r | head -n "$MAX_RECENT_RELEASES")
 
 	# Crear encabezado
 	cat >"$temp_file" <<EOF
@@ -266,8 +280,10 @@ EOF
 
 	# Añadir cada release reciente
 	for release_file in $recent_releases; do
-		local tag=$(basename "$release_file" .md)
-		local tag_date=$(git log -1 --format="%ad" --date=short "$tag" 2>/dev/null || echo "Unknown date")
+		local tag
+		tag=$(basename "$release_file" .md)
+		local tag_date
+		tag_date=$(git log -1 --format="%ad" --date=short "$tag" 2>/dev/null || echo "Unknown date")
 
 		echo "## [${tag}] - ${tag_date}" >>"$temp_file"
 		echo "" >>"$temp_file"

@@ -12,7 +12,8 @@ pkg install -y git lsd unzip openssh nano wget curl zsh
 
 # Cambiar shell predeterminada a Zsh y continuar en Zsh
 chsh -s zsh
-export SHELL=$(which zsh)
+SHELL=$(which zsh)
+export SHELL
 # exec zsh
 
 # Añadir alias al .zshrc

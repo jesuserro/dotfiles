@@ -80,17 +80,26 @@ categorize_commits() {
 	local content="$1"
 
 	# Crear archivos temporales para cada categoría
-	local feat_file=$(mktemp)
-	local fix_file=$(mktemp)
-	local docs_file=$(mktemp)
-	local style_file=$(mktemp)
-	local refactor_file=$(mktemp)
-	local test_file=$(mktemp)
-	local chore_file=$(mktemp)
-	local other_file=$(mktemp)
+	local feat_file
+	feat_file=$(mktemp)
+	local fix_file
+	fix_file=$(mktemp)
+	local docs_file
+	docs_file=$(mktemp)
+	local style_file
+	style_file=$(mktemp)
+	local refactor_file
+	refactor_file=$(mktemp)
+	local test_file
+	test_file=$(mktemp)
+	local chore_file
+	chore_file=$(mktemp)
+	local other_file
+	other_file=$(mktemp)
 
 	# Procesar cada línea
-	local tmp_content=$(mktemp)
+	local tmp_content
+	tmp_content=$(mktemp)
 	echo "$content" >"$tmp_content"
 	while IFS= read -r line; do
 		case "$line" in
@@ -185,18 +194,22 @@ generate_branch_changelog() {
 	local base_branch="$2"
 
 	# Crear nombre de archivo seguro para la rama
-	local safe_branch_name=$(echo "$branch_name" | sed 's/[^a-zA-Z0-9._-]/_/g')
+	local safe_branch_name
+	safe_branch_name=$(echo "$branch_name" | sed 's/[^a-zA-Z0-9._-]/_/g')
 	local changelog_file="$RELEASES_DIR/${CHANGELOG_PREFIX}${safe_branch_name}.md"
 
 	echo -e "${YELLOW}📄 Generando changelog para rama: ${branch_name}${NC}"
 	echo -e "${BLUE}📁 Archivo: ${changelog_file}${NC}"
 
 	# Obtener fecha y hora actual
-	local current_date=$(date +%Y-%m-%d)
-	local current_time=$(date +%H:%M)
+	local current_date
+	current_date=$(date +%Y-%m-%d)
+	local current_time
+	current_time=$(date +%H:%M)
 
 	# Obtener información de la rama
-	local total_commits=$(git rev-list --count "${base_branch}..${branch_name}" 2>/dev/null || echo "0")
+	local total_commits
+	total_commits=$(git rev-list --count "${base_branch}..${branch_name}" 2>/dev/null || echo "0")
 
 	# Generar contenido del changelog con formato mejorado
 	local changelog_content=""
@@ -239,8 +252,10 @@ show_branch_info() {
 	echo -e "  • Rama base: ${BASE_BRANCH}"
 
 	if branch_exists "$BASE_BRANCH"; then
-		local commits_ahead=$(git rev-list --count "${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null || echo "0")
-		local commits_behind=$(git rev-list --count "${CURRENT_BRANCH}..${BASE_BRANCH}" 2>/dev/null || echo "0")
+		local commits_ahead
+		commits_ahead=$(git rev-list --count "${BASE_BRANCH}..${CURRENT_BRANCH}" 2>/dev/null || echo "0")
+		local commits_behind
+		commits_behind=$(git rev-list --count "${CURRENT_BRANCH}..${BASE_BRANCH}" 2>/dev/null || echo "0")
 		echo -e "  • Commits adelante: ${commits_ahead}"
 		echo -e "  • Commits atrás: ${commits_behind}"
 	else

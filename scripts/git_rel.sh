@@ -86,8 +86,10 @@ check_potential_conflicts() {
 	git fetch origin "$source_branch" "$target_branch" >/dev/null 2>&1
 
 	# Obtener la lista de archivos modificados en la rama source desde el último merge
-	local modified_files=$(git diff --name-only "$target_branch...$source_branch" 2>/dev/null || echo "")
-	local target_modified_files=$(git diff --name-only "$source_branch...$target_branch" 2>/dev/null || echo "")
+	local modified_files
+	modified_files=$(git diff --name-only "$target_branch...$source_branch" 2>/dev/null || echo "")
+	local target_modified_files
+	target_modified_files=$(git diff --name-only "$source_branch...$target_branch" 2>/dev/null || echo "")
 
 	# Si no hay archivos modificados, no hay conflictos potenciales
 	if [ -z "$modified_files" ]; then
@@ -135,8 +137,10 @@ do_merge() {
 	fi
 
 	# Guardar configuración actual del editor
-	local old_editor=$(git config --get core.editor 2>/dev/null || echo "")
-	local old_merge_ff=$(git config --get merge.ff 2>/dev/null || echo "")
+	local old_editor
+	old_editor=$(git config --get core.editor 2>/dev/null || echo "")
+	local old_merge_ff
+	old_merge_ff=$(git config --get merge.ff 2>/dev/null || echo "")
 
 	# Configurar temporalmente para evitar editor completamente
 	# Usar múltiples métodos para asegurar que no se abra el editor

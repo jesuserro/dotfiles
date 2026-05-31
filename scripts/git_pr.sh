@@ -101,7 +101,8 @@ generate_pr_title() {
 	local base_branch="$2"
 
 	# Intentar extraer del primer commit siguiendo Conventional Commits
-	local first_commit=$(git log --pretty=format:"%s" "${base_branch}..${feature_branch}" 2>/dev/null | head -n 1)
+	local first_commit
+	first_commit=$(git log --pretty=format:"%s" "${base_branch}..${feature_branch}" 2>/dev/null | head -n 1)
 
 	if [ -n "$first_commit" ]; then
 		# Si el commit sigue Conventional Commits, usar su mensaje
@@ -112,7 +113,8 @@ generate_pr_title() {
 	fi
 
 	# Fallback: formatear nombre de la rama
-	local clean_name=$(echo "$feature_branch" | sed "s|^${FEATURE_PREFIX}||" | sed 's/-/ /g')
+	local clean_name
+	clean_name=$(echo "$feature_branch" | sed "s|^${FEATURE_PREFIX}||" | sed 's/-/ /g')
 	# Capitalizar primera letra
 	echo "$clean_name" | awk '{for(i=1;i<=NF;i++){sub(/./,toupper(substr($i,1,1)),$i)};print}'
 }
@@ -125,14 +127,18 @@ generate_pr_description() {
 	local description=""
 
 	# Obtener estadísticas
-	local stats=$(git diff --stat "${base_branch}..${feature_branch}" 2>/dev/null | tail -n 1)
-	local total_commits=$(git rev-list --count "${base_branch}..${feature_branch}" 2>/dev/null || echo "0")
+	local stats
+	stats=$(git diff --stat "${base_branch}..${feature_branch}" 2>/dev/null | tail -n 1)
+	local total_commits
+	total_commits=$(git rev-list --count "${base_branch}..${feature_branch}" 2>/dev/null || echo "0")
 
 	# Obtener lista de commits
-	local commits=$(git log --pretty=format:"- %s" "${base_branch}..${feature_branch}" 2>/dev/null)
+	local commits
+	commits=$(git log --pretty=format:"- %s" "${base_branch}..${feature_branch}" 2>/dev/null)
 
 	# Obtener archivos modificados
-	local files=$(git diff --name-status "${base_branch}..${feature_branch}" 2>/dev/null | head -n 20)
+	local files
+	files=$(git diff --name-status "${base_branch}..${feature_branch}" 2>/dev/null | head -n 20)
 
 	# Construir descripción
 	description="## 📊 Estadísticas\n\n"
@@ -190,7 +196,8 @@ create_pull_request() {
 	# Verificar si ya existe un PR
 	if pr_exists "$feature_branch" "$base_branch"; then
 		echo -e "${YELLOW}⚠️  Ya existe un Pull Request abierto para '${feature_branch}' → '${base_branch}'${NC}"
-		local pr_url=$(gh pr list --base "$base_branch" --head "$feature_branch" --state open --json url --jq '.[0].url' 2>/dev/null)
+		local pr_url
+		pr_url=$(gh pr list --base "$base_branch" --head "$feature_branch" --state open --json url --jq '.[0].url' 2>/dev/null)
 		if [ -n "$pr_url" ]; then
 			echo -e "${BLUE}🔗 PR existente: ${pr_url}${NC}"
 			if [ "$OPEN_BROWSER" = true ]; then
@@ -203,8 +210,10 @@ create_pull_request() {
 
 	# Generar título y descripción
 	echo -e "${YELLOW}📝 Generando título y descripción del PR...${NC}"
-	local pr_title=$(generate_pr_title "$feature_branch" "$base_branch")
-	local pr_description=$(generate_pr_description "$feature_branch" "$base_branch")
+	local pr_title
+	pr_title=$(generate_pr_title "$feature_branch" "$base_branch")
+	local pr_description
+	pr_description=$(generate_pr_description "$feature_branch" "$base_branch")
 
 	echo -e "${BLUE}📋 Título: ${pr_title}${NC}"
 
@@ -222,7 +231,8 @@ create_pull_request() {
 		echo -e "${GREEN}✅ Pull Request creado exitosamente${NC}"
 		if [ "$OPEN_BROWSER" = false ]; then
 			# Extraer URL del output si no se abrió el navegador
-			local extracted_url=$(echo "$pr_url" | grep -o 'https://github.com[^ ]*' | head -n 1)
+			local extracted_url
+			extracted_url=$(echo "$pr_url" | grep -o 'https://github.com[^ ]*' | head -n 1)
 			if [ -n "$extracted_url" ]; then
 				echo -e "${BLUE}🔗 PR: ${extracted_url}${NC}"
 			else

@@ -70,7 +70,8 @@ check_potential_conflicts() {
 	echo -e "${BLUE}🔍 Verificando conflictos potenciales entre '${source_branch}' y '${target_branch}'...${NC}"
 
 	# Obtener la lista de archivos modificados
-	local modified_files=$(git diff --name-only $target_branch...$source_branch)
+	local modified_files
+	modified_files=$(git diff --name-only $target_branch...$source_branch)
 
 	# Verificar si hay archivos que podrían causar conflictos
 	local potential_conflicts=()
@@ -97,7 +98,8 @@ check_untracked_conflicts() {
 	local target_branch="$1"
 
 	# Obtener archivos no trackeados
-	local untracked_files=$(git ls-files --others --exclude-standard)
+	local untracked_files
+	untracked_files=$(git ls-files --others --exclude-standard)
 
 	# Verificar si alguno de estos archivos existe en la rama objetivo
 	local potential_conflicts=()

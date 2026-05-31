@@ -51,7 +51,8 @@ clean_local_branches() {
 	echo -e "${BLUE}🧹 Limpiando ramas locales '${prefix}*' mergeadas en dev...${NC}"
 
 	# Obtener ramas locales que empiecen con el prefijo y estén mergeadas en dev
-	local merged_branches=$(git branch --merged dev --format='%(refname:short)' | grep "^${prefix}" || true)
+	local merged_branches
+	merged_branches=$(git branch --merged dev --format='%(refname:short)' | grep "^${prefix}" || true)
 
 	if [ -z "$merged_branches" ]; then
 		echo -e "${YELLOW}⚠️  No hay ramas locales '${prefix}*' mergeadas en dev${NC}"
@@ -94,7 +95,8 @@ clean_remote_branches() {
 	echo -e "${BLUE}🧹 Limpiando ramas remotas '${prefix}*' mergeadas en dev...${NC}"
 
 	# Obtener ramas remotas que empiecen con el prefijo y estén mergeadas en dev
-	local merged_remote_branches=$(git branch -r --merged dev --format='%(refname:short)' | sed 's/origin\///' | grep "^${prefix}" || true)
+	local merged_remote_branches
+	merged_remote_branches=$(git branch -r --merged dev --format='%(refname:short)' | sed 's/origin\///' | grep "^${prefix}" || true)
 
 	if [ -z "$merged_remote_branches" ]; then
 		echo -e "${YELLOW}⚠️  No hay ramas remotas '${prefix}*' mergeadas en dev${NC}"
