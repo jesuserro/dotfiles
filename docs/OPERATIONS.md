@@ -211,7 +211,7 @@ make chezmoi-drift-report
 
 Apply global consciente (bootstrap / recuperación): `make install-dotfiles DOTFILES_APPLY=1` o `chezmoi --source="$HOME/dotfiles" apply` **solo** tras revisar el diff completo.
 
-**Config local** (`~/.config/chezmoi/chezmoi.toml`, no versionada): fusiona datos como `obsidian_vault_path`. Opcionalmente, para ocultar ruido de scripts antiguos en el estado Chezmoi:
+**Config local** (`~/.config/chezmoi/chezmoi.toml`, no versionada): fusiona datos como `obsidian_vault_path`. Opcionalmente, para ocultar en `status`/`diff` las líneas `R` de hooks (comodidad local, no obligatorio):
 
 ```toml
 [status]
@@ -221,7 +221,7 @@ Apply global consciente (bootstrap / recuperación): `make install-dotfiles DOTF
     exclude = ["scripts"]
 ```
 
-Los scripts reales del repo usan prefijos `run_before_*` / `run_after_*`. Entradas `R` de nombres viejos en status son fantasmas del estado local, no targets aplicables.
+Los `R` de `.chezmoiscripts` son entradas **Run**: hooks `run_before_*` / `run_after_*` que Chezmoi ejecutaría en un `apply`. No son ficheros borrados. Interprétalos con `make chezmoi-drift-report`; no uses `chezmoi apply` global solo para limpiarlos.
 
 Auditar scripts explícitamente: `chezmoi status -i scripts -x ''`.
 

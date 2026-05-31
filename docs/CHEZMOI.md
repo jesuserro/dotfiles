@@ -137,7 +137,7 @@ Archivo **no versionado** que Chezmoi fusiona con `.chezmoi.toml` del repo. Usos
 
 - `[source] path` — ruta del repo si no quieres pasar `--source` cada vez.
 - `[data.ai] obsidian_vault_path` — ruta del vault en esta máquina.
-- **`[status] exclude` / `[diff] exclude`** — opcional; por ejemplo `exclude = ["scripts"]` oculta en `chezmoi status` entradas fantasma de scripts renombrados en el estado local (nombres viejos `00_*` / `10_*`). **No es requisito global del repo**; es comodidad por máquina.
+- **`[status] exclude` / `[diff] exclude`** — opcional; por ejemplo `exclude = ["scripts"]` oculta en `chezmoi status` las líneas `R` de hooks (ver § Scripts y columna `R`). **No es requisito global del repo**; es comodidad por máquina si el ruido molesta.
 
 Para auditar scripts de verdad:
 
@@ -255,7 +255,7 @@ Cada línea usa dos columnas de estado (`xy path`): estado en **source** (repo/p
 | Símbolo | Significado habitual |
 |---------|----------------------|
 | `M` | Modificado respecto al último estado aplicado |
-| `R` | Eliminado en source o destino (según columna) |
+| `R` | **Scripts** (p. ej. bajo `.chezmoiscripts/`): **Run** — se ejecutarán en el próximo `apply`. No significa “removed”. |
 | `MM` | Source y destino divergen (revisar diff antes de apply) |
 
 Comandos de **solo lectura** (seguros para auditar):
@@ -275,23 +275,42 @@ Reporte resumido en el repo (no muta HOME, no ejecuta `apply`):
 make chezmoi-drift-report
 ```
 
-### Scripts `R` tras renombres (`00_*` / `10_*`)
+### Scripts `.chezmoiscripts` y columna `R` (`Run`)
 
-Los hooks viven en el repo como plantillas con nombres actuales:
+En Chezmoi, **`R` significa Run**: el hook se ejecutará en el próximo `chezmoi apply`. No es “removed” como en `git status`.
+
+Los hooks del repo usan prefijos `run_before_*` / `run_after_*` y sufijo `.tmpl`, por ejemplo:
 
 - `run_before_00_backup_rc_files.sh.tmpl`
 - `run_after_00_gen_secrets.sh.tmpl`, `run_after_10_*`, … `run_after_15_*`
 
-Si `status` lista entradas **`R`** en rutas como `.chezmoiscripts/00_backup_rc_files.sh` o `.chezmoiscripts/10_setup_ai_runtime.sh`, suelen ser **restos del estado persistente de Chezmoi** tras renombrar hooks, no archivos perdidos en el repo.
+En `chezmoi status` aparecen con **nombre normalizado** (sin prefijo `run_before_` / `run_after_` ni `.tmpl`), por ejemplo:
 
-- **No confundir** `run_after_00_gen_secrets.sh.tmpl` con drift de secretos en HOME: el canonico generado es `~/.config/mcp-secrets.env` (SOPS). Los `R` de scripts no indican por sí solos un problema con `secrets.sops.yaml`.
-- Para auditar hooks reales: `chezmoi status -i scripts -x ''` (ver arriba).
-- Comodidad local (opcional, **no versionado**): en `~/.config/chezmoi/chezmoi.toml`:
+| Línea en `status` | Plantilla en el repo |
+|-------------------|----------------------|
+| `R .chezmoiscripts/00_backup_rc_files.sh` | `run_before_00_backup_rc_files.sh.tmpl` |
+| `R .chezmoiscripts/00_gen_secrets.sh` | `run_after_00_gen_secrets.sh.tmpl` |
+| `R .chezmoiscripts/10_setup_ai_runtime.sh` | `run_after_10_setup_ai_runtime.sh.tmpl` |
+| … | `run_after_11_*` … `run_after_15_*` |
+
+Esas rutas **no tienen por qué existir como ficheros en `~/.chezmoiscripts/`**; Chezmoi las lista como scripts a ejecutar, no como dotfiles materializados en HOME.
+
+- **No uses `chezmoi apply` global** solo para “quitar” esas líneas: un apply global **ejecutaría** los hooks (backup RC, SOPS, runtime AI, symlinks, etc.).
+- **No uses `chezmoi forget`** para silenciarlas; no corrige la semántica y puede provocar re-ejecuciones no deseadas.
+- **No confundas** `.chezmoiscripts/00_gen_secrets.sh` en status con drift de secretos: el artefacto canónico en HOME es `~/.config/mcp-secrets.env` (SOPS). Un `R` en el script no indica por sí solo que `secrets.sops.yaml` esté mal.
+- Para auditar solo scripts: `chezmoi status -i scripts -x ''`.
+- Resumen legible: `make chezmoi-drift-report` (marca entradas esperadas como aceptadas).
+- Comodidad local (opcional, **no versionado**) si el ruido en `status` molesta:
 
 ```toml
 [status]
     exclude = ["scripts"]
+
+[diff]
+    exclude = ["scripts"]
 ```
+
+Tras `exclude`, sigue pudiendo auditar con `chezmoi status -i scripts -x ''`.
 
 ### Codex — gobernanza versionada (apply acotado)
 

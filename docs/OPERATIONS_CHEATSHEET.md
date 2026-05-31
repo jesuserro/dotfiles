@@ -93,7 +93,7 @@ chezmoi --source="$HOME/dotfiles" diff
 | **Codex** (`~/.codex/config.toml`) | Apply acotado (§6); ver [CHEZMOI.md](CHEZMOI.md) — Codex |
 | **Launchers MCP** (`~/.local/share/chezmoi/bin/mcp-*`) | Apply acotado de esos launchers |
 | **Configs MCP** (Cursor/OpenCode/Codex) | Apply acotado de `mcp.json` / `opencode.json` / `config.toml` |
-| **Scripts `R` en status** | Restos de estado Chezmoi; ver [CHEZMOI.md](CHEZMOI.md); no implica secretos rotos |
+| **Scripts `R` en status** | Hooks que se ejecutarían en apply (`R` = Run); ruido esperado. Ver `make chezmoi-drift-report` y [CHEZMOI.md](CHEZMOI.md). No apply global para “limpiar”; no implica secretos rotos |
 | **Secretos** (`mcp-secrets.env`) | Solo con decisión explícita: `sops secrets.sops.yaml` → `chezmoi apply -i scripts` |
 
 ---

@@ -37,6 +37,12 @@ setup() {
 	[[ "${status}" -eq 1 ]]
 }
 
+@test "OPERATIONS.md describes chezmoiscripts R as Run not phantom drift" {
+	assert_file_not_matches "${OPERATIONS}" '[Ff]antasma|[Pp]hantom'
+	grep -qiE 'R.*Run|Run.*apply|chezmoiscripts' "${OPERATIONS}"
+	grep -q 'make chezmoi-drift-report' "${OPERATIONS}"
+}
+
 @test "global chezmoi apply is framed as bootstrap or conscious human action" {
 	local doc line
 	for doc in "${GUIA}" "${OPERATIONS}"; do
