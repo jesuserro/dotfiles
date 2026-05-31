@@ -42,13 +42,15 @@ Layers describe *purpose*; default **activation** for global agents follows the 
 ### GitNexus Helpers
 
 ```bash
-make update      # Updates GitNexus CLI after validating Node >=22
-make update-check # Read-only Node/runtime precheck before re-indexing
-gnx-serve        # Start local server
-gnx-analyze-here # Analyze current repo
-gnx-map          # Analyze + serve
-gnx-wiki-here    # Generate wiki (requires OPENAI_API_KEY)
+make gitnexus-status  # Read-only index/lock/Node status (see GITNEXUS_OPERATIONAL_POLICY.md)
+make update-check       # Read-only Node/runtime precheck before re-indexing
+gnx-serve               # Start local server (human)
+gnx-analyze-here        # Analyze current repo (human only; managed Node)
+gnx-map                 # Analyze + serve (human)
+gnx-wiki-here           # Generate wiki (human; requires OPENAI_API_KEY)
 ```
+
+**Agent policy:** [`docs/GITNEXUS_OPERATIONAL_POLICY.md`](./GITNEXUS_OPERATIONAL_POLICY.md) — agents use `make gitnexus-status` and MCP read-only; never auto-run analyze/wiki/clean/npx.
 
 ### GitNexus Node precheck
 
