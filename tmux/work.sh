@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck source=tmux/common/header.sh
 source ~/dotfiles/tmux/common/header.sh
 
 # Total screen
@@ -26,4 +27,5 @@ tmux split-window -v -p 35 && sleep $tiempo # Crea t2
 # tmux split-window -v -p 35 && sleep $tiempo
 # tmux send-keys -t 5 'ssh -oHostKeyAlgorithms=+ssh-dss jesus@89.17.208.189' C-m && sleep $tiempo
 
+# shellcheck source=tmux/common/footer.sh
 source ~/dotfiles/tmux/common/footer.sh

@@ -64,6 +64,13 @@ bats_require_minimum_version 1.5.0
 	[[ ! -f "${DOTFILES_DIR}/tmux/nges.sh" ]]
 }
 
+@test "legacy tmux scripts document shellcheck sources" {
+	grep -q '# shellcheck source=tmux/common/header.sh' "${DOTFILES_DIR}/tmux/home.sh"
+	grep -q '# shellcheck source=tmux/common/footer.sh' "${DOTFILES_DIR}/tmux/home.sh"
+	grep -q '# shellcheck source=tmux/common/header.sh' "${DOTFILES_DIR}/tmux/work.sh"
+	grep -q '# shellcheck source=tmux/common/footer.sh' "${DOTFILES_DIR}/tmux/work.sh"
+}
+
 @test "chezmoi symlink template exists for tmux.conf" {
 	[[ -f "${DOTFILES_DIR}/symlink_dot_tmux.conf.tmpl" ]]
 	grep -q '{{ .chezmoi.homeDir }}/dotfiles/tmux.conf' "${DOTFILES_DIR}/symlink_dot_tmux.conf.tmpl"
