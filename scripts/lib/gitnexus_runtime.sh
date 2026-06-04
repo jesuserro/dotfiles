@@ -144,14 +144,20 @@ gitnexus_serve() {
 gitnexus_analyze_here() {
 	local repo_root
 	repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
-		echo "No estas en un repositorio Git" >&2
+		echo "ERROR: gnx-analyze-here debe ejecutarse dentro de un repositorio Git." >&2
 		return 1
 	}
+
+	# Optional leading "--" (e.g. gnx-analyze-here -- --skip-agents-md) must not reach
+	# gitnexus analyze, or GitNexus treats "--" as the repo path.
+	if [[ "${1:-}" == "--" ]]; then
+		shift
+	fi
 
 	echo "Analizando repositorio actual con GitNexus..."
 	(
 		cd "$repo_root" || exit 1
-		_gnx_analyze_with_managed_node "$@"
+		_gnx_analyze_with_managed_node . "$@"
 	)
 }
 
