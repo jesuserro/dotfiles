@@ -120,6 +120,16 @@ copy_hook_entrypoints() {
 	[[ -z "$(git -C "$repo" diff --cached --name-only)" ]]
 }
 
+@test "post-commit honors DOTFILES_SKIP_HOOKS" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	init_repo "$repo"
+	copy_post_commit "$repo"
+
+	run env DOTFILES_SKIP_HOOKS=1 bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"DOTFILES_SKIP_HOOKS=1"* ]]
+}
+
 @test "post-commit honors DOTFILES_SKIP_GITNEXUS" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	init_repo "$repo"
@@ -130,18 +140,23 @@ copy_hook_entrypoints() {
 	[[ "$output" == *"DOTFILES_SKIP_GITNEXUS=1"* ]]
 }
 
-@test "post-commit skips a busy GitNexus index" {
+@test "post-commit forces refresh when GitNexus MCP or lock is active" {
 	local repo="${TEST_TEMP_DIR}/repo"
+	local trace="${TEST_TEMP_DIR}/trace"
 	init_repo "$repo"
 	copy_post_commit "$repo"
 	cat >"$repo/scripts/lib/gitnexus_runtime.sh" <<'EOF'
 gitnexus_index_in_use() { return 0; }
-gitnexus_analyze_here() { return 99; }
+gitnexus_analyze_here() {
+	printf '%s\n' "$*" >"$GNX_TRACE"
+}
 EOF
 
-	run bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
+	run env GNX_TRACE="$trace" bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 	[[ "$status" -eq 0 ]]
-	[[ "$output" == *"index is in use"* ]]
+	[[ "$output" == *"MCP/lock detected; running forced post-commit refresh"* ]]
+	[[ "$output" == *"post-commit refresh completed"* ]]
+	grep -q -- '--force --skip-agents-md' "$trace"
 }
 
 @test "post-commit remains successful when GitNexus analyze fails" {
@@ -159,8 +174,33 @@ EOF
 
 	run env GNX_TRACE="$trace" bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 	[[ "$status" -eq 0 ]]
-	[[ "$output" == *"refresh failed; commit remains successful"* ]]
-	grep -q -- '--skip-agents-md' "$trace"
+	[[ "$output" == *"refresh failed; run gitnexus analyze --force . manually"* ]]
+	grep -q -- '--force --skip-agents-md' "$trace"
+}
+
+@test "post-commit timeout remains successful with a warning" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local fake_bin="${TEST_TEMP_DIR}/fake-bin"
+	local trace="${TEST_TEMP_DIR}/timeout-trace"
+	init_repo "$repo"
+	copy_post_commit "$repo"
+	mkdir -p "$fake_bin"
+	cat >"$repo/scripts/lib/gitnexus_runtime.sh" <<'EOF'
+gitnexus_index_in_use() { return 1; }
+gitnexus_analyze_here() { return 99; }
+EOF
+	cat >"$fake_bin/timeout" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >"$TIMEOUT_TRACE"
+exit 124
+EOF
+	chmod +x "$fake_bin/timeout"
+
+	run env TIMEOUT_TRACE="$trace" PATH="$fake_bin:$PATH" \
+		bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"refresh timed out after 30s"* ]]
+	grep -q '^30s ' "$trace"
 }
 
 @test "post-commit uses the shared managed Node runtime without aliases" {
@@ -198,7 +238,7 @@ EOF
 		bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 
 	[[ "$status" -eq 0 ]]
-	grep -q '^analyze --skip-agents-md:' "$trace"
+	grep -q '^analyze --force --skip-agents-md:' "$trace"
 	grep -q 'node-runtime\..*/node:v24.16.0' "$trace"
 }
 
@@ -254,4 +294,10 @@ EOF
 		grep -q 'DOTFILES_SKIP_TREEGEN=1' "$doc"
 		grep -q 'DOTFILES_SKIP_GITNEXUS=1' "$doc"
 	done
+}
+
+@test "GitNexus hook policy documents forced best-effort refresh" {
+	local policy="${DOTFILES_DIR}/docs/GITNEXUS_OPERATIONAL_POLICY.md"
+	grep -q 'gitnexus analyze --force .' "$policy"
+	grep -q '30 segundos' "$policy"
 }

@@ -171,8 +171,10 @@ make install-git-hooks
 
 Configura `core.hooksPath=.githooks` solo para este checkout. El pre-commit
 ejecuta `treegen` sin auto-stage y aborta si cambia `STRUCTURE.md`. El
-post-commit refresca GitNexus de forma síncrona, best-effort y no fatal; si el
-índice/MCP está ocupado, lo omite con un aviso.
+post-commit refresca GitNexus con `--force --skip-agents-md` de forma síncrona,
+best-effort y no fatal. Si detecta MCP/lock activo, informa y ejecuta igualmente
+el refresh forzado; si falla o expira tras 30 segundos, ejecuta manualmente
+`gitnexus analyze --force .`.
 
 Escapes: `DOTFILES_SKIP_HOOKS=1`, `DOTFILES_SKIP_TREEGEN=1`,
 `DOTFILES_SKIP_GITNEXUS=1`.

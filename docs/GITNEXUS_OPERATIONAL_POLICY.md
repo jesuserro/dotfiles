@@ -59,13 +59,13 @@ Flujo recomendado:
 
 `make install-git-hooks` configura `core.hooksPath=.githooks` solo para el
 checkout actual. Su post-commit ejecuta síncronamente
-`gnx-analyze-here --skip-agents-md` mediante la librería no interactiva y Node
-gestionado, únicamente cuando no detecta MCP/procesos GitNexus ni
-`.gitnexus/lbug` abierto.
+`gnx-analyze-here --force --skip-agents-md` mediante la librería no interactiva
+y Node gestionado. Si detecta MCP/procesos GitNexus o `.gitnexus/lbug` abierto,
+informa y ejecuta igualmente el refresh forzado best-effort.
 
-- Si el índice está ocupado, avisa y sale `0`.
-- Si analyze falla, avisa y sale `0`.
-- Nunca usa background, retries largos, `kill`, limpieza de locks ni operaciones Git.
+- El refresh expira tras 30 segundos para no bloquear commits largos.
+- Si analyze falla o expira, avisa, recomienda `gitnexus analyze --force .` y sale `0`.
+- Nunca usa background, retries largos, mata procesos MCP, limpia locks ni ejecuta operaciones Git.
 - `DOTFILES_SKIP_HOOKS=1` y `DOTFILES_SKIP_GITNEXUS=1` permiten omitirlo.
 
 ---
@@ -100,6 +100,9 @@ Ejemplos válidos para que un humano refresque:
 - Antes de un análisis de impacto humano que requiera índice al día.
 
 **No ejecutar analyze** si `make gitnexus-status` lista procesos `gitnexus mcp` / `analyze` / `ladybug`, o si el lock en `.gitnexus/lbug` está en uso: cerrar Cursor, desactivar el MCP GitNexus o esperar a que terminen y repetir status hasta que no haya procesos vivos. La presencia de `lbug` con MCP activo es habitual y no autoriza borrar el lock.
+
+El post-commit local instalado explícitamente es la excepción automatizada: usa
+`--force --skip-agents-md`, timeout y semántica best-effort no fatal.
 
 ### Procedimiento humano de refresh (dotfiles)
 

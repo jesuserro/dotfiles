@@ -30,12 +30,31 @@ fi
 source "$runtime_lib"
 
 if gitnexus_index_in_use "$repo_root"; then
-	echo "WARN: GitNexus post-commit skipped: index is in use; run gnx-analyze-here --skip-agents-md later." >&2
+	echo "INFO: GitNexus MCP/lock detected; running forced post-commit refresh."
+fi
+
+timeout_seconds=30
+if ! command -v timeout >/dev/null 2>&1; then
+	echo "WARN: GitNexus post-commit refresh skipped: timeout command not found; run gitnexus analyze --force . manually." >&2
 	exit 0
 fi
 
-if ! gitnexus_analyze_here --skip-agents-md; then
-	echo "WARN: GitNexus post-commit refresh failed; commit remains successful." >&2
-fi
+# shellcheck disable=SC2016
+timeout "${timeout_seconds}s" bash -c \
+	'source "$1"; gitnexus_analyze_here --force --skip-agents-md' \
+	bash "$runtime_lib"
+refresh_status=$?
+
+case "$refresh_status" in
+0)
+	echo "INFO: GitNexus post-commit refresh completed."
+	;;
+124 | 137)
+	echo "WARN: GitNexus post-commit refresh timed out after ${timeout_seconds}s; run gitnexus analyze --force . manually." >&2
+	;;
+*)
+	echo "WARN: GitNexus post-commit refresh failed; run gitnexus analyze --force . manually." >&2
+	;;
+esac
 
 exit 0

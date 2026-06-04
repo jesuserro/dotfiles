@@ -91,8 +91,9 @@ make ai-cursor-check
 `core.hooksPath=.githooks`. El pre-commit ejecuta `treegen` sin auto-stage y
 aborta si actualiza `STRUCTURE.md`; revisa el cambio, ejecuta
 `git add STRUCTURE.md` y repite el commit. El post-commit refresca GitNexus con
-`--skip-agents-md` cuando el índice está libre; es best-effort y nunca invalida
-el commit.
+`--force --skip-agents-md`, incluso si detecta MCP/lock activo; tiene timeout de
+30 segundos, es best-effort y nunca invalida el commit. Si falla o expira,
+ejecuta manualmente `gitnexus analyze --force .`.
 
 Escapes puntuales: `DOTFILES_SKIP_HOOKS=1`, `DOTFILES_SKIP_TREEGEN=1` y
 `DOTFILES_SKIP_GITNEXUS=1`.
