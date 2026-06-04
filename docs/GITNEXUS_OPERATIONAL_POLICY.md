@@ -26,6 +26,7 @@ Política operativa para agentes y humanos en repos gestionados con dotfiles. Co
 - Lectura con **MCP GitNexus** (`gitnexus_query`, `gitnexus_context`, `gitnexus_impact`, `gitnexus_detect_changes`, recursos `gitnexus://…`).
 - `make update-check` — precheck Node/runtime (read-only).
 - Inspección de docs, `meta.json` (si existe) y código fuente por medios habituales.
+- El post-commit local instalado explícitamente con `make install-git-hooks` puede ejecutar el refresh best-effort descrito abajo; los agentes no lo invocan directamente.
 
 ---
 
@@ -51,6 +52,21 @@ Flujo recomendado:
 3. Si hay **MCPs vivos** (p. ej. Cursor con GitNexus MCP), **esperar** o cerrar IDE/MCP antes de analyze.
 4. Si **no hay procesos** y analyze sigue fallando por lock, **reiniciar IDE** antes de considerar limpieza manual.
 5. **No borrar `lbug`** sin decisión humana explícita.
+
+---
+
+## Post-commit local best-effort
+
+`make install-git-hooks` configura `core.hooksPath=.githooks` solo para el
+checkout actual. Su post-commit ejecuta síncronamente
+`gnx-analyze-here --skip-agents-md` mediante la librería no interactiva y Node
+gestionado, únicamente cuando no detecta MCP/procesos GitNexus ni
+`.gitnexus/lbug` abierto.
+
+- Si el índice está ocupado, avisa y sale `0`.
+- Si analyze falla, avisa y sale `0`.
+- Nunca usa background, retries largos, `kill`, limpieza de locks ni operaciones Git.
+- `DOTFILES_SKIP_HOOKS=1` y `DOTFILES_SKIP_GITNEXUS=1` permiten omitirlo.
 
 ---
 

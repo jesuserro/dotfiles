@@ -1,15 +1,39 @@
 #!/usr/bin/env bash
 # Generate STRUCTURE.md with tree output (excludes build artifacts, deps, etc.)
-# Usage: treegen.sh [DIR]
-#   DIR  Target directory (default: current directory)
-# When run from a repo root (e.g. via git pre-commit), runs in current dir and optionally runs git add.
+# Usage: treegen.sh [--no-stage] [DIR]
+#   --no-stage  Do not stage STRUCTURE.md after updating it.
+#   DIR         Target directory (default: current directory).
 
-set -e
+set -euo pipefail
 
 # filetree-pro.exclude + py/db/logs + otel/dagster/grafana runtime (var, .nux, .telemetry, compute_logs)
-TREE_IGNORE='node_modules|dist|build|out|\.git|\.venv|venv|env|\.env|target|bin|obj|\.vs|\.idea|__pycache__|__none__|mypy_cache|\.mypy_cache|*.pyc|*.log|*.tmp|*.cache|\.ruff_cache|uncommitted|index_*|chunks|wal|*.db|*.db-shm|*.db-wal|logs|var|\.nux|\.telemetry|compute_logs'
+TREE_IGNORE='.git|.gitnexus|.venv-tools|.claude|node_modules|dist|build|out|.venv|venv|env|.env|target|bin|obj|.vs|.idea|__pycache__|__none__|mypy_cache|.mypy_cache|*.pyc|*.log|*.tmp|*.cache|.ruff_cache|uncommitted|index_*|chunks|wal|*.db|*.db-shm|*.db-wal|logs|var|.nux|.telemetry|compute_logs'
 
-TARGET_DIR="${1:-.}"
+NO_STAGE=0
+TARGET_DIR="."
+target_set=0
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+	--no-stage)
+		NO_STAGE=1
+		;;
+	-*)
+		echo "treegen.sh: unknown option: $1" >&2
+		exit 2
+		;;
+	*)
+		if [[ "$target_set" -eq 1 ]]; then
+			echo "treegen.sh: only one target directory may be provided." >&2
+			exit 2
+		fi
+		TARGET_DIR="$1"
+		target_set=1
+		;;
+	esac
+	shift
+done
+
 TARGET_DIR="$(cd "$TARGET_DIR" && pwd)"
 ROOT_NAME="$(basename "$TARGET_DIR")"
 DATE="$(date '+%Y-%m-%d %H:%M:%S')"
@@ -58,19 +82,45 @@ TREE_OUT="$(echo "$RAW_TREE" | awk '
   }
 ')"
 
-{
-	echo "# File Tree: $ROOT_NAME"
-	echo ""
-	echo "**Generated:** $DATE"
-	echo "**Root Path:** \`$TARGET_DIR\`"
-	echo ""
-	echo "\`\`\`"
-	echo "$TREE_OUT"
-	echo "\`\`\`"
-} >"$OUTPUT"
+write_structure() {
+	local generated_at="$1" destination="$2"
+	{
+		echo "# File Tree: $ROOT_NAME"
+		echo ""
+		echo "**Generated:** $generated_at"
+		echo "**Root Path:** \`$TARGET_DIR\`"
+		echo ""
+		echo "\`\`\`"
+		echo "$TREE_OUT"
+		echo "\`\`\`"
+	} >"$destination"
+}
 
-if git -C "$TARGET_DIR" rev-parse --is-inside-work-tree &>/dev/null; then
-	git -C "$TARGET_DIR" add STRUCTURE.md
+stage_structure() {
+	if [[ "$NO_STAGE" -eq 0 ]] && git -C "$TARGET_DIR" rev-parse --is-inside-work-tree &>/dev/null; then
+		git -C "$TARGET_DIR" add STRUCTURE.md
+	fi
+}
+
+existing_date="$DATE"
+if [[ -f "$OUTPUT" ]]; then
+	existing_date="$(sed -n 's/^\*\*Generated:\*\* //p' "$OUTPUT" | head -n 1)"
+	existing_date="${existing_date:-$DATE}"
 fi
 
+TEMP_OUTPUT="$(mktemp "${TARGET_DIR}/.STRUCTURE.md.tmp.XXXXXX")"
+trap 'rm -f "$TEMP_OUTPUT"' EXIT
+write_structure "$existing_date" "$TEMP_OUTPUT"
+
+if [[ -f "$OUTPUT" ]] && cmp -s "$TEMP_OUTPUT" "$OUTPUT"; then
+	stage_structure
+	echo "Unchanged: $OUTPUT"
+	exit 0
+fi
+
+write_structure "$DATE" "$TEMP_OUTPUT"
+mv "$TEMP_OUTPUT" "$OUTPUT"
+trap - EXIT
+
+stage_structure
 echo "Written: $OUTPUT"

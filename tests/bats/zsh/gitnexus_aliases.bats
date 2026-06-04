@@ -4,6 +4,7 @@ setup() {
 	load '../helpers/common'
 	DOTFILES_DIR="$(cd "${BATS_TEST_DIRNAME}/../../.." && pwd)"
 	ALIASES_FILE="${DOTFILES_DIR}/aliases"
+	RUNTIME_FILE="${DOTFILES_DIR}/scripts/lib/gitnexus_runtime.sh"
 	setup_temp_dir
 }
 
@@ -74,9 +75,10 @@ EOF
 	chmod +x "$path"
 }
 
-@test "_gnx_with_managed_node helper exists in aliases" {
-	grep -q '_gnx_with_managed_node()' "$ALIASES_FILE"
-	grep -q '_gnx_with_managed_node_impl()' "$ALIASES_FILE"
+@test "aliases source the shared GitNexus runtime" {
+	grep -q 'scripts/lib/gitnexus_runtime.sh' "$ALIASES_FILE"
+	grep -q '_gnx_with_managed_node()' "$RUNTIME_FILE"
+	grep -q '_gnx_with_managed_node_impl()' "$RUNTIME_FILE"
 }
 
 @test "gnx-serve is not a direct alias to gitnexus serve" {
@@ -86,7 +88,7 @@ EOF
 
 @test "gnx-serve uses _gnx_with_managed_node serve" {
 	grep -q 'gnx-serve()' "$ALIASES_FILE"
-	grep -q '_gnx_with_managed_node serve' "$ALIASES_FILE"
+	grep -q '_gnx_with_managed_node serve' "$RUNTIME_FILE"
 }
 
 @test "gnx-wiki-here does not call gitnexus status or gitnexus wiki directly" {
@@ -99,8 +101,8 @@ EOF
 }
 
 @test "gnx-wiki-here uses managed node for status and wiki" {
-	grep -q '_gnx_with_managed_node status' "$ALIASES_FILE"
-	grep -q '_gnx_with_managed_node wiki' "$ALIASES_FILE"
+	grep -q '_gnx_with_managed_node status' "$RUNTIME_FILE"
+	grep -q '_gnx_with_managed_node wiki' "$RUNTIME_FILE"
 }
 
 @test "gnx-map does not call gitnexus serve directly" {
@@ -131,7 +133,8 @@ EOF
 	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
 	write_fake_node "$managed" "v24.15.0" "managed"
 	write_fake_gitnexus "${npm_prefix}/bin/gitnexus"
-	mkdir -p "$fake_home" "$repo/.git"
+	mkdir -p "$fake_home"
+	git init -q "$repo"
 
 	run env \
 		HOME="$fake_home" \
@@ -171,7 +174,8 @@ EOF
 	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
 	write_fake_node "$managed" "v24.15.0" "managed"
 	write_fake_gitnexus "${npm_prefix}/bin/gitnexus"
-	mkdir -p "$fake_home" "$repo/.git"
+	mkdir -p "$fake_home"
+	git init -q "$repo"
 
 	run env \
 		HOME="$fake_home" \
@@ -211,7 +215,8 @@ EOF
 	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
 	write_fake_node "$managed" "v20.18.2" "managed"
 	write_fake_gitnexus "${npm_prefix}/bin/gitnexus"
-	mkdir -p "$fake_home" "$repo/.git"
+	mkdir -p "$fake_home"
+	git init -q "$repo"
 
 	run env \
 		HOME="$fake_home" \
@@ -248,7 +253,9 @@ EOF
 	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
 	write_fake_node "$managed" "v24.15.0" "managed"
 	write_fake_gitnexus "${npm_prefix}/bin/gitnexus"
-	mkdir -p "$fake_home" "$repo/.git" "$repo/.gitnexus"
+	mkdir -p "$fake_home"
+	git init -q "$repo"
+	mkdir -p "$repo/.gitnexus"
 	touch "$repo/.gitnexus/lbug"
 
 	run env \

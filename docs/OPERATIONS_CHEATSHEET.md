@@ -163,6 +163,20 @@ Referencia agentes: [MCP_QUICKREF.md](MCP_QUICKREF.md).
 
 Política completa: [GITNEXUS_OPERATIONAL_POLICY.md](GITNEXUS_OPERATIONAL_POLICY.md).
 
+### Hooks locales del repo
+
+```bash
+make install-git-hooks
+```
+
+Configura `core.hooksPath=.githooks` solo para este checkout. El pre-commit
+ejecuta `treegen` sin auto-stage y aborta si cambia `STRUCTURE.md`. El
+post-commit refresca GitNexus de forma síncrona, best-effort y no fatal; si el
+índice/MCP está ocupado, lo omite con un aviso.
+
+Escapes: `DOTFILES_SKIP_HOOKS=1`, `DOTFILES_SKIP_TREEGEN=1`,
+`DOTFILES_SKIP_GITNEXUS=1`.
+
 ### Refresh humano del índice
 
 Solo **humano**; los agentes no ejecutan analyze ni refresh por `STALE`. Sin `npx gitnexus` (ver prohibiciones §8). Con `--skip-agents-md` no se tocan los bloques `<!-- gitnexus:* -->` en `AGENTS.md` / `CLAUDE.md`.
@@ -233,6 +247,7 @@ Detalle: [TESTING.md](TESTING.md).
 | `make chezmoi-drift-report` | No | No | Tras `git pull` / merge |
 | `make mcp-launcher-contract-check` | No | No | Cambios launchers / plantillas MCP |
 | `make gitnexus-status` | No | No | Estado índice/lock/Node |
+| `make install-git-hooks` | Sí, local repo | No | Activar pre-commit treegen y post-commit GitNexus en este checkout |
 | `make validate-skills-structure` | No | No | Cambios en skills locales |
 | `make ai-mcp-governance` | No | No | Cambios MANIFEST / plantillas |
 | `make test-chezmoi` | No | No | Cambios Chezmoi / hooks |
