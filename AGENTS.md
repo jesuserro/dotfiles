@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **dotfiles** (3154 symbols, 3648 relationships, 60 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **dotfiles** (3238 symbols, 3760 relationships, 60 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `make gitnexus-status`. Agents must not auto-refresh; ask Jesús before `gnx-analyze-here`. See `docs/GITNEXUS_OPERATIONAL_POLICY.md`.
 
