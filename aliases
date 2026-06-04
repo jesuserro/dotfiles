@@ -246,7 +246,7 @@ gnx-serve() {
 
 # Función para analizar el repositorio actual
 # Dotfiles index refresh without regenerating AGENTS/CLAUDE:
-#   gnx-analyze-here -- --skip-agents-md
+#   gnx-analyze-here --skip-agents-md
 gnx-analyze-here() {
   if [ -d ".git" ]; then
     echo "🔍 Analizando repositorio actual con GitNexus..."

@@ -170,7 +170,7 @@ Solo **humano**; los agentes no ejecutan analyze ni refresh por `STALE`. Sin `np
 ```bash
 make gitnexus-status
 # cerrar Cursor/MCP si hay procesos vivos o lock activo
-gnx-analyze-here -- --skip-agents-md
+gnx-analyze-here --skip-agents-md
 make gitnexus-status
 git status --short -- .gitnexus AGENTS.md CLAUDE.md docs/wiki
 make bats-docs

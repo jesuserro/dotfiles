@@ -48,7 +48,7 @@ make gitnexus-status  # Read-only index/lock/Node status (see GITNEXUS_OPERATION
 make update-check       # Read-only Node/runtime precheck before re-indexing
 gnx-serve               # Start local server (human; managed Node)
 gnx-analyze-here        # Analyze current repo (human only; managed Node)
-gnx-analyze-here -- --skip-agents-md   # Human index refresh without AGENTS.md/CLAUDE.md blocks — see GITNEXUS_OPERATIONAL_POLICY.md
+gnx-analyze-here --skip-agents-md   # Human index refresh without AGENTS.md/CLAUDE.md blocks — see GITNEXUS_OPERATIONAL_POLICY.md
 gnx-map                 # Analyze + serve (human; managed Node)
 gnx-wiki-here           # Generate wiki (human; managed Node; requires OPENAI_API_KEY; may use network/LLM)
 ```

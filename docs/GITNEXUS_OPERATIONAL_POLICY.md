@@ -93,7 +93,7 @@ Comando **canónico** — solo índice en `.gitnexus/`, sin tocar bloques versio
 make update-check
 make gitnexus-status
 # Si hay procesos MCP o lock en uso: cerrar Cursor / desactivar MCP GitNexus; repetir status
-gnx-analyze-here -- --skip-agents-md
+gnx-analyze-here --skip-agents-md
 make gitnexus-status
 git status --short -- .gitnexus AGENTS.md CLAUDE.md docs/wiki
 bats tests/bats/docs/agents-claude-gitnexus-blocks.bats

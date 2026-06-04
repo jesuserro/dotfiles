@@ -12,7 +12,7 @@ setup() {
 }
 
 @test "policy documents canonical human refresh with skip-agents-md" {
-	grep -q 'gnx-analyze-here -- --skip-agents-md' "${POLICY}"
+	grep -q 'gnx-analyze-here --skip-agents-md' "${POLICY}"
 }
 
 @test "policy states agents must not auto-refresh on STALE" {
@@ -33,7 +33,7 @@ setup() {
 @test "cheatsheet contains short human refresh flow with status and skip-agents-md" {
 	grep -q '### Refresh humano del índice' "${CHEATSHEET}"
 	grep -q 'make gitnexus-status' "${CHEATSHEET}"
-	grep -q 'gnx-analyze-here -- --skip-agents-md' "${CHEATSHEET}"
+	grep -q 'gnx-analyze-here --skip-agents-md' "${CHEATSHEET}"
 	grep -q 'make bats-docs' "${CHEATSHEET}"
 }
 

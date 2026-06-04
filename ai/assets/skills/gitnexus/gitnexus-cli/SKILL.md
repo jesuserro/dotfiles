@@ -36,7 +36,7 @@ If it warns that the effective Node runtime comes from Cursor/VS Code and is bel
 ```bash
 make gitnexus-status
 # Close Cursor / disable GitNexus MCP if live processes or lock in use; re-run status
-gnx-analyze-here -- --skip-agents-md
+gnx-analyze-here --skip-agents-md
 make gitnexus-status
 ```
 
@@ -97,7 +97,7 @@ Manual fallback: `gitnexus list`. The MCP `list_repos` tool provides the same in
 
 - **"Not inside a git repository"**: Run from a directory inside a git repo
 - **Index stale (agents)**: Run `make gitnexus-status`; do not run analyze; ask Jesús for human refresh
-- **Human refresh (dotfiles)**: `make gitnexus-status` → close MCP if needed → `gnx-analyze-here -- --skip-agents-md` → `make gitnexus-status` again
+- **Human refresh (dotfiles)**: `make gitnexus-status` → close MCP if needed → `gnx-analyze-here --skip-agents-md` → `make gitnexus-status` again
 - **Analyze is slow or appears stuck under Cursor**: Run `make update-check`; human uses `gnx-analyze-here`, not `gitnexus analyze` or `npx gitnexus`
 - **Index is stale after re-analyzing**: Restart Cursor / MCP client to reload the index
 - **Lock on `.gitnexus/lbug`**: Run `make gitnexus-status`; close Cursor or disable GitNexus MCP; never delete `lbug` automatically

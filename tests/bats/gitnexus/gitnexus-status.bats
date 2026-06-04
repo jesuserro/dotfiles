@@ -48,6 +48,17 @@ bats_require_minimum_version 1.5.0
 	[[ "${output}" == *"NO_INDEX"* ]]
 }
 
+@test "gitnexus-status recommends the canonical human refresh command" {
+	local repo="${TEST_TEMP_DIR}/canonical-refresh"
+	local broken_hint="gnx-analyze-here --"" --skip-agents-md"
+	init_git_repo "$repo"
+
+	run env DOTFILES_DIR="${DOTFILES_DIR}" bash -c "cd '${repo}' && bash '${SCRIPT}'"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"gnx-analyze-here --skip-agents-md"* ]]
+	[[ "${output}" != *"${broken_hint}"* ]]
+}
+
 @test "gitnexus-status reports STALE when lastCommit differs from HEAD" {
 	local repo="${TEST_TEMP_DIR}/stale"
 	init_git_repo "$repo"

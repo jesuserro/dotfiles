@@ -1,6 +1,6 @@
 # File Tree: dotfiles
 
-**Generated:** 2026-05-31 13:11:54
+**Generated:** 2026-06-04 17:59:11
 **Root Path:** `/home/jesus/dotfiles`
 
 ```
@@ -638,7 +638,6 @@
 │   │   │   ├── 📄 .keep
 │   │   │   └── 📝 README.md
 │   │   └── 📁 skills
-│   │       ├── 📁 _test_symlink_governance -> /tmp/tmp.6PbMhdD4II
 │   │       ├── 📁 diagrams
 │   │       │   ├── 📁 conventions
 │   │       │   │   └── 📁 excalidraw-architecture

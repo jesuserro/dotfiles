@@ -181,13 +181,13 @@ EOF
 		NPM_CONFIG_PREFIX= \
 		GNX_ALIAS_TRACE="$trace" \
 		PATH="$shadow_bin:$npm_prefix/bin" \
-		"$zsh_bin" -c "cd '$repo' && source '$DOTFILES_DIR/aliases' && gnx-analyze-here"
+		"$zsh_bin" -c "cd '$repo' && source '$DOTFILES_DIR/aliases' && gnx-analyze-here --skip-agents-md"
 
 	[[ "$status" -eq 0 ]] || {
 		echo "$output" >&2
 		false
 	}
-	grep -q '^gitnexus:analyze$' "$trace"
+	grep -q '^gitnexus:analyze --skip-agents-md$' "$trace"
 	grep -q 'gitnexus-node:.*/node-runtime\.[^:]*\/node:v24.15.0' "$trace"
 	assert_file_not_contains "$trace" 'gitnexus-node:.*v20.18.2'
 }
