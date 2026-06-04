@@ -280,6 +280,7 @@
 │   ├── 📝 branch_feature_19-resolver-shellchecks.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_20-refactoring-chezmoi.md
+│   ├── 📝 branch_feature_22-adding-git-hooks.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
 │   ├── 📝 branch_feature_5-adding-mcps-globales-especializados.md
