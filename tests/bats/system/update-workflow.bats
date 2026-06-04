@@ -1374,15 +1374,28 @@ PY
 
 @test "PowerShell Windows logging keeps WSL and WinGet encoding contracts explicit" {
 	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
-	grep -q 'Run-NativeLogged "WinGet packages".*"utf8"' "$ps1"
+	grep -q 'Run-NativeLiveLogged "WinGet packages".*"utf8"' "$ps1"
 	grep -q '\$winGetListName = "WinGet packages to upgrade"' "$ps1"
 	grep -q 'Run-NativeLogged \$winGetListName.*"windows-winget-list.log".*"utf8" \$false \$false' "$ps1"
 	grep -q 'Run-NativeLogged "WSL status".*"unicode"' "$ps1"
 	grep -q 'Run-NativeLogged "WSL update".*"unicode"' "$ps1"
 	grep -q -- '--disable-interactivity' "$ps1"
-	grep -q 'Full WinGet upgrade log:' "$ps1"
+	grep -q 'Updating \$winGetPackageCount packages with WinGet\.\.\.' "$ps1"
+	grep -q 'Write-Host "Full log: \$log"' "$ps1"
 	grep -q 'Get-WinGetConsoleText' "$ps1"
+	grep -q 'Get-WinGetUpgradeCount' "$ps1"
 	grep -q 'Write-WinGetListStatus \$winGetListName' "$ps1"
+}
+
+@test "PowerShell WinGet upgrade runner streams through Tee-Object and captures native exit code immediately" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	grep -q 'function Run-NativeLiveLogged' "$ps1"
+	grep -q 'Tee-Object -FilePath \$log' "$ps1"
+	grep -q 'Tee-Object -FilePath \$log.*| Out-Host' "$ps1"
+	grep -Fq '$script:LiveRunCode = $LASTEXITCODE' "$ps1"
+	grep -Fq '[System.IO.File]::WriteAllText($log, $content, $encoding)' "$ps1"
+	run grep -q 'Run-NativeLogged "WinGet packages"' "$ps1"
+	[[ "$status" -ne 0 ]]
 }
 
 @test "PowerShell native runner passes arguments to child processes" {
@@ -1417,6 +1430,38 @@ PY
 	[[ "$output" != *$'\n\\\n'* ]]
 	[[ "$output" != *$'\n|\n'* ]]
 	[[ "$output" != *$'\n/\n'* ]]
+}
+
+@test "PowerShell live native runner writes output before child exits and preserves WARN result" {
+	command -v powershell.exe >/dev/null 2>&1 || skip "requires powershell.exe accessible from WSL (Windows interop)"
+	command -v wslpath >/dev/null 2>&1 || skip "requires wslpath to pass repo paths to powershell.exe"
+	run powershell.exe -NoProfile -Command 'exit 0'
+	if [[ "$status" -ne 0 ]]; then
+		skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+	fi
+
+	local run_dir="${TEST_TEMP_DIR}/live-run"
+	local output_file="${TEST_TEMP_DIR}/live-output.txt"
+	powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "${DOTFILES_DIR}/scripts/update/update-windows.ps1")" -RunDir "$(wslpath -w "$run_dir")" -SelfTestLiveLogging >"$output_file" 2>&1 &
+	local powershell_pid=$!
+	local saw_first_line=0
+	for _ in $(seq 1 50); do
+		if grep -q 'live-first' "$output_file" 2>/dev/null; then
+			saw_first_line=1
+			break
+		fi
+		sleep 0.1
+	done
+	[[ "$saw_first_line" -eq 1 ]]
+	kill -0 "$powershell_pid"
+	wait "$powershell_pid"
+	grep -q 'Updating 2 packages with WinGet\.\.\.' "$output_file"
+	grep -q 'Full log: .*native-live.log' "$output_file"
+	grep -q 'WARN Live logging self-test exit 23' "$output_file"
+	grep -q 'live-second' "$output_file"
+	grep -q 'live-first' "${run_dir}/logs/native-live.log"
+	grep -q 'live-second' "${run_dir}/logs/native-live.log"
+	grep -q $'WARN\tWindows\tLive logging self-test\texit 23' "${run_dir}/windows-results.tsv"
 }
 
 @test "PowerShell native argument serializer avoids reserved Args parameter" {

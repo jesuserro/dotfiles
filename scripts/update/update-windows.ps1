@@ -1,12 +1,13 @@
 param(
   [string]$RunDir = "",
   [switch]$SelfTestNativeArguments,
-  [switch]$SelfTestWinGetConsoleText
+  [switch]$SelfTestWinGetConsoleText,
+  [switch]$SelfTestLiveLogging
 )
 
 $ErrorActionPreference = "Continue"
 if ([string]::IsNullOrWhiteSpace($RunDir)) {
-  if ($SelfTestNativeArguments -or $SelfTestWinGetConsoleText) {
+  if ($SelfTestNativeArguments -or $SelfTestWinGetConsoleText -or $SelfTestLiveLogging) {
     $RunDir = Join-Path ([System.IO.Path]::GetTempPath()) ("dotfiles-update-native-args-" + [System.Guid]::NewGuid().ToString("N"))
   } else {
     throw "RunDir is required"
@@ -121,6 +122,70 @@ function Run-NativeLogged {
   $script:LastRunElapsed = $elapsed
 }
 
+function Run-NativeLiveLogged {
+  param(
+    [string]$Name,
+    [string]$LogName,
+    [string]$FileName,
+    [string[]]$NativeArguments,
+    [string]$OutputEncoding = "utf8",
+    [string]$StartMessage = ""
+  )
+  $log = Join-Path $LogDir $LogName
+  $start = Get-Date
+  $encoding = Get-NativeEncoding $OutputEncoding
+  $argumentString = Join-NativeArguments -NativeArguments $NativeArguments
+  Write-Host ""
+  Write-Host "==> $Name"
+  if (-not [string]::IsNullOrWhiteSpace($StartMessage)) {
+    Write-Host $StartMessage
+  }
+  Write-Host "Full log: $log"
+  if (($NativeArguments.Count -gt 0) -and [string]::IsNullOrWhiteSpace($argumentString)) {
+    $message = "native arguments were not serialized; refusing to run $FileName without expected arguments"
+    [System.IO.File]::WriteAllText($log, $message, [System.Text.UTF8Encoding]::new($false))
+    Write-Host $message
+    Add-Result "WARN" $Name "$message; log: $log"
+    $script:LastRunLog = $log
+    $script:LastRunCode = $null
+    $script:LastRunContent = $message
+    $script:LastRunElapsed = 0
+    return
+  }
+
+  $script:LiveRunCode = $null
+  try {
+    & {
+      & $FileName @NativeArguments 2>&1
+      # Capture before downstream cmdlets can change the native exit code.
+      $script:LiveRunCode = $LASTEXITCODE
+    } | Tee-Object -FilePath $log -ErrorAction Stop | Out-Host
+    $code = $script:LiveRunCode
+    $content = if (Test-Path $log) { Get-Content -Path $log -Raw -ErrorAction SilentlyContinue } else { "" }
+    $content = $content -replace "`r`n", "`n" -replace "`r", "`n"
+    [System.IO.File]::WriteAllText($log, $content, $encoding)
+    $elapsed = [int]((Get-Date) - $start).TotalSeconds
+    if ($code -eq 0) {
+      Add-Result "OK" $Name "completed in ${elapsed}s; log: $log"
+      Write-Host "OK $Name (${elapsed}s)"
+    } else {
+      Add-Result "WARN" $Name "exit $code in ${elapsed}s; log: $log"
+      Write-Host "WARN $Name exit $code (${elapsed}s); log: $log"
+    }
+  } catch {
+    $elapsed = [int]((Get-Date) - $start).TotalSeconds
+    [System.IO.File]::WriteAllText($log, $_.Exception.ToString(), [System.Text.UTF8Encoding]::new($false))
+    Add-Result "WARN" $Name "exception in ${elapsed}s: $($_.Exception.Message); log: $log"
+    Write-Host "WARN $Name exception in ${elapsed}s: $($_.Exception.Message); log: $log"
+    $code = $null
+    $content = $_.Exception.ToString()
+  }
+  $script:LastRunLog = $log
+  $script:LastRunCode = $code
+  $script:LastRunContent = if ($null -eq $content) { "" } else { $content }
+  $script:LastRunElapsed = $elapsed
+}
+
 function Get-WinGetConsoleText {
   param([string]$Text)
   if ([string]::IsNullOrWhiteSpace($Text)) { return "" }
@@ -137,6 +202,33 @@ function Get-WinGetConsoleText {
     $lines.Add($line)
   }
   return ($lines -join [Environment]::NewLine)
+}
+
+function Get-WinGetUpgradeCount {
+  param([string]$Text)
+  if ([string]::IsNullOrWhiteSpace($Text)) { return 0 }
+
+  $normalized = $Text -replace "`r", "`n"
+  foreach ($rawLine in ($normalized -split "`n")) {
+    if ($rawLine -match '(?i)^\s*(\d+)\s+(?:upgrades?|actualizaci[oó]n(?:es)?)\s+(?:available|disponible(?:s)?)') {
+      return [int]$Matches[1]
+    }
+  }
+
+  $afterSeparator = $false
+  $count = 0
+  foreach ($rawLine in ($normalized -split "`n")) {
+    $line = $rawLine.Trim()
+    if ($line -match '^-{3,}$') {
+      $afterSeparator = $true
+      continue
+    }
+    if (-not $afterSeparator) { continue }
+    if ([string]::IsNullOrWhiteSpace($line)) { continue }
+    if ($line -match '(?i)^(No installed package found|No se encontr[oó]|No hay actualizaciones)') { break }
+    $count++
+  }
+  return $count
 }
 
 function Write-WinGetListStatus {
@@ -218,13 +310,30 @@ Pandoc           John.Pandoc     1.0     2.0       winget
 -
 "@
   $filtered = Get-WinGetConsoleText $sample
+  $englishCount = Get-WinGetUpgradeCount "2 upgrades available."
+  $spanishCount = Get-WinGetUpgradeCount "3 actualizaciones disponibles."
   Write-Host $filtered
-  if (($filtered -match '(?m)^\s*[-\\|/]\s*$') -or ($filtered -notlike "*Pandoc*")) {
+  if (($filtered -match '(?m)^\s*[-\\|/]\s*$') -or ($filtered -notlike "*Pandoc*") -or ($englishCount -ne 2) -or ($spanishCount -ne 3)) {
     Add-Result "WARN" "WinGet console text self-test" "spinner filtering failed"
     exit 65
   }
   Add-Result "OK" "WinGet console text self-test" "spinner filtering passed"
   Write-Host "OK WinGet console text self-test passed"
+  exit 0
+}
+
+if ($SelfTestLiveLogging) {
+  Write-Host "Dotfiles Windows update live logging self-test"
+  Write-Host "Run directory: $RunDir"
+  $emitScript = Join-Path $RunDir "emit-live-output.ps1"
+  [System.IO.File]::WriteAllText($emitScript, 'Write-Output "live-first"; Start-Sleep -Seconds 2; Write-Output "live-second"; exit 23', [System.Text.UTF8Encoding]::new($false))
+  Run-NativeLiveLogged "Live logging self-test" "native-live.log" "powershell.exe" @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $emitScript) "utf8" "Updating 2 packages with WinGet..."
+  if (($script:LastRunCode -ne 23) -or ($script:LastRunContent -notlike "*live-first*") -or ($script:LastRunContent -notlike "*live-second*")) {
+    Add-Result "WARN" "Live logging self-test verification" "live output or exit code was not preserved"
+    Write-Host "WARN live logging self-test failed"
+    exit 66
+  }
+  Write-Host "OK live logging self-test passed"
   exit 0
 }
 
@@ -248,8 +357,8 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
   Write-WinGetListStatus $winGetListName
   Write-Host "Full WinGet package list log: $script:LastRunLog"
 
-  Run-NativeLogged "WinGet packages" "windows-winget-upgrade.log" "winget" @("upgrade", "--all", "--include-unknown", "--silent", "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity") "utf8" $false
-  Write-Host "Full WinGet upgrade log: $script:LastRunLog"
+  $winGetPackageCount = Get-WinGetUpgradeCount $packageTable
+  Run-NativeLiveLogged "WinGet packages" "windows-winget-upgrade.log" "winget" @("upgrade", "--all", "--include-unknown", "--silent", "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity") "utf8" "Updating $winGetPackageCount packages with WinGet..."
   Add-WinGetPackageResults $script:LastRunLog
 } else {
   Add-Result "WARN" "WinGet" "winget not found on Windows PATH"
