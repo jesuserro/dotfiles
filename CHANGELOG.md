@@ -2,65 +2,60 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.05.31_1312] - 2026-05-31
+## [v2026.06.04_2024] - 2026-06-04
 
 ## Changes
-### Added
-- 2026-05-31 12:03 [37769f3](https://github.com/jesuserro/dotfiles/commit/37769f3) feat(gitnexus): enhance alias functionality and documentation (Cursor Agent)
-  - Removed direct alias for `gnx-serve` to ensure it utilizes the `_gnx_with_managed_node` helper for managed Node execution.
-  - Introduced new helper functions to streamline the execution of GitNexus commands with managed Node, improving compatibility and user experience.
-  - Updated documentation to reflect changes in command usage and the importance of managed Node overlays for various GitNexus operations.
-- 2026-05-31 11:59 [8990902](https://github.com/jesuserro/dotfiles/commit/8990902) feat(gitnexus): add gitnexus-status target and update documentation (Cursor Agent)
-  - Introduced a new Makefile target `gitnexus-status` for checking read-only index, lock, and Node status for agents, ensuring compliance with operational policies.
-  - Updated multiple skill documentation files to reflect the new command, emphasizing the importance of human approval for mutating operations.
-  - Enhanced the MCP_QUICKREF.md to include the new `gitnexus-status` command, providing clearer guidance for users on GitNexus operations.
-- 2026-05-31 11:52 [3e12425](https://github.com/jesuserro/dotfiles/commit/3e12425) feat(mcp): introduce mcp-launcher-contract-check for launcher validation (Cursor Agent)
-  - Added a new script `mcp-launcher-contract-check.sh` to validate the synchronization between launcher binaries and their corresponding templates, ensuring strict compliance for git, gitnexus, and postgres launchers.
-  - Updated `install.mk` to include the new Makefile target `mcp-launcher-contract-check`, allowing users to run the validation easily.
-  - Enhanced documentation in CHEZMOI.md and MCP_QUICKREF.md to explain the new contract check and its usage.
-- 2026-05-31 11:46 [f8812f7](https://github.com/jesuserro/dotfiles/commit/f8812f7) feat(codex): update configuration management and enhance documentation (Cursor Agent)
-  - Added new Codex agent preferences to `.chezmoi.toml`, allowing for model and reasoning effort customization.
-  - Renamed the Codex configuration template from `config.toml.tmpl` to `private_config.toml.tmpl` to reflect its private nature and ensure proper permissions on apply.
-  - Updated documentation in CHEZMOI.md and GUIA_MCP_AI.md to clarify the governance of Codex configurations and the importance of manual application.
-- 2026-05-31 11:36 [33f6f13](https://github.com/jesuserro/dotfiles/commit/33f6f13) feat(install): add chezmoi-drift-report target and enhance documentation (Cursor Agent)
-  - Introduced a new Makefile target `chezmoi-drift-report` for generating a read-only report of chezmoi status and launcher diffs without applying changes.
-  - Updated documentation in CHEZMOI.md to explain how to interpret `chezmoi status` and the significance of drift, including examples of read-only commands.
-  - Enhanced the tests to include checks for the new drift report functionality, ensuring proper validation of the chezmoi launchers.
-- 2026-05-31 11:29 [f8ab903](https://github.com/jesuserro/dotfiles/commit/f8ab903) feat(scripts): enhance skills validation and cleanup processes (Cursor Agent)
-  - Introduced functions to check for symlinks and the presence of the 'mattpocock' vendor directory in the skills structure, ensuring compliance with governance standards.
-  - Updated the cleanup process for Matt symlinks to utilize a more robust method for finding and removing links.
-  - Enhanced the install-agent-skills script to assert the cleanliness of the canonical skills directory post-installation.
+### Fixed
+- 2026-06-04 20:13 [60a6d61](https://github.com/jesuserro/dotfiles/commit/60a6d61) fix(gitnexus): update error message for GitNexus installation path (Cursor Agent)
+  - Modified the error message in the GitNexus runtime script to dynamically reference the DOTFILES_DIR variable, improving clarity on the installation command.
+  - Adjusted the test to ensure it correctly matches the updated command format in the output, enhancing the robustness of the testing suite.
+- 2026-06-04 20:02 [4d9158e](https://github.com/jesuserro/dotfiles/commit/4d9158e) fix(gitnexus): improve error messaging and command handling in gnx-analyze-here (Cursor Agent)
+  - Updated the error message for the gnx-analyze-here command to provide clearer guidance when executed outside a Git repository.
+  - Enhanced command handling to correctly process optional leading "--" before GitNexus flags, ensuring proper functionality during analysis.
+  - Added tests to validate the new error messaging and command behavior, improving overall robustness of the gnx-analyze-here functionality.
+- 2026-06-04 19:31 [1d289b2](https://github.com/jesuserro/dotfiles/commit/1d289b2) fix(gitnexus): update index refresh instructions and skill file paths (Cursor Agent)
+  - Revised instructions for refreshing the GitNexus index to use `make gitnexus-status` instead of `npx gitnexus analyze`.
+  - Updated skill file paths in AGENTS.md and CLAUDE.md to reflect the new directory structure under `ai/assets/skills/gitnexus`.
+  - Modified STRUCTURE.md generation to indicate it is produced by `scripts/treegen.sh` instead of a timestamp.
+- 2026-06-04 17:59 [2d6907f](https://github.com/jesuserro/dotfiles/commit/2d6907f) fix(gitnexus): standardize index refresh command across documentation (Cursor Agent)
+  - Updated all instances of the `gnx-analyze-here` command to remove the redundant `--` before the `--skip-agents-md` flag, ensuring consistency in documentation.
+  - Revised related documentation files including GITNEXUS_OPERATIONAL_POLICY.md, MCP_QUICKREF.md, and OPERATIONS_CHEATSHEET.md to reflect the updated command format.
+  - Enhanced tests to validate the changes and ensure accurate representation of the canonical refresh procedure.
+- 2026-06-04 17:32 [0827419](https://github.com/jesuserro/dotfiles/commit/0827419) fix(ci): restore GitNexus contracts and lint drift report (Jesús Erro)
 
 ### Documentation
-- 2026-05-31 13:12 [85ffb69](https://github.com/jesuserro/dotfiles/commit/85ffb69) docs(releases): added changelog (Cursor Agent)
-- 2026-05-31 13:00 [dd32de4](https://github.com/jesuserro/dotfiles/commit/dd32de4) docs(gitnexus): enhance index refresh procedure and documentation (Cursor Agent)
-  - Updated the `gnx-analyze-here` command to include a `--skip-agents-md` flag for refreshing the index without modifying `AGENTS.md` and `CLAUDE.md` blocks, streamlining the process for human users.
-  - Revised `GITNEXUS_OPERATIONAL_POLICY.md` and `MCP_QUICKREF.md` to clarify the conditions under which humans should refresh the index and the implications of using the new flag.
-  - Enhanced the `OPERATIONS_CHEATSHEET.md` to provide a canonical procedure for index refresh, ensuring users follow best practices.
-- 2026-05-31 12:52 [f26b369](https://github.com/jesuserro/dotfiles/commit/f26b369) docs(cheatsheet, tests): enhance update-ai-skills documentation and testing (Cursor Agent)
-  - Updated OPERATIONS_CHEATSHEET.md to include new commands for `make update-ai-skills`, clarifying its usage for refreshing the external skills catalog and the DRY_RUN option for previews.
-  - Revised the Makefile's help section to mention `make update-ai-skills` as a human opt-in command.
-  - Added tests to ensure the documentation accurately reflects the new command and its implications for users, including checks for the DRY_RUN preview functionality.
-- 2026-05-31 12:45 [7dd0538](https://github.com/jesuserro/dotfiles/commit/7dd0538) docs(CHEZMOI, OPERATIONS): clarify script R status and enhance drift reporting (Cursor Agent)
-  - Updated CHEZMOI.md to clarify that `R` in chezmoi status indicates scripts that will run on apply, not removed files, and provided examples of normalized script names.
-  - Revised OPERATIONS.md and OPERATIONS_CHEATSHEET.md to reflect the updated understanding of script R entries, emphasizing the importance of not using global apply to clear these lines.
-  - Enhanced the chezmoi-drift-report.sh script to document the meaning of R entries and provide guidance on auditing scripts explicitly.
-- 2026-05-31 12:32 [db17cf9](https://github.com/jesuserro/dotfiles/commit/db17cf9) docs(README, cheatsheet): update help command and enhance operational documentation (Cursor Agent)
-  - Added a new entry to the README for the `make help` command, detailing targets categorized by risk (read-only vs human/mutating).
-  - Updated the OPERATIONS_CHEATSHEET.md to include a description of the `make help` command, providing clearer guidance on CLI targets.
-  - Revised the Makefile's help section to improve clarity and organization of available commands, distinguishing between safe and human/mutating operations.
-- 2026-05-31 12:17 [c4b280a](https://github.com/jesuserro/dotfiles/commit/c4b280a) docs(gitnexus): update operational instructions and enhance index refresh process (Cursor Agent)
-  - Revised instructions in AGENTS.md and CLAUDE.md to replace `npx gitnexus analyze` with `make gitnexus-status`, emphasizing the need for human approval before refreshing the index.
-  - Added a new section in GITNEXUS_OPERATIONAL_POLICY.md detailing the procedure for refreshing the index without regenerating agent blocks, including a warning about potential overwrites.
-  - Updated tests in the Makefile to include checks for the new operational guidelines regarding GitNexus blocks.
-- 2026-05-31 12:13 [3d2fe92](https://github.com/jesuserro/dotfiles/commit/3d2fe92) docs(guide): enhance MCP operational instructions and clarify apply processes (Cursor Agent)
-  - Updated GUIA_MCP_AI.md to emphasize the importance of reviewing drift before applying changes, introducing specific commands for drift reporting and selective application.
-  - Revised instructions for applying MCP configurations and launchers, ensuring users understand the need for careful review of diffs.
-  - Enhanced OPERATIONS.md to reflect the new workflow for daily operations, highlighting the significance of applying changes in a controlled manner.
-- 2026-05-31 12:10 [c2d7772](https://github.com/jesuserro/dotfiles/commit/c2d7772) docs(cheatsheet): update operational documentation and add cheatsheet reference (Cursor Agent)
-  - Enhanced the README and OPERATIONS.md to include a new operational cheatsheet for daily tasks, Chezmoi drift, and agent limits.
-  - Updated MCP_QUICKREF.md to reference the new cheatsheet, providing clearer guidance for users.
-  - Revised the UPDATE.md to emphasize the importance of checking Chezmoi drift before updates.
+- 2026-06-04 20:23 [1583fde](https://github.com/jesuserro/dotfiles/commit/1583fde) docs(releases): add feature changelog for git hooks integration (Cursor Agent)
+  - Created a new changelog file for the feature branch `feature/22-adding-git-hooks`, summarizing 8 commits related to GitNexus improvements, error handling, and documentation updates.
+  - Highlights include enhancements to error messaging, command handling, and the introduction of a new Git hooks installation process.
+  - Integrated changes into the `dev` branch on 2026-06-04.
+- 2026-06-04 18:51 [686f768](https://github.com/jesuserro/dotfiles/commit/686f768) docs(structure): update STRUCTURE.md generation timestamp and maintain file tree structure (Cursor Agent)
+  - Updated the generated timestamp in STRUCTURE.md to reflect the latest generation time.
+  - Ensured the file tree structure remains consistent and accurate for better clarity and navigation.
+- 2026-06-01 08:45 [23e577c](https://github.com/jesuserro/dotfiles/commit/23e577c) docs(gitnexus): update index information and skill file paths (jesus)
+  - Increased symbol and relationship counts in AGENTS.md and CLAUDE.md to reflect the latest indexing.
+  - Revised instructions for refreshing the index, replacing `make gitnexus-status` with `npx gitnexus analyze`.
+  - Updated skill file paths to use the `.claude` directory for consistency across documentation.
+
+### Refactored
+- 2026-06-04 19:54 [cf38e7d](https://github.com/jesuserro/dotfiles/commit/cf38e7d) refactor(powershell): enhance Windows update script with live logging and upgrade count functionality (Cursor Agent)
+  - Updated the PowerShell script to implement live logging during the WinGet upgrade process, capturing real-time output and exit codes.
+  - Introduced a new function, `Run-NativeLiveLogged`, to facilitate live logging and ensure accurate logging of upgrade actions.
+  - Added a method to count available upgrades, improving the feedback provided during the update process.
+- 2026-06-04 19:05 [2ffdaa8](https://github.com/jesuserro/dotfiles/commit/2ffdaa8) refactor(gitnexus): enhance post-commit refresh process and update documentation (Cursor Agent)
+  - Updated the post-commit hook to use `--force --skip-agents-md` for refreshing the GitNexus index, ensuring it runs even when MCP/lock is active.
+  - Added a timeout mechanism for the refresh process, with appropriate warnings for timeouts and failures.
+  - Revised documentation in GITNEXUS_OPERATIONAL_POLICY.md and INSTALL.md to reflect the new refresh command and its behavior.
+- 2026-06-04 18:49 [c85453e](https://github.com/jesuserro/dotfiles/commit/c85453e) refactor(gitnexus): streamline GitNexus commands and enhance documentation (Cursor Agent)
+  - Removed deprecated functions from the aliases file, replacing them with direct calls to `gitnexus` commands for improved clarity and maintainability.
+  - Introduced a new Git hooks installation process via `make install-git-hooks`, allowing for local configuration of hooks without affecting global settings.
+  - Updated documentation across multiple files, including INSTALL.md and GITNEXUS_OPERATIONAL_POLICY.md, to reflect the new Git hooks setup and command usage.
+
+### Tests
+- 2026-06-04 19:07 [e73500f](https://github.com/jesuserro/dotfiles/commit/e73500f) test: trigger hooks (Jesús Erro)
+
+### Chores
+- 2026-06-01 08:37 [e663918](https://github.com/jesuserro/dotfiles/commit/e663918) chore(assets): remove unused symlink governance file (jesus)
+  - Deleted the `_test_symlink_governance` file as it is no longer needed, streamlining the asset directory.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
