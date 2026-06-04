@@ -49,7 +49,7 @@ _gnx_resolve_gitnexus_bin() {
 	fi
 
 	echo "GitNexus no esta instalado" >&2
-	echo "Ejecuta: ~/dotfiles/scripts/install-gitnexus.sh" >&2
+	echo "Ejecuta: ${DOTFILES_DIR:-$HOME/dotfiles}/scripts/install-gitnexus.sh" >&2
 	return 1
 }
 

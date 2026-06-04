@@ -280,7 +280,7 @@ EOF
 		bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 
 	[[ "$status" -eq 0 ]]
-	grep -q '^analyze --force --skip-agents-md:' "$trace"
+	grep -q '^analyze \. --force --skip-agents-md:' "$trace"
 	grep -q 'node-runtime\..*/node:v24.16.0' "$trace"
 }
 
