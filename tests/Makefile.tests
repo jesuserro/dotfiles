@@ -18,6 +18,7 @@ SHELLCHECK_EXCLUDED_SCRIPTS := $(ZSH_SCRIPTS)
 SHELL_SCRIPTS_ALL := $(shell find $(DOTFILES_DIR) -name '*.sh' -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/')
 SHELL_SCRIPTS := $(filter-out $(SHELLCHECK_EXCLUDED_SCRIPTS),$(SHELL_SCRIPTS_ALL))
 SHELL_LAUNCHERS := $(shell find $(DOTFILES_DIR)/bin -type f \( -name 'mcp-*-launcher' -o -name 'tmux-dotfiles' \) 2>/dev/null || true)
+GIT_HOOKS := $(shell find $(DOTFILES_DIR)/.githooks -type f 2>/dev/null || true)
 PROMPT_LAUNCHERS := $(shell find $(DOTFILES_DIR)/local/bin -name 'prompt-*' -type f 2>/dev/null || true)
 AI_PROMPT_CLI := $(wildcard $(DOTFILES_DIR)/local/bin/ai-prompt)
 SHELL_TESTS := $(shell find $(TESTS_DIR) -name '*.bats' -type f | grep -v '/\.git/')
@@ -26,7 +27,7 @@ GITHUB_WORKFLOWS := $(shell find $(DOTFILES_DIR)/.github/workflows \( -name '*.y
 OSV_INPUTS := $(shell find $(DOTFILES_DIR) \( -name 'package-lock.json' -o -name 'pnpm-lock.yaml' -o -name 'yarn.lock' -o -name 'requirements*.txt' -o -name 'pyproject.toml' -o -name 'uv.lock' -o -name 'go.mod' -o -name 'Cargo.lock' -o -name 'composer.lock' \) -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/')
 
 # All shell files to lint
-SHELL_FILES := $(SHELL_SCRIPTS) $(SHELL_LAUNCHERS) $(PROMPT_LAUNCHERS) $(AI_PROMPT_CLI) $(SHELL_TESTS)
+SHELL_FILES := $(SHELL_SCRIPTS) $(SHELL_LAUNCHERS) $(GIT_HOOKS) $(PROMPT_LAUNCHERS) $(AI_PROMPT_CLI) $(SHELL_TESTS)
 
 # bats tests
 BATS_DIR := $(TESTS_DIR)/bats
@@ -44,7 +45,7 @@ YELLOW := \033[1;33m
 BLUE := \033[0;34m
 NC := \033[0m
 
-.PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts bats-skills bats-tmux bats-gitnexus
+.PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts bats-skills bats-tmux bats-gitnexus bats-git-hooks
 .PHONY: test-ci test-bats-ci bats-docs test-commands generate-commands validate-commands materialize-commands validate-skills-structure
 .PHONY: deps-check deps-install deps-actions bats-system bats-zsh bats-gitnexus test-deps-check
 .PHONY: quality-check security-check agent-validate agent-validate-changed ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
@@ -79,6 +80,7 @@ help:
 	@echo "  make deps-install                HUMAN: install APT dependencies (sudo)"
 	@echo "  make install-agent-tools         HUMAN: install non-APT validation CLIs"
 	@echo "  make install-mattpocock-skills   HUMAN unless DRY_RUN=1; external skills catalog"
+	@echo "  make install-git-hooks           HUMAN: configure local core.hooksPath=.githooks"
 	@echo "  make update-ai-skills            HUMAN: opt-in external skills catalog; use DRY_RUN=1 for preview"
 	@echo "  make ai-mcp-generate APPLY=1     HUMAN: rewrites MCP templates in repo"
 	@echo "  chezmoi apply                    HUMAN: not normal daily flow; see docs/CHEZMOI.md"
@@ -337,11 +339,11 @@ fmt-shell:
 # Bats tests (human-readable output)
 # ============================================
 
-test-bats: test-deps-check bats-helpers bats-mcp bats-chezmoi bats-skills bats-commands bats-git-ai bats-prompts bats-system
+test-bats: test-deps-check bats-helpers bats-mcp bats-chezmoi bats-skills bats-commands bats-git-ai bats-git-hooks bats-prompts bats-system
 	@echo ""
 	@echo "$(GREEN)==>$NC Bats tests passed"
 
-test-bats-fast: test-deps-check bats-helpers bats-mcp bats-skills bats-commands bats-git-ai bats-prompts bats-tmux bats-system
+test-bats-fast: test-deps-check bats-helpers bats-mcp bats-skills bats-commands bats-git-ai bats-git-hooks bats-prompts bats-tmux bats-system
 	@echo ""
 	@echo "$(GREEN)==>$NC Fast bats tests passed"
 
@@ -435,6 +437,10 @@ bats-gitnexus:
 	@echo "$(BLUE)==>$NC Running GitNexus alias tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/gitnexus_aliases.bats)
 
+bats-git-hooks:
+	@echo "$(BLUE)==>$NC Running repository Git hook tests..."
+	@$(call run_bats,$(BATS_DIR)/git-hooks/hooks.bats)
+
 bats-docs:
 	@echo "$(BLUE)==>$NC Running documentation contract tests..."
 	@$(call run_bats,$(BATS_DIR)/system/update-governance.bats)
@@ -462,7 +468,7 @@ test-ci: test-lint test-bats-ci test-chezmoi
 	@echo ""
 	@echo "$(GREEN)==>$NC CI tests completed"
 
-test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance bats-chezmoi bats-skills bats-gitnexus bats-docs
+test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance bats-chezmoi bats-skills bats-gitnexus bats-git-hooks bats-docs
 
 # ============================================
 # Combined tests

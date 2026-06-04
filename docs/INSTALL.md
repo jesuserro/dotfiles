@@ -44,6 +44,7 @@ make install-zsh-stack   # Oh My Zsh + Powerlevel10k + plugins (no toca ~/.zshrc
 # zoxide (salto de directorios, reemplaza plugin OMZ z): make deps-install DEPS_INSTALL_ARGS=--include-optional
 make install-fonts   # MesloLGS NF para Powerlevel10k en Linux/WSL (no configura Windows Terminal)
 make install-mattpocock-skills # fallback externo opt-in: catálogo Matt completo
+make install-git-hooks # hooks Git locales de este checkout; no forma parte de make install/update
 
 # 5. Configurar rutas AI por máquina (vault Obsidian, workspace Excalidraw)
 #    Editar ~/.config/chezmoi/chezmoi.toml (mínimo: obsidian_vault_path).
@@ -83,6 +84,19 @@ make ai-cursor-check
 > MesloLGS NF se verifica como `WARN` si falta; instálala con
 > `make install-fonts`. Si los iconos se ven mal en Windows Terminal o VS Code,
 > selecciona `MesloLGS NF` como fuente en la aplicación host.
+
+### Hooks Git locales (opt-in)
+
+`make install-git-hooks` configura únicamente este checkout con
+`core.hooksPath=.githooks`. El pre-commit ejecuta `treegen` sin auto-stage y
+aborta si actualiza `STRUCTURE.md`; revisa el cambio, ejecuta
+`git add STRUCTURE.md` y repite el commit. El post-commit refresca GitNexus con
+`--force --skip-agents-md`, incluso si detecta MCP/lock activo; tiene timeout de
+30 segundos, es best-effort y nunca invalida el commit. Si falla o expira,
+ejecuta manualmente `gitnexus analyze --force .`.
+
+Escapes puntuales: `DOTFILES_SKIP_HOOKS=1`, `DOTFILES_SKIP_TREEGEN=1` y
+`DOTFILES_SKIP_GITNEXUS=1`.
 
 ---
 

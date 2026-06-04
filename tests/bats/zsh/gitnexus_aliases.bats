@@ -4,6 +4,7 @@ setup() {
 	load '../helpers/common'
 	DOTFILES_DIR="$(cd "${BATS_TEST_DIRNAME}/../../.." && pwd)"
 	ALIASES_FILE="${DOTFILES_DIR}/aliases"
+	RUNTIME_FILE="${DOTFILES_DIR}/scripts/lib/gitnexus_runtime.sh"
 	setup_temp_dir
 }
 
@@ -74,9 +75,10 @@ EOF
 	chmod +x "$path"
 }
 
-@test "_gnx_with_managed_node helper exists in aliases" {
-	grep -q '_gnx_with_managed_node()' "$ALIASES_FILE"
-	grep -q '_gnx_with_managed_node_impl()' "$ALIASES_FILE"
+@test "aliases source the shared GitNexus runtime" {
+	grep -q 'scripts/lib/gitnexus_runtime.sh' "$ALIASES_FILE"
+	grep -q '_gnx_with_managed_node()' "$RUNTIME_FILE"
+	grep -q '_gnx_with_managed_node_impl()' "$RUNTIME_FILE"
 }
 
 @test "gnx-serve is not a direct alias to gitnexus serve" {
@@ -86,7 +88,7 @@ EOF
 
 @test "gnx-serve uses _gnx_with_managed_node serve" {
 	grep -q 'gnx-serve()' "$ALIASES_FILE"
-	grep -q '_gnx_with_managed_node serve' "$ALIASES_FILE"
+	grep -q '_gnx_with_managed_node serve' "$RUNTIME_FILE"
 }
 
 @test "gnx-wiki-here does not call gitnexus status or gitnexus wiki directly" {
@@ -99,8 +101,8 @@ EOF
 }
 
 @test "gnx-wiki-here uses managed node for status and wiki" {
-	grep -q '_gnx_with_managed_node status' "$ALIASES_FILE"
-	grep -q '_gnx_with_managed_node wiki' "$ALIASES_FILE"
+	grep -q '_gnx_with_managed_node status' "$RUNTIME_FILE"
+	grep -q '_gnx_with_managed_node wiki' "$RUNTIME_FILE"
 }
 
 @test "gnx-map does not call gitnexus serve directly" {
@@ -131,7 +133,8 @@ EOF
 	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
 	write_fake_node "$managed" "v24.15.0" "managed"
 	write_fake_gitnexus "${npm_prefix}/bin/gitnexus"
-	mkdir -p "$fake_home" "$repo/.git"
+	mkdir -p "$fake_home"
+	git init -q "$repo"
 
 	run env \
 		HOME="$fake_home" \
@@ -171,7 +174,8 @@ EOF
 	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
 	write_fake_node "$managed" "v24.15.0" "managed"
 	write_fake_gitnexus "${npm_prefix}/bin/gitnexus"
-	mkdir -p "$fake_home" "$repo/.git"
+	mkdir -p "$fake_home"
+	git init -q "$repo"
 
 	run env \
 		HOME="$fake_home" \
@@ -181,15 +185,71 @@ EOF
 		NPM_CONFIG_PREFIX= \
 		GNX_ALIAS_TRACE="$trace" \
 		PATH="$shadow_bin:$npm_prefix/bin" \
-		"$zsh_bin" -c "cd '$repo' && source '$DOTFILES_DIR/aliases' && gnx-analyze-here"
+		"$zsh_bin" -c "cd '$repo' && source '$DOTFILES_DIR/aliases' && gnx-analyze-here --skip-agents-md"
 
 	[[ "$status" -eq 0 ]] || {
 		echo "$output" >&2
 		false
 	}
-	grep -q '^gitnexus:analyze$' "$trace"
+	grep -q '^gitnexus:analyze \. --skip-agents-md$' "$trace"
 	grep -q 'gitnexus-node:.*/node-runtime\.[^:]*\/node:v24.15.0' "$trace"
 	assert_file_not_contains "$trace" 'gitnexus-node:.*v20.18.2'
+}
+
+@test "gnx-analyze-here accepts leading -- before GitNexus flags" {
+	if ! command -v zsh >/dev/null 2>&1; then
+		skip "zsh not in PATH"
+	fi
+
+	local zsh_bin
+	zsh_bin="$(command -v zsh)"
+	local fake_home="${TEST_TEMP_DIR}/home"
+	local shadow_bin="${TEST_TEMP_DIR}/home/.cursor-server/bin/hash"
+	local managed="${TEST_TEMP_DIR}/managed/node"
+	local npm_prefix="${TEST_TEMP_DIR}/npm-prefix"
+	local trace="${TEST_TEMP_DIR}/trace.log"
+	local repo="${TEST_TEMP_DIR}/repo"
+
+	link_core_utils "$shadow_bin"
+	write_fake_docker "${shadow_bin}/docker"
+	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
+	write_fake_node "$managed" "v24.15.0" "managed"
+	write_fake_gitnexus "${npm_prefix}/bin/gitnexus"
+	mkdir -p "$fake_home"
+	git init -q "$repo"
+
+	run env \
+		HOME="$fake_home" \
+		DOTFILES_DIR="$DOTFILES_DIR" \
+		DOTFILES_MANAGED_NODE_BIN="$managed" \
+		DOTFILES_NPM_PREFIX="$npm_prefix" \
+		NPM_CONFIG_PREFIX= \
+		GNX_ALIAS_TRACE="$trace" \
+		PATH="$shadow_bin:$npm_prefix/bin" \
+		"$zsh_bin" -c "cd '$repo' && source '$DOTFILES_DIR/aliases' && gnx-analyze-here -- --skip-agents-md"
+
+	[[ "$status" -eq 0 ]] || {
+		echo "$output" >&2
+		false
+	}
+	grep -q '^gitnexus:analyze \. --skip-agents-md$' "$trace"
+}
+
+@test "gnx-analyze-here fails with a clear message outside a Git repository" {
+	if ! command -v zsh >/dev/null 2>&1; then
+		skip "zsh not in PATH"
+	fi
+
+	local zsh_bin
+	zsh_bin="$(command -v zsh)"
+	local outside="${TEST_TEMP_DIR}/not-a-repo"
+	mkdir -p "$outside"
+
+	run env DOTFILES_DIR="$DOTFILES_DIR" \
+		"$zsh_bin" -c "cd '$outside' && source '$DOTFILES_DIR/aliases' && gnx-analyze-here"
+
+	[[ "$status" -eq 1 ]]
+	[[ "$output" == *"debe ejecutarse dentro de un repositorio Git"* ]]
 }
 
 @test "gnx-analyze-here fails before GitNexus analyze when no compatible Node is available" {
@@ -211,7 +271,8 @@ EOF
 	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
 	write_fake_node "$managed" "v20.18.2" "managed"
 	write_fake_gitnexus "${npm_prefix}/bin/gitnexus"
-	mkdir -p "$fake_home" "$repo/.git"
+	mkdir -p "$fake_home"
+	git init -q "$repo"
 
 	run env \
 		HOME="$fake_home" \
@@ -248,7 +309,9 @@ EOF
 	write_fake_node "${shadow_bin}/node" "v20.18.2" "shadow"
 	write_fake_node "$managed" "v24.15.0" "managed"
 	write_fake_gitnexus "${npm_prefix}/bin/gitnexus"
-	mkdir -p "$fake_home" "$repo/.git" "$repo/.gitnexus"
+	mkdir -p "$fake_home"
+	git init -q "$repo"
+	mkdir -p "$repo/.gitnexus"
 	touch "$repo/.gitnexus/lbug"
 
 	run env \

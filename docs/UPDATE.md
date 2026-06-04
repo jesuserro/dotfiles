@@ -37,7 +37,7 @@ Desde Ubuntu/WSL, `make update` crea un directorio de ejecución en una ruta vis
 
 PowerShell escribe logs, `windows-results.tsv` y su propio resumen final. WSL no espera a `windows.done` ni bloquea su resumen por el estado de Windows; como máximo informa que la actualización Windows se abrió en una ventana separada.
 
-La consola PowerShell muestra primero `WinGet packages to upgrade`, con la tabla de paquetes pendientes, y guarda el detalle completo en logs. La instalación usa `winget upgrade --all --include-unknown --silent --accept-package-agreements --accept-source-agreements --disable-interactivity`; si WinGet devuelve errores parciales, Windows los registra como `WARN` y mantiene el log completo como fuente de detalle.
+La consola PowerShell muestra primero `WinGet packages to upgrade`, con la tabla de paquetes pendientes. Después, `WinGet packages` anuncia cuántos paquetes actualizará, muestra la salida de instalación en tiempo real y la guarda a la vez en `windows-winget-upgrade.log`. La instalación usa `winget upgrade --all --include-unknown --silent --accept-package-agreements --accept-source-agreements --disable-interactivity`; si WinGet devuelve errores parciales, Windows los registra como `WARN` y mantiene el log completo como fuente de detalle.
 
 `wsl --shutdown` no se ejecuta automáticamente. Si `wsl --update` indica que conviene reiniciar WSL, el resumen lo muestra como acción posterior para ejecutar manualmente desde PowerShell cuando la sesión WSL haya terminado.
 

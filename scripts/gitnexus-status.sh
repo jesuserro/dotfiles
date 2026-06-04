@@ -225,7 +225,7 @@ note "  make update-check"
 note "  Read docs/GITNEXUS_OPERATIONAL_POLICY.md"
 
 info "Requires explicit human approval (Jesús):"
-note "  gnx-analyze-here -- --skip-agents-md (canonical dotfiles index refresh)"
+note "  gnx-analyze-here --skip-agents-md (canonical dotfiles index refresh)"
 note "  gnx-analyze-here without --skip-agents-md (regenerates AGENTS/CLAUDE blocks; exception)"
 note "  gnx-wiki-here / wiki subcommand"
 note "  clean subcommand"

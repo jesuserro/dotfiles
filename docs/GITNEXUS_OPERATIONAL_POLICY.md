@@ -26,6 +26,7 @@ Política operativa para agentes y humanos en repos gestionados con dotfiles. Co
 - Lectura con **MCP GitNexus** (`gitnexus_query`, `gitnexus_context`, `gitnexus_impact`, `gitnexus_detect_changes`, recursos `gitnexus://…`).
 - `make update-check` — precheck Node/runtime (read-only).
 - Inspección de docs, `meta.json` (si existe) y código fuente por medios habituales.
+- El post-commit local instalado explícitamente con `make install-git-hooks` puede ejecutar el refresh best-effort descrito abajo; los agentes no lo invocan directamente.
 
 ---
 
@@ -51,6 +52,21 @@ Flujo recomendado:
 3. Si hay **MCPs vivos** (p. ej. Cursor con GitNexus MCP), **esperar** o cerrar IDE/MCP antes de analyze.
 4. Si **no hay procesos** y analyze sigue fallando por lock, **reiniciar IDE** antes de considerar limpieza manual.
 5. **No borrar `lbug`** sin decisión humana explícita.
+
+---
+
+## Post-commit local best-effort
+
+`make install-git-hooks` configura `core.hooksPath=.githooks` solo para el
+checkout actual. Su post-commit ejecuta síncronamente
+`gnx-analyze-here --force --skip-agents-md` mediante la librería no interactiva
+y Node gestionado. Si detecta MCP/procesos GitNexus o `.gitnexus/lbug` abierto,
+informa y ejecuta igualmente el refresh forzado best-effort.
+
+- El refresh expira tras 30 segundos para no bloquear commits largos.
+- Si analyze falla o expira, avisa, recomienda `gitnexus analyze --force .` y sale `0`.
+- Nunca usa background, retries largos, mata procesos MCP, limpia locks ni ejecuta operaciones Git.
+- `DOTFILES_SKIP_HOOKS=1` y `DOTFILES_SKIP_GITNEXUS=1` permiten omitirlo.
 
 ---
 
@@ -85,6 +101,9 @@ Ejemplos válidos para que un humano refresque:
 
 **No ejecutar analyze** si `make gitnexus-status` lista procesos `gitnexus mcp` / `analyze` / `ladybug`, o si el lock en `.gitnexus/lbug` está en uso: cerrar Cursor, desactivar el MCP GitNexus o esperar a que terminen y repetir status hasta que no haya procesos vivos. La presencia de `lbug` con MCP activo es habitual y no autoriza borrar el lock.
 
+El post-commit local instalado explícitamente es la excepción automatizada: usa
+`--force --skip-agents-md`, timeout y semántica best-effort no fatal.
+
 ### Procedimiento humano de refresh (dotfiles)
 
 Comando **canónico** — solo índice en `.gitnexus/`, sin tocar bloques versionados:
@@ -93,7 +112,7 @@ Comando **canónico** — solo índice en `.gitnexus/`, sin tocar bloques versio
 make update-check
 make gitnexus-status
 # Si hay procesos MCP o lock en uso: cerrar Cursor / desactivar MCP GitNexus; repetir status
-gnx-analyze-here -- --skip-agents-md
+gnx-analyze-here --skip-agents-md
 make gitnexus-status
 git status --short -- .gitnexus AGENTS.md CLAUDE.md docs/wiki
 bats tests/bats/docs/agents-claude-gitnexus-blocks.bats

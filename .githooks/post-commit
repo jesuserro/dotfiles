@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -u
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+	echo "WARN: dotfiles post-commit could not resolve repository root." >&2
+	exit 0
+}
+
+"$repo_root/scripts/hooks/post-commit-gitnexus.sh"
+exit 0

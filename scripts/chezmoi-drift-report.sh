@@ -8,6 +8,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 SOURCE="${CHEZMOI_SOURCE:-${DOTFILES_ROOT}}"
 HOME_ROOT="${HOME}"
+CODEX_CONFIG_DISPLAY_PATH='~'/.codex/config.toml
+readonly CODEX_CONFIG_DISPLAY_PATH
 
 GIT_LAUNCHER="${HOME_ROOT}/.local/share/chezmoi/bin/mcp-git-launcher"
 POSTGRES_LAUNCHER="${HOME_ROOT}/.local/share/chezmoi/bin/mcp-postgres-launcher"
@@ -38,7 +40,7 @@ note() {
 report_script_run_entries() {
 	local status_out="$1"
 	local run_lines=()
-	local line name tmpl_path found expected_ok=true
+	local line name tmpl_path expected_ok=true
 	local -A seen=()
 
 	while IFS= read -r line; do
@@ -115,7 +117,7 @@ else
 fi
 
 section "Codex — versioned policy; acotado apply manual if drift"
-note "~/.codex/config.toml may show MM until you apply that path only (never global apply)."
+note "${CODEX_CONFIG_DISPLAY_PATH} may show MM until you apply that path only (never global apply)."
 note "Policy: HOME prefs + Chezmoi data.codex defaults (model, reasoning, trust_level)."
 note "Template: dot_codex/private_config.toml.tmpl (private_ prefix → mode 600 on apply)."
 note "Override per machine in ~/.config/chezmoi/chezmoi.toml under [data.codex]."
