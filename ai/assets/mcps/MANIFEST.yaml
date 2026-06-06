@@ -1,6 +1,7 @@
 # Canonical MCP intent for Cursor, Codex, and OpenCode (global Chezmoi scope).
-# Templates under dot_cursor/, dot_codex/, dot_config/opencode/ are NOT yet generated
-# from this file; run `make ai-mcp-validate` to verify schema and policy.
+# Templates under dot_cursor/, dot_codex/, and dot_config/opencode/ are kept
+# aligned with this manifest through `make ai-mcp-validate`, `make ai-mcp-render`,
+# `make ai-mcp-drift`, and `make ai-mcp-generate APPLY=1`.
 #
 # Codex plugin blocks (e.g. github@openai-curated) are out of scope here.
 

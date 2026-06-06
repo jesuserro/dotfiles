@@ -82,6 +82,20 @@ EOF
 	[[ "$output" == *"Validation FAILED"* ]]
 }
 
+@test "validate-skills fails when repo-local .claude/skills exists" {
+	local fixture_root="${TEST_TEMP_DIR}/dotfiles-fixture"
+	local category="${fixture_root}/ai/assets/skills/example"
+	mkdir -p "${fixture_root}/scripts" "${category}" "${fixture_root}/.claude/skills/gitnexus"
+	cp "${DOTFILES_DIR}/scripts/validate-skills-structure.sh" "${fixture_root}/scripts/validate-skills-structure.sh"
+	write_valid_skill "${category}/valid-skill"
+
+	run bash "${fixture_root}/scripts/validate-skills-structure.sh"
+
+	[[ "$status" -eq 1 ]]
+	[[ "$output" == *"ERROR: non-canonical skills directory found: .claude/skills. Canonical repo skills must live under ai/assets/skills only."* ]]
+	[[ "$output" == *"Validation FAILED"* ]]
+}
+
 @test "validate-skills passes governance checks on clean fixture tree" {
 	local fixture_root="${TEST_TEMP_DIR}/dotfiles-fixture"
 	local category="${fixture_root}/ai/assets/skills/example"

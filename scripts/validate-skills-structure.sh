@@ -215,6 +215,19 @@ check_no_mattpocock_vendor() {
 	return 1
 }
 
+check_no_noncanonical_agent_skill_dirs() {
+	local path="${DOTFILES_DIR}/.claude/skills"
+
+	if [[ ! -e "${path}" ]]; then
+		return 0
+	fi
+
+	echo "ERROR: non-canonical skills directory found: .claude/skills. Canonical repo skills must live under ai/assets/skills only."
+	echo "  Remove .claude/skills from the checkout; agent skill surfaces are materialized outside the repo."
+	((ERRORS++))
+	return 1
+}
+
 echo "========================================"
 echo "SKILL STRUCTURE VALIDATION"
 echo "========================================"
@@ -228,6 +241,7 @@ fi
 echo "Governance checks"
 check_no_symlinks || true
 check_no_mattpocock_vendor || true
+check_no_noncanonical_agent_skill_dirs || true
 echo ""
 
 if [[ ${ERRORS} -gt 0 ]]; then
