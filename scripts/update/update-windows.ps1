@@ -47,6 +47,98 @@ function Get-NativeEncoding {
   }
 }
 
+function Get-WinGetConsoleLine {
+  param([string]$Text)
+  if ([string]::IsNullOrWhiteSpace($Text)) { return $null }
+  $line = ($Text -replace "`e\[[0-9;?]*[ -/]*[@-~]", "").TrimEnd()
+  if ([string]::IsNullOrWhiteSpace($line)) { return $null }
+  if ($line -match '^\s*[-\\|/]\s*$') { return $null }
+  if ($line -match '^\s*[\u2588\u2592\s]+(?:\d{1,3}%\s*)?$') { return $null }
+  if ($line -match '(?i)(Updating (?:all sources|source)|Actualizando (?:todos los or(?:i|\u00ed)genes|origen)|Done|Listo|Encontrado|Found|Descargando|Downloading|El hash del instalador se verific(?:o|\u00f3) correctamente|Installer hash|Iniciando instalaci(?:o|\u00f3)n|Installing|Iniciando la desinstalaci(?:o|\u00f3)n|Uninstalling|Instalado correctamente|Se instal(?:o|\u00f3) correctamente|Successfully installed|Successfully updated|Error|failed|exit code|c(?:o|\u00f3)digo de salida|actualizaciones disponibles|upgrades available)') {
+    return $line
+  }
+  return $null
+}
+
+function Invoke-NativeLiveProcess {
+  param(
+    [string]$FileName,
+    [string[]]$NativeArguments,
+    [string]$LogPath,
+    [string]$OutputEncoding = "utf8",
+    [scriptblock]$ConsoleLineFilter = $null
+  )
+  $encoding = Get-NativeEncoding $OutputEncoding
+  $argumentString = Join-NativeArguments -NativeArguments $NativeArguments
+  $psi = [System.Diagnostics.ProcessStartInfo]::new()
+  $psi.FileName = $FileName
+  $psi.Arguments = $argumentString
+  $psi.UseShellExecute = $false
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError = $true
+  $psi.StandardOutputEncoding = $encoding
+  $psi.StandardErrorEncoding = $encoding
+  $psi.CreateNoWindow = $true
+
+  $writer = [System.IO.StreamWriter]::new($LogPath, $false, [System.Text.UTF8Encoding]::new($false))
+  try {
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $psi
+    [void]$process.Start()
+    $stdoutDone = $false
+    $stderrDone = $false
+    $stdoutTask = $process.StandardOutput.ReadLineAsync()
+    $stderrTask = $process.StandardError.ReadLineAsync()
+    while ((-not $stdoutDone) -or (-not $stderrDone)) {
+      $activeTasks = @()
+      if (-not $stdoutDone) { $activeTasks += $stdoutTask }
+      if (-not $stderrDone) { $activeTasks += $stderrTask }
+      if ($activeTasks.Count -eq 0) { break }
+      [void][System.Threading.Tasks.Task]::WaitAny($activeTasks, 100)
+
+      if ((-not $stdoutDone) -and $stdoutTask.IsCompleted) {
+        $line = $stdoutTask.Result
+        if ($null -eq $line) {
+          $stdoutDone = $true
+        } else {
+          $writer.WriteLine($line)
+          $writer.Flush()
+          $displayLine = if ($null -eq $ConsoleLineFilter) { $line } else { & $ConsoleLineFilter $line }
+          if (-not [string]::IsNullOrWhiteSpace($displayLine)) { Write-Host $displayLine }
+          $stdoutTask = $process.StandardOutput.ReadLineAsync()
+        }
+      }
+      if ((-not $stderrDone) -and $stderrTask.IsCompleted) {
+        $line = $stderrTask.Result
+        if ($null -eq $line) {
+          $stderrDone = $true
+        } else {
+          $writer.WriteLine($line)
+          $writer.Flush()
+          $displayLine = if ($null -eq $ConsoleLineFilter) { $line } else { & $ConsoleLineFilter $line }
+          if (-not [string]::IsNullOrWhiteSpace($displayLine)) { Write-Host $displayLine }
+          $stderrTask = $process.StandardError.ReadLineAsync()
+        }
+      }
+    }
+    $process.WaitForExit()
+    return [int]$process.ExitCode
+  } finally {
+    $writer.Dispose()
+    if ($null -ne $process) { $process.Dispose() }
+  }
+}
+
+function Invoke-WinGetLiveFiltered {
+  param(
+    [string[]]$NativeArguments,
+    [string]$LogPath,
+    [string]$OutputEncoding = "utf8",
+    [string]$FileName = "winget"
+  )
+  return Invoke-NativeLiveProcess -FileName $FileName -NativeArguments $NativeArguments -LogPath $LogPath -OutputEncoding $OutputEncoding -ConsoleLineFilter { param($line) Get-WinGetConsoleLine $line }
+}
+
 function Run-NativeLogged {
   param(
     [string]$Name,
@@ -129,7 +221,8 @@ function Run-NativeLiveLogged {
     [string]$FileName,
     [string[]]$NativeArguments,
     [string]$OutputEncoding = "utf8",
-    [string]$StartMessage = ""
+    [string]$StartMessage = "",
+    [bool]$FilterWinGetConsole = $false
   )
   $log = Join-Path $LogDir $LogName
   $start = Get-Date
@@ -155,12 +248,11 @@ function Run-NativeLiveLogged {
 
   $script:LiveRunCode = $null
   try {
-    & {
-      & $FileName @NativeArguments 2>&1
-      # Capture before downstream cmdlets can change the native exit code.
-      $script:LiveRunCode = $LASTEXITCODE
-    } | Tee-Object -FilePath $log -ErrorAction Stop | Out-Host
-    $code = $script:LiveRunCode
+    if ($FilterWinGetConsole) {
+      $code = Invoke-WinGetLiveFiltered -FileName $FileName -NativeArguments $NativeArguments -LogPath $log -OutputEncoding $OutputEncoding
+    } else {
+      $code = Invoke-NativeLiveProcess -FileName $FileName -NativeArguments $NativeArguments -LogPath $log -OutputEncoding $OutputEncoding
+    }
     $content = if (Test-Path $log) { Get-Content -Path $log -Raw -ErrorAction SilentlyContinue } else { "" }
     $content = $content -replace "`r`n", "`n" -replace "`r", "`n"
     [System.IO.File]::WriteAllText($log, $content, $encoding)
@@ -195,7 +287,7 @@ function Get-WinGetConsoleText {
     $line = ($rawLine -replace "`e\[[0-9;?]*[ -/]*[@-~]", "").TrimEnd()
     if ([string]::IsNullOrWhiteSpace($line)) { continue }
     if ($line -match '^\s*[-\\|/]\s*$') { continue }
-    if (($line.IndexOf([char]0x2588) -ge 0) -or ($line.IndexOf([char]0x2592) -ge 0) -or ($line.IndexOf([char]0x2593) -ge 0) -or ($line.IndexOf([char]0x2591) -ge 0)) { continue }
+    if ($line -match '^\s*[\u2588\u2592\s]+(?:\d{1,3}%\s*)?$') { continue }
     if ($line -match '^\s*[#=]{5,}') { continue }
     if ($line -match '^\s*\d+(\.\d+)?\s*(B|KB|MB|GB)\s*/\s*\d+(\.\d+)?\s*(B|KB|MB|GB)') { continue }
     if ($line -match '^\s*\d{1,3}%\s*$') { continue }
@@ -210,7 +302,7 @@ function Get-WinGetUpgradeCount {
 
   $normalized = $Text -replace "`r", "`n"
   foreach ($rawLine in ($normalized -split "`n")) {
-    if ($rawLine -match '(?i)^\s*(\d+)\s+(?:upgrades?|actualizaci[oó]n(?:es)?)\s+(?:available|disponible(?:s)?)') {
+    if ($rawLine -match '(?i)^\s*(\d+)\s+(?:upgrades?|actualizaci(?:o|\u00f3)n(?:es)?)\s+(?:available|disponible(?:s)?)') {
       return [int]$Matches[1]
     }
   }
@@ -225,7 +317,7 @@ function Get-WinGetUpgradeCount {
     }
     if (-not $afterSeparator) { continue }
     if ([string]::IsNullOrWhiteSpace($line)) { continue }
-    if ($line -match '(?i)^(No installed package found|No se encontr[oó]|No hay actualizaciones)') { break }
+    if ($line -match '(?i)^(No installed package found|No se encontr(?:o|\u00f3)|No hay actualizaciones)') { break }
     $count++
   }
   return $count
@@ -256,14 +348,14 @@ function Add-WinGetPackageResults {
       $currentId = $Matches[2].Trim()
       continue
     }
-    if ($currentName -and $line -match '(?:c[oó]digo de salida|exit code):\s*(-?\d+)') {
+    if ($currentName -and $line -match '(?:c(?:o|\u00f3)digo de salida|exit code):\s*(-?\d+)') {
       Add-Result "WARN" "WinGet package $currentName [$currentId]" "upgrade failed with code $($Matches[1])"
       $foundAny = $true
       $currentName = $null
       $currentId = $null
       continue
     }
-    if ($currentName -and $line -match '(?:Se instal[oó] correctamente|Successfully installed|Successfully updated)') {
+    if ($currentName -and $line -match '(?:Se instal(?:o|\u00f3) correctamente|Successfully installed|Successfully updated)') {
       Add-Result "OK" "WinGet package $currentName [$currentId]" "updated successfully"
       $foundAny = $true
       $currentName = $null
@@ -298,22 +390,41 @@ if ($SelfTestNativeArguments) {
 }
 
 if ($SelfTestWinGetConsoleText) {
-  $sample = @"
--
-\
-|
-/
-
-Name             Id              Version Available Source
-Pandoc           John.Pandoc     1.0     2.0       winget
-
--
-"@
+  $shade = [string]([char]0x2592)
+  $block = [string]([char]0x2588)
+  $oAcute = [string]([char]0x00f3)
+  $sample = @(
+    "-"
+    "\"
+    "|"
+    "/"
+    ($shade * 10)
+    (($block * 10) + " 40%")
+    ""
+    "Name             Id              Version Available Source"
+    "Pandoc           John.Pandoc     1.0     2.0       winget"
+    "Updating source: winget"
+    "Done"
+    "(1/2) Encontrado Pandoc [JohnMacFarlane.Pandoc]"
+    "Descargando https://example.invalid/pandoc.msi"
+    "El hash del instalador se verific${oAcute} correctamente"
+    "Iniciando instalaci${oAcute}n..."
+    "C${oAcute}digo de salida del instalador: 1603"
+    "(2/2) Found Cursor [Anysphere.Cursor]"
+    "Downloading https://example.invalid/cursor.exe"
+    "Installer hash verified successfully"
+    "Installing..."
+    "Successfully installed"
+    ""
+    "-"
+  ) -join [Environment]::NewLine
   $filtered = Get-WinGetConsoleText $sample
+  $eventLines = ($sample -replace "`r", "`n" -split "`n" | ForEach-Object { Get-WinGetConsoleLine $_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join [Environment]::NewLine
   $englishCount = Get-WinGetUpgradeCount "2 upgrades available."
   $spanishCount = Get-WinGetUpgradeCount "3 actualizaciones disponibles."
   Write-Host $filtered
-  if (($filtered -match '(?m)^\s*[-\\|/]\s*$') -or ($filtered -notlike "*Pandoc*") -or ($englishCount -ne 2) -or ($spanishCount -ne 3)) {
+  Write-Host $eventLines
+  if (($filtered -match '(?m)^\s*[-\\|/]\s*$') -or ($filtered -match '[\u2588\u2592]') -or ($eventLines -match '(?m)^\s*[-\\|/]\s*$') -or ($eventLines -match '[\u2588\u2592]') -or ($filtered -notlike "*Pandoc*") -or ($eventLines -notlike "*Updating source*") -or ($eventLines -notlike "*1603*") -or ($eventLines -notlike "*Cursor*") -or ($eventLines -notlike "*Successfully installed*") -or ($englishCount -ne 2) -or ($spanishCount -ne 3)) {
     Add-Result "WARN" "WinGet console text self-test" "spinner filtering failed"
     exit 65
   }
@@ -341,7 +452,7 @@ Write-Host "Dotfiles Windows update"
 Write-Host "Run directory: $RunDir"
 
 if (Get-Command winget -ErrorAction SilentlyContinue) {
-  Run-NativeLogged "WinGet sources" "windows-winget-source.log" "winget" @("source", "update") "utf8" $false
+  Run-NativeLiveLogged "WinGet sources" "windows-winget-source.log" "winget" @("source", "update") "utf8" "Updating WinGet sources..." $true
   Write-Host "Full WinGet source log: $script:LastRunLog"
 
   $winGetListName = "WinGet packages to upgrade"
@@ -358,7 +469,7 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
   Write-Host "Full WinGet package list log: $script:LastRunLog"
 
   $winGetPackageCount = Get-WinGetUpgradeCount $packageTable
-  Run-NativeLiveLogged "WinGet packages" "windows-winget-upgrade.log" "winget" @("upgrade", "--all", "--include-unknown", "--silent", "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity") "utf8" "Updating $winGetPackageCount packages with WinGet..."
+  Run-NativeLiveLogged "WinGet packages" "windows-winget-upgrade.log" "winget" @("upgrade", "--all", "--include-unknown", "--silent", "--accept-package-agreements", "--accept-source-agreements") "utf8" "Updating $winGetPackageCount packages with WinGet..." $true
   Add-WinGetPackageResults $script:LastRunLog
 } else {
   Add-Result "WARN" "WinGet" "winget not found on Windows PATH"

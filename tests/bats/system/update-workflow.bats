@@ -1387,13 +1387,18 @@ PY
 	grep -q 'Write-WinGetListStatus \$winGetListName' "$ps1"
 }
 
-@test "PowerShell WinGet upgrade runner streams through Tee-Object and captures native exit code immediately" {
+@test "PowerShell WinGet upgrade runner uses ProcessStartInfo and live filtered console output" {
 	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
 	grep -q 'function Run-NativeLiveLogged' "$ps1"
-	grep -q 'Tee-Object -FilePath \$log' "$ps1"
-	grep -q 'Tee-Object -FilePath \$log.*| Out-Host' "$ps1"
-	grep -Fq '$script:LiveRunCode = $LASTEXITCODE' "$ps1"
+	grep -q 'function Invoke-WinGetLiveFiltered' "$ps1"
+	grep -Fq '[System.Diagnostics.ProcessStartInfo]::new()' "$ps1"
+	grep -Fq '$psi.RedirectStandardOutput = $true' "$ps1"
+	grep -Fq '$psi.RedirectStandardError = $true' "$ps1"
+	grep -Fq 'Get-WinGetConsoleLine $line' "$ps1"
 	grep -Fq '[System.IO.File]::WriteAllText($log, $content, $encoding)' "$ps1"
+	grep -Fq 'Run-NativeLiveLogged "WinGet packages" "windows-winget-upgrade.log" "winget" @("upgrade", "--all", "--include-unknown", "--silent", "--accept-package-agreements", "--accept-source-agreements") "utf8" "Updating $winGetPackageCount packages with WinGet..." $true' "$ps1"
+	run grep -q 'Tee-Object -FilePath \$log' "$ps1"
+	[[ "$status" -ne 0 ]]
 	run grep -q 'Run-NativeLogged "WinGet packages"' "$ps1"
 	[[ "$status" -ne 0 ]]
 }
@@ -1425,11 +1430,16 @@ PY
 	run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "${DOTFILES_DIR}/scripts/update/update-windows.ps1")" -SelfTestWinGetConsoleText
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"Pandoc"* ]]
+	[[ "$output" == *"1603"* ]]
+	[[ "$output" == *"Cursor"* ]]
+	[[ "$output" == *"Successfully installed"* ]]
 	[[ "$output" == *"OK WinGet console text self-test passed"* ]]
 	[[ "$output" != *$'\n-\n'* ]]
 	[[ "$output" != *$'\n\\\n'* ]]
 	[[ "$output" != *$'\n|\n'* ]]
 	[[ "$output" != *$'\n/\n'* ]]
+	[[ "$output" != *$'\342\226\222\342\226\222\342\226\222'* ]]
+	[[ "$output" != *$'\342\226\210\342\226\210\342\226\210'* ]]
 }
 
 @test "PowerShell live native runner writes output before child exits and preserves WARN result" {
