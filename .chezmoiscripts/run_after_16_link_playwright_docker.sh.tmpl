@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Publica playwright-docker en ~/.local/bin tras chezmoi apply.
+
+set -euo pipefail
+
+SOURCE_DIR="{{ .chezmoi.sourceDir }}"
+LOCAL_BIN="{{ .chezmoi.homeDir }}/.local/bin"
+WRAPPER="${SOURCE_DIR}/bin/playwright-docker"
+
+mkdir -p "${LOCAL_BIN}"
+
+if [[ ! -f "${WRAPPER}" ]]; then
+	echo "[run_after_16_link_playwright_docker] ERROR: source wrapper not found: ${WRAPPER}" >&2
+	exit 1
+fi
+
+ln -sf "${WRAPPER}" "${LOCAL_BIN}/playwright-docker"
+
+exit 0

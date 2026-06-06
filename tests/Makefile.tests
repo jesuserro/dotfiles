@@ -17,7 +17,7 @@ SHELLCHECK_EXCLUDED_SCRIPTS := $(ZSH_SCRIPTS)
 # understand Go template delimiters reliably unless templates are rendered.
 SHELL_SCRIPTS_ALL := $(shell find $(DOTFILES_DIR) -name '*.sh' -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/')
 SHELL_SCRIPTS := $(filter-out $(SHELLCHECK_EXCLUDED_SCRIPTS),$(SHELL_SCRIPTS_ALL))
-SHELL_LAUNCHERS := $(shell find $(DOTFILES_DIR)/bin -type f \( -name 'mcp-*-launcher' -o -name 'tmux-dotfiles' \) 2>/dev/null || true)
+SHELL_LAUNCHERS := $(shell find $(DOTFILES_DIR)/bin -type f \( -name 'mcp-*-launcher' -o -name 'tmux-dotfiles' -o -name 'playwright-docker' \) 2>/dev/null || true)
 GIT_HOOKS := $(shell find $(DOTFILES_DIR)/.githooks -type f 2>/dev/null || true)
 PROMPT_LAUNCHERS := $(shell find $(DOTFILES_DIR)/local/bin -name 'prompt-*' -type f 2>/dev/null || true)
 AI_PROMPT_CLI := $(wildcard $(DOTFILES_DIR)/local/bin/ai-prompt)
