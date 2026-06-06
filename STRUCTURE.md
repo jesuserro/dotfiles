@@ -13,7 +13,6 @@
 │   ├── 📄 run_after_13_link_git_ai_wrapper.sh.tmpl
 │   ├── 📄 run_after_14_link_prompt_launchers.sh.tmpl
 │   ├── 📄 run_after_15_link_tmux_dotfiles.sh.tmpl
-│   ├── 📄 run_after_16_link_playwright_docker.sh.tmpl
 │   └── 📄 run_before_00_backup_rc_files.sh.tmpl
 ├── 📁 .cursor
 │   ├── 📁 plans

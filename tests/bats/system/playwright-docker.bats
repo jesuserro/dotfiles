@@ -115,9 +115,17 @@ assert_no_arg() {
 	[[ ! -f "$DOCKER_LOG" ]]
 }
 
-@test "chezmoi hook publishes playwright-docker to local bin" {
-	local hook="${DOTFILES_DIR}/.chezmoiscripts/run_after_16_link_playwright_docker.sh.tmpl"
-	[[ -f "$hook" ]]
-	grep -q 'bin/playwright-docker' "$hook"
-	grep -q 'LOCAL_BIN}/playwright-docker' "$hook"
+@test "chezmoi manages playwright-docker as a direct local bin symlink" {
+	local tmpl="${DOTFILES_DIR}/dot_local/bin/symlink_playwright-docker.tmpl"
+	[[ -f "$tmpl" ]]
+	[[ "$(cat "$tmpl")" == '{{ .chezmoi.homeDir }}/dotfiles/bin/playwright-docker' ]]
+	[[ ! -f "${DOTFILES_DIR}/.chezmoiscripts/run_after_16_link_playwright_docker.sh.tmpl" ]]
+}
+
+@test "chezmoi managed list includes scoped playwright-docker target" {
+	skip_if_command_missing "chezmoi"
+
+	run chezmoi --source="$DOTFILES_DIR" managed
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *$'.local/bin/playwright-docker'* ]]
 }

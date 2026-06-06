@@ -40,7 +40,7 @@ Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si ha
 | `~/.aliases` | `symlink_dot_aliases.tmpl` → `$HOME/dotfiles/aliases` |
 | `~/.tmux.conf` | `symlink_dot_tmux.conf.tmpl` → `$HOME/dotfiles/tmux.conf` |
 | `~/.local/bin/tmux-dotfiles` | `run_after_15_link_tmux_dotfiles` → `$HOME/dotfiles/bin/tmux-dotfiles` |
-| `~/.local/bin/playwright-docker` | `run_after_16_link_playwright_docker` → `$HOME/dotfiles/bin/playwright-docker` |
+| `~/.local/bin/playwright-docker` | `dot_local/bin/symlink_playwright-docker.tmpl` → `$HOME/dotfiles/bin/playwright-docker` |
 
 ### Backup seguro de symlinks gestionados (RC + tmux)
 

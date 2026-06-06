@@ -50,6 +50,13 @@ teardown() {
 	grep -q 'LOCAL_BIN}/tmux-dotfiles' "$tmpl"
 }
 
+@test "playwright-docker is a directly managed chezmoi local bin symlink" {
+	local tmpl="$DOTFILES_DIR/dot_local/bin/symlink_playwright-docker.tmpl"
+	[[ -f "$tmpl" ]]
+	[[ "$(cat "$tmpl")" == '{{ .chezmoi.homeDir }}/dotfiles/bin/playwright-docker' ]]
+	[[ ! -f "$DOTFILES_DIR/.chezmoiscripts/run_after_16_link_playwright_docker.sh.tmpl" ]]
+}
+
 @test "symlink_dot_tmux.conf points to repo tmux.conf" {
 	local tmpl="$DOTFILES_DIR/symlink_dot_tmux.conf.tmpl"
 	[[ -f "$tmpl" ]]

@@ -177,10 +177,16 @@ docker.exe mcp gateway run --dry-run --verbose
 
 `bin/playwright-docker` ejecuta Playwright dentro de Docker desde cualquier
 proyecto externo, sin instalar browsers ni Playwright en Ubuntu. Tras
-`chezmoi apply`, queda publicado como `~/.local/bin/playwright-docker`, que la
-zsh stack ya deja en `PATH`. Es útil para automatizaciones de navegador,
-sesiones y descargas de PDFs cuando las dependencias locales de Ubuntu/WSL sean
-problemáticas.
+`chezmoi apply`, queda publicado como symlink gestionado
+`~/.local/bin/playwright-docker`, que la zsh stack ya deja en `PATH`. Para
+aplicar solo este launcher:
+
+```bash
+chezmoi --source="$HOME/dotfiles" apply ~/.local/bin/playwright-docker
+```
+
+Es útil para automatizaciones de navegador, sesiones y descargas de PDFs
+cuando las dependencias locales de Ubuntu/WSL sean problemáticas.
 
 Contrato por defecto:
 
