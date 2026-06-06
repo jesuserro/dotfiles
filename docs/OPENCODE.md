@@ -54,7 +54,9 @@ Available in all projects, enabled by default:
 - `tempo` - Trace visualization
 - `store_etl_ops` - Store ETL operations
 
-Optional **project-local** `opencode.json` can still narrow or override behavior for a repo without changing the dotfiles-wide intent in **`MANIFEST.yaml`**.
+Optional **project-local** `opencode.json` in a repository can still narrow or override behavior for that repo without changing the dotfiles-wide intent in **`MANIFEST.yaml`**.
+
+**Note:** `MANIFEST.yaml` `profiles.project-local` is a **reserved placeholder** (not active). It is unrelated to a real project-local `opencode.json` file in a checkout. Reserved profiles (`store-etl`, `ixatu`, `project-local`) are not rendered or validated by the manifest pipeline today.
 
 ### Layer 4: Database MCPs (Runtime vs connection profile)
 

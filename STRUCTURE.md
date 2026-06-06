@@ -455,6 +455,7 @@
 │   │   │   ├── 📄 documentation-consistency.bats
 │   │   │   ├── 📄 gitnexus-human-refresh-procedure.bats
 │   │   │   ├── 📄 make-help.bats
+│   │   │   ├── 📄 mcp-taxonomy-consistency.bats
 │   │   │   └── 📄 operations-cheatsheet.bats
 │   │   ├── 📁 git-hooks
 │   │   │   └── 📄 hooks.bats

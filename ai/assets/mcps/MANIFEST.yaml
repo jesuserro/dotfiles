@@ -14,13 +14,30 @@ policy:
     Missing services, secrets, binaries, or host paths are surfaced by readiness
     checks (WARN/MISSING/FAIL under STRICT), not by silently omitting servers.
 
-# Reserved for future per-project or per-stack overlays (not used by the validator yet).
+# Reserved for future per-project or per-stack overlays.
+# Only `global` is active today. Other entries are placeholders — not rendered,
+# validated, or applied by the manifest pipeline until a dedicated profiles BUILD.
 profiles:
   global:
+    status: active
     description: Chezmoi-managed global MCP intent (editor templates in this repo)
-  store-etl: {}
-  ixatu: {}
-  project-local: {}
+  store-etl:
+    status: reserved
+    description: >
+      Reserved placeholder for a future store-etl stack overlay. Not active;
+      not rendered or validated. For Store ETL today use global store_etl_ops
+      with STORE_ETL_WORKDIR and project-local .cursor/mcp.json in store-etl.
+  ixatu:
+    status: reserved
+    description: >
+      Reserved placeholder for a future ixatu project overlay. Not active;
+      not rendered or validated.
+  project-local:
+    status: reserved
+    description: >
+      Reserved placeholder for generic project-local overlays. Not active.
+      Live project MCP configs belong in each project's own .cursor/mcp.json,
+      opencode.json, or local editor config — not in dotfiles global templates.
 
 mcps:
   - id: excalidraw_canvas

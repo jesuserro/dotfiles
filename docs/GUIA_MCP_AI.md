@@ -158,7 +158,7 @@ chezmoi --source="$HOME/dotfiles" apply ~/.config/ai/runtime
 | **excalidraw_canvas** | `make excalidraw-update` — pull de `ghcr.io/yctimlin/mcp_excalidraw` y canvas; no arranca canvas |
 | **docker** | Docker Desktop MCP Gateway oficial: `docker.exe mcp gateway run` desde WSL |
 | **postgres** (npm) | `~/.config/mcp/servers/*/` — `npm update` en cada directorio con `package.json` (solo si existe) |
-| **fetch** | `uv tool install mcp-server-fetch` (instala o actualiza) |
+| **fetch** | `uvx mcp-server-fetch` — runtime efímero (`runtime: uvx` en manifest; no `uv tool install`) |
 | **filesystem** | Launcher local — no requiere actualización |
 | **git** | `uvx mcp-server-git` — se actualiza al ejecutarse |
 | **sequential-thinking** | `npx -y @modelcontextprotocol/server-sequential-thinking` (obtiene latest al ejecutar) |

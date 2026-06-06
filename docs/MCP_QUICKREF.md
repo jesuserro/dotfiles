@@ -29,6 +29,15 @@ Layers describe *purpose*; default **activation** for global agents follows the 
 | Platform | Local services | dagster, loki, minio, prometheus, tempo, store_etl_ops |
 | Connection | DB / engines | postgres, trino |
 
+## MCP profiles (manifest)
+
+`ai/assets/mcps/MANIFEST.yaml` declares `profiles:` for **future** overlays. Only **`global`** is active today.
+
+- `store-etl`, `ixatu`, `project-local` are **`status: reserved`** — not rendered, validated, or applied by the manifest pipeline.
+- Do **not** assume reserved profiles provide active MCPs.
+- **Project-local MCPs today:** configure in the project's own `.cursor/mcp.json`, `opencode.json`, or equivalent — not via dotfiles profile keys.
+- **Store ETL today:** global `store_etl_ops` with `STORE_ETL_WORKDIR`; stack-specific MCPs in the **store-etl** repository.
+
 ## GitNexus
 
 | Aspect | Value |
