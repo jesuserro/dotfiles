@@ -170,8 +170,9 @@ make install-git-hooks
 ```
 
 Configura `core.hooksPath=.githooks` solo para este checkout. El pre-commit
-ejecuta `treegen` sin auto-stage y aborta si cambia `STRUCTURE.md`. El
-post-commit refresca GitNexus con `--force --skip-agents-md` de forma síncrona,
+ejecuta `treegen` antes de cada commit; si regenera `STRUCTURE.md`, stagea
+automáticamente solo ese fichero y deja continuar el commit. No stagea otros
+cambios del workspace. El post-commit refresca GitNexus con `--force --skip-agents-md` de forma síncrona,
 best-effort y no fatal. Si detecta MCP/lock activo, informa y ejecuta igualmente
 el refresh forzado; si falla o expira tras 30 segundos, ejecuta manualmente
 `gitnexus analyze --force .`.

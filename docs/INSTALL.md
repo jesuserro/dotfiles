@@ -89,9 +89,9 @@ make ai-cursor-check
 ### Hooks Git locales (opt-in)
 
 `make install-git-hooks` configura únicamente este checkout con
-`core.hooksPath=.githooks`. El pre-commit ejecuta `treegen` sin auto-stage y
-aborta si actualiza `STRUCTURE.md`; revisa el cambio, ejecuta
-`git add STRUCTURE.md` y repite el commit. El post-commit refresca GitNexus con
+`core.hooksPath=.githooks`. El pre-commit ejecuta `treegen` antes de cada commit;
+si regenera `STRUCTURE.md`, stagea automáticamente solo ese fichero y deja
+continuar el commit. No stagea otros cambios del workspace. El post-commit refresca GitNexus con
 `--force --skip-agents-md`, incluso si detecta MCP/lock activo; tiene timeout de
 30 segundos, es best-effort y nunca invalida el commit. Si falla o expira,
 ejecuta manualmente `gitnexus analyze --force .`.
