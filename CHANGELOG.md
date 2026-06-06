@@ -2,60 +2,80 @@
 
 Este archivo contiene las últimas 5 releases. Para el historial completo, consulta los archivos en el directorio `releases/`.
 
-## [v2026.06.04_2024] - 2026-06-04
+## [v2026.06.06_2316] - 2026-06-06
 
 ## Changes
+### Added
+- 2026-06-06 22:28 [f7a5ddf](https://github.com/jesuserro/dotfiles/commit/f7a5ddf) feat(visualization): add VisiData support and update documentation for optional tools (Cursor Agent)
+  - Included VisiData (`vd`) as an optional tool for exploring CSV, TSV, JSON, and tabular files in SKILL.md and SYSTEM_DEPENDENCIES.md.
+  - Updated INSTALL.md to reflect the installation instructions for VisiData.
+  - Enhanced tests to verify the inclusion of VisiData in the system dependencies check, ensuring proper documentation alignment.
+- 2026-06-06 22:17 [f5e6952](https://github.com/jesuserro/dotfiles/commit/f5e6952) feat(zsh): add fzf integration and update documentation for optional tools (Cursor Agent)
+  - Included the fzf script in the zsh configuration for enhanced fuzzy finding capabilities.
+  - Updated SKILL.md to mention the use of fzf for interactive file and history searches.
+  - Enhanced INSTALL.md and SYSTEM_DEPENDENCIES.md to include installation instructions for fzf and lnav as optional tools.
+- 2026-06-06 21:58 [10de2c4](https://github.com/jesuserro/dotfiles/commit/10de2c4) feat(store_etl_ops): implement configurable workdir resolution and update documentation (Cursor Agent)
+  - Introduced a new function to resolve the Store ETL workspace using the `STORE_ETL_WORKDIR` environment variable, with a fallback to `/home/jesus/proyectos/store-etl`.
+  - Updated the `server.py` to handle workdir validation, ensuring it exists and contains necessary repository markers.
+  - Enhanced documentation in `MCP_QUICKREF.md`, `MCP_TAXONOMY.md`, and `VERIFICAR_MCP_STORE_ETL.md` to clarify workdir configuration and error handling.
+- 2026-06-06 21:26 [5dc427b](https://github.com/jesuserro/dotfiles/commit/5dc427b) feat(ai-assets): implement validation to prevent materializing AI assets in dotfiles checkout (Cursor Agent)
+  - Added a new function to refuse the creation of agent skill surfaces within the dotfiles repository, enhancing the governance of AI asset locations.
+  - Updated the script to use absolute paths for better clarity and reliability.
+  - Enhanced tests to verify that the script correctly refuses to create symlinks for agent skills in the source directory, ensuring robust error handling and messaging.
+- 2026-06-06 21:05 [9b94d4b](https://github.com/jesuserro/dotfiles/commit/9b94d4b) feat(powershell): enhance WinGet package parser with self-test functionality (Cursor Agent)
+  - Added a new self-test feature for the WinGet package parser in the PowerShell script, allowing validation against predefined fixtures without requiring WinGet execution.
+  - Introduced helper functions for line comparison and non-empty line retrieval to facilitate the self-test process.
+  - Updated the `parse-winget-log.py` script documentation to clarify its role as an auxiliary parser for WSL diagnostics.
+- 2026-06-06 20:57 [92b3c9f](https://github.com/jesuserro/dotfiles/commit/92b3c9f) feat(playwright): update CHEZMOI and OPERATIONS documentation to include Playwright Docker (Cursor Agent)
+  - Enhanced the CHEZMOI documentation to clarify the management of dotfiles and the addition of Playwright Docker as a launcher in the local bin.
+  - Added a new section in OPERATIONS.md detailing the usage and configuration of Playwright Docker for browser automation without local installations.
+  - Updated references to include the new launcher in relevant commands and examples, ensuring comprehensive guidance for users.
+- 2026-06-06 20:20 [dd58993](https://github.com/jesuserro/dotfiles/commit/dd58993) feat(powershell): enhance WinGet upgrade process with live output filtering (Cursor Agent)
+  - Introduced new functions `Get-WinGetConsoleLine` and `Invoke-WinGetLiveFiltered` to improve console output handling during WinGet upgrades.
+  - Updated `Run-NativeLiveLogged` to support live filtered output, enhancing user experience by providing real-time feedback.
+  - Revised tests to validate the new functionality and ensure accurate logging and output during the upgrade process.
+
 ### Fixed
-- 2026-06-04 20:13 [60a6d61](https://github.com/jesuserro/dotfiles/commit/60a6d61) fix(gitnexus): update error message for GitNexus installation path (Cursor Agent)
-  - Modified the error message in the GitNexus runtime script to dynamically reference the DOTFILES_DIR variable, improving clarity on the installation command.
-  - Adjusted the test to ensure it correctly matches the updated command format in the output, enhancing the robustness of the testing suite.
-- 2026-06-04 20:02 [4d9158e](https://github.com/jesuserro/dotfiles/commit/4d9158e) fix(gitnexus): improve error messaging and command handling in gnx-analyze-here (Cursor Agent)
-  - Updated the error message for the gnx-analyze-here command to provide clearer guidance when executed outside a Git repository.
-  - Enhanced command handling to correctly process optional leading "--" before GitNexus flags, ensuring proper functionality during analysis.
-  - Added tests to validate the new error messaging and command behavior, improving overall robustness of the gnx-analyze-here functionality.
-- 2026-06-04 19:31 [1d289b2](https://github.com/jesuserro/dotfiles/commit/1d289b2) fix(gitnexus): update index refresh instructions and skill file paths (Cursor Agent)
-  - Revised instructions for refreshing the GitNexus index to use `make gitnexus-status` instead of `npx gitnexus analyze`.
-  - Updated skill file paths in AGENTS.md and CLAUDE.md to reflect the new directory structure under `ai/assets/skills/gitnexus`.
-  - Modified STRUCTURE.md generation to indicate it is produced by `scripts/treegen.sh` instead of a timestamp.
-- 2026-06-04 17:59 [2d6907f](https://github.com/jesuserro/dotfiles/commit/2d6907f) fix(gitnexus): standardize index refresh command across documentation (Cursor Agent)
-  - Updated all instances of the `gnx-analyze-here` command to remove the redundant `--` before the `--skip-agents-md` flag, ensuring consistency in documentation.
-  - Revised related documentation files including GITNEXUS_OPERATIONAL_POLICY.md, MCP_QUICKREF.md, and OPERATIONS_CHEATSHEET.md to reflect the updated command format.
-  - Enhanced tests to validate the changes and ensure accurate representation of the canonical refresh procedure.
-- 2026-06-04 17:32 [0827419](https://github.com/jesuserro/dotfiles/commit/0827419) fix(ci): restore GitNexus contracts and lint drift report (Jesús Erro)
+- 2026-06-06 22:52 [e07e531](https://github.com/jesuserro/dotfiles/commit/e07e531) fix(hooks): update pre-commit hook to auto-stage STRUCTURE.md changes (Cursor Agent)
+  - Modified the pre-commit hook to automatically stage STRUCTURE.md if it is regenerated by treegen, allowing the commit to proceed without manual intervention.
+  - Updated documentation in INSTALL.md and OPERATIONS_CHEATSHEET.md to reflect the new behavior of the pre-commit hook.
+  - Enhanced tests to verify that STRUCTURE.md is staged automatically and that unrelated unstaged files remain unaffected.
+- 2026-06-06 20:37 [1737eb0](https://github.com/jesuserro/dotfiles/commit/1737eb0) fix(validation): add check for non-canonical agent skill directories (Cursor Agent)
+  - Introduced a new validation function to ensure that agent skills are located only under `ai/assets/skills`, preventing the use of non-canonical directories like `.claude/skills`.
+  - Updated the validation script to include this new check, enhancing the governance of skill structure.
+  - Added a corresponding test to verify that the validation fails when a non-canonical directory is present, ensuring robust error messaging and validation feedback.
 
 ### Documentation
-- 2026-06-04 20:23 [1583fde](https://github.com/jesuserro/dotfiles/commit/1583fde) docs(releases): add feature changelog for git hooks integration (Cursor Agent)
-  - Created a new changelog file for the feature branch `feature/22-adding-git-hooks`, summarizing 8 commits related to GitNexus improvements, error handling, and documentation updates.
-  - Highlights include enhancements to error messaging, command handling, and the introduction of a new Git hooks installation process.
-  - Integrated changes into the `dev` branch on 2026-06-04.
-- 2026-06-04 18:51 [686f768](https://github.com/jesuserro/dotfiles/commit/686f768) docs(structure): update STRUCTURE.md generation timestamp and maintain file tree structure (Cursor Agent)
-  - Updated the generated timestamp in STRUCTURE.md to reflect the latest generation time.
-  - Ensured the file tree structure remains consistent and accurate for better clarity and navigation.
-- 2026-06-01 08:45 [23e577c](https://github.com/jesuserro/dotfiles/commit/23e577c) docs(gitnexus): update index information and skill file paths (jesus)
-  - Increased symbol and relationship counts in AGENTS.md and CLAUDE.md to reflect the latest indexing.
-  - Revised instructions for refreshing the index, replacing `make gitnexus-status` with `npx gitnexus analyze`.
-  - Updated skill file paths to use the `.claude` directory for consistency across documentation.
+- 2026-06-06 23:16 [e0848e5](https://github.com/jesuserro/dotfiles/commit/e0848e5) docs(releases): added changelog for branch #23 (Cursor Agent)
+  - Hooks Git más robustos: pre-commit regenera y auto-stagea STRUCTURE.md; post-commit actualiza GitNexus con comportamiento más claro.
+  - Mejor integración de fzf en Zsh.
+  - Añadido soporte/documentación para VisiData como herramienta opcional de inspección tabular.
+- 2026-06-06 22:37 [40c7485](https://github.com/jesuserro/dotfiles/commit/40c7485) docs(ops): add wsl2-raw-data-inspection skill and update documentation (Cursor Agent)
+  - Introduced the `wsl2-raw-data-inspection` skill for secure inspection of CSV/JSON/raw ETL data.
+  - Updated `SKILL.md` for `wsl2-local-tools` to reference the new skill for raw data handling.
+  - Enhanced `README.md` to include the new skill in the list of available operations, ensuring comprehensive documentation.
 
 ### Refactored
-- 2026-06-04 19:54 [cf38e7d](https://github.com/jesuserro/dotfiles/commit/cf38e7d) refactor(powershell): enhance Windows update script with live logging and upgrade count functionality (Cursor Agent)
-  - Updated the PowerShell script to implement live logging during the WinGet upgrade process, capturing real-time output and exit codes.
-  - Introduced a new function, `Run-NativeLiveLogged`, to facilitate live logging and ensure accurate logging of upgrade actions.
-  - Added a method to count available upgrades, improving the feedback provided during the update process.
-- 2026-06-04 19:05 [2ffdaa8](https://github.com/jesuserro/dotfiles/commit/2ffdaa8) refactor(gitnexus): enhance post-commit refresh process and update documentation (Cursor Agent)
-  - Updated the post-commit hook to use `--force --skip-agents-md` for refreshing the GitNexus index, ensuring it runs even when MCP/lock is active.
-  - Added a timeout mechanism for the refresh process, with appropriate warnings for timeouts and failures.
-  - Revised documentation in GITNEXUS_OPERATIONAL_POLICY.md and INSTALL.md to reflect the new refresh command and its behavior.
-- 2026-06-04 18:49 [c85453e](https://github.com/jesuserro/dotfiles/commit/c85453e) refactor(gitnexus): streamline GitNexus commands and enhance documentation (Cursor Agent)
-  - Removed deprecated functions from the aliases file, replacing them with direct calls to `gitnexus` commands for improved clarity and maintainability.
-  - Introduced a new Git hooks installation process via `make install-git-hooks`, allowing for local configuration of hooks without affecting global settings.
-  - Updated documentation across multiple files, including INSTALL.md and GITNEXUS_OPERATIONAL_POLICY.md, to reflect the new Git hooks setup and command usage.
-
-### Tests
-- 2026-06-04 19:07 [e73500f](https://github.com/jesuserro/dotfiles/commit/e73500f) test: trigger hooks (Jesús Erro)
-
-### Chores
-- 2026-06-01 08:37 [e663918](https://github.com/jesuserro/dotfiles/commit/e663918) chore(assets): remove unused symlink governance file (jesus)
-  - Deleted the `_test_symlink_governance` file as it is no longer needed, streamlining the asset directory.
+- 2026-06-06 23:01 [e4ee3e4](https://github.com/jesuserro/dotfiles/commit/e4ee3e4) refactor(hooks): enhance post-commit behavior and documentation (Cursor Agent)
+  - Updated the post-commit hook to skip refresh when GitNexus MCP or index lock is active, ensuring commits remain valid and the index does not become stale.
+  - Improved error handling for non-writable GitNexus home and registry files, providing actionable warnings to users.
+  - Revised documentation in GITNEXUS_OPERATIONAL_POLICY.md, INSTALL.md, and OPERATIONS_CHEATSHEET.md to reflect the new post-commit behavior and clarify manual refresh procedures.
+- 2026-06-06 22:02 [9624630](https://github.com/jesuserro/dotfiles/commit/9624630) refactor(update): clarify mcp-server-fetch installation in WSL update process (Cursor Agent)
+  - Updated documentation to specify that `make update-wsl` does not install `mcp-server-fetch` as a persistent tool, instead managing it at runtime via `uvx`.
+  - Modified the `update-wsl.sh` script to reflect this change, ensuring clarity in the installation process.
+  - Added tests to verify that the `mcp-server-fetch` installation behavior aligns with the updated documentation, confirming it is not installed persistently.
+- 2026-06-06 22:00 [11c1e14](https://github.com/jesuserro/dotfiles/commit/11c1e14) refactor(manifest): update MCP profiles in MANIFEST.yaml and documentation for clarity (Cursor Agent)
+  - Enhanced the `MANIFEST.yaml` to include status and descriptions for reserved profiles: `store-etl`, `ixatu`, and `project-local`, clarifying their inactive status.
+  - Updated `MCP_QUICKREF.md` and `MCP_TAXONOMY.md` to reflect the changes in profile management and emphasize that reserved profiles are not operational.
+  - Added a new test for consistency between MCP taxonomy and manifest profiles to ensure documentation accuracy.
+- 2026-06-06 21:56 [82cdc86](https://github.com/jesuserro/dotfiles/commit/82cdc86) refactor(operations): update agent validation commands and clarify OSV scanning options (Cursor Agent)
+  - Enhanced the documentation for `make agent-validate-changed` to specify that it performs local checks by default and requires `SECURITY_ONLINE=1` for strict OSV scanning.
+  - Updated the `TESTING.md` file to reflect the new behavior of the agent validation command, emphasizing the distinction between local and online security checks.
+  - Modified the `agent-validate-changed.sh` script to include a conditional for running the OSV online scan based on the `SECURITY_ONLINE` environment variable, improving flexibility in validation processes.
+- 2026-06-06 21:16 [b3ea38e](https://github.com/jesuserro/dotfiles/commit/b3ea38e) refactor(playwright): remove run_after_16_link_playwright_docker script and update documentation (Cursor Agent)
+  - Deleted the `run_after_16_link_playwright_docker.sh.tmpl` script as it is no longer needed.
+  - Updated CHEZMOI and OPERATIONS documentation to reflect the change, clarifying the management of `playwright-docker` as a direct symlink in the local bin.
+  - Enhanced tests to verify the new symlink management for `playwright-docker`, ensuring proper functionality and documentation alignment.
 
 
 ## [v2025.12.07_1051] - 2025-12-07
