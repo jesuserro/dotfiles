@@ -140,6 +140,35 @@ These are complementary, not interchangeable. Enable both for full Obsidian inte
 - **`make update` does not fix** a closed Desktop — open Docker Desktop first.
 - Smoke: `docker.exe mcp version` · `docker.exe mcp gateway run --dry-run --verbose`
 
+## Store ETL Ops MCP
+
+| Aspect | Value |
+|--------|-------|
+| **Type** | Platform MCP (curated make wrapper) |
+| **Scope** | Global; operates on a Store ETL checkout |
+| **Config Pattern** | `~/.config/ai/runtime/.venv` + `ai/runtime/mcp/servers/store_etl_ops/server.py` |
+| **Workdir** | `STORE_ETL_WORKDIR` (optional); fallback `/home/jesus/proyectos/store-etl` |
+| **Allowlist** | Fixed curated `make` targets only (`run_make`, `tail_log`) |
+
+### Workdir resolution
+
+- Set `STORE_ETL_WORKDIR` in the MCP `env` block (Cursor/Codex/OpenCode) or shell to point at your `store-etl` checkout.
+- Supports `~` expansion and relative paths (resolved from the server process cwd).
+- The path must exist and look like a Store ETL repo (`.git`, `pyproject.toml`, or `Makefile`).
+- If unset, the server uses the local fallback `/home/jesus/proyectos/store-etl` (Jesús home layout only).
+- If the resolved path is missing: `Store ETL workdir not found: ... Set STORE_ETL_WORKDIR to your store-etl checkout`.
+- Domain-specific Store ETL skills belong in the **store-etl** repository, not in dotfiles.
+
+Example (Cursor `mcp.json` env):
+
+```json
+"store_etl_ops": {
+  "env": {
+    "STORE_ETL_WORKDIR": "/path/to/store-etl"
+  }
+}
+```
+
 ## Postgres MCP
 
 - **Requires:** non-empty `mcp.postgres_dsn` in `secrets.sops.yaml` → `export POSTGRES_DSN=...` in `~/.config/mcp-secrets.env` (generated; do not edit by hand).

@@ -467,6 +467,7 @@
 │   │   │   ├── 📄 filesystem-launcher.bats
 │   │   │   ├── 📄 git-launcher.bats
 │   │   │   ├── 📄 mcp-launcher-contract-check.bats
+│   │   │   ├── 📄 store-etl-ops-workdir.bats
 │   │   │   └── 📄 validate-governance.bats
 │   │   ├── 📁 prompts
 │   │   │   └── 📄 prompt-launchers.bats
@@ -512,6 +513,8 @@
 │   │       ├── 📄 english-success.expected.tsv
 │   │       ├── 📄 spanish-mixed.expected.tsv
 │   │       └── 📄 unknown.expected.tsv
+│   ├── 📁 python
+│   │   └── 🐍 test_store_etl_ops_workdir.py
 │   └── 📄 Makefile.tests
 ├── 📁 tmux
 │   ├── 📁 common

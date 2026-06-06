@@ -388,4 +388,4 @@ mcps:
     secrets: []
     paths_probe:
       - ~/.config/ai/runtime/.venv/bin/python
-    notes: Expects store-etl workspace conventions; readiness may WARN if repo absent.
+    notes: "Workdir via STORE_ETL_WORKDIR; fallback /home/jesus/proyectos/store-etl. Curated make allowlist unchanged; readiness errors if checkout missing."

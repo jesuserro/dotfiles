@@ -35,6 +35,8 @@ This document establishes the taxonomy for all MCPs integrated in the workstatio
 
 **Platform:** Tools requiring specific local services. Intended enabled globally; connectivity errors are readiness WARN/MISSING, not a reason to omit the MCP from the manifest.
 
+`store_etl_ops` resolves its Store ETL checkout via `STORE_ETL_WORKDIR` (optional). Without it, the server falls back to `/home/jesus/proyectos/store-etl`. Missing or invalid workdirs surface as tool/readiness errors; the curated make allowlist is unchanged.
+
 **Connection-Specific:** MCPs with project-dependent credentials. Runtime is global, connection is project-specific.
 
 ---
