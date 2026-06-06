@@ -57,6 +57,11 @@ packages:
     required: false
     capability: data
     note: Log file navigator for local and Docker logs. Install with make deps-install DEPS_INSTALL_ARGS=--include-optional.
+  - package: visidata
+    command: vd
+    required: false
+    capability: data
+    note: Interactive terminal explorer for CSV, TSV, JSON and tabular files. Install with make deps-install DEPS_INSTALL_ARGS=--include-optional.
   - package: shellcheck
     command: shellcheck
     required: true

@@ -9,6 +9,7 @@ description: Guía breve para usar herramientas locales de WSL2 al inspeccionar 
 - Cuando necesites inspeccionar rápidamente la estructura de un proyecto (por ejemplo con `tree`) o encontrar archivos/fragmentos de texto (por ejemplo con `fdfind` y `rg`).
 - Cuando necesites inspeccionar el estado y/o networking de servicios locales en Docker, especialmente para comprobar salud de Postgres con `docker inspect` + `jq`, o revisar logs con `lnav` (opcional APT).
 - Cuando quieras búsqueda interactiva en el historial o el árbol de archivos con `fzf` (opcional APT; keybindings vía `zsh/26-fzf.zsh`).
+- Cuando quieras explorar CSV, TSV, JSON o tablas locales con `vd` (VisiData, opcional APT).
 - Cuando quieras diagnosticar problemas de conectividad (por ejemplo con `nc`).
 
 ## Guidelines
@@ -53,6 +54,6 @@ description: Guía breve para usar herramientas locales de WSL2 al inspeccionar 
 - Evita dependencia de entornos “globales” (como venv de otro repo). Usa el entorno del proyecto cuando sea posible.
 
 ## Quality Checklist
-- El comando usa herramientas locales rápidas (`rg`, `fdfind`, `tree`, `jq`, `nc`; opcionales: `fzf`, `lnav`).
+- El comando usa herramientas locales rápidas (`rg`, `fdfind`, `tree`, `jq`, `nc`; opcionales: `fzf`, `lnav`, `vd`).
 - Los ejemplos no contienen secretos.
 - Los ejemplos Docker usan `jq` para extraer solo campos relevantes.

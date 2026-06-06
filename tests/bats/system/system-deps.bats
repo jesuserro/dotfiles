@@ -127,6 +127,7 @@ EOF
 	[[ "${output}" == *$'optional\tosv-scanner\tosv-scanner\tcommon\tsecurity\texternal\tgithub-release'* ]]
 	[[ "${output}" == *$'optional\tfzf\tfzf\tubuntu\tcli\tapt'* ]]
 	[[ "${output}" == *$'optional\tlnav\tlnav\tubuntu\tdata\tapt'* ]]
+	[[ "${output}" == *$'optional\tvisidata\tvd\tubuntu\tdata\tapt'* ]]
 }
 
 @test "actions helper routes agent tools to canonical installers" {
