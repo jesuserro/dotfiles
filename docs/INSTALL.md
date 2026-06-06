@@ -42,6 +42,7 @@ make install-agent-tools # ast-grep, actionlint, osv-scanner (opt-in corporativo
 make install-uv      # uv (Astral) en ~/.local/bin
 make install-zsh-stack   # Oh My Zsh + Powerlevel10k + plugins (no toca ~/.zshrc)
 # zoxide (salto de directorios, reemplaza plugin OMZ z): make deps-install DEPS_INSTALL_ARGS=--include-optional
+# fzf (fuzzy finder, integración shell en zsh/26-fzf.zsh) y lnav (logs): make deps-install DEPS_INSTALL_ARGS=--include-optional
 make install-fonts   # MesloLGS NF para Powerlevel10k en Linux/WSL (no configura Windows Terminal)
 make install-mattpocock-skills # fallback externo opt-in: catálogo Matt completo
 make install-git-hooks # hooks Git locales de este checkout; no forma parte de make install/update

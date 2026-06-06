@@ -47,6 +47,16 @@ packages:
     required: false
     capability: shell
     note: Directory jumper; replaces OMZ plugin z. Install with make deps-install DEPS_INSTALL_ARGS=--include-optional.
+  - package: fzf
+    command: fzf
+    required: false
+    capability: cli
+    note: Fuzzy finder; shell integration via zsh/26-fzf.zsh. Install with make deps-install DEPS_INSTALL_ARGS=--include-optional.
+  - package: lnav
+    command: lnav
+    required: false
+    capability: data
+    note: Log file navigator for local and Docker logs. Install with make deps-install DEPS_INSTALL_ARGS=--include-optional.
   - package: shellcheck
     command: shellcheck
     required: true
