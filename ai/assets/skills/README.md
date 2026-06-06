@@ -104,6 +104,7 @@ Visible skill names follow semantic origin, not just repository location:
 - `ops/excalidraw-mcp-operations/` - `Dotfiles Excalidraw MCP Operations`
 - `ops/playwright-ui-validation/` - `Dotfiles Playwright UI Validation`
 - `ops/wsl2-local-tools/` - `Dotfiles WSL2 Local Tools`
+- `ops/wsl2-raw-data-inspection/` - `Dotfiles WSL2 Raw Data Inspection`
 - `ops/agent-workflow/` - `Dotfiles Agent Workflow`
 - `ops/grill-plan/` - `Dotfiles Grill Plan`
 - `ops/to-spec/` - `Dotfiles To Spec`

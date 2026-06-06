@@ -9,7 +9,7 @@ description: Guía breve para usar herramientas locales de WSL2 al inspeccionar 
 - Cuando necesites inspeccionar rápidamente la estructura de un proyecto (por ejemplo con `tree`) o encontrar archivos/fragmentos de texto (por ejemplo con `fdfind` y `rg`).
 - Cuando necesites inspeccionar el estado y/o networking de servicios locales en Docker, especialmente para comprobar salud de Postgres con `docker inspect` + `jq`, o revisar logs con `lnav` (opcional APT).
 - Cuando quieras búsqueda interactiva en el historial o el árbol de archivos con `fzf` (opcional APT; keybindings vía `zsh/26-fzf.zsh`).
-- Cuando quieras explorar CSV, TSV, JSON o tablas locales con `vd` (VisiData, opcional APT).
+- Para inspección segura de CSV/JSON/raw ETL (sin PII ni TUI), usa la skill [`wsl2-raw-data-inspection`](../wsl2-raw-data-inspection/SKILL.md).
 - Cuando quieras diagnosticar problemas de conectividad (por ejemplo con `nc`).
 
 ## Guidelines
@@ -54,6 +54,6 @@ description: Guía breve para usar herramientas locales de WSL2 al inspeccionar 
 - Evita dependencia de entornos “globales” (como venv de otro repo). Usa el entorno del proyecto cuando sea posible.
 
 ## Quality Checklist
-- El comando usa herramientas locales rápidas (`rg`, `fdfind`, `tree`, `jq`, `nc`; opcionales: `fzf`, `lnav`, `vd`).
+- El comando usa herramientas locales rápidas (`rg`, `fdfind`, `tree`, `jq`, `nc`; opcionales: `fzf`, `lnav`). Para datos raw/ETL, delega en `wsl2-raw-data-inspection`.
 - Los ejemplos no contienen secretos.
 - Los ejemplos Docker usan `jq` para extraer solo campos relevantes.

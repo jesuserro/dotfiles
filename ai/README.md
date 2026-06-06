@@ -98,6 +98,7 @@ ejecuta. En solapes, gana el skill local bajo `ai/assets/skills/`.
 | `ops/` | `system-updates/` | `Dotfiles Update Workflow` |
 | `ops/` | `excalidraw-mcp-operations/` | `Dotfiles Excalidraw MCP Operations` |
 | `ops/` | `wsl2-local-tools/` | `Dotfiles WSL2 Local Tools` |
+| `ops/` | `wsl2-raw-data-inspection/` | `Dotfiles WSL2 Raw Data Inspection` |
 | `ops/` | `agent-workflow/` | `Dotfiles Agent Workflow` (mapa de familia) |
 | `ops/` | `grill-plan/` | `Dotfiles Grill Plan` |
 | `ops/` | `to-spec/` | `Dotfiles To Spec` |
