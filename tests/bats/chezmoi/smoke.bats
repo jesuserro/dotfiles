@@ -126,6 +126,12 @@ teardown() {
 		grep -q "readlink" "$DOTFILES_DIR/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl"
 }
 
+@test "ai assets script refuses repo-local agent skill surfaces" {
+	local tmpl="$DOTFILES_DIR/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl"
+	grep -q "refuse_repo_local_target" "$tmpl"
+	grep -q "refusing to materialize AI assets inside dotfiles checkout" "$tmpl"
+}
+
 @test "dot_cursor/mcp.json.tmpl is valid json structure" {
 	skip_if_command_missing "python3"
 
