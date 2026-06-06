@@ -173,9 +173,12 @@ Configura `core.hooksPath=.githooks` solo para este checkout. El pre-commit
 ejecuta `treegen` antes de cada commit; si regenera `STRUCTURE.md`, stagea
 automáticamente solo ese fichero y deja continuar el commit. No stagea otros
 cambios del workspace. El post-commit refresca GitNexus con `--force --skip-agents-md` de forma síncrona,
-best-effort y no fatal. Si detecta MCP/lock activo, informa y ejecuta igualmente
-el refresh forzado; si falla o expira tras 30 segundos, ejecuta manualmente
-`gitnexus analyze --force .`.
+best-effort y no fatal. Si detecta MCP/lock activo o permisos no escribibles en
+`~/.gitnexus` / `registry.json`, omite el refresh con `WARN` (el índice puede
+quedar STALE). Si no hay contención y el analyze falla o expira tras 30 segundos,
+refresca manualmente con `make gitnexus-status` y
+`gnx-analyze-here --force --skip-agents-md`. Si hay varios procesos
+`gitnexus mcp`, cierra sesiones duplicadas de Cursor antes de refrescar.
 
 Escapes: `DOTFILES_SKIP_HOOKS=1`, `DOTFILES_SKIP_TREEGEN=1`,
 `DOTFILES_SKIP_GITNEXUS=1`.

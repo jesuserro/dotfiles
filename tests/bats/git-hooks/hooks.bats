@@ -220,7 +220,7 @@ EOF
 	[[ "$output" == *"DOTFILES_SKIP_GITNEXUS=1"* ]]
 }
 
-@test "post-commit forces refresh when GitNexus MCP or lock is active" {
+@test "post-commit skips refresh when GitNexus MCP or lock is active" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	local trace="${TEST_TEMP_DIR}/trace"
 	init_repo "$repo"
@@ -234,9 +234,54 @@ EOF
 
 	run env GNX_TRACE="$trace" bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 	[[ "$status" -eq 0 ]]
-	[[ "$output" == *"MCP/lock detected; running forced post-commit refresh"* ]]
-	[[ "$output" == *"post-commit refresh completed"* ]]
-	grep -q -- '--force --skip-agents-md' "$trace"
+	[[ "$output" == *"MCP/index lock is active"* ]]
+	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md"* ]]
+	[[ ! -f "$trace" ]]
+}
+
+@test "post-commit skips when GitNexus registry is not writable" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local gnx_home="${TEST_TEMP_DIR}/gitnexus-home"
+	local trace="${TEST_TEMP_DIR}/trace"
+	init_repo "$repo"
+	copy_post_commit "$repo"
+	mkdir -p "$gnx_home"
+	echo '[]' >"$gnx_home/registry.json"
+	chmod a-w "$gnx_home/registry.json"
+	cat >"$repo/scripts/lib/gitnexus_runtime.sh" <<'EOF'
+gitnexus_index_in_use() { return 1; }
+gitnexus_analyze_here() {
+	printf '%s\n' "$*" >"$GNX_TRACE"
+}
+EOF
+
+	run env GNX_TRACE="$trace" GITNEXUS_HOME="$gnx_home" \
+		bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"registry.json is not writable"* ]]
+	[[ ! -f "$trace" ]]
+}
+
+@test "post-commit skips when GitNexus home is not writable" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local gnx_home="${TEST_TEMP_DIR}/gitnexus-home-ro"
+	local trace="${TEST_TEMP_DIR}/trace"
+	init_repo "$repo"
+	copy_post_commit "$repo"
+	mkdir -p "$gnx_home"
+	chmod a-w "$gnx_home"
+	cat >"$repo/scripts/lib/gitnexus_runtime.sh" <<'EOF'
+gitnexus_index_in_use() { return 1; }
+gitnexus_analyze_here() {
+	printf '%s\n' "$*" >"$GNX_TRACE"
+}
+EOF
+
+	run env GNX_TRACE="$trace" GITNEXUS_HOME="$gnx_home" \
+		bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"is not writable"* ]]
+	[[ ! -f "$trace" ]]
 }
 
 @test "post-commit remains successful when GitNexus analyze fails" {
@@ -254,7 +299,8 @@ EOF
 
 	run env GNX_TRACE="$trace" bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 	[[ "$status" -eq 0 ]]
-	[[ "$output" == *"refresh failed; run gitnexus analyze --force . manually"* ]]
+	[[ "$output" == *"refresh failed with exit code 1"* ]]
+	[[ "$output" == *"commit kept"* ]]
 	grep -q -- '--force --skip-agents-md' "$trace"
 }
 
@@ -279,7 +325,9 @@ EOF
 	run env TIMEOUT_TRACE="$trace" PATH="$fake_bin:$PATH" \
 		bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 	[[ "$status" -eq 0 ]]
-	[[ "$output" == *"refresh timed out after 30s"* ]]
+	[[ "$output" == *"timed out after 30s"* ]]
+	[[ "$output" == *"commit kept"* ]]
+	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md"* ]]
 	grep -q '^30s ' "$trace"
 }
 
@@ -376,8 +424,9 @@ EOF
 	done
 }
 
-@test "GitNexus hook policy documents forced best-effort refresh" {
+@test "GitNexus hook policy documents post-commit best-effort refresh" {
 	local policy="${DOTFILES_DIR}/docs/GITNEXUS_OPERATIONAL_POLICY.md"
-	grep -q 'gitnexus analyze --force .' "$policy"
+	grep -q 'gnx-analyze-here --force --skip-agents-md' "$policy"
 	grep -q '30 segundos' "$policy"
+	grep -q 'MCP/procesos GitNexus' "$policy"
 }
