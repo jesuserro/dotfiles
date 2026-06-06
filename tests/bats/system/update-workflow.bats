@@ -1768,6 +1768,12 @@ EOF
 	assert_file_not_matches "${DOTFILES_DIR}/scripts/update/update-windows.ps1" '^.*Run-Logged.*wsl --shutdown|^[[:space:]]*wsl --shutdown'
 }
 
+@test "update-wsl does not install mcp-server-fetch as persistent uv tool" {
+	run grep -q 'uv tool install mcp-server-fetch' "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+	[[ "${status}" -eq 1 ]]
+	grep -q 'runtime-managed via uvx' "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+}
+
 @test "ups command is absent from aliases and Make targets" {
 	run grep -Eq '(^|[[:space:]])ups\\(\\)' "${DOTFILES_DIR}/aliases"
 	[[ "${status}" -ne 0 ]]

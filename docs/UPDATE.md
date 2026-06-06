@@ -113,6 +113,8 @@ Regla de rutas para agentes: no pases rutas WSL `/mnt/c/...` a `import_scene`, `
 
 Cada ejecución crea logs bajo un directorio `dotfiles/update-runs/<timestamp>-<pid>/logs`. El resumen final indica esa ruta.
 
+`make update-wsl` no instala `mcp-server-fetch` como herramienta persistente (`uv tool install`). El MCP fetch usa `uvx` en runtime; ver `docs/MCP_TAXONOMY.md`.
+
 Comandos útiles:
 
 ```bash

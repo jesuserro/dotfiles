@@ -28,6 +28,13 @@ setup() {
 	grep -Eiq 'not active|not rendered|reserved placeholder' "${MANIFEST}"
 }
 
+@test "update-wsl aligns fetch with uvx runtime contract" {
+	SCRIPT="${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+	run grep -q 'uv tool install mcp-server-fetch' "${SCRIPT}"
+	[[ "${status}" -eq 1 ]]
+	grep -q 'runtime-managed via uvx' "${SCRIPT}"
+}
+
 @test "MCP_QUICKREF explains reserved profiles are not operational" {
 	grep -Eiq 'reserved|not rendered|not active' "${QUICKREF}"
 	grep -q 'store-etl' "${QUICKREF}"
