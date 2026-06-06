@@ -264,6 +264,7 @@
 ├── 📁 dot_local
 │   └── 📁 share
 │       └── 📁 chezmoi
+├── 📁 downloads
 ├── 📁 local
 ├── 📁 powerlevel10k
 │   └── 🔧 p10k.zsh
@@ -473,6 +474,7 @@
 │   │   │   ├── 📄 canonical-skills.bats
 │   │   │   └── 📄 validate-skills-structure.bats
 │   │   ├── 📁 system
+│   │   │   ├── 📄 agent-validate-changed.bats
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
 │   │   │   ├── 📄 docker-desktop-credentials.bats

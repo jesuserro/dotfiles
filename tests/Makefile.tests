@@ -68,7 +68,7 @@ help:
 	@echo "  make ai-cursor-check             Check Cursor/MCP readiness in HOME"
 	@echo "  make update-check                Read-only update/runtime diagnostics"
 	@echo "  make ai-doctor                   Read-only AI readiness checks"
-	@echo "  make agent-validate-changed      Validate changed files for agents"
+	@echo "  make agent-validate-changed      Validate changed files for agents (local; SECURITY_ONLINE=1 for OSV)"
 	@echo "  make deps-check                  Check declarative system dependencies"
 	@echo "  make deps-actions                Show actions for missing dependencies"
 	@echo "  make test-chezmoi                Chezmoi smoke tests"
@@ -179,7 +179,7 @@ agent-validate: quality-check security-check
 	@echo "$(GREEN)==>$NC Agent validation completed"
 
 agent-validate-changed:
-	@bash $(DOTFILES_DIR)/scripts/agent-validate-changed.sh
+	@SECURITY_ONLINE="$(SECURITY_ONLINE)" bash $(DOTFILES_DIR)/scripts/agent-validate-changed.sh
 
 ai-doctor:
 	@echo "$(BLUE)==>$(NC) AI doctor: dependency inventory"

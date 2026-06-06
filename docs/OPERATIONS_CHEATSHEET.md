@@ -217,7 +217,7 @@ make update-ai-skills DRY_RUN=1             # agente: previsualizar refresh del 
 | MCP | `make mcp-launcher-contract-check`, `make ai-mcp-governance` |
 | GitNexus docs/aliases | `bats tests/bats/zsh/gitnexus_aliases.bats`, `make gitnexus-status` |
 | Skills | `make validate-skills-structure` |
-| General | `make agent-validate-changed` |
+| General | `make agent-validate-changed` (local); `SECURITY_ONLINE=1 make agent-validate-changed` antes de cerrar si quieres OSV estricto |
 
 Readiness agregado (no sustituye tests focalizados): `make ai-doctor`.
 
@@ -256,7 +256,8 @@ Detalle: [TESTING.md](TESTING.md).
 | `make test-bats-ci` | No | No | Paridad CI / pre-PR |
 | `make ai-doctor` | No | No | Readiness agregado pre-implementación |
 | `make ai-cursor-check` | No | No | Tras materializar MCP en HOME |
-| `make agent-validate-changed` | No | No | Cierre de rama con cambios |
+| `make agent-validate-changed` | No | No | Cierre de rama con cambios (local; sin OSV online) |
+| `SECURITY_ONLINE=1 make agent-validate-changed` | No | Sí | Cierre humano con escaneo OSV estricto |
 
 ---
 
