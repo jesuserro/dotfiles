@@ -3,6 +3,7 @@
 setup() {
 	load '../helpers/common'
 	DOTFILES_DIR="$(cd "${BATS_TEST_DIRNAME}/../../.." && pwd)"
+	WINGET_FIXTURES="${DOTFILES_DIR}/tests/fixtures/winget"
 	setup_temp_dir
 }
 
@@ -1363,6 +1364,19 @@ PY
 	[[ "$output" == *$'OK\tWindows\tWinGet package Microsoft Teams [Microsoft.Teams]\tupdated successfully'* ]]
 }
 
+@test "winget parser fixtures match expected TSV" {
+	local log expected case_name expected_text
+	for log in "${WINGET_FIXTURES}"/*.log; do
+		case_name="$(basename "$log" .log)"
+		expected="${WINGET_FIXTURES}/${case_name}.expected.tsv"
+		[[ -f "$expected" ]]
+		expected_text="$(awk 'NF {print}' "$expected")"
+		run python3 "${DOTFILES_DIR}/scripts/update/parse-winget-log.py" "$log"
+		[[ "$status" -eq 0 ]]
+		[[ "$output" == "$expected_text" ]]
+	done
+}
+
 @test "PowerShell Windows logging uses native process capture and UTF-8 log writes" {
 	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
 	grep -q 'Run-NativeLogged' "$ps1"
@@ -1440,6 +1454,31 @@ PY
 	[[ "$output" != *$'\n/\n'* ]]
 	[[ "$output" != *$'\342\226\222\342\226\222\342\226\222'* ]]
 	[[ "$output" != *$'\342\226\210\342\226\210\342\226\210'* ]]
+}
+
+@test "PowerShell WinGet package parser self-test uses fixtures without running WinGet" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	local run_dir="${TEST_TEMP_DIR}/winget-package-selftest"
+	if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+		run powershell.exe -NoProfile -Command 'exit 0'
+		if [[ "$status" -ne 0 ]]; then
+			skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+		fi
+		run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$ps1")" -RunDir "$(wslpath -w "$run_dir")" -SelfTestWinGetPackageResults
+	elif command -v pwsh >/dev/null 2>&1; then
+		run pwsh -NoProfile -File "$ps1" -RunDir "$run_dir" -SelfTestWinGetPackageResults
+	else
+		skip "requires powershell.exe or pwsh"
+	fi
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"OK english-success"* ]]
+	[[ "$output" == *"OK english-failure"* ]]
+	[[ "$output" == *"OK spanish-mixed"* ]]
+	[[ "$output" == *"OK unknown"* ]]
+	[[ "$output" == *"OK WinGet package parser self-test passed"* ]]
+	[[ "$output" != *"==> WinGet sources"* ]]
+	[[ "$output" != *"Dotfiles Windows update"$'\n'* ]]
+	grep -q $'OK\tWindows\tWinGet package parser self-test\tfixtures matched' "${run_dir}/windows-results.tsv"
 }
 
 @test "PowerShell live native runner writes output before child exits and preserves WARN result" {

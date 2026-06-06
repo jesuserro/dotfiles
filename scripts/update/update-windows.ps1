@@ -2,12 +2,13 @@ param(
   [string]$RunDir = "",
   [switch]$SelfTestNativeArguments,
   [switch]$SelfTestWinGetConsoleText,
+  [switch]$SelfTestWinGetPackageResults,
   [switch]$SelfTestLiveLogging
 )
 
 $ErrorActionPreference = "Continue"
 if ([string]::IsNullOrWhiteSpace($RunDir)) {
-  if ($SelfTestNativeArguments -or $SelfTestWinGetConsoleText -or $SelfTestLiveLogging) {
+  if ($SelfTestNativeArguments -or $SelfTestWinGetConsoleText -or $SelfTestWinGetPackageResults -or $SelfTestLiveLogging) {
     $RunDir = Join-Path ([System.IO.Path]::GetTempPath()) ("dotfiles-update-native-args-" + [System.Guid]::NewGuid().ToString("N"))
   } else {
     throw "RunDir is required"
@@ -368,6 +369,37 @@ function Add-WinGetPackageResults {
   }
 }
 
+function Get-NonEmptyLines {
+  param([string]$Path)
+  if (-not (Test-Path $Path)) { return @() }
+  return @(Get-Content -Path $Path -ErrorAction Stop | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+}
+
+function Assert-LinesEqual {
+  param(
+    [string]$Name,
+    [string[]]$Expected,
+    [string[]]$Actual
+  )
+  if ($Expected.Count -ne $Actual.Count) {
+    Write-Host "WARN $Name line count mismatch: expected $($Expected.Count), got $($Actual.Count)"
+    Write-Host "Expected:"
+    $Expected | ForEach-Object { Write-Host "  $_" }
+    Write-Host "Actual:"
+    $Actual | ForEach-Object { Write-Host "  $_" }
+    return $false
+  }
+  for ($i = 0; $i -lt $Expected.Count; $i++) {
+    if ($Expected[$i] -ne $Actual[$i]) {
+      Write-Host "WARN $Name mismatch at line $($i + 1)"
+      Write-Host "Expected: $($Expected[$i])"
+      Write-Host "Actual:   $($Actual[$i])"
+      return $false
+    }
+  }
+  return $true
+}
+
 if ($SelfTestNativeArguments) {
   Write-Host "Dotfiles Windows update native argument self-test"
   Write-Host "Run directory: $RunDir"
@@ -386,6 +418,37 @@ if ($SelfTestNativeArguments) {
   }
   Add-Result "OK" "Argument self-test" "native arguments reached child process"
   Write-Host "OK native argument self-test passed"
+  exit 0
+}
+
+if ($SelfTestWinGetPackageResults) {
+  Write-Host "Dotfiles Windows update WinGet package parser self-test"
+  Write-Host "Run directory: $RunDir"
+  $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "../..")
+  $fixtureDir = Join-Path $repoRoot "tests/fixtures/winget"
+  $cases = @("english-success", "english-failure", "spanish-mixed", "unknown")
+  foreach ($caseName in $cases) {
+    $log = Join-Path $fixtureDir "${caseName}.log"
+    $expected = Join-Path $fixtureDir "${caseName}.expected.tsv"
+    if ((-not (Test-Path $log)) -or (-not (Test-Path $expected))) {
+      Add-Result "WARN" "WinGet package parser self-test" "missing fixture for ${caseName}"
+      Write-Host "WARN missing fixture for ${caseName}"
+      exit 67
+    }
+    Set-Content -Path $ResultFile -Value "" -Encoding UTF8
+    $script:LastRunCode = 0
+    Add-WinGetPackageResults $log
+    $actualLines = Get-NonEmptyLines $ResultFile
+    $expectedLines = Get-NonEmptyLines $expected
+    if (-not (Assert-LinesEqual $caseName $expectedLines $actualLines)) {
+      Add-Result "WARN" "WinGet package parser self-test" "${caseName} fixture mismatch"
+      exit 67
+    }
+    Write-Host "OK ${caseName}"
+  }
+  Set-Content -Path $ResultFile -Value "" -Encoding UTF8
+  Add-Result "OK" "WinGet package parser self-test" "fixtures matched"
+  Write-Host "OK WinGet package parser self-test passed"
   exit 0
 }
 

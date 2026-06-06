@@ -505,6 +505,12 @@
 │   │   │   ├── 📄 rc_symlinks.bats
 │   │   │   └── 📄 zoxide.bats
 │   │   └── 📄 git-ai-author.bats
+│   ├── 📁 fixtures
+│   │   └── 📁 winget
+│   │       ├── 📄 english-failure.expected.tsv
+│   │       ├── 📄 english-success.expected.tsv
+│   │       ├── 📄 spanish-mixed.expected.tsv
+│   │       └── 📄 unknown.expected.tsv
 │   └── 📄 Makefile.tests
 ├── 📁 tmux
 │   ├── 📁 common
