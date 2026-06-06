@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DEFAULT_IMAGE="mcr.microsoft.com/playwright:v1.60.0-noble"
+PROJECT_DIR="${PLAYWRIGHT_DOCKER_PROJECT:-$PWD}"
+DOWNLOADS_DIR="${PLAYWRIGHT_DOCKER_DOWNLOADS:-${PWD}/downloads}"
+IMAGE="${PLAYWRIGHT_DOCKER_IMAGE:-$DEFAULT_IMAGE}"
+PROJECT_CONTAINER="/workspace/project"
+DOWNLOADS_CONTAINER="/workspace/downloads"
+
+usage() {
+	cat <<'EOF'
+Usage: playwright-docker <command> [args...]
+
+Run Playwright from the official Docker image without installing browsers locally.
+
+Examples:
+  playwright-docker npx playwright --version
+  playwright-docker node scripts/download-pdfs.js
+  PLAYWRIGHT_DOCKER_IMAGE=mcr.microsoft.com/playwright/python:<version>-noble playwright-docker python scripts/download_pdfs.py
+
+Environment:
+  PLAYWRIGHT_DOCKER_IMAGE       Docker image to run (default: mcr.microsoft.com/playwright:v1.60.0-noble)
+  PLAYWRIGHT_DOCKER_DOWNLOADS   Host downloads dir (default: ./downloads)
+  PLAYWRIGHT_DOCKER_EXTRA_ARGS  Extra docker run args, whitespace-separated
+EOF
+}
+
+if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+	usage
+	if [[ $# -eq 0 ]]; then
+		exit 2
+	fi
+	exit 0
+fi
+
+if ! command -v docker >/dev/null 2>&1; then
+	echo "playwright-docker: docker is required; start Docker Desktop or install Docker for this host." >&2
+	exit 1
+fi
+
+mkdir -p "$DOWNLOADS_DIR"
+
+extra_args=()
+if [[ -n "${PLAYWRIGHT_DOCKER_EXTRA_ARGS:-}" ]]; then
+	read -r -a extra_args <<<"$PLAYWRIGHT_DOCKER_EXTRA_ARGS"
+fi
+
+exec docker run \
+	--rm \
+	--init \
+	--ipc=host \
+	--user "$(id -u):$(id -g)" \
+	-e "HOME=/tmp/playwright-home" \
+	-e "PLAYWRIGHT_DOWNLOADS_PATH=${DOWNLOADS_CONTAINER}" \
+	-v "${PROJECT_DIR}:${PROJECT_CONTAINER}" \
+	-v "${DOWNLOADS_DIR}:${DOWNLOADS_CONTAINER}" \
+	-w "${PROJECT_CONTAINER}" \
+	"${extra_args[@]}" \
+	"$IMAGE" \
+	"$@"

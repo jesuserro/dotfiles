@@ -3,6 +3,7 @@
 setup() {
 	load '../helpers/common'
 	DOTFILES_DIR="$(cd "${BATS_TEST_DIRNAME}/../../.." && pwd)"
+	WINGET_FIXTURES="${DOTFILES_DIR}/tests/fixtures/winget"
 	setup_temp_dir
 }
 
@@ -1363,6 +1364,19 @@ PY
 	[[ "$output" == *$'OK\tWindows\tWinGet package Microsoft Teams [Microsoft.Teams]\tupdated successfully'* ]]
 }
 
+@test "winget parser fixtures match expected TSV" {
+	local log expected case_name expected_text
+	for log in "${WINGET_FIXTURES}"/*.log; do
+		case_name="$(basename "$log" .log)"
+		expected="${WINGET_FIXTURES}/${case_name}.expected.tsv"
+		[[ -f "$expected" ]]
+		expected_text="$(awk 'NF {print}' "$expected")"
+		run python3 "${DOTFILES_DIR}/scripts/update/parse-winget-log.py" "$log"
+		[[ "$status" -eq 0 ]]
+		[[ "$output" == "$expected_text" ]]
+	done
+}
+
 @test "PowerShell Windows logging uses native process capture and UTF-8 log writes" {
 	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
 	grep -q 'Run-NativeLogged' "$ps1"
@@ -1387,13 +1401,18 @@ PY
 	grep -q 'Write-WinGetListStatus \$winGetListName' "$ps1"
 }
 
-@test "PowerShell WinGet upgrade runner streams through Tee-Object and captures native exit code immediately" {
+@test "PowerShell WinGet upgrade runner uses ProcessStartInfo and live filtered console output" {
 	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
 	grep -q 'function Run-NativeLiveLogged' "$ps1"
-	grep -q 'Tee-Object -FilePath \$log' "$ps1"
-	grep -q 'Tee-Object -FilePath \$log.*| Out-Host' "$ps1"
-	grep -Fq '$script:LiveRunCode = $LASTEXITCODE' "$ps1"
+	grep -q 'function Invoke-WinGetLiveFiltered' "$ps1"
+	grep -Fq '[System.Diagnostics.ProcessStartInfo]::new()' "$ps1"
+	grep -Fq '$psi.RedirectStandardOutput = $true' "$ps1"
+	grep -Fq '$psi.RedirectStandardError = $true' "$ps1"
+	grep -Fq 'Get-WinGetConsoleLine $line' "$ps1"
 	grep -Fq '[System.IO.File]::WriteAllText($log, $content, $encoding)' "$ps1"
+	grep -Fq 'Run-NativeLiveLogged "WinGet packages" "windows-winget-upgrade.log" "winget" @("upgrade", "--all", "--include-unknown", "--silent", "--accept-package-agreements", "--accept-source-agreements") "utf8" "Updating $winGetPackageCount packages with WinGet..." $true' "$ps1"
+	run grep -q 'Tee-Object -FilePath \$log' "$ps1"
+	[[ "$status" -ne 0 ]]
 	run grep -q 'Run-NativeLogged "WinGet packages"' "$ps1"
 	[[ "$status" -ne 0 ]]
 }
@@ -1425,11 +1444,41 @@ PY
 	run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "${DOTFILES_DIR}/scripts/update/update-windows.ps1")" -SelfTestWinGetConsoleText
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"Pandoc"* ]]
+	[[ "$output" == *"1603"* ]]
+	[[ "$output" == *"Cursor"* ]]
+	[[ "$output" == *"Successfully installed"* ]]
 	[[ "$output" == *"OK WinGet console text self-test passed"* ]]
 	[[ "$output" != *$'\n-\n'* ]]
 	[[ "$output" != *$'\n\\\n'* ]]
 	[[ "$output" != *$'\n|\n'* ]]
 	[[ "$output" != *$'\n/\n'* ]]
+	[[ "$output" != *$'\342\226\222\342\226\222\342\226\222'* ]]
+	[[ "$output" != *$'\342\226\210\342\226\210\342\226\210'* ]]
+}
+
+@test "PowerShell WinGet package parser self-test uses fixtures without running WinGet" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	local run_dir="${TEST_TEMP_DIR}/winget-package-selftest"
+	if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+		run powershell.exe -NoProfile -Command 'exit 0'
+		if [[ "$status" -ne 0 ]]; then
+			skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+		fi
+		run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$ps1")" -RunDir "$(wslpath -w "$run_dir")" -SelfTestWinGetPackageResults
+	elif command -v pwsh >/dev/null 2>&1; then
+		run pwsh -NoProfile -File "$ps1" -RunDir "$run_dir" -SelfTestWinGetPackageResults
+	else
+		skip "requires powershell.exe or pwsh"
+	fi
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"OK english-success"* ]]
+	[[ "$output" == *"OK english-failure"* ]]
+	[[ "$output" == *"OK spanish-mixed"* ]]
+	[[ "$output" == *"OK unknown"* ]]
+	[[ "$output" == *"OK WinGet package parser self-test passed"* ]]
+	[[ "$output" != *"==> WinGet sources"* ]]
+	[[ "$output" != *"Dotfiles Windows update"$'\n'* ]]
+	grep -q $'OK\tWindows\tWinGet package parser self-test\tfixtures matched' "${run_dir}/windows-results.tsv"
 }
 
 @test "PowerShell live native runner writes output before child exits and preserves WARN result" {
@@ -1717,6 +1766,12 @@ EOF
 @test "update PowerShell script invokes wsl --update and never wsl --shutdown" {
 	grep -q 'Run-NativeLogged "WSL update" "windows-wsl-update.log" "wsl" @("--update") "unicode"' "${DOTFILES_DIR}/scripts/update/update-windows.ps1"
 	assert_file_not_matches "${DOTFILES_DIR}/scripts/update/update-windows.ps1" '^.*Run-Logged.*wsl --shutdown|^[[:space:]]*wsl --shutdown'
+}
+
+@test "update-wsl does not install mcp-server-fetch as persistent uv tool" {
+	run grep -q 'uv tool install mcp-server-fetch' "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+	[[ "${status}" -eq 1 ]]
+	grep -q 'runtime-managed via uvx' "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
 }
 
 @test "ups command is absent from aliases and Make targets" {

@@ -154,7 +154,9 @@
 │   │       │   │   └── 📝 SKILL.md
 │   │       │   ├── 📁 vault-write-commit-message
 │   │       │   │   └── 📝 SKILL.md
-│   │       │   └── 📁 wsl2-local-tools
+│   │       │   ├── 📁 wsl2-local-tools
+│   │       │   │   └── 📝 SKILL.md
+│   │       │   └── 📁 wsl2-raw-data-inspection
 │   │       │       └── 📝 SKILL.md
 │   │       ├── 📁 postgres
 │   │       │   ├── 📁 schema-review
@@ -264,6 +266,7 @@
 ├── 📁 dot_local
 │   └── 📁 share
 │       └── 📁 chezmoi
+├── 📁 downloads
 ├── 📁 local
 ├── 📁 powerlevel10k
 │   └── 🔧 p10k.zsh
@@ -281,6 +284,7 @@
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_20-refactoring-chezmoi.md
 │   ├── 📝 branch_feature_22-adding-git-hooks.md
+│   ├── 📝 branch_feature_23-adding-refactors.md
 │   ├── 📝 branch_feature_3-enhance-ups-alias-with-ai-upgrades.md
 │   ├── 📝 branch_feature_4-adding-opencode.md
 │   ├── 📝 branch_feature_5-adding-mcps-globales-especializados.md
@@ -454,6 +458,7 @@
 │   │   │   ├── 📄 documentation-consistency.bats
 │   │   │   ├── 📄 gitnexus-human-refresh-procedure.bats
 │   │   │   ├── 📄 make-help.bats
+│   │   │   ├── 📄 mcp-taxonomy-consistency.bats
 │   │   │   └── 📄 operations-cheatsheet.bats
 │   │   ├── 📁 git-hooks
 │   │   │   └── 📄 hooks.bats
@@ -466,6 +471,7 @@
 │   │   │   ├── 📄 filesystem-launcher.bats
 │   │   │   ├── 📄 git-launcher.bats
 │   │   │   ├── 📄 mcp-launcher-contract-check.bats
+│   │   │   ├── 📄 store-etl-ops-workdir.bats
 │   │   │   └── 📄 validate-governance.bats
 │   │   ├── 📁 prompts
 │   │   │   └── 📄 prompt-launchers.bats
@@ -473,6 +479,7 @@
 │   │   │   ├── 📄 canonical-skills.bats
 │   │   │   └── 📄 validate-skills-structure.bats
 │   │   ├── 📁 system
+│   │   │   ├── 📄 agent-validate-changed.bats
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
 │   │   │   ├── 📄 docker-desktop-credentials.bats
@@ -490,6 +497,7 @@
 │   │   │   ├── 📄 install-uv.bats
 │   │   │   ├── 📄 mcp-manifest.bats
 │   │   │   ├── 📄 mcp-render-drift.bats
+│   │   │   ├── 📄 playwright-docker.bats
 │   │   │   ├── 📄 system-deps.bats
 │   │   │   ├── 📄 update-governance.bats
 │   │   │   ├── 📄 update-node-runtime.bats
@@ -497,12 +505,21 @@
 │   │   ├── 📁 tmux
 │   │   │   └── 📄 tmux-dotfiles.bats
 │   │   ├── 📁 zsh
+│   │   │   ├── 📄 fzf.bats
 │   │   │   ├── 📄 gitnexus_aliases.bats
 │   │   │   ├── 📄 omz_plugins.bats
 │   │   │   ├── 📄 p10k_cache_keys.bats
 │   │   │   ├── 📄 rc_symlinks.bats
 │   │   │   └── 📄 zoxide.bats
 │   │   └── 📄 git-ai-author.bats
+│   ├── 📁 fixtures
+│   │   └── 📁 winget
+│   │       ├── 📄 english-failure.expected.tsv
+│   │       ├── 📄 english-success.expected.tsv
+│   │       ├── 📄 spanish-mixed.expected.tsv
+│   │       └── 📄 unknown.expected.tsv
+│   ├── 📁 python
+│   │   └── 🐍 test_store_etl_ops_workdir.py
 │   └── 📄 Makefile.tests
 ├── 📁 tmux
 │   ├── 📁 common
@@ -519,6 +536,7 @@
 │   ├── 🔧 10-path.zsh
 │   ├── 🔧 20-omz.zsh
 │   ├── 🔧 25-zoxide.zsh
+│   ├── 🔧 26-fzf.zsh
 │   ├── 🔧 30-python.zsh
 │   ├── 🔧 50-aliases-dotfiles.zsh
 │   ├── 🔧 55-aliases-azure.zsh

@@ -29,13 +29,30 @@ fi
 # shellcheck source=scripts/lib/gitnexus_runtime.sh
 source "$runtime_lib"
 
+gitnexus_home="${GITNEXUS_HOME:-$HOME/.gitnexus}"
+registry_file="$gitnexus_home/registry.json"
+
+if [[ -e "$gitnexus_home" && ! -w "$gitnexus_home" ]]; then
+	echo "WARN: GitNexus post-commit skipped: ${gitnexus_home} is not writable." >&2
+	echo "WARN: Fix ownership/permissions manually, then run: make gitnexus-status" >&2
+	exit 0
+fi
+
+if [[ -e "$registry_file" && ! -w "$registry_file" ]]; then
+	echo "WARN: GitNexus post-commit skipped: ${registry_file} is not writable." >&2
+	echo "WARN: Check owner and permissions; do not run GitNexus with sudo." >&2
+	exit 0
+fi
+
 if gitnexus_index_in_use "$repo_root"; then
-	echo "INFO: GitNexus MCP/lock detected; running forced post-commit refresh."
+	echo "WARN: GitNexus post-commit skipped: MCP/index lock is active; index may remain STALE." >&2
+	echo "WARN: Close duplicate Cursor/GitNexus MCP sessions, then run: gnx-analyze-here --force --skip-agents-md" >&2
+	exit 0
 fi
 
 timeout_seconds=30
 if ! command -v timeout >/dev/null 2>&1; then
-	echo "WARN: GitNexus post-commit refresh skipped: timeout command not found; run gitnexus analyze --force . manually." >&2
+	echo "WARN: GitNexus post-commit refresh skipped: timeout command not found; run gnx-analyze-here --force --skip-agents-md manually." >&2
 	exit 0
 fi
 
@@ -50,10 +67,12 @@ case "$refresh_status" in
 	echo "INFO: GitNexus post-commit refresh completed."
 	;;
 124 | 137)
-	echo "WARN: GitNexus post-commit refresh timed out after ${timeout_seconds}s; run gitnexus analyze --force . manually." >&2
+	echo "WARN: GitNexus post-commit timed out after ${timeout_seconds}s; commit kept." >&2
+	echo "WARN: If Cursor/GitNexus MCP is active, close duplicate sessions and run: gnx-analyze-here --force --skip-agents-md" >&2
 	;;
 *)
-	echo "WARN: GitNexus post-commit refresh failed; run gitnexus analyze --force . manually." >&2
+	echo "WARN: GitNexus post-commit refresh failed with exit code ${refresh_status}; commit kept." >&2
+	echo "WARN: Run: gnx-analyze-here --force --skip-agents-md" >&2
 	;;
 esac
 

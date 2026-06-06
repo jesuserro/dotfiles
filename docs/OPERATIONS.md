@@ -173,6 +173,65 @@ docker.exe mcp version
 docker.exe mcp gateway run --dry-run --verbose
 ```
 
+### Playwright Docker
+
+`bin/playwright-docker` ejecuta Playwright dentro de Docker desde cualquier
+proyecto externo, sin instalar browsers ni Playwright en Ubuntu. Tras
+`chezmoi apply`, queda publicado como symlink gestionado
+`~/.local/bin/playwright-docker`, que la zsh stack ya deja en `PATH`. Para
+aplicar solo este launcher:
+
+```bash
+chezmoi --source="$HOME/dotfiles" apply ~/.local/bin/playwright-docker
+```
+
+Es útil para automatizaciones de navegador, sesiones y descargas de PDFs
+cuando las dependencias locales de Ubuntu/WSL sean problemáticas.
+
+Contrato por defecto:
+
+- Imagen: `mcr.microsoft.com/playwright:v1.60.0-noble`.
+- Proyecto: el directorio actual se monta como `/workspace/project`.
+- Descargas: `./downloads` se crea y monta como `/workspace/downloads`.
+- Usuario: `--user "$(id -u):$(id -g)"`, para no escribir como root.
+- Variables: `HOME=/tmp/playwright-home` y
+  `PLAYWRIGHT_DOWNLOADS_PATH=/workspace/downloads`.
+- Docker: `--rm`, `--init`, `--ipc=host`; no publica puertos.
+
+Ejemplos:
+
+```bash
+playwright-docker npx playwright --version
+playwright-docker node scripts/download-pdfs.js
+PLAYWRIGHT_DOCKER_IMAGE=mcr.microsoft.com/playwright/python:<version>-noble \
+  playwright-docker python scripts/download_pdfs.py
+```
+
+Para Python, usa la etiqueta publicada en la documentación oficial de
+Playwright Python Docker para tu versión de proyecto.
+
+Para guardar PDFs fuera de `./downloads`:
+
+```bash
+PLAYWRIGHT_DOCKER_DOWNLOADS="$PWD/pdf-output" \
+  playwright-docker node scripts/download-pdfs.js
+```
+
+Para pasar opciones extra a `docker run`:
+
+```bash
+PLAYWRIGHT_DOCKER_EXTRA_ARGS="--add-host=hostmachine:host-gateway" \
+  playwright-docker node scripts/download-pdfs.js
+```
+
+Los scripts deben usar el directorio de descargas del contenedor, por ejemplo
+`process.env.PLAYWRIGHT_DOWNLOADS_PATH` en Node o
+`os.environ["PLAYWRIGHT_DOWNLOADS_PATH"]` en Python. No montes `$HOME`, vaults,
+secretos ni rutas amplias salvo que el proyecto lo decida explícitamente.
+Credenciales, cookies, CAPTCHA, 2FA, `robots.txt` y términos de uso de webs
+externas siguen siendo responsabilidad del proyecto; los tests de dotfiles no
+ejecutan scraping real ni hacen smoke tests contra internet.
+
 ### Postgres MCP
 
 - Lee `POSTGRES_DSN` de `~/.config/mcp-secrets.env` (generado desde SOPS).

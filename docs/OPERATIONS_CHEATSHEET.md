@@ -170,11 +170,15 @@ make install-git-hooks
 ```
 
 Configura `core.hooksPath=.githooks` solo para este checkout. El pre-commit
-ejecuta `treegen` sin auto-stage y aborta si cambia `STRUCTURE.md`. El
-post-commit refresca GitNexus con `--force --skip-agents-md` de forma síncrona,
-best-effort y no fatal. Si detecta MCP/lock activo, informa y ejecuta igualmente
-el refresh forzado; si falla o expira tras 30 segundos, ejecuta manualmente
-`gitnexus analyze --force .`.
+ejecuta `treegen` antes de cada commit; si regenera `STRUCTURE.md`, stagea
+automáticamente solo ese fichero y deja continuar el commit. No stagea otros
+cambios del workspace. El post-commit refresca GitNexus con `--force --skip-agents-md` de forma síncrona,
+best-effort y no fatal. Si detecta MCP/lock activo o permisos no escribibles en
+`~/.gitnexus` / `registry.json`, omite el refresh con `WARN` (el índice puede
+quedar STALE). Si no hay contención y el analyze falla o expira tras 30 segundos,
+refresca manualmente con `make gitnexus-status` y
+`gnx-analyze-here --force --skip-agents-md`. Si hay varios procesos
+`gitnexus mcp`, cierra sesiones duplicadas de Cursor antes de refrescar.
 
 Escapes: `DOTFILES_SKIP_HOOKS=1`, `DOTFILES_SKIP_TREEGEN=1`,
 `DOTFILES_SKIP_GITNEXUS=1`.
@@ -217,7 +221,7 @@ make update-ai-skills DRY_RUN=1             # agente: previsualizar refresh del 
 | MCP | `make mcp-launcher-contract-check`, `make ai-mcp-governance` |
 | GitNexus docs/aliases | `bats tests/bats/zsh/gitnexus_aliases.bats`, `make gitnexus-status` |
 | Skills | `make validate-skills-structure` |
-| General | `make agent-validate-changed` |
+| General | `make agent-validate-changed` (local); `SECURITY_ONLINE=1 make agent-validate-changed` antes de cerrar si quieres OSV estricto |
 
 Readiness agregado (no sustituye tests focalizados): `make ai-doctor`.
 
@@ -256,7 +260,8 @@ Detalle: [TESTING.md](TESTING.md).
 | `make test-bats-ci` | No | No | Paridad CI / pre-PR |
 | `make ai-doctor` | No | No | Readiness agregado pre-implementación |
 | `make ai-cursor-check` | No | No | Tras materializar MCP en HOME |
-| `make agent-validate-changed` | No | No | Cierre de rama con cambios |
+| `make agent-validate-changed` | No | No | Cierre de rama con cambios (local; sin OSV online) |
+| `SECURITY_ONLINE=1 make agent-validate-changed` | No | Sí | Cierre humano con escaneo OSV estricto |
 
 ---
 

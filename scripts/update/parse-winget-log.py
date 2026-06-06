@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Parse package-level WinGet results from a captured upgrade log."""
+"""Auxiliary parser for package-level WinGet results from a captured upgrade log.
+
+The productive Windows update parser lives in scripts/update/update-windows.ps1.
+This helper is for WSL-side diagnostics and tests; it is not a Windows runtime
+dependency.
+"""
 
 from __future__ import annotations
 

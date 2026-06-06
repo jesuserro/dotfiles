@@ -35,6 +35,8 @@ This document establishes the taxonomy for all MCPs integrated in the workstatio
 
 **Platform:** Tools requiring specific local services. Intended enabled globally; connectivity errors are readiness WARN/MISSING, not a reason to omit the MCP from the manifest.
 
+`store_etl_ops` resolves its Store ETL checkout via `STORE_ETL_WORKDIR` (optional). Without it, the server falls back to `/home/jesus/proyectos/store-etl`. Missing or invalid workdirs surface as tool/readiness errors; the curated make allowlist is unchanged.
+
 **Connection-Specific:** MCPs with project-dependent credentials. Runtime is global, connection is project-specific.
 
 ---
@@ -49,7 +51,6 @@ These MCPs require explicit installation or update via `make update` or a dedica
 |-----|--------------|
 | gitnexus CLI | `make update-wsl` / `scripts/install-gitnexus.sh` after Node `>=22` (`make install-node-stack`) |
 | excalidraw_canvas | `make excalidraw-update` pulls Docker images; MCP clients run `docker run -i --rm`; use this name for advanced Excalidraw scene import/export |
-| fetch | `uv tool install mcp-server-fetch` |
 | docker | Docker Desktop MCP Gateway: `docker.exe mcp gateway run` from WSL |
 | postgres | `npm update` in `~/.config/mcp/servers/*/` (only if present) |
 | Python MCPs | `pip install -r requirements.txt -U` in venv |
@@ -61,6 +62,7 @@ These MCPs use `npx -y` or `uvx` and get latest version automatically:
 | MCP | Command |
 |-----|---------|
 | context7 | `npx -y @upstash/context7-mcp` |
+| fetch | `uvx mcp-server-fetch` (`runtime: uvx` in manifest; ephemeral, no `uv tool install`) |
 | github | `npx -y @modelcontextprotocol/server-github` |
 | sequential-thinking | `npx -y @modelcontextprotocol/server-sequential-thinking` |
 | obsidian | `npx -y @bitbonsai/mcpvault` + vault path from Chezmoi `ai.obsidian_vault_path` (see [CHEZMOI.md](./CHEZMOI.md)) |
@@ -92,6 +94,21 @@ MCPs using custom launchers (no update needed):
 |-----|----------|
 | filesystem | `~/.local/share/chezmoi/bin/mcp-filesystem-launcher` |
 | git | `~/.local/share/chezmoi/bin/mcp-git-launcher` |
+
+---
+
+## MCP profiles (`MANIFEST.yaml`)
+
+The manifest declares a `profiles:` block for **future** per-project or per-stack overlays. Today only **`global`** is active.
+
+| Profile | Status | Meaning |
+|---------|--------|---------|
+| `global` | **active** | Chezmoi-managed global MCP intent (Cursor/Codex/OpenCode templates in dotfiles) |
+| `store-etl` | **reserved** | Placeholder; not rendered, validated, or applied. Store ETL stack MCPs live in the **store-etl** repo (e.g. `.cursor/mcp.json`) plus global `store_etl_ops` with `STORE_ETL_WORKDIR` |
+| `ixatu` | **reserved** | Placeholder; not active until a dedicated profiles BUILD |
+| `project-local` | **reserved** | Placeholder; live project MCP configs belong in each project's own editor config, not dotfiles global templates |
+
+Agents must **not** treat reserved profiles as operational contracts. Project-local MCPs that work today are configured in the **project repository** or explicit local editor files — not via these manifest profile keys.
 
 ---
 

@@ -39,6 +39,8 @@ PowerShell escribe logs, `windows-results.tsv` y su propio resumen final. WSL no
 
 La consola PowerShell muestra primero `WinGet packages to upgrade`, con la tabla de paquetes pendientes. Después, `WinGet packages` anuncia cuántos paquetes actualizará, muestra la salida de instalación en tiempo real y la guarda a la vez en `windows-winget-upgrade.log`. La instalación usa `winget upgrade --all --include-unknown --silent --accept-package-agreements --accept-source-agreements --disable-interactivity`; si WinGet devuelve errores parciales, Windows los registra como `WARN` y mantiene el log completo como fuente de detalle.
 
+El parser operativo de resultados por paquete vive en `scripts/update/update-windows.ps1`. El script `scripts/update/parse-winget-log.py` es auxiliar para diagnóstico/tests desde WSL y no es dependencia runtime obligatoria de Windows. Ambos se validan contra fixtures pequeños en `tests/fixtures/winget/` para reducir drift semántico sin consolidar los parsers.
+
 `wsl --shutdown` no se ejecuta automáticamente. Si `wsl --update` indica que conviene reiniciar WSL, el resumen lo muestra como acción posterior para ejecutar manualmente desde PowerShell cuando la sesión WSL haya terminado.
 
 ## Node y GitNexus
@@ -110,6 +112,8 @@ Regla de rutas para agentes: no pases rutas WSL `/mnt/c/...` a `import_scene`, `
 ## Logs y troubleshooting
 
 Cada ejecución crea logs bajo un directorio `dotfiles/update-runs/<timestamp>-<pid>/logs`. El resumen final indica esa ruta.
+
+`make update-wsl` no instala `mcp-server-fetch` como herramienta persistente (`uv tool install`). El MCP fetch usa `uvx` en runtime; ver `docs/MCP_TAXONOMY.md`.
 
 Comandos útiles:
 

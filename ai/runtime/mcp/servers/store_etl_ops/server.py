@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -9,9 +10,10 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 
 MCP_NAME = "store_etl_ops"
-WORKDIR = Path("/home/jesus/proyectos/store-etl")
+DEFAULT_STORE_ETL_WORKDIR = Path("/home/jesus/proyectos/store-etl")
+STORE_ETL_WORKDIR_ENV = "STORE_ETL_WORKDIR"
+STORE_ETL_REPO_MARKERS = (".git", "pyproject.toml", "Makefile")
 MAX_STDIO_BYTES = 32768
-LOGS_DIR = WORKDIR / "logs"
 
 mcp = FastMCP("store-etl-ops-mcp")
 
@@ -26,6 +28,50 @@ _ALLOWED_TARGETS = {
 
 _SAFE_VALUE = re.compile(r"^[A-Za-z0-9._:/-]+$")
 _ALLOWED_LOG_EXTS = {".log", ".txt", ".json", ".ndjson"}
+
+
+def resolve_store_etl_workdir() -> Path:
+    """Resolve the Store ETL workspace from STORE_ETL_WORKDIR or the local fallback."""
+    raw = os.environ.get(STORE_ETL_WORKDIR_ENV, "").strip()
+    source = STORE_ETL_WORKDIR_ENV if raw else f"default fallback ({DEFAULT_STORE_ETL_WORKDIR})"
+
+    if raw:
+        workdir = Path(raw).expanduser()
+        if not workdir.is_absolute():
+            workdir = (Path.cwd() / workdir).resolve()
+        else:
+            workdir = workdir.resolve()
+    else:
+        workdir = DEFAULT_STORE_ETL_WORKDIR
+
+    if not workdir.exists():
+        raise FileNotFoundError(
+            f"Store ETL workdir not found: {workdir} (from {source}). "
+            f"Set {STORE_ETL_WORKDIR_ENV} to your store-etl checkout "
+            f"or create the fallback path."
+        )
+
+    if not workdir.is_dir():
+        raise NotADirectoryError(
+            f"Store ETL workdir is not a directory: {workdir} (from {source})"
+        )
+
+    if not _looks_like_store_etl_repo(workdir):
+        markers = ", ".join(STORE_ETL_REPO_MARKERS)
+        raise ValueError(
+            f"Store ETL workdir does not look like a store-etl repository: {workdir}. "
+            f"Expected at least one marker: {markers}"
+        )
+
+    return workdir
+
+
+def _looks_like_store_etl_repo(workdir: Path) -> bool:
+    return any((workdir / marker).exists() for marker in STORE_ETL_REPO_MARKERS)
+
+
+def get_logs_dir() -> Path:
+    return resolve_store_etl_workdir() / "logs"
 
 
 def _validate_target_and_args(target: str, args: dict[str, Any] | None) -> tuple[str, list[str]]:
@@ -58,13 +104,12 @@ def _validate_target_and_args(target: str, args: dict[str, Any] | None) -> tuple
 
 
 def _run_make(target: str, env_pairs: list[str]) -> dict[str, Any]:
-    if not WORKDIR.exists():
-        raise FileNotFoundError(f"Workdir not found: {WORKDIR}")
+    workdir = resolve_store_etl_workdir()
 
     cmd = ["make", target, *env_pairs]
     completed = subprocess.run(
         cmd,
-        cwd=str(WORKDIR),
+        cwd=str(workdir),
         check=False,
         capture_output=True,
         text=True,
@@ -79,7 +124,7 @@ def _run_make(target: str, env_pairs: list[str]) -> dict[str, Any]:
     return {
         "ok": completed.returncode == 0,
         "return_code": completed.returncode,
-        "workdir": str(WORKDIR),
+        "workdir": str(workdir),
         "command": cmd,
         "output": combined,
     }
@@ -99,15 +144,16 @@ def run_make(target: str, args: dict[str, Any] | None = None) -> dict[str, Any]:
 def tail_log(file: str, lines: int = 200) -> dict[str, Any]:
     """Tail an allow-listed log file path under store-etl workspace."""
     try:
+        logs_dir = get_logs_dir()
         requested = Path(file)
         if requested.is_absolute():
             resolved = requested.resolve()
         else:
-            resolved = (LOGS_DIR / requested).resolve()
+            resolved = (logs_dir / requested).resolve()
 
-        logs_resolved = LOGS_DIR.resolve()
+        logs_resolved = logs_dir.resolve()
         if logs_resolved not in resolved.parents and resolved != logs_resolved:
-            raise ValueError("File must be inside /home/jesus/proyectos/store-etl/logs")
+            raise ValueError(f"File must be inside {logs_resolved}")
         if resolved.suffix and resolved.suffix.lower() not in _ALLOWED_LOG_EXTS:
             raise ValueError(f"File extension not allowed: {resolved.suffix}")
         if not resolved.exists():

@@ -2,6 +2,7 @@
 set -euo pipefail
 
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+SECURITY_ONLINE="${SECURITY_ONLINE:-0}"
 TMP_DIR="$(mktemp -d -t agent-validate-changed.XXXXXX)"
 
 cleanup() {
@@ -39,16 +40,39 @@ run_yamllint() {
 	fi
 }
 
-ensure_agent_release_tools() {
-	if command -v actionlint >/dev/null 2>&1 && command -v osv-scanner >/dev/null 2>&1; then
+ensure_actionlint() {
+	if command -v actionlint >/dev/null 2>&1; then
 		return 0
 	fi
 
-	warn "actionlint/osv-scanner missing; using temporary install-agent-tools fallback"
+	warn "actionlint missing; using temporary install-agent-tools fallback"
 	local temp_home="${TMP_DIR}/agent-tools-home"
 	mkdir -p "${temp_home}"
 	HOME="${temp_home}" bash "${DOTFILES_DIR}/scripts/install-agent-tools.sh" --external-only >/dev/null
 	export PATH="${temp_home}/.local/bin:${PATH}"
+}
+
+ensure_osv_scanner() {
+	if command -v osv-scanner >/dev/null 2>&1; then
+		return 0
+	fi
+
+	warn "osv-scanner missing; using temporary install-agent-tools fallback"
+	local temp_home="${TMP_DIR}/osv-tools-home"
+	mkdir -p "${temp_home}"
+	HOME="${temp_home}" bash "${DOTFILES_DIR}/scripts/install-agent-tools.sh" --external-only >/dev/null
+	export PATH="${temp_home}/.local/bin:${PATH}"
+}
+
+has_osv_scan_inputs() {
+	find "${DOTFILES_DIR}" \
+		\( -name 'package-lock.json' -o -name 'pnpm-lock.yaml' -o -name 'yarn.lock' \
+		-o -name 'requirements*.txt' -o -name 'pyproject.toml' -o -name 'uv.lock' \
+		-o -name 'go.mod' -o -name 'Cargo.lock' -o -name 'composer.lock' \) \
+		-type f \
+		! -path '*/.git/*' ! -path '*/.venv/*' ! -path '*/node_modules/*' \
+		! -path '*/vendor/*' ! -path '*/__pycache__/*' \
+		-print -quit | grep -q .
 }
 
 install_temp_gitleaks() {
@@ -124,15 +148,51 @@ ensure_gitleaks() {
 	install_temp_gitleaks
 }
 
-run_security_scan() {
+run_local_security_scan() {
 	ensure_gitleaks
-	ensure_agent_release_tools
 
 	log "gitleaks working-tree scan"
 	gitleaks detect --source "${DOTFILES_DIR}" --no-git --redact --no-banner
+}
 
-	log "osv-scanner repository scan"
-	osv-scanner scan source -r "${DOTFILES_DIR}"
+is_osv_infrastructure_failure() {
+	local output_file="$1"
+
+	grep -Eiq \
+		'service unavailable|connection refused|timed out|network is unreachable|failed to connect|dial tcp|no such host|temporary failure in name resolution|api.*unavailable|could not reach|error fetching' \
+		"${output_file}"
+}
+
+run_osv_online_scan() {
+	if ! has_osv_scan_inputs; then
+		log "osv-scanner skipped: no supported manifests or lockfiles found"
+		return 0
+	fi
+
+	ensure_osv_scanner
+
+	if ! command -v osv-scanner >/dev/null 2>&1; then
+		printf 'Missing security dependency: osv-scanner\n' >&2
+		printf 'Run: make install-agent-tools\n' >&2
+		return 1
+	fi
+
+	log "osv-scanner repository scan (SECURITY_ONLINE=1)"
+	local osv_output="${TMP_DIR}/osv-output.txt"
+	local osv_status=0
+
+	osv-scanner scan source -r "${DOTFILES_DIR}" >"${osv_output}" 2>&1 || osv_status=$?
+	if [[ ${osv_status} -eq 0 ]]; then
+		return 0
+	fi
+	if is_osv_infrastructure_failure "${osv_output}"; then
+		printf 'External dependency failure: osv-scanner service unavailable\n' >&2
+		cat "${osv_output}" >&2
+		return "${osv_status}"
+	fi
+
+	cat "${osv_output}" >&2
+	return "${osv_status}"
 }
 
 main() {
@@ -233,7 +293,7 @@ main() {
 	fi
 
 	if [[ -s "${workflow_files}" ]]; then
-		ensure_agent_release_tools
+		ensure_actionlint
 		log "actionlint GitHub workflows"
 		actionlint -shellcheck= "${DOTFILES_DIR}"/.github/workflows/*.yml
 	else
@@ -258,7 +318,14 @@ main() {
 			"${DOTFILES_DIR}/tests/bats/system/mcp-render-drift.bats"
 	fi
 
-	run_security_scan
+	run_local_security_scan
+
+	if [[ "${SECURITY_ONLINE}" == "1" ]]; then
+		run_osv_online_scan
+	else
+		log "osv-scanner online scan skipped (set SECURITY_ONLINE=1 to enable strict dependency scan)"
+	fi
+
 	log "Changed-file agent validation completed"
 }
 

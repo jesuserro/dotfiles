@@ -81,7 +81,8 @@ make fmt-shell
 | `make ai-doctor` | Read-only agent readiness: dependencies, update readiness, AI/MCPs, skills, commands and `gitleaks` |
 | `make quality-check` | Full strict repository quality audit: shellcheck + shfmt check + yamllint + actionlint (`-shellcheck=`) when workflows exist |
 | `make security-check` | gitleaks working-tree scan + osv-scanner when supported manifests/lockfiles exist |
-| `make agent-validate-changed` | Practical agent gate: changed shell/YAML/workflow files + relevant focused tests + full security scan |
+| `make agent-validate-changed` | Practical agent gate: changed shell/YAML/workflow files + relevant focused tests + local security (`gitleaks`); OSV online is opt-in |
+| `SECURITY_ONLINE=1 make agent-validate-changed` | Same as above plus strict `osv-scanner` dependency scan (requires network) |
 | `make agent-validate` | Full repository validation: quality-check + security-check |
 | `make test-bats` | All bats tests (includes chezmoi hooks) |
 | `make test-chezmoi` | Chezmoi bats + `chezmoi-templates` |
@@ -104,7 +105,35 @@ make fmt-shell
 
 `make quality-check` and `make agent-validate` are full-repository audits. They are intentionally strict, and can surface existing shellcheck/shfmt debt until that cleanup is handled separately.
 
-`make agent-validate-changed` is the practical post-change gate for agents: it checks only shell scripts changed since `HEAD` with shellcheck/shfmt, checks changed YAML/workflows, runs focused dependency/MCP tests when relevant paths changed, and still runs the full security scan. It uses installed tools when present; on a partially bootstrapped machine it may use temporary verified fallbacks for `yamllint`, `actionlint`, `osv-scanner`, and `gitleaks` so the gate remains useful without installing into `HOME`.
+`make agent-validate-changed` is the practical post-change gate for agents. By default it runs **local** checks only:
+
+- shell scripts changed since `HEAD`: `shellcheck` + `shfmt`
+- changed YAML: `yamllint`
+- changed GitHub workflows: `actionlint`
+- focused bats when dependency/MCP paths changed
+- **local security**: mandatory `gitleaks` working-tree scan
+
+**OSV online is not part of the default agent gate.** The default command does not call `osv-scanner` and does not depend on the OSV API. Agents should use `make agent-validate-changed` after implementation.
+
+To run a strict online dependency scan before closing a change (human or pre-merge), use:
+
+```bash
+SECURITY_ONLINE=1 make agent-validate-changed
+```
+
+`SECURITY_ONLINE=1` enables `osv-scanner scan source -r` when supported manifests or lockfiles exist. Outcomes:
+
+| OSV result | Meaning | Blocks gate |
+|------------|---------|-------------|
+| Clean scan | No reported vulnerabilities | No |
+| Vulnerability findings | Confirmed dependency issues | Yes |
+| `service unavailable` / network errors | External infrastructure failure | Yes (online mode only) |
+| Tool missing with scan inputs present | Install `osv-scanner` via `make install-agent-tools` | Yes (online mode only) |
+| No supported lockfiles | Scan skipped | No |
+
+A failure with `External dependency failure: osv-scanner service unavailable` is **not** a secret leak and **not** a confirmed vulnerability; it means the online scanner could not reach its service. Retry later or validate offline findings separately.
+
+The script uses installed tools when present. On a partially bootstrapped machine it may use temporary verified fallbacks for `yamllint`, `actionlint`, `osv-scanner` (online mode only), and `gitleaks` so the gate remains useful without installing into `HOME`.
 
 Chezmoi `.tmpl` files are not sent raw to shellcheck/shfmt because Go template syntax can confuse those tools. Template rendering/drift remains covered by `make test-chezmoi`, `make ai-mcp-render`, and `make ai-mcp-drift`.
 

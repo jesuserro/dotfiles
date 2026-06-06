@@ -56,6 +56,14 @@ Resume el resultado: qué MCPs responden OK y cuáles fallan (y por qué).
 | tempo        | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/tempo/server.py |
 | loki         | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/loki/server.py |
 | prometheus   | ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/prometheus/server.py |
-| store_etl_ops| ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/store_etl_ops/server.py |
+| store_etl_ops| ~/.config/ai/runtime/.venv + ai/runtime/mcp/servers/store_etl_ops/server.py; workdir via `STORE_ETL_WORKDIR` (fallback `~/proyectos/store-etl`) |
+
+### `store_etl_ops` workdir
+
+- **Variable:** `STORE_ETL_WORKDIR` — ruta al checkout de `store-etl` (admite `~` y rutas relativas).
+- **Fallback:** `/home/jesus/proyectos/store-etl` si no está definida (solo layout local de referencia).
+- **Error esperado si falta:** `Store ETL workdir not found: ... Set STORE_ETL_WORKDIR to your store-etl checkout`.
+- **Allowlist:** sin cambios; solo targets `make` curados (`run_make`, `tail_log`).
+- **Skills de dominio Store ETL:** deben vivir en el repo `store-etl`, no en dotfiles.
 
 Ver [GUIA_MCP_AI.md](GUIA_MCP_AI.md) para comandos de verificación y añadir nuevos MCPs.

@@ -50,6 +50,13 @@ teardown() {
 	grep -q 'LOCAL_BIN}/tmux-dotfiles' "$tmpl"
 }
 
+@test "playwright-docker is a directly managed chezmoi local bin symlink" {
+	local tmpl="$DOTFILES_DIR/dot_local/bin/symlink_playwright-docker.tmpl"
+	[[ -f "$tmpl" ]]
+	[[ "$(cat "$tmpl")" == '{{ .chezmoi.homeDir }}/dotfiles/bin/playwright-docker' ]]
+	[[ ! -f "$DOTFILES_DIR/.chezmoiscripts/run_after_16_link_playwright_docker.sh.tmpl" ]]
+}
+
 @test "symlink_dot_tmux.conf points to repo tmux.conf" {
 	local tmpl="$DOTFILES_DIR/symlink_dot_tmux.conf.tmpl"
 	[[ -f "$tmpl" ]]
@@ -117,6 +124,12 @@ teardown() {
 	# Check for symlink handling that prevents duplicates
 	grep -q "ensure_symlink" "$DOTFILES_DIR/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl" ||
 		grep -q "readlink" "$DOTFILES_DIR/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl"
+}
+
+@test "ai assets script refuses repo-local agent skill surfaces" {
+	local tmpl="$DOTFILES_DIR/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl"
+	grep -q "refuse_repo_local_target" "$tmpl"
+	grep -q "refusing to materialize AI assets inside dotfiles checkout" "$tmpl"
 }
 
 @test "dot_cursor/mcp.json.tmpl is valid json structure" {

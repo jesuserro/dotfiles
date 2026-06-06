@@ -537,9 +537,7 @@ run_mcp() {
 		return 0
 	fi
 	"${SCRIPT_DIR}/update-excalidraw.sh" update --results "${RESULTS_FILE}" --log-dir "$LOG_DIR" || true
-	if command -v uv >/dev/null 2>&1; then
-		run_step "WSL" "mcp-server-fetch" "${LOG_DIR}/wsl-mcp-fetch.log" uv tool install mcp-server-fetch
-	fi
+	result_info "WSL" "mcp-server-fetch" "runtime-managed via uvx; no persistent uv tool install"
 	local ai_venv="$HOME/.config/ai/runtime/.venv"
 	local ai_req="${DOTFILES_ROOT}/ai/runtime/mcp/requirements.txt"
 	if [[ -x "$ai_venv/bin/python" && -f "$ai_req" ]]; then

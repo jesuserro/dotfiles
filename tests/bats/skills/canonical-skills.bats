@@ -25,7 +25,8 @@ teardown() {
 
 @test "ai assets hook publishes canonical skills to Claude Code personal skills path" {
 	local hook="${DOTFILES_DIR}/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl"
-	grep -q '{{ .chezmoi.homeDir }}/.claude/skills' "$hook"
+	grep -q 'HOME_DIR="{{ .chezmoi.homeDir }}"' "$hook"
+	grep -q '"${HOME_DIR}/.claude/skills"' "$hook"
 	grep -q 'AGENT_DIRS=(' "$hook"
 }
 
@@ -44,6 +45,26 @@ teardown() {
 	[[ -L "${fake_home}/.config/ai/skills" ]]
 	[[ -L "${fake_home}/.claude/skills/gitnexus" ]]
 	[[ "$(readlink -f "${fake_home}/.claude/skills/gitnexus")" == "${DOTFILES_DIR}/ai/assets/skills/gitnexus" ]]
+}
+
+@test "rendered ai assets hook refuses to create agent skills inside source checkout" {
+	local fixture_root="${TEST_TEMP_DIR}/dotfiles-fixture"
+	local rendered="${TEST_TEMP_DIR}/link-ai-assets-repo-local.sh"
+	mkdir -p "${fixture_root}/.chezmoiscripts" "${fixture_root}/scripts/lib" "${fixture_root}/ai/assets/skills/example-skill"
+	cp "${DOTFILES_DIR}/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl" "${fixture_root}/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl"
+	cp "${DOTFILES_DIR}/scripts/lib/install_common.sh" "${fixture_root}/scripts/lib/install_common.sh"
+	touch "${fixture_root}/ai/assets/skills/example-skill/SKILL.md"
+
+	sed \
+		-e "s|{{ .chezmoi.sourceDir }}|${fixture_root}|g" \
+		-e "s|{{ .chezmoi.homeDir }}|${fixture_root}|g" \
+		"${fixture_root}/.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl" >"$rendered"
+
+	run bash "$rendered"
+	[[ "$status" -eq 1 ]]
+	[[ "$output" == *"refusing to materialize AI assets inside dotfiles checkout"* ]]
+	[[ ! -e "${fixture_root}/.claude/skills" ]]
+	[[ ! -e "${fixture_root}/.config/ai" ]]
 }
 
 @test "AGENTS.md references canonical gitnexus skill path" {

@@ -17,7 +17,7 @@ SHELLCHECK_EXCLUDED_SCRIPTS := $(ZSH_SCRIPTS)
 # understand Go template delimiters reliably unless templates are rendered.
 SHELL_SCRIPTS_ALL := $(shell find $(DOTFILES_DIR) -name '*.sh' -type f | grep -v '/\.git/' | grep -v '/\.venv/' | grep -v '/node_modules/' | grep -v '/vendor/' | grep -v '/__pycache__/')
 SHELL_SCRIPTS := $(filter-out $(SHELLCHECK_EXCLUDED_SCRIPTS),$(SHELL_SCRIPTS_ALL))
-SHELL_LAUNCHERS := $(shell find $(DOTFILES_DIR)/bin -type f \( -name 'mcp-*-launcher' -o -name 'tmux-dotfiles' \) 2>/dev/null || true)
+SHELL_LAUNCHERS := $(shell find $(DOTFILES_DIR)/bin -type f \( -name 'mcp-*-launcher' -o -name 'tmux-dotfiles' -o -name 'playwright-docker' \) 2>/dev/null || true)
 GIT_HOOKS := $(shell find $(DOTFILES_DIR)/.githooks -type f 2>/dev/null || true)
 PROMPT_LAUNCHERS := $(shell find $(DOTFILES_DIR)/local/bin -name 'prompt-*' -type f 2>/dev/null || true)
 AI_PROMPT_CLI := $(wildcard $(DOTFILES_DIR)/local/bin/ai-prompt)
@@ -68,7 +68,7 @@ help:
 	@echo "  make ai-cursor-check             Check Cursor/MCP readiness in HOME"
 	@echo "  make update-check                Read-only update/runtime diagnostics"
 	@echo "  make ai-doctor                   Read-only AI readiness checks"
-	@echo "  make agent-validate-changed      Validate changed files for agents"
+	@echo "  make agent-validate-changed      Validate changed files for agents (local; SECURITY_ONLINE=1 for OSV)"
 	@echo "  make deps-check                  Check declarative system dependencies"
 	@echo "  make deps-actions                Show actions for missing dependencies"
 	@echo "  make test-chezmoi                Chezmoi smoke tests"
@@ -179,7 +179,7 @@ agent-validate: quality-check security-check
 	@echo "$(GREEN)==>$NC Agent validation completed"
 
 agent-validate-changed:
-	@bash $(DOTFILES_DIR)/scripts/agent-validate-changed.sh
+	@SECURITY_ONLINE="$(SECURITY_ONLINE)" bash $(DOTFILES_DIR)/scripts/agent-validate-changed.sh
 
 ai-doctor:
 	@echo "$(BLUE)==>$(NC) AI doctor: dependency inventory"
@@ -447,6 +447,7 @@ bats-docs:
 	@$(call run_bats,$(BATS_DIR)/docs/make-help.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/operations-cheatsheet.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/documentation-consistency.bats)
+	@$(call run_bats,$(BATS_DIR)/docs/mcp-taxonomy-consistency.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/agents-claude-gitnexus-blocks.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/gitnexus-human-refresh-procedure.bats)
 
@@ -457,6 +458,8 @@ bats-zsh:
 	@$(call run_bats,$(BATS_DIR)/zsh/omz_plugins.bats)
 	@echo "$(BLUE)==>$NC Running zoxide module tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/zoxide.bats)
+	@echo "$(BLUE)==>$NC Running fzf module tests..."
+	@$(call run_bats,$(BATS_DIR)/zsh/fzf.bats)
 	@echo "$(BLUE)==>$NC Running Powerlevel10k cache key tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/p10k_cache_keys.bats)
 

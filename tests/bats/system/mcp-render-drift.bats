@@ -178,11 +178,11 @@ import runpy
 from pathlib import Path
 root = Path('.')
 g = runpy.run_path('scripts/generate-mcp-configs.py')
-full = (root / 'dot_codex' / 'config.toml.tmpl').read_text(encoding='utf-8')
+full = (root / 'dot_codex' / 'private_config.toml.tmpl').read_text(encoding='utf-8')
 frag = '[mcp_servers.__probe_merge__]\ncommand = \"true\"\nenabled = true\n'
 out = g['merge_codex_productive'](full, frag)
 import tomllib
-tomllib.loads(g['strip_chezmoi_template_preamble'](out))
+tomllib.loads(g['sanitize_template_for_toml'](out))
 assert 'model =' in out
 assert '[plugins.' in out
 assert '__probe_merge__' in out
