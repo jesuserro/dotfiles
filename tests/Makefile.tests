@@ -45,7 +45,7 @@ YELLOW := \033[1;33m
 BLUE := \033[0;34m
 NC := \033[0m
 
-.PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts bats-skills bats-tmux bats-gitnexus bats-git-hooks
+.PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-git-flow bats-prompts bats-skills bats-tmux bats-gitnexus bats-git-hooks
 .PHONY: test-ci test-bats-ci bats-docs test-commands generate-commands validate-commands materialize-commands validate-skills-structure
 .PHONY: deps-check deps-install deps-actions bats-system bats-zsh bats-gitnexus test-deps-check
 .PHONY: quality-check security-check agent-validate agent-validate-changed ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
@@ -339,11 +339,11 @@ fmt-shell:
 # Bats tests (human-readable output)
 # ============================================
 
-test-bats: test-deps-check bats-helpers bats-mcp bats-chezmoi bats-skills bats-commands bats-git-ai bats-git-hooks bats-prompts bats-system
+test-bats: test-deps-check bats-helpers bats-mcp bats-chezmoi bats-skills bats-commands bats-git-ai bats-git-flow bats-git-hooks bats-prompts bats-system
 	@echo ""
 	@echo "$(GREEN)==>$NC Bats tests passed"
 
-test-bats-fast: test-deps-check bats-helpers bats-mcp bats-skills bats-commands bats-git-ai bats-git-hooks bats-prompts bats-tmux bats-system
+test-bats-fast: test-deps-check bats-helpers bats-mcp bats-skills bats-commands bats-git-ai bats-git-flow bats-git-hooks bats-prompts bats-tmux bats-system
 	@echo ""
 	@echo "$(GREEN)==>$NC Fast bats tests passed"
 
@@ -401,6 +401,10 @@ bats-commands:
 bats-git-ai:
 	@echo "$(BLUE)==>$NC Running git-ai-author tests..."
 	@$(call run_bats,$(BATS_DIR)/git-ai-author.bats)
+
+bats-git-flow:
+	@echo "$(BLUE)==>$(NC) Running Git flow policy tests..."
+	@$(call run_bats,$(BATS_DIR)/git-flow/policy.bats)
 
 bats-prompts:
 	@echo "$(BLUE)==>$NC Running prompt launcher tests..."
@@ -471,7 +475,7 @@ test-ci: test-lint test-bats-ci test-chezmoi
 	@echo ""
 	@echo "$(GREEN)==>$NC CI tests completed"
 
-test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance bats-chezmoi bats-skills bats-gitnexus bats-git-hooks bats-docs
+test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance bats-chezmoi bats-skills bats-git-flow bats-gitnexus bats-git-hooks bats-docs
 
 # ============================================
 # Combined tests
@@ -515,7 +519,7 @@ define run_bats
 	elif [ -x "$(HOME)/.local/bin/bats" ]; then \
 		DOTFILES_DIR="$(DOTFILES_DIR)" $$HOME/.local/bin/bats $(1); \
 	else \
-		echo "$(RED)==>$NC bats not installed. Run: make test-install"; \
+		echo "$(RED)==>$(NC) bats not installed. Run: make test-install"; \
 		exit 1; \
 	fi
 endef

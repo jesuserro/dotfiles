@@ -220,6 +220,7 @@
 │   ├── 📝 GITNEXUS_OPERATIONAL_POLICY.md
 │   ├── 📝 GIT_AI_AUTHOR.md
 │   ├── 📝 GIT_AI_CURSOR_SETTINGS.md
+│   ├── 📝 GIT_FLOW_POLICY.md
 │   ├── 📝 GIT_REL_INCIDENT.md
 │   ├── 📝 GIT_WORKFLOW.md
 │   ├── 📝 GUIA_MCP_AI.md
@@ -345,6 +346,7 @@
 │   ├── 📁 lib
 │   │   ├── 🔧 git-ai-common.sh
 │   │   ├── 🔧 git-ai-cursor-path.sh
+│   │   ├── 🔧 git_flow_policy.sh
 │   │   ├── 🔧 gitnexus_runtime.sh
 │   │   ├── 🔧 install_common.sh
 │   │   ├── 🔧 prompt-vault-common.sh
@@ -387,6 +389,7 @@
 │   ├── 🔧 git_diffstat.sh
 │   ├── 📝 git_feat.md
 │   ├── 🔧 git_feat.sh
+│   ├── 🔧 git_flow_policy_print.sh
 │   ├── 🔧 git_merge_cleanup.sh
 │   ├── 📝 git_pr.md
 │   ├── 🔧 git_pr.sh
@@ -460,6 +463,8 @@
 │   │   │   ├── 📄 make-help.bats
 │   │   │   ├── 📄 mcp-taxonomy-consistency.bats
 │   │   │   └── 📄 operations-cheatsheet.bats
+│   │   ├── 📁 git-flow
+│   │   │   └── 📄 policy.bats
 │   │   ├── 📁 git-hooks
 │   │   │   └── 📄 hooks.bats
 │   │   ├── 📁 gitnexus
