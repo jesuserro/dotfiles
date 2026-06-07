@@ -15,6 +15,15 @@
 
 Tras cambiar de máquina o aplicar Chezmoi, abre una shell nueva y verifica con `gh auth status`.
 
+También puedes ejecutar el diagnóstico no mutante:
+
+```bash
+github-identity-check
+github-identity-check --online   # opcional: consulta login efectivo y permisos con gh
+```
+
+Por defecto corre en modo offline/warn-only: no llama a `gh api` ni `gh repo view`, muestra si `GH_TOKEN` o `GITHUB_TOKEN` están presentes como `<set>` y nunca imprime sus valores.
+
 ## Flujo de secretos MCP
 
 1. **secrets.sops.yaml** → `mcp.github_personal_access_token` (classic, scope `project`)
@@ -41,12 +50,21 @@ Tras cambiar de máquina o aplicar Chezmoi, abre una shell nueva y verifica con 
 env | grep -E '^(GH_TOKEN|GITHUB_TOKEN)=' && echo LEAK || echo OK
 
 # Identidad gh (sin GH_TOKEN en env)
+github-identity-check
 gh auth status
 gh repo view jesuserro/dotfiles --json nameWithOwner,viewerPermission
 
 # MCP: token presente sin mostrar valor
 grep -q '^export GITHUB_PERSONAL_ACCESS_TOKEN=' ~/.config/mcp-secrets.env && echo "MCP token configurado"
 ```
+
+Config opcional por máquina, sin secretos:
+
+```bash
+~/.config/dotfiles/github-identity.env
+```
+
+Variables soportadas: `DOTFILES_GITHUB_EXPECTED_LOGIN`, `DOTFILES_GITHUB_EXPECTED_ORIGIN`, `DOTFILES_GITHUB_EXPECTED_UPSTREAM` y `DOTFILES_GITHUB_IDENTITY_PROFILE`.
 
 ## Codex shell snapshots
 

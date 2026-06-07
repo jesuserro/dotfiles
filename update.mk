@@ -3,6 +3,7 @@
 DOTFILES_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 .PHONY: update update-windows update-wsl update-projects update-check update-ai-skills
+.PHONY: github-identity-check clean-runtime-skills
 .PHONY: update-apt update-tools update-shell update-mcp update-services
 .PHONY: excalidraw-start excalidraw-stop excalidraw-status excalidraw-update
 
@@ -20,6 +21,12 @@ update-projects:
 
 update-check:
 	@bash $(DOTFILES_DIR)/scripts/update/update-check.sh
+
+github-identity-check:
+	@bash $(DOTFILES_DIR)/scripts/github-identity-check.sh --offline --warn-only
+
+clean-runtime-skills:
+	@bash $(DOTFILES_DIR)/scripts/clean-runtime-skills.sh --dry-run
 
 update-ai-skills:
 	@bash $(DOTFILES_DIR)/scripts/install-agent-skills.sh $(if $(filter 1 true yes on,$(DRY_RUN)),--dry-run,)

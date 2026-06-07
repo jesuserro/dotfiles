@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+
+if [[ ! -d "$DOTFILES_DIR" ]]; then
+	echo "ERROR: dotfiles directory not found: $DOTFILES_DIR" >&2
+	exit 1
+fi
+
+SCRIPT="$DOTFILES_DIR/scripts/github-identity-check.sh"
+if [[ ! -f "$SCRIPT" ]]; then
+	echo "ERROR: github identity script not found: $SCRIPT" >&2
+	exit 1
+fi
+
+exec bash "$SCRIPT" "$@"
