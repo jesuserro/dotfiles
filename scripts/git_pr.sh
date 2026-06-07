@@ -38,6 +38,9 @@ process_arguments() {
 			echo -e "  3. Genera título y descripción automáticamente"
 			echo -e "  4. Crea el Pull Request en GitHub"
 			echo -e "  5. Abre el PR en el navegador (opcional)"
+			echo -e "${YELLOW}📖 Nota:${NC}"
+			echo -e "  El flujo recomendado es \`git feat\` con \`.git-flow-policy.env\`."
+			echo -e "  \`git pr\` se mantiene como comando legacy standalone."
 			exit 0
 			;;
 		--no-open)

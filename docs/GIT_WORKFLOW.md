@@ -23,21 +23,37 @@ Esta documentación describe la nueva política de ramas y workflow de Git imple
 
 ## Git Flow Policy
 
-`git feat` and `git rel` can read an optional `.git-flow-policy.env` from the
-repository root.
+`git feat` and `git rel` are the **recommended** integration commands. They read
+an optional `.git-flow-policy.env` from the repository root.
 
 See:
 - `docs/GIT_FLOW_POLICY.md`
 - `docs/examples/git-flow-policy.env`
 
-Without `.git-flow-policy.env`, the legacy local behavior is preserved. Optional
-validation commands work for feature integration and release integration.
-PR modes (`pr`, `pr_auto`, `pr_immediate`) are configurable per destination
-branch. Merge strategies (`MERGE_STRATEGY_TO_DEV`, `MERGE_STRATEGY_TO_MAIN`)
-apply to `pr_auto` and `pr_immediate`. `git feat --dry-run` and
-`git rel --dry-run` preview actions without mutating the repository. Tests use
-a stub `gh` and do not create real Pull Requests; production use requires an
-authenticated GitHub CLI session.
+Without `.git-flow-policy.env`, the legacy local behavior is preserved. PR modes
+(`pr`, `pr_auto`, `pr_immediate`) are configurable per destination branch.
+Merge strategies apply to `pr_auto` and `pr_immediate`. Use
+`git feat --dry-run` and `git rel --dry-run` to preview actions without
+mutating the repository.
+
+### Dotfiles (este repo)
+
+El repo dotfiles activa policy manual PR en feature → dev y dev → main:
+
+- `git feat` crea PR manual hacia `dev` tras `make agent-validate`
+- `git rel` crea PR manual hacia `main` tras `make agent-validate-full`
+- No hay auto-merge por defecto (`pr`, no `pr_auto` / `pr_immediate`)
+- Previsualiza con `--dry-run` antes del primer uso en un ciclo de release
+
+Para merge local legacy puntual, edita temporalmente `.git-flow-policy.env` con
+`FLOW_MODE_TO_DEV=local` y/o `FLOW_MODE_TO_MAIN=local`. Ver
+`docs/GIT_FLOW_POLICY.md`.
+
+### `git pr` (legacy)
+
+`git pr` (`scripts/git_pr.sh`) sigue disponible como comando histórico standalone
+para PR feature → dev con título/descripción enriquecidos. **No lee policy** y
+no sustituye a `git feat`. El flujo recomendado es `git feat` con policy.
 
 ## 🛠️ Scripts Disponibles
 

@@ -252,6 +252,42 @@ setup() {
 	grep -q 'MERGE_STRATEGY' "${ADR_DIR}/0008-git-flow-pr-policy.md"
 }
 
+@test "GIT_WORKFLOW recommends git feat and git rel as primary flow" {
+	local workflow="${DOTFILES_DIR}/docs/GIT_WORKFLOW.md"
+	grep -q 'git feat' "${workflow}"
+	grep -q 'git rel' "${workflow}"
+	grep -qiE 'recomendado|recommended' "${workflow}"
+}
+
+@test "GIT_WORKFLOW documents git pr as legacy standalone" {
+	local workflow="${DOTFILES_DIR}/docs/GIT_WORKFLOW.md"
+	grep -qiE 'legacy' "${workflow}"
+	grep -q 'git pr' "${workflow}"
+	grep -q 'git_pr.sh' "${workflow}"
+}
+
+@test "GIT_FLOW_POLICY documents dotfiles operational policy and escape hatch" {
+	local policy_doc="${DOTFILES_DIR}/docs/GIT_FLOW_POLICY.md"
+	grep -q 'Dotfiles Operational Policy' "${policy_doc}"
+	grep -q 'FLOW_MODE_TO_DEV=local' "${policy_doc}"
+	grep -qiE 'legacy|git pr' "${policy_doc}"
+}
+
+@test "dotfiles policy defaults to manual pr not auto merge modes" {
+	local policy="${DOTFILES_DIR}/.git-flow-policy.env"
+	[[ -f "${policy}" ]]
+	grep -q '^FLOW_MODE_TO_DEV=pr$' "${policy}"
+	grep -q '^FLOW_MODE_TO_MAIN=pr$' "${policy}"
+	run grep -E '^FLOW_MODE_TO_(DEV|MAIN)=(pr_auto|pr_immediate)$' "${policy}"
+	[[ "${status}" -eq 1 ]]
+}
+
+@test "AGENT_FIRST_SUMMARY marks git-flow policy closed" {
+	grep -qiE 'git-flow.*cerrado|BUILD D.*git-flow|0008' "${AGENT_FIRST_SUMMARY}"
+	run grep -qi 'git-flow PR.*pointer\|Mejora futura pendiente.*git-flow' "${AGENT_FIRST_SUMMARY}"
+	[[ "${status}" -eq 1 ]]
+}
+
 @test "adr 0009 dotfiles-update is implemented not pending" {
 	local adr="${ADR_DIR}/0009-dotfiles-update-wrapper.md"
 	grep -qiE 'Implemented|implementado' "${adr}" || {

@@ -76,3 +76,4 @@ Implemented:
 - Example config: `docs/examples/git-flow-policy.env`
 - Library: `scripts/lib/git_flow_policy.sh`
 - Tests: `tests/bats/git-flow/`
+- Dotfiles activation: `.git-flow-policy.env` (manual PR, `make agent-validate`)

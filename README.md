@@ -91,7 +91,8 @@ Detalle: [docs/OPERATIONS_CHEATSHEET.md](docs/OPERATIONS_CHEATSHEET.md).
 | [docs/CHEZMOI.md](docs/CHEZMOI.md) | Chezmoi, SOPS, symlinks RC, scripts, `ZSH_RC_APPLY` |
 | [docs/SECRETS_EXAMPLES.md](docs/SECRETS_EXAMPLES.md) | Ejemplos de secretos (GitHub, Postgres, MinIO) |
 | [docs/UPDATE.md](docs/UPDATE.md) | `make update` (mantenimiento; no aplica Chezmoi) |
-| [docs/GUIA_MCP_AI.md](docs/GUIA_MCP_AI.md) | MCPs, skills, comandos AI |
+| [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md) | Política de ramas, `git feat` / `git rel`, policy PR |
+| [docs/GIT_FLOW_POLICY.md](docs/GIT_FLOW_POLICY.md) | `.git-flow-policy.env`, modos PR, policy activa dotfiles |
 | [docs/MCP_QUICKREF.md](docs/MCP_QUICKREF.md) | Referencia rápida para agentes |
 | [docs/README.md](docs/README.md) | Índice completo |
 

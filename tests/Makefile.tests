@@ -428,6 +428,7 @@ bats-git-flow:
 	@$(call run_bats,$(BATS_DIR)/git-flow/policy.bats)
 	@$(call run_bats,$(BATS_DIR)/git-flow/feat-policy.bats)
 	@$(call run_bats,$(BATS_DIR)/git-flow/rel-policy.bats)
+	@$(call run_bats,$(BATS_DIR)/git-flow/dotfiles-policy.bats)
 
 bats-prompts:
 	@echo "$(BLUE)==>$(NC) Running prompt launcher tests..."

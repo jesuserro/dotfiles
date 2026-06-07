@@ -493,6 +493,7 @@
 │   │   │   ├── 📄 mcp-taxonomy-consistency.bats
 │   │   │   └── 📄 operations-cheatsheet.bats
 │   │   ├── 📁 git-flow
+│   │   │   ├── 📄 dotfiles-policy.bats
 │   │   │   ├── 📄 feat-policy.bats
 │   │   │   ├── 📄 policy.bats
 │   │   │   └── 📄 rel-policy.bats

@@ -55,6 +55,58 @@ Implemented:
 Tests under `tests/bats/git-flow/` use a stub `gh` binary and do not create real
 Pull Requests.
 
+## Dotfiles Operational Policy
+
+This repository ships an active `.git-flow-policy.env` at the repo root. The
+recommended integration flow is `git feat` and `git rel` — not `git pr`.
+
+Current dotfiles policy (manual PR mode, no auto-merge):
+
+```env
+FLOW_MODE_TO_DEV=pr
+FLOW_MODE_TO_MAIN=pr
+VALIDATE_TO_DEV=true
+VALIDATE_TO_MAIN=true
+VALIDATE_CMD_TO_DEV="make agent-validate"
+VALIDATE_CMD_TO_MAIN="make agent-validate-full"
+MERGE_STRATEGY_TO_DEV=merge
+MERGE_STRATEGY_TO_MAIN=merge
+DELETE_FEATURE_BRANCH=true
+OPEN_BROWSER=false
+```
+
+Operational checklist before integrating:
+
+```bash
+git feat --print-policy
+git rel --print-policy
+git feat --dry-run
+git rel --dry-run
+```
+
+Production use requires an authenticated GitHub CLI session. Tests stub `gh` and
+never create real Pull Requests.
+
+### Local legacy escape hatch
+
+There are no `git feat-local` / `git rel-local` aliases. To force the legacy
+local merge flow temporarily, edit `.git-flow-policy.env`:
+
+```env
+FLOW_MODE_TO_DEV=local
+FLOW_MODE_TO_MAIN=local
+```
+
+Restore `pr` values when finished. Preview any change with `--dry-run` first.
+
+### `git pr` (legacy standalone)
+
+`git pr` (`scripts/git_pr.sh`) remains available as a historical standalone
+command for feature → dev Pull Requests with rich auto-generated titles and
+descriptions. It does not read `.git-flow-policy.env` and is not the
+recommended path when policy-driven integration is available. Prefer
+`git feat` with `FLOW_MODE_TO_DEV=pr`.
+
 ## Print Effective Policy
 
 From any directory:
