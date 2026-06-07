@@ -3,6 +3,7 @@ set -euo pipefail
 
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 SECURITY_ONLINE="${SECURITY_ONLINE:-0}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TMP_DIR="$(mktemp -d -t agent-validate-changed.XXXXXX)"
 
 cleanup() {
@@ -64,15 +65,28 @@ ensure_osv_scanner() {
 	export PATH="${temp_home}/.local/bin:${PATH}"
 }
 
-has_osv_scan_inputs() {
-	find "${DOTFILES_DIR}" \
-		\( -name 'package-lock.json' -o -name 'pnpm-lock.yaml' -o -name 'yarn.lock' \
-		-o -name 'requirements*.txt' -o -name 'pyproject.toml' -o -name 'uv.lock' \
-		-o -name 'go.mod' -o -name 'Cargo.lock' -o -name 'composer.lock' \) \
-		-type f \
-		! -path '*/.git/*' ! -path '*/.venv/*' ! -path '*/node_modules/*' \
-		! -path '*/vendor/*' ! -path '*/__pycache__/*' \
-		-print -quit | grep -q .
+# shellcheck source=scripts/lib/osv_scan.sh
+source "${SCRIPT_DIR}/lib/osv_scan.sh"
+
+run_osv_online_scan() {
+	if ! has_osv_scan_inputs "${DOTFILES_DIR}"; then
+		log "osv-scanner skipped: no supported manifests or lockfiles found"
+		return 0
+	fi
+
+	ensure_osv_scanner
+
+	if ! command -v osv-scanner >/dev/null 2>&1; then
+		printf 'Missing security dependency: osv-scanner\n' >&2
+		printf 'Run: make install-agent-tools\n' >&2
+		return 1
+	fi
+
+	log "osv-scanner repository scan (SECURITY_ONLINE=1 strict)"
+	if run_osv_repo_scan "${DOTFILES_DIR}" 1; then
+		return 0
+	fi
+	return 1
 }
 
 install_temp_gitleaks() {
@@ -153,46 +167,6 @@ run_local_security_scan() {
 
 	log "gitleaks working-tree scan"
 	gitleaks detect --source "${DOTFILES_DIR}" --no-git --redact --no-banner
-}
-
-is_osv_infrastructure_failure() {
-	local output_file="$1"
-
-	grep -Eiq \
-		'service unavailable|connection refused|timed out|network is unreachable|failed to connect|dial tcp|no such host|temporary failure in name resolution|api.*unavailable|could not reach|error fetching' \
-		"${output_file}"
-}
-
-run_osv_online_scan() {
-	if ! has_osv_scan_inputs; then
-		log "osv-scanner skipped: no supported manifests or lockfiles found"
-		return 0
-	fi
-
-	ensure_osv_scanner
-
-	if ! command -v osv-scanner >/dev/null 2>&1; then
-		printf 'Missing security dependency: osv-scanner\n' >&2
-		printf 'Run: make install-agent-tools\n' >&2
-		return 1
-	fi
-
-	log "osv-scanner repository scan (SECURITY_ONLINE=1)"
-	local osv_output="${TMP_DIR}/osv-output.txt"
-	local osv_status=0
-
-	osv-scanner scan source -r "${DOTFILES_DIR}" >"${osv_output}" 2>&1 || osv_status=$?
-	if [[ ${osv_status} -eq 0 ]]; then
-		return 0
-	fi
-	if is_osv_infrastructure_failure "${osv_output}"; then
-		printf 'External dependency failure: osv-scanner service unavailable\n' >&2
-		cat "${osv_output}" >&2
-		return "${osv_status}"
-	fi
-
-	cat "${osv_output}" >&2
-	return "${osv_status}"
 }
 
 main() {

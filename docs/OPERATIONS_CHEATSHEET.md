@@ -220,7 +220,7 @@ make update-ai-skills DRY_RUN=1             # agente: previsualizar refresh del 
 | MCP | `make mcp-launcher-contract-check`, `make ai-mcp-governance` |
 | GitNexus docs/aliases | `bats tests/bats/zsh/gitnexus_aliases.bats`, `make gitnexus-status` |
 | Skills | `make validate-skills-structure` |
-| General | `make agent-validate` (gate dotfiles); `make agent-validate-changed` (solo cambios); `SECURITY_ONLINE=1` para OSV estricto |
+| General | `make agent-validate` (gate dotfiles); `make agent-validate-changed` (solo cambios); `SECURITY_ONLINE=1` para OSV estricto (también en `security-check` / `agent-validate-full`) |
 
 Readiness agregado (no sustituye tests focalizados): `make ai-doctor`.
 
@@ -267,8 +267,9 @@ Detalle: [TESTING.md](TESTING.md).
 | `scripts/treegen.sh --check .` | No | No | Comprobar drift de `STRUCTURE.md` sin escribir |
 | `make install DRY_RUN=1` | No | No | Simular instalación APT (ver [SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md)) |
 | `make agent-validate-changed` | No | No | Solo archivos cambiados (local; sin OSV online) |
-| `make agent-validate-audit` | No | No | Auditoría full-repo estricta (lint + security) |
+| `make agent-validate-audit` | No | No* | Auditoría full-repo (lint + security; OSV best-effort salvo `SECURITY_ONLINE=1`) |
 | `SECURITY_ONLINE=1 make agent-validate-changed` | No | Sí | Cierre humano con escaneo OSV estricto |
+| `SECURITY_ONLINE=1 make security-check` | No | Sí | OSV estricto dentro de `agent-validate-audit` / `agent-validate-full` |
 
 ---
 

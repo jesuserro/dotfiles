@@ -374,6 +374,7 @@
 │   │   ├── 🔧 git_flow_policy.sh
 │   │   ├── 🔧 gitnexus_runtime.sh
 │   │   ├── 🔧 install_common.sh
+│   │   ├── 🔧 osv_scan.sh
 │   │   ├── 🔧 prompt-vault-common.sh
 │   │   └── 🐍 system_deps.py
 │   ├── 📁 update
@@ -452,6 +453,7 @@
 │   ├── 🔧 install-zsh-stack.sh
 │   ├── 🔧 materialize-commands.sh
 │   ├── 🔧 mcp-launcher-contract-check.sh
+│   ├── 🔧 security-osv-scan.sh
 │   ├── 🔧 set-default-shell-zsh.sh
 │   ├── 🔧 show-system-deps-actions.sh
 │   ├── 🔧 show_branches_with_dates.sh
@@ -542,6 +544,7 @@
 │   │   │   ├── 📄 mcp-manifest.bats
 │   │   │   ├── 📄 mcp-render-drift.bats
 │   │   │   ├── 📄 playwright-docker.bats
+│   │   │   ├── 📄 security-osv-scan.bats
 │   │   │   ├── 📄 system-deps.bats
 │   │   │   ├── 📄 update-governance.bats
 │   │   │   ├── 📄 update-node-runtime.bats

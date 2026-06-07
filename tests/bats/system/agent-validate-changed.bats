@@ -51,6 +51,11 @@ unavailable)
 	printf 'osv-scanner service unavailable\n' >&2
 	exit 2
 	;;
+unavailable_ok)
+	printf 'failed resolution: rpc error: code = Unavailable desc = service unavailable\n' >&2
+	printf 'Total 0 packages affected by 0 known vulnerabilities\n'
+	exit 0
+	;;
 vuln)
 	printf 'Vulnerability findings detected\n' >&2
 	exit 1
@@ -141,17 +146,27 @@ run_agent_validate() {
 	add_osv_input
 	run_agent_validate 1
 	[[ "${status}" -eq 0 ]]
-	[[ "${output}" == *"osv-scanner repository scan (SECURITY_ONLINE=1)"* ]]
+	[[ "${output}" == *"osv-scanner repository scan (SECURITY_ONLINE=1 strict)"* ]]
 	grep -q '^osv-scanner pass$' "${TEST_LOG}"
 }
 
-@test "agent-validate-changed reports external failure when osv service is unavailable" {
+@test "agent-validate-changed reports external failure when osv service is unavailable in strict mode" {
 	add_osv_input
 	write_fake_osv unavailable
 	run_agent_validate 1
 	[[ "${status}" -ne 0 ]]
 	[[ "${output}" == *"External dependency failure: osv-scanner service unavailable"* ]]
 	[[ "${output}" == *"osv-scanner service unavailable"* ]]
+	[[ "${output}" == *"not confirmed clean"* ]]
+}
+
+@test "agent-validate-changed treats osv infrastructure failure as non-blocking when exit code is zero" {
+	add_osv_input
+	write_fake_osv unavailable_ok
+	run_agent_validate 1
+	[[ "${status}" -ne 0 ]]
+	[[ "${output}" == *"failed resolution"* ]]
+	[[ "${output}" == *"External dependency failure: osv-scanner service unavailable"* ]]
 }
 
 @test "agent-validate-changed still runs local shell checks on changed files" {
