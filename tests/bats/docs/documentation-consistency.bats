@@ -273,12 +273,12 @@ setup() {
 	grep -qiE 'legacy|git pr' "${policy_doc}"
 }
 
-@test "dotfiles policy defaults to manual pr not auto merge modes" {
+@test "dotfiles policy uses local feat and pr_auto rel without pr_immediate" {
 	local policy="${DOTFILES_DIR}/.git-flow-policy.env"
 	[[ -f "${policy}" ]]
-	grep -q '^FLOW_MODE_TO_DEV=pr$' "${policy}"
-	grep -q '^FLOW_MODE_TO_MAIN=pr$' "${policy}"
-	run grep -E '^FLOW_MODE_TO_(DEV|MAIN)=(pr_auto|pr_immediate)$' "${policy}"
+	grep -q '^FLOW_MODE_TO_DEV=local$' "${policy}"
+	grep -q '^FLOW_MODE_TO_MAIN=pr_auto$' "${policy}"
+	run grep -q '^FLOW_MODE_TO_MAIN=pr_immediate$' "${policy}"
 	[[ "${status}" -eq 1 ]]
 }
 

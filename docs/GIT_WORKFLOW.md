@@ -38,16 +38,17 @@ mutating the repository.
 
 ### Dotfiles (este repo)
 
-El repo dotfiles activa policy manual PR en feature → dev y dev → main:
+El repo dotfiles activa integración local rápida en feature → dev y PR con
+auto-merge en dev → main:
 
-- `git feat` crea PR manual hacia `dev` tras `make agent-validate`
-- `git rel` crea PR manual hacia `main` tras `make agent-validate-full`
-- No hay auto-merge por defecto (`pr`, no `pr_auto` / `pr_immediate`)
-- Previsualiza con `--dry-run` antes del primer uso en un ciclo de release
+- `git feat` hace merge local feature → `dev` tras `make agent-validate`
+- `git rel` crea PR dev → `main` con auto-merge (`pr_auto`) tras
+  `make agent-validate-full`, sujeto a checks de GitHub
+- No usa `pr_immediate` por defecto
+- Previsualiza con `--dry-run` antes del primer release en un ciclo
 
-Para merge local legacy puntual, edita temporalmente `.git-flow-policy.env` con
-`FLOW_MODE_TO_DEV=local` y/o `FLOW_MODE_TO_MAIN=local`. Ver
-`docs/GIT_FLOW_POLICY.md`.
+Para cambiar temporalmente el comportamiento, edita `.git-flow-policy.env`.
+Ver `docs/GIT_FLOW_POLICY.md`.
 
 ### `git pr` (legacy)
 

@@ -120,7 +120,7 @@ No forman parte del cierre BUILDs 1–10; tienen handoffs o ADRs aparte:
 
 **Cerrado (BUILD A):** `dotfiles-update` / retirada de `ups` — ADR [0009](adr/0009-dotfiles-update-wrapper.md), [0010](adr/0010-ups-removal.md). Contrato: `make update` (interno) + `dotfiles-update` (global).
 
-**Cerrado (BUILD D):** git-flow policy — ADR [0008](adr/0008-git-flow-pr-policy.md). Motor configurable + policy activa en dotfiles (`pr` manual, validación agent-validate). `git pr` queda legacy standalone.
+**Cerrado (BUILD D):** git-flow policy — ADR [0008](adr/0008-git-flow-pr-policy.md). Motor configurable + policy activa en dotfiles (`local` feat, `pr_auto` rel, validación agent-validate). `git pr` queda legacy standalone.
 
 ---
 

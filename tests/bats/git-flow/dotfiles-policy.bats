@@ -74,13 +74,12 @@ init_rel_repo() {
 	[[ -f "$POLICY_FILE" ]]
 	run bash "$POLICY_PRINT" --policy-file "$POLICY_FILE"
 	[[ "$status" -eq 0 ]]
-	[[ "$output" == *"FLOW_MODE_TO_DEV=pr"* ]]
-	[[ "$output" == *"FLOW_MODE_TO_MAIN=pr"* ]]
+	[[ "$output" == *"FLOW_MODE_TO_DEV=local"* ]]
+	[[ "$output" == *"FLOW_MODE_TO_MAIN=pr_auto"* ]]
 	[[ "$output" == *"VALIDATE_TO_DEV=true"* ]]
 	[[ "$output" == *"VALIDATE_TO_MAIN=true"* ]]
 	[[ "$output" == *"VALIDATE_CMD_TO_DEV=make agent-validate"* ]]
 	[[ "$output" == *"VALIDATE_CMD_TO_MAIN=make agent-validate-full"* ]]
-	[[ "$output" != *"pr_auto"* ]]
 	[[ "$output" != *"pr_immediate"* ]]
 }
 
@@ -88,7 +87,7 @@ init_rel_repo() {
 	cd "$DOTFILES_DIR"
 	run bash "$GIT_FEAT" --print-policy
 	[[ "$status" -eq 0 ]]
-	[[ "$output" == *"FLOW_MODE_TO_DEV=pr"* ]]
+	[[ "$output" == *"FLOW_MODE_TO_DEV=local"* ]]
 	[[ "$output" == *"VALIDATE_CMD_TO_DEV=make agent-validate"* ]]
 	[[ "$output" == *"DELETE_FEATURE_BRANCH=true"* ]]
 }
@@ -97,12 +96,12 @@ init_rel_repo() {
 	cd "$DOTFILES_DIR"
 	run bash "$GIT_REL" --print-policy
 	[[ "$status" -eq 0 ]]
-	[[ "$output" == *"FLOW_MODE_TO_MAIN=pr"* ]]
+	[[ "$output" == *"FLOW_MODE_TO_MAIN=pr_auto"* ]]
 	[[ "$output" == *"VALIDATE_CMD_TO_MAIN=make agent-validate-full"* ]]
 	[[ "$output" == *"OPEN_BROWSER=false"* ]]
 }
 
-@test "git_feat --dry-run with dotfiles policy does not call gh" {
+@test "git_feat --dry-run with dotfiles policy shows local flow and does not call gh" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	local remote="${TEST_TEMP_DIR}/origin.git"
 	local gh_log="${TEST_TEMP_DIR}/gh-dotfiles-feat-dry.log"
@@ -115,13 +114,13 @@ init_rel_repo() {
 	cd "$repo"
 	run bash "$GIT_FEAT" --dry-run demo
 	[[ "$status" -eq 0 ]]
-	[[ "$output" == *"DRY RUN: git feat PR flow (pr)"* ]]
-	[[ "$output" == *"Would create PR 'feature/demo' -> 'dev'"* ]]
-	[[ "$output" == *"Would leave PR open for manual review"* ]]
+	[[ "$output" == *"DRY RUN: git feat local flow"* ]]
+	[[ "$output" == *"Would merge 'feature/demo' into 'dev'"* ]]
+	[[ "$output" != *"Would create PR"* ]]
 	[[ ! -s "$gh_log" ]]
 }
 
-@test "git_rel --dry-run with dotfiles policy does not call gh" {
+@test "git_rel --dry-run with dotfiles policy shows pr_auto and does not call gh" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	local remote="${TEST_TEMP_DIR}/origin.git"
 	local gh_log="${TEST_TEMP_DIR}/gh-dotfiles-rel-dry.log"
@@ -134,8 +133,8 @@ init_rel_repo() {
 	cd "$repo"
 	run bash "$GIT_REL" --dry-run
 	[[ "$status" -eq 0 ]]
-	[[ "$output" == *"DRY RUN: git rel policy flow (pr)"* ]]
+	[[ "$output" == *"DRY RUN: git rel policy flow (pr_auto)"* ]]
 	[[ "$output" == *"Would create PR 'dev' -> 'main'"* ]]
-	[[ "$output" == *"Would leave PR open for manual review"* ]]
+	[[ "$output" == *"Would enable auto-merge using strategy: merge"* ]]
 	[[ ! -s "$gh_log" ]]
 }

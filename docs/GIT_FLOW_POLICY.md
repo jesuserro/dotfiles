@@ -60,11 +60,11 @@ Pull Requests.
 This repository ships an active `.git-flow-policy.env` at the repo root. The
 recommended integration flow is `git feat` and `git rel` — not `git pr`.
 
-Current dotfiles policy (manual PR mode, no auto-merge):
+Current dotfiles policy (local feature integration, auto-merge release PR):
 
 ```env
-FLOW_MODE_TO_DEV=pr
-FLOW_MODE_TO_MAIN=pr
+FLOW_MODE_TO_DEV=local
+FLOW_MODE_TO_MAIN=pr_auto
 VALIDATE_TO_DEV=true
 VALIDATE_TO_MAIN=true
 VALIDATE_CMD_TO_DEV="make agent-validate"
@@ -75,6 +75,11 @@ DELETE_FEATURE_BRANCH=true
 OPEN_BROWSER=false
 ```
 
+- `git feat` merges feature → dev locally after `make agent-validate`.
+- `git rel` creates a release PR dev → main and enables auto-merge (`pr_auto`)
+  after `make agent-validate-full`, subject to GitHub checks and branch
+  protection.
+
 Operational checklist before integrating:
 
 ```bash
@@ -84,28 +89,31 @@ git feat --dry-run
 git rel --dry-run
 ```
 
-Production use requires an authenticated GitHub CLI session. Tests stub `gh` and
-never create real Pull Requests.
+Production release flow requires an authenticated GitHub CLI session. Tests stub
+`gh` and never create real Pull Requests.
 
-### Local legacy escape hatch
+### Policy overrides
 
-There are no `git feat-local` / `git rel-local` aliases. To force the legacy
-local merge flow temporarily, edit `.git-flow-policy.env`:
+There are no `git feat-local` / `git rel-local` aliases. To override temporarily,
+edit `.git-flow-policy.env`:
 
 ```env
-FLOW_MODE_TO_DEV=local
+# PR-based feature integration instead of local merge
+FLOW_MODE_TO_DEV=pr
+
+# Local release merge instead of auto-merge PR
 FLOW_MODE_TO_MAIN=local
 ```
 
-Restore `pr` values when finished. Preview any change with `--dry-run` first.
+Restore dotfiles defaults when finished. Preview any change with `--dry-run`
+first.
 
 ### `git pr` (legacy standalone)
 
 `git pr` (`scripts/git_pr.sh`) remains available as a historical standalone
 command for feature → dev Pull Requests with rich auto-generated titles and
 descriptions. It does not read `.git-flow-policy.env` and is not the
-recommended path when policy-driven integration is available. Prefer
-`git feat` with `FLOW_MODE_TO_DEV=pr`.
+recommended path when policy-driven integration is available. Prefer `git feat`.
 
 ## Print Effective Policy
 
