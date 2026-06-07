@@ -144,6 +144,8 @@ Referencias:
 
 ## Agent workflow (vault + issues + repo)
 
+Contrato operativo para cambios **en dotfiles**: [docs/AGENT_WORKFLOW.md](../docs/AGENT_WORKFLOW.md). Mapa de zonas: [docs/AI_REPO_MAP.md](../docs/AI_REPO_MAP.md).
+
 Tutorial paso a paso: [Agent Workflow Loop](../docs/AGENT_WORKFLOW_LOOP.md).
 
 Guía operativa para agentes IA (orquestación, delegación, política `gh`/CLI): [AGENT_WORKFLOW_FOR_AGENTS.md](AGENT_WORKFLOW_FOR_AGENTS.md).

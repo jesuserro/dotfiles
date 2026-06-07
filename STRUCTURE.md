@@ -214,8 +214,10 @@
 │   ├── 📁 plans
 │   │   └── 📝 PLAN_000009.md
 │   ├── 📁 wiki
+│   ├── 📝 AGENT_WORKFLOW.md
 │   ├── 📝 AGENT_WORKFLOW_LOOP.md
 │   ├── 📝 AI_PROMPTS_SYSTEM.md
+│   ├── 📝 AI_REPO_MAP.md
 │   ├── 📝 CAMBIAR_TOKEN_GITHUB.md
 │   ├── 📝 CHEZMOI.md
 │   ├── 📝 COMMANDS_ARCHITECTURE.md
@@ -243,6 +245,7 @@
 │   ├── 📝 TMUX.md
 │   ├── 📝 TOKEN_GITHUB_GH.md
 │   ├── 📝 UPDATE.md
+│   ├── 📝 VALIDATION_MATRIX.md
 │   ├── 📝 VAULT_PROJECT_WIKI_FLOW.md
 │   └── 📝 VERIFICAR_MCP_STORE_ETL.md
 ├── 📁 dot_codex

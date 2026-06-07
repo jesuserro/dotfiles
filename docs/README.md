@@ -1,5 +1,11 @@
 # Documentación dotfiles
 
+## Agentes IA
+
+- **[AGENT_WORKFLOW.md](AGENT_WORKFLOW.md)** — Contrato operativo para agentes en este repo (modos PLAN/BUILD/AUDIT, rutas sensibles, validación).
+- **[AI_REPO_MAP.md](AI_REPO_MAP.md)** — Mapa operativo por zona (intención, riesgos, validación; complementa STRUCTURE.md).
+- **[VALIDATION_MATRIX.md](VALIDATION_MATRIX.md)** — Matriz cambio → validación por tipo de archivo.
+
 ## Operaciones
 
 - **[OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)** — Chuleta diaria: casa/oficina, drift Chezmoi, apply acotado, MCP, GitNexus, agentes.

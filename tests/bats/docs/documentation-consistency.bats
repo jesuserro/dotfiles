@@ -7,6 +7,12 @@ setup() {
 	DOTFILES_DIR="$(get_dotfiles_dir)"
 	GUIA="${DOTFILES_DIR}/docs/GUIA_MCP_AI.md"
 	OPERATIONS="${DOTFILES_DIR}/docs/OPERATIONS.md"
+	AGENT_WORKFLOW="${DOTFILES_DIR}/docs/AGENT_WORKFLOW.md"
+	AI_REPO_MAP="${DOTFILES_DIR}/docs/AI_REPO_MAP.md"
+	VALIDATION_MATRIX="${DOTFILES_DIR}/docs/VALIDATION_MATRIX.md"
+	AGENTS="${DOTFILES_DIR}/AGENTS.md"
+	DOCS_README="${DOTFILES_DIR}/docs/README.md"
+	AI_README="${DOTFILES_DIR}/ai/README.md"
 }
 
 @test "GUIA_MCP_AI.md mentions make chezmoi-drift-report" {
@@ -41,6 +47,63 @@ setup() {
 	assert_file_not_matches "${OPERATIONS}" '[Ff]antasma|[Pp]hantom'
 	grep -qiE 'R.*Run|Run.*apply|chezmoiscripts' "${OPERATIONS}"
 	grep -q 'make chezmoi-drift-report' "${OPERATIONS}"
+}
+
+@test "docs/AGENT_WORKFLOW.md exists with required sections" {
+	[[ -f "${AGENT_WORKFLOW}" ]]
+	grep -q '^## 1\. Propósito' "${AGENT_WORKFLOW}"
+	grep -q 'PLAN' "${AGENT_WORKFLOW}"
+	grep -q 'BUILD' "${AGENT_WORKFLOW}"
+	grep -q 'AUDIT' "${AGENT_WORKFLOW}"
+	grep -q 'VALIDATION_MATRIX.md' "${AGENT_WORKFLOW}"
+}
+
+@test "docs/AI_REPO_MAP.md exists and distinguishes from STRUCTURE.md" {
+	[[ -f "${AI_REPO_MAP}" ]]
+	grep -q 'STRUCTURE.md' "${AI_REPO_MAP}"
+	grep -qE 'No sustituye|diferencia|inventario' "${AI_REPO_MAP}"
+	grep -q '^## 3\. Mapa por carpetas' "${AI_REPO_MAP}"
+}
+
+@test "docs/VALIDATION_MATRIX.md exists with required zones" {
+	[[ -f "${VALIDATION_MATRIX}" ]]
+	local zone
+	for zone in \
+		'zsh/' \
+		'scripts/' \
+		'scripts/update/' \
+		'scripts/hooks/' \
+		'ai/assets/skills/' \
+		'ai/assets/mcps/' \
+		'ai/runtime/mcp/' \
+		'docs/' \
+		'tests/' \
+		'.chezmoiscripts/' \
+		'dot_local/bin/' \
+		'bin/' \
+		'system/packages/' \
+		'Makefile'; do
+		grep -qF "${zone}" "${VALIDATION_MATRIX}" || {
+			echo "missing zone: ${zone}" >&2
+			return 1
+		}
+	done
+}
+
+@test "AGENTS.md links docs/AGENT_WORKFLOW.md after gitnexus block" {
+	grep -q 'docs/AGENT_WORKFLOW.md' "${AGENTS}"
+	# Manual section must follow the auto-generated gitnexus block.
+	awk '/<!-- gitnexus:end -->/,0' "${AGENTS}" | grep -q 'AGENT_WORKFLOW.md'
+}
+
+@test "docs/README.md links agent-first docs" {
+	grep -q 'AGENT_WORKFLOW.md' "${DOCS_README}"
+	grep -q 'AI_REPO_MAP.md' "${DOCS_README}"
+	grep -q 'VALIDATION_MATRIX.md' "${DOCS_README}"
+}
+
+@test "ai/README.md links agent workflow or repo map" {
+	grep -qE 'AGENT_WORKFLOW\.md|AI_REPO_MAP\.md' "${AI_README}"
 }
 
 @test "global chezmoi apply is framed as bootstrap or conscious human action" {
