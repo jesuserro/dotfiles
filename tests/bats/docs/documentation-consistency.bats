@@ -16,6 +16,8 @@ setup() {
 	HANDOFFS_DIR="${DOTFILES_DIR}/ai/assets/handoffs"
 	SKILLS_README="${DOTFILES_DIR}/ai/assets/skills/README.md"
 	AGENT_REVIEW_SKILL="${DOTFILES_DIR}/ai/assets/skills/ops/dotfiles-agent-review/SKILL.md"
+	ADR_DIR="${DOTFILES_DIR}/docs/adr"
+	ADR_README="${ADR_DIR}/README.md"
 }
 
 @test "GUIA_MCP_AI.md mentions make chezmoi-drift-report" {
@@ -171,6 +173,53 @@ setup() {
 
 @test "skills README registers dotfiles-agent-review" {
 	grep -q 'dotfiles-agent-review' "${SKILLS_README}"
+}
+
+@test "adr README and template exist" {
+	[[ -f "${ADR_README}" ]]
+	[[ -f "${ADR_DIR}/template.md" ]]
+}
+
+@test "adrs 0001 through 0010 exist with decision section" {
+	local file
+	local ids=(
+		0001-mcp-governance
+		0002-gitnexus-mcp
+		0003-skills-architecture
+		0004-ai-assets-not-materialized
+		0005-mcp-runtime-managed-vs-installed
+		0006-gitnexus-post-commit-policy
+		0007-playwright-docker-via-chezmoi-bin
+		0008-git-flow-pr-policy
+		0009-dotfiles-update-wrapper
+		0010-ups-removal
+	)
+	for file in "${ids[@]}"; do
+		[[ -f "${ADR_DIR}/${file}.md" ]] || {
+			echo "missing ADR: ${file}.md" >&2
+			return 1
+		}
+		grep -qi '^## Decision' "${ADR_DIR}/${file}.md" || {
+			echo "${file}: missing Decision section" >&2
+			return 1
+		}
+	done
+}
+
+@test "pointer adrs 0008 through 0010 state no functional implementation in adr build" {
+	local file
+	for file in 0008-git-flow-pr-policy 0009-dotfiles-update-wrapper 0010-ups-removal; do
+		grep -qiE 'pointer|handoff|does \*\*not\*\*|no implementation|not in the' \
+			"${ADR_DIR}/${file}.md" || {
+			echo "${file}: missing pointer/no-implementation wording" >&2
+			return 1
+		}
+	done
+}
+
+@test "docs README and AGENT_WORKFLOW mention adr" {
+	grep -q 'adr/' "${DOCS_README}"
+	grep -q 'adr/' "${AGENT_WORKFLOW}"
 }
 
 @test "global chezmoi apply is framed as bootstrap or conscious human action" {

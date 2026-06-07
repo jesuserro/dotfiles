@@ -205,6 +205,14 @@
 │   │   ├── 📝 0001-mcp-governance.md
 │   │   ├── 📝 0002-gitnexus-mcp.md
 │   │   ├── 📝 0003-skills-architecture.md
+│   │   ├── 📝 0004-ai-assets-not-materialized.md
+│   │   ├── 📝 0005-mcp-runtime-managed-vs-installed.md
+│   │   ├── 📝 0006-gitnexus-post-commit-policy.md
+│   │   ├── 📝 0007-playwright-docker-via-chezmoi-bin.md
+│   │   ├── 📝 0008-git-flow-pr-policy.md
+│   │   ├── 📝 0009-dotfiles-update-wrapper.md
+│   │   ├── 📝 0010-ups-removal.md
+│   │   ├── 📝 README.md
 │   │   └── 📝 template.md
 │   ├── 📁 examples
 │   │   └── 📄 git-flow-policy.env

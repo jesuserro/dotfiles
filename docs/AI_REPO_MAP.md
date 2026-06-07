@@ -79,7 +79,7 @@ Referencia: [CHEZMOI.md](CHEZMOI.md), [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEA
 
 Hook relevante: `.chezmoiscripts/run_after_11_link_ai_assets.sh.tmpl`.
 
-Arquitectura: [ai/SKILLS_ARCHITECTURE.md](../ai/SKILLS_ARCHITECTURE.md), ADR [0003-skills-architecture.md](adr/0003-skills-architecture.md).
+Arquitectura: [ai/SKILLS_ARCHITECTURE.md](../ai/SKILLS_ARCHITECTURE.md), ADR [0003-skills-architecture.md](adr/0003-skills-architecture.md). Índice ADRs: [adr/README.md](adr/README.md).
 
 ---
 

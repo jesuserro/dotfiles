@@ -27,7 +27,7 @@ Cada handoff debe declarar el modo. Si no está claro, asumir **PLAN** hasta que
 - **Cambios pequeños y testeables** — un BUILD acotado por objetivo.
 - **No destructivo por defecto** — preferir validación read-only antes de mutar HOME o sistema.
 - **Referencias, no duplicación** — enlazar docs canónicos existentes en lugar de copiar bloques largos.
-- **Respetar contratos del repo** — Chezmoi, taxonomía MCP, skills canónicas, hooks Git y [STRUCTURE.md](../STRUCTURE.md).
+- **Respetar contratos del repo** — Chezmoi, taxonomía MCP, skills canónicas, hooks Git, [STRUCTURE.md](../STRUCTURE.md) y ADRs en [docs/adr/](adr/README.md).
 - **Secretos** — nunca commitear credenciales en claro; ver [CHEZMOI.md](CHEZMOI.md) y [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
 - **GitNexus** — seguir [GITNEXUS_OPERATIONAL_POLICY.md](GITNEXUS_OPERATIONAL_POLICY.md); no auto-refrescar el índice.
 
@@ -196,6 +196,7 @@ Separar claramente lo **implementado**, lo **validado** y lo **pendiente**.
 | [CHEZMOI.md](CHEZMOI.md) | Referencia Chezmoi + SOPS |
 | [GITNEXUS_OPERATIONAL_POLICY.md](GITNEXUS_OPERATIONAL_POLICY.md) | Política GitNexus |
 | [MCP_TAXONOMY.md](MCP_TAXONOMY.md) | Taxonomía MCP |
+| [adr/README.md](adr/README.md) | Memoria arquitectónica (decisiones ADR) |
 | [STRUCTURE.md](../STRUCTURE.md) | Árbol del repositorio |
 | [ai/AGENT_WORKFLOW_FOR_AGENTS.md](../ai/AGENT_WORKFLOW_FOR_AGENTS.md) | Loop vault → spec → issues |
 | [ai/assets/handoffs/README.md](../ai/assets/handoffs/README.md) | Plantillas handoff PLAN/BUILD/AUDIT |
