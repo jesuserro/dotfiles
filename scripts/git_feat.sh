@@ -3,12 +3,19 @@
 # Activa el modo estricto: cualquier error hace que el script se detenga
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/git_flow_policy.sh
+source "${SCRIPT_DIR}/lib/git_flow_policy.sh"
+
 # 📦 Configuración básica
-DEV_BRANCH="dev"          # Rama de desarrollo
-FEATURE_PREFIX="feature/" # Prefijo estándar para ramas de features
-FEATURE_BRANCH=""         # Rama feature final a usar (resuelta más abajo)
-ARCHIVE_PREFIX="archive/" # Prefijo para archivar ramas
-GENERATE_CHANGELOG=true   # Generar changelog automáticamente
+DEV_BRANCH="dev"                 # Rama de desarrollo
+FEATURE_PREFIX="feature/"        # Prefijo estándar para ramas de features
+FEATURE_BRANCH=""                # Rama feature final a usar (resuelta más abajo)
+ARCHIVE_PREFIX="archive/"        # Prefijo para archivar ramas
+GENERATE_CHANGELOG=true          # Generar changelog automáticamente
+GIT_FLOW_REPO_ROOT=""            # Raíz del repo donde se busca la policy
+GIT_FLOW_PRINT_POLICY_ONLY=false # Modo diagnóstico sin operaciones productivas
+INPUT_NAME=""                    # Nombre de feature recibido por argumento
 
 # 🎨 Colores para el output en consola
 GREEN='\033[0;32m'
@@ -19,8 +26,6 @@ NC='\033[0m' # Sin color
 
 # 🔍 Procesar argumentos
 process_arguments() {
-	local input_name=""
-
 	while [[ $# -gt 0 ]]; do
 		case $1 in
 		--help | -h)
@@ -32,6 +37,7 @@ process_arguments() {
 			echo -e "  git feat login-system               # Rama 'feature/login-system'"
 			echo -e "${BLUE}📖 Opciones:${NC}"
 			echo -e "  --no-changelog                      # No generar changelog automáticamente"
+			echo -e "  --print-policy                      # Imprimir la policy efectiva y salir"
 			echo -e "  --help, -h                          # Mostrar esta ayuda"
 			echo -e "${BLUE}📖 Flujo:${NC}"
 			echo -e "  1. Se mueve a rama 'dev'"
@@ -45,9 +51,13 @@ process_arguments() {
 			GENERATE_CHANGELOG=false
 			shift
 			;;
+		--print-policy)
+			GIT_FLOW_PRINT_POLICY_ONLY=true
+			shift
+			;;
 		*)
-			if [ -z "$input_name" ]; then
-				input_name="$1"
+			if [ -z "$INPUT_NAME" ]; then
+				INPUT_NAME="$1"
 			else
 				echo -e "${RED}❗ Argumento desconocido: $1${NC}"
 				echo -e "${BLUE}💡 Usa 'git feat --help' para ver las opciones${NC}"
@@ -57,12 +67,47 @@ process_arguments() {
 			;;
 		esac
 	done
+}
 
-	echo "$input_name"
+load_git_flow_policy() {
+	GIT_FLOW_REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+
+	git_flow_policy_set_defaults
+	if [[ -f "${GIT_FLOW_REPO_ROOT}/.git-flow-policy.env" ]]; then
+		git_flow_policy_load_file "${GIT_FLOW_REPO_ROOT}/.git-flow-policy.env"
+	fi
+	git_flow_policy_validate
+
+	DEV_BRANCH="$BASE_DEV_BRANCH"
+	FEATURE_PREFIX="$FEATURE_BRANCH_PREFIX"
+}
+
+ensure_supported_flow_mode() {
+	if [[ "$FLOW_MODE_TO_DEV" != "local" ]]; then
+		echo -e "${RED}❌ PR mode not implemented yet for git feat: FLOW_MODE_TO_DEV=${FLOW_MODE_TO_DEV}${NC}"
+		exit 1
+	fi
+}
+
+run_validation_if_enabled() {
+	if [[ "$VALIDATE_TO_DEV" == "true" ]]; then
+		echo -e "${BLUE}Running validation: ${VALIDATE_CMD_TO_DEV}${NC}"
+		if ! (cd "$GIT_FLOW_REPO_ROOT" && bash -c "$VALIDATE_CMD_TO_DEV"); then
+			echo -e "${RED}❌ Validation failed: ${VALIDATE_CMD_TO_DEV}${NC}"
+			exit 1
+		fi
+	fi
 }
 
 # Procesar argumentos y obtener el nombre de la feature
-INPUT_NAME=$(process_arguments "$@")
+process_arguments "$@"
+
+load_git_flow_policy
+
+if [[ "$GIT_FLOW_PRINT_POLICY_ONLY" == "true" ]]; then
+	git_flow_policy_print
+	exit 0
+fi
 
 # ✅ Validación: debe ejecutarse dentro de un repositorio Git
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -93,12 +138,12 @@ check_potential_conflicts() {
 
 	# Obtener la lista de archivos modificados
 	local modified_files
-	modified_files=$(git diff --name-only $target_branch...$source_branch)
+	modified_files=$(git diff --name-only "$target_branch...$source_branch")
 
 	# Verificar si hay archivos que podrían causar conflictos
 	local potential_conflicts=()
 	for file in $modified_files; do
-		if git diff --name-only $target_branch | grep -q "^$file$"; then
+		if git diff --name-only "$target_branch" | grep -Fxq -- "$file"; then
 			potential_conflicts+=("$file")
 		fi
 	done
@@ -141,7 +186,7 @@ do_merge() {
 	fi
 
 	# Push de los cambios
-	if ! git push origin "$target_branch"; then
+	if ! git push "$REMOTE_NAME" "$target_branch"; then
 		echo -e "${RED}❗ Error al hacer push a '${target_branch}'${NC}"
 		echo -e "${YELLOW}💡 Sugerencia: Asegúrate de tener permisos y que la rama no esté protegida${NC}"
 		exit 1
@@ -168,7 +213,7 @@ generate_feature_changelog() {
 
 		# Crear nombre de archivo seguro para la feature
 		local safe_branch_name
-		safe_branch_name=$(echo "$feature_branch" | sed 's/[^a-zA-Z0-9._-]/_/g')
+		safe_branch_name="${feature_branch//[^a-zA-Z0-9._-]/_}"
 		local changelog_file="$releases_dir/branch_${safe_branch_name}.md"
 
 		# Obtener fecha y hora actual
@@ -213,7 +258,9 @@ EOF
 }
 
 # 📢 Inicio del flujo
-echo -e "${YELLOW}🚀 Integrando feature '${INPUT_NAME}' en dev...${NC}"
+echo -e "${YELLOW}🚀 Integrando feature '${INPUT_NAME}' en ${DEV_BRANCH}...${NC}"
+
+ensure_supported_flow_mode
 
 # 📛 Validación de argumentos
 if [ -z "$INPUT_NAME" ]; then
@@ -236,10 +283,12 @@ fi
 # Verificar estado del repositorio
 check_clean_repo
 
+run_validation_if_enabled
+
 # 🔁 Merge de feature → dev
 echo -e "${YELLOW}🔁 Integrando '${FEATURE_BRANCH}' en '${DEV_BRANCH}'...${NC}"
 git checkout "$DEV_BRANCH"
-git pull origin "$DEV_BRANCH"
+git pull "$REMOTE_NAME" "$DEV_BRANCH"
 
 # Guardar el commit actual de dev antes del merge (para poder obtener commits exclusivos después)
 BASE_COMMIT=$(git rev-parse HEAD)
@@ -253,11 +302,11 @@ generate_feature_changelog "$FEATURE_BRANCH" "$DEV_BRANCH" "$BASE_COMMIT"
 # 📦 Archivar la rama feature
 ARCHIVE_BRANCH="${ARCHIVE_PREFIX}${FEATURE_BRANCH}"
 echo -e "${YELLOW}📦 Archivando rama '${FEATURE_BRANCH}' como '${ARCHIVE_BRANCH}'...${NC}"
-git branch -m "$FEATURE_BRANCH" "$ARCHIVE_BRANCH"  # Renombrado local
-git push origin "$ARCHIVE_BRANCH"                  # Subida rama archivada
-git push origin --delete "$FEATURE_BRANCH" || true # Eliminación en remoto (ignora error si no existe)
+git branch -m "$FEATURE_BRANCH" "$ARCHIVE_BRANCH"          # Renombrado local
+git push "$REMOTE_NAME" "$ARCHIVE_BRANCH"                  # Subida rama archivada
+git push "$REMOTE_NAME" --delete "$FEATURE_BRANCH" || true # Eliminación en remoto (ignora error si no existe)
 echo -e "${GREEN}✅ Rama archivada como '${ARCHIVE_BRANCH}' y eliminada la original del remoto.${NC}"
 
 # 🎉 Fin del proceso
-echo -e "${GREEN}🎉 ¡Feature '${INPUT_NAME}' integrada exitosamente en dev!${NC}"
+echo -e "${GREEN}🎉 ¡Feature '${INPUT_NAME}' integrada exitosamente en ${DEV_BRANCH}!${NC}"
 echo -e "${BLUE}💡 Próximo paso: Cuando dev esté listo para producción, ejecuta 'git rel'${NC}"

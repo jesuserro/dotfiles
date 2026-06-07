@@ -464,7 +464,9 @@
 │   │   │   ├── 📄 mcp-taxonomy-consistency.bats
 │   │   │   └── 📄 operations-cheatsheet.bats
 │   │   ├── 📁 git-flow
-│   │   │   └── 📄 policy.bats
+│   │   │   ├── 📄 feat-policy.bats
+│   │   │   ├── 📄 policy.bats
+│   │   │   └── 📄 rel-policy.bats
 │   │   ├── 📁 git-hooks
 │   │   │   └── 📄 hooks.bats
 │   │   ├── 📁 gitnexus

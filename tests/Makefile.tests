@@ -405,6 +405,8 @@ bats-git-ai:
 bats-git-flow:
 	@echo "$(BLUE)==>$(NC) Running Git flow policy tests..."
 	@$(call run_bats,$(BATS_DIR)/git-flow/policy.bats)
+	@$(call run_bats,$(BATS_DIR)/git-flow/feat-policy.bats)
+	@$(call run_bats,$(BATS_DIR)/git-flow/rel-policy.bats)
 
 bats-prompts:
 	@echo "$(BLUE)==>$NC Running prompt launcher tests..."

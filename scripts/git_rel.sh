@@ -3,13 +3,19 @@
 # Activa el modo estricto: cualquier error hace que el script se detenga
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/git_flow_policy.sh
+source "${SCRIPT_DIR}/lib/git_flow_policy.sh"
+
 # 📦 Configuración básica
 # NOTA: Esta configuración es estándar para TODOS los proyectos.
 # Siempre usamos 'main' como rama principal de producción.
-VERSION="$1"       # Versión opcional recibida por parámetro
-DEV_BRANCH="dev"   # Rama de desarrollo
-MAIN_BRANCH="main" # Rama principal de producción (estándar en todos los proyectos)
-TAG_PREFIX="v"     # Prefijo para tags de versión
+VERSION="$1"                     # Versión opcional recibida por parámetro
+DEV_BRANCH="dev"                 # Rama de desarrollo
+MAIN_BRANCH="main"               # Rama principal de producción
+TAG_PREFIX="v"                   # Prefijo para tags de versión
+GIT_FLOW_REPO_ROOT=""            # Raíz del repo donde se busca la policy
+GIT_FLOW_PRINT_POLICY_ONLY=false # Modo diagnóstico sin operaciones productivas
 
 # 🎨 Colores para el output en consola
 GREEN='\033[0;32m'
@@ -28,8 +34,13 @@ process_arguments() {
 			echo -e "  git rel                    # Release con versión automática"
 			echo -e "  git rel 1.2.3              # Release con versión específica"
 			echo -e "${BLUE}📖 Opciones:${NC}"
+			echo -e "  --print-policy             # Imprimir la policy efectiva y salir"
 			echo -e "  --help, -h                 # Mostrar esta ayuda"
 			exit 0
+			;;
+		--print-policy)
+			GIT_FLOW_PRINT_POLICY_ONLY=true
+			shift
 			;;
 		*)
 			if [ -z "$VERSION" ]; then
@@ -45,8 +56,45 @@ process_arguments() {
 	done
 }
 
+load_git_flow_policy() {
+	GIT_FLOW_REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+
+	git_flow_policy_set_defaults
+	if [[ -f "${GIT_FLOW_REPO_ROOT}/.git-flow-policy.env" ]]; then
+		git_flow_policy_load_file "${GIT_FLOW_REPO_ROOT}/.git-flow-policy.env"
+	fi
+	git_flow_policy_validate
+
+	DEV_BRANCH="$BASE_DEV_BRANCH"
+	MAIN_BRANCH="$BASE_MAIN_BRANCH"
+}
+
+ensure_supported_flow_mode() {
+	if [[ "$FLOW_MODE_TO_MAIN" != "local" ]]; then
+		echo -e "${RED}❌ PR mode not implemented yet for git rel: FLOW_MODE_TO_MAIN=${FLOW_MODE_TO_MAIN}${NC}"
+		exit 1
+	fi
+}
+
+run_validation_if_enabled() {
+	if [[ "$VALIDATE_TO_MAIN" == "true" ]]; then
+		echo -e "${BLUE}Running validation: ${VALIDATE_CMD_TO_MAIN}${NC}"
+		if ! (cd "$GIT_FLOW_REPO_ROOT" && bash -c "$VALIDATE_CMD_TO_MAIN"); then
+			echo -e "${RED}❌ Validation failed: ${VALIDATE_CMD_TO_MAIN}${NC}"
+			exit 1
+		fi
+	fi
+}
+
 # Procesar argumentos
 process_arguments "$@"
+
+load_git_flow_policy
+
+if [[ "$GIT_FLOW_PRINT_POLICY_ONLY" == "true" ]]; then
+	git_flow_policy_print
+	exit 0
+fi
 
 # ✅ Validación: debe ejecutarse dentro de un repositorio Git
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -55,9 +103,9 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 fi
 
 # ✅ Validación: debe tener un remoto configurado
-if ! git remote get-url origin >/dev/null 2>&1; then
-	echo -e "${RED}❌ No hay un remoto 'origin' configurado.${NC}"
-	echo -e "${YELLOW}💡 Sugerencia: Configura el remoto con: git remote add origin <url>${NC}"
+if ! git remote get-url "$REMOTE_NAME" >/dev/null 2>&1; then
+	echo -e "${RED}❌ No hay un remoto '${REMOTE_NAME}' configurado.${NC}"
+	echo -e "${YELLOW}💡 Sugerencia: Configura el remoto con: git remote add ${REMOTE_NAME} <url>${NC}"
 	exit 1
 fi
 
@@ -83,7 +131,7 @@ check_potential_conflicts() {
 	echo -e "${BLUE}🔍 Verificando conflictos potenciales entre '${source_branch}' y '${target_branch}'...${NC}"
 
 	# Verificar si las ramas están al día
-	git fetch origin "$source_branch" "$target_branch" >/dev/null 2>&1
+	git fetch "$REMOTE_NAME" "$source_branch" "$target_branch" >/dev/null 2>&1
 
 	# Obtener la lista de archivos modificados en la rama source desde el último merge
 	local modified_files
@@ -211,7 +259,7 @@ do_merge() {
 	fi
 
 	# Push de los cambios
-	if ! git push origin "$target_branch"; then
+	if ! git push "$REMOTE_NAME" "$target_branch"; then
 		echo -e "${RED}❗ Error al hacer push a '${target_branch}'${NC}"
 		echo -e "${YELLOW}💡 Sugerencia: Asegúrate de tener permisos y que la rama no esté protegida${NC}"
 		exit 1
@@ -229,7 +277,7 @@ generate_version() {
 	else
 		# Si se proporciona una versión manual, asegurar que tenga el formato correcto
 		# Remover el prefijo 'v' si existe para normalizar
-		VERSION=$(echo "$VERSION" | sed 's/^v//')
+		VERSION="${VERSION#v}"
 		# Validar formato básico (debe contener al menos números y puntos/guiones bajos)
 		if ! echo "$VERSION" | grep -qE '^[0-9]'; then
 			echo -e "${YELLOW}⚠️  Formato de versión no reconocido, usando versión automática${NC}"
@@ -241,13 +289,15 @@ generate_version() {
 }
 
 # 📢 Inicio del flujo
-echo -e "${YELLOW}🚀 Iniciando release de dev a main...${NC}"
+echo -e "${YELLOW}🚀 Iniciando release de ${DEV_BRANCH} a ${MAIN_BRANCH}...${NC}"
+
+ensure_supported_flow_mode
 
 # Verificar que las ramas existan localmente
 if ! branch_exists "$DEV_BRANCH"; then
 	echo -e "${RED}❗ La rama '${DEV_BRANCH}' no existe localmente.${NC}"
 	echo -e "${BLUE}💡 Intentando obtener desde remoto...${NC}"
-	if git fetch origin "$DEV_BRANCH" && git checkout -b "$DEV_BRANCH" "origin/$DEV_BRANCH"; then
+	if git fetch "$REMOTE_NAME" "$DEV_BRANCH" && git checkout -b "$DEV_BRANCH" "${REMOTE_NAME}/$DEV_BRANCH"; then
 		echo -e "${GREEN}✅ Rama '${DEV_BRANCH}' creada desde remoto${NC}"
 	else
 		echo -e "${RED}❌ No se pudo obtener la rama '${DEV_BRANCH}' desde remoto${NC}"
@@ -258,7 +308,7 @@ fi
 if ! branch_exists "$MAIN_BRANCH"; then
 	echo -e "${RED}❗ La rama '${MAIN_BRANCH}' no existe localmente.${NC}"
 	echo -e "${BLUE}💡 Intentando obtener desde remoto...${NC}"
-	if git fetch origin "$MAIN_BRANCH" && git checkout -b "$MAIN_BRANCH" "origin/$MAIN_BRANCH"; then
+	if git fetch "$REMOTE_NAME" "$MAIN_BRANCH" && git checkout -b "$MAIN_BRANCH" "${REMOTE_NAME}/$MAIN_BRANCH"; then
 		echo -e "${GREEN}✅ Rama '${MAIN_BRANCH}' creada desde remoto${NC}"
 	else
 		echo -e "${RED}❌ No se pudo obtener la rama '${MAIN_BRANCH}' desde remoto${NC}"
@@ -268,12 +318,12 @@ fi
 
 # Verificar que las ramas remotas existan
 echo -e "${BLUE}🔍 Verificando ramas remotas...${NC}"
-if ! git ls-remote --heads origin "$DEV_BRANCH" | grep -q "$DEV_BRANCH"; then
+if ! git ls-remote --heads "$REMOTE_NAME" "$DEV_BRANCH" | grep -q "$DEV_BRANCH"; then
 	echo -e "${RED}❗ La rama remota '${DEV_BRANCH}' no existe.${NC}"
 	exit 1
 fi
 
-if ! git ls-remote --heads origin "$MAIN_BRANCH" | grep -q "$MAIN_BRANCH"; then
+if ! git ls-remote --heads "$REMOTE_NAME" "$MAIN_BRANCH" | grep -q "$MAIN_BRANCH"; then
 	echo -e "${RED}❗ La rama remota '${MAIN_BRANCH}' no existe.${NC}"
 	exit 1
 fi
@@ -283,15 +333,17 @@ echo -e "${GREEN}✅ Todas las ramas verificadas correctamente${NC}"
 # Verificar estado del repositorio
 check_clean_repo
 
+run_validation_if_enabled
+
 # 🔁 Paso 1: Merge de dev → main (igual que git_feat.sh)
 echo -e "${YELLOW}🔁 Integrando '${DEV_BRANCH}' en '${MAIN_BRANCH}'...${NC}"
 
 # Asegurar que dev esté actualizada antes del merge
-git fetch origin "$DEV_BRANCH" >/dev/null 2>&1 || true
+git fetch "$REMOTE_NAME" "$DEV_BRANCH" >/dev/null 2>&1 || true
 
 # Cambiar a main y actualizar
 git checkout "$MAIN_BRANCH"
-git pull origin "$MAIN_BRANCH"
+git pull "$REMOTE_NAME" "$MAIN_BRANCH"
 
 # Verificar que HEAD está disponible antes del merge.
 git rev-parse HEAD >/dev/null
@@ -327,7 +379,7 @@ if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
 	2)
 		echo -e "${YELLOW}🗑️  Eliminando tag existente...${NC}"
 		git tag -d "$TAG_NAME" 2>/dev/null || true
-		git push origin ":refs/tags/$TAG_NAME" 2>/dev/null || true
+		git push "$REMOTE_NAME" ":refs/tags/$TAG_NAME" 2>/dev/null || true
 		;;
 	3)
 		echo -e "${YELLOW}⚠️  Continuando sin crear tag${NC}"
@@ -359,12 +411,12 @@ Changelog will be generated automatically by GitHub Actions."
 	# Crear tag anotado con mensaje básico
 	if echo "$TAG_MESSAGE" | git tag -a "$TAG_NAME" -F -; then
 		echo -e "${BLUE}📤 Subiendo tag a GitHub...${NC}"
-		if git push origin "$TAG_NAME"; then
+		if git push "$REMOTE_NAME" "$TAG_NAME"; then
 			echo -e "${GREEN}✅ Tag anotado '${TAG_NAME}' creado y subido exitosamente a GitHub.${NC}"
 
 			# Verificar que el tag se subió correctamente
 			echo -e "${BLUE}🔍 Verificando tag en GitHub...${NC}"
-			if git ls-remote --tags origin | grep -q "$TAG_NAME"; then
+			if git ls-remote --tags "$REMOTE_NAME" | grep -q "$TAG_NAME"; then
 				echo -e "${GREEN}✅ Tag '${TAG_NAME}' confirmado en GitHub.${NC}"
 			else
 				echo -e "${YELLOW}⚠️  No se pudo verificar el tag en GitHub, pero el push fue exitoso${NC}"
@@ -400,7 +452,7 @@ echo -e "${GREEN}🎉 ¡Release completado exitosamente!${NC}"
 echo -e "${BLUE}📋 Resumen:${NC}"
 echo -e "  • ${DEV_BRANCH} → ${MAIN_BRANCH} ✅"
 if [ -n "$TAG_NAME" ]; then
-	repo_url=$(git remote get-url origin | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/' | sed 's/\.git$//')
+	repo_url=$(git remote get-url "$REMOTE_NAME" | sed 's/.*github\.com[:/]\([^/]*\/[^/]*\).*/\1/' | sed 's/\.git$//')
 	echo -e "  • Tag anotado creado: ${TAG_NAME} ✅"
 	echo -e "  • Tag en GitHub: https://github.com/${repo_url}/releases/tag/${TAG_NAME}"
 	echo -e "  • Changelog y release: Se generarán automáticamente por GitHub Actions 🔄"
