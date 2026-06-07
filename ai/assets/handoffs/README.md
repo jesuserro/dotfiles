@@ -4,7 +4,7 @@
 
 Este directorio contiene plantillas **copiables en chats** para pedir trabajo a agentes IA sobre el repo dotfiles o proyectos relacionados.
 
-Contrato operativo del repo: [docs/AGENT_WORKFLOW.md](../../docs/AGENT_WORKFLOW.md).
+Resumen operativo: [docs/AGENT_FIRST_SUMMARY.md](../../docs/AGENT_FIRST_SUMMARY.md). Contrato del repo: [docs/AGENT_WORKFLOW.md](../../docs/AGENT_WORKFLOW.md).
 
 ## Convenciones de modo
 

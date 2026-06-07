@@ -11,6 +11,7 @@ setup() {
 	AI_REPO_MAP="${DOTFILES_DIR}/docs/AI_REPO_MAP.md"
 	VALIDATION_MATRIX="${DOTFILES_DIR}/docs/VALIDATION_MATRIX.md"
 	SCRIPT_CONVENTIONS="${DOTFILES_DIR}/docs/SCRIPT_CONVENTIONS.md"
+	AGENT_FIRST_SUMMARY="${DOTFILES_DIR}/docs/AGENT_FIRST_SUMMARY.md"
 	AGENTS="${DOTFILES_DIR}/AGENTS.md"
 	DOCS_README="${DOTFILES_DIR}/docs/README.md"
 	AI_README="${DOTFILES_DIR}/ai/README.md"
@@ -103,10 +104,35 @@ setup() {
 }
 
 @test "docs/README.md links agent-first docs" {
+	grep -q 'AGENT_FIRST_SUMMARY.md' "${DOCS_README}"
 	grep -q 'AGENT_WORKFLOW.md' "${DOCS_README}"
 	grep -q 'AI_REPO_MAP.md' "${DOCS_README}"
 	grep -q 'VALIDATION_MATRIX.md' "${DOCS_README}"
 	grep -q 'SCRIPT_CONVENTIONS.md' "${DOCS_README}"
+}
+
+@test "AGENT_FIRST_SUMMARY.md exists with operational closure content" {
+	[[ -f "${AGENT_FIRST_SUMMARY}" ]]
+	grep -q 'make agent-validate' "${AGENT_FIRST_SUMMARY}"
+	grep -q 'make agent-validate-report' "${AGENT_FIRST_SUMMARY}"
+	grep -q 'dotfiles-apply' "${AGENT_FIRST_SUMMARY}"
+	grep -q 'make bats-agent' "${AGENT_FIRST_SUMMARY}"
+	grep -q 'SCRIPT_CONVENTIONS.md' "${AGENT_FIRST_SUMMARY}"
+	grep -q 'rm -rf .claude/' "${AGENT_FIRST_SUMMARY}"
+	grep -q 'Checklist operativa' "${AGENT_FIRST_SUMMARY}"
+}
+
+@test "AGENT_WORKFLOW links AGENT_FIRST_SUMMARY and final commands" {
+	grep -q 'AGENT_FIRST_SUMMARY.md' "${AGENT_WORKFLOW}"
+	grep -q 'make agent-validate-report' "${AGENT_WORKFLOW}"
+	grep -q 'dotfiles-apply' "${AGENT_WORKFLOW}"
+	grep -q 'SCRIPT_CONVENTIONS.md' "${AGENT_WORKFLOW}"
+}
+
+@test "AGENT_FIRST_SUMMARY does not document ups as active alternative" {
+	run grep -E '(\`ups\`|^ups |use ups|ejecutar ups)' "${AGENT_FIRST_SUMMARY}"
+	[[ "${status}" -eq 1 ]]
+	grep -q 'dotfiles-update' "${AGENT_FIRST_SUMMARY}"
 }
 
 @test "SCRIPT_CONVENTIONS.md exists and distinguishes check from dry-run" {
@@ -239,6 +265,18 @@ setup() {
 	grep -q 'agent-validate-dotfiles.sh' "${testing}"
 	grep -q 'build/agent-validation/latest.md' "${testing}"
 	grep -q 'bats-agent' "${testing}"
+}
+
+@test "TESTING.md documents .claude checkout remediation" {
+	local testing="${DOTFILES_DIR}/docs/TESTING.md"
+	grep -q 'rm -rf .claude/' "${testing}"
+	grep -q 'ADR 0004' "${testing}"
+}
+
+@test "OPERATIONS_CHEATSHEET mentions dotfiles-apply safe wrapper" {
+	local cheatsheet="${DOTFILES_DIR}/docs/OPERATIONS_CHEATSHEET.md"
+	grep -q 'dotfiles-apply' "${cheatsheet}"
+	grep -q 'make agent-validate-report' "${cheatsheet}"
 }
 
 @test "agent regression index is documented" {

@@ -11,7 +11,7 @@ Este documento explica **intención, contratos, riesgos y validación** por zona
 | **STRUCTURE.md** | Árbol completo del repo (inventario, generado automáticamente) |
 | **AI_REPO_MAP.md** | Qué hace cada zona, qué riesgos tiene y qué validar al cambiarla |
 
-Contrato de comportamiento del agente: [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md). Matriz cambio → validación: [VALIDATION_MATRIX.md](VALIDATION_MATRIX.md).
+Resumen operativo: [AGENT_FIRST_SUMMARY.md](AGENT_FIRST_SUMMARY.md). Contrato: [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md). Matriz cambio → validación: [VALIDATION_MATRIX.md](VALIDATION_MATRIX.md).
 
 ---
 

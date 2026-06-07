@@ -25,7 +25,7 @@ Provide or discover before reviewing:
 | Diff or file list | `git diff`, user handoff, or stated paths |
 | BUILD objective | Handoff § Objetivo or user message |
 | Zones touched | Map to [docs/VALIDATION_MATRIX.md](../../../../docs/VALIDATION_MATRIX.md) |
-| Contract docs | [docs/AGENT_WORKFLOW.md](../../../../docs/AGENT_WORKFLOW.md), [docs/AI_REPO_MAP.md](../../../../docs/AI_REPO_MAP.md) |
+| Contract docs | [docs/AGENT_FIRST_SUMMARY.md](../../../../docs/AGENT_FIRST_SUMMARY.md), [docs/AGENT_WORKFLOW.md](../../../../docs/AGENT_WORKFLOW.md), [docs/AI_REPO_MAP.md](../../../../docs/AI_REPO_MAP.md) |
 
 If inputs are incomplete, state assumptions explicitly in the report.
 
@@ -108,9 +108,11 @@ Deliver a structured report:
 2. **Riesgos críticos** — must fix before merge or apply
 3. **Riesgos medios** — should fix soon
 4. **Observaciones menores** — style, nits, doc drift
-5. **Validaciones recomendadas** — commands from VALIDATION_MATRIX for zones touched
-6. **Validaciones ejecutadas** — if run: command + pass/fail
+5. **Validaciones recomendadas** — commands from VALIDATION_MATRIX for zones touched (`make agent-validate-changed`, `make agent-validate`, `make agent-validate-report`)
+6. **Validaciones ejecutadas** — if run: command + pass/fail; attach `build/agent-validation/latest.md` when available
 7. **Siguiente acción** — BUILD fix, human apply, or approve
+
+Post-BUILD gate mínimo: `make agent-validate` + `make agent-validate-report`. Si hay `.claude/` en checkout: `rm -rf .claude/` (ADR 0004) y revalidar — ver [AGENT_FIRST_SUMMARY.md](../../../../docs/AGENT_FIRST_SUMMARY.md).
 
 State explicitly: "This review is read-only unless the user requested fixes."
 

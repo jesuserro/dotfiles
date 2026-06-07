@@ -2,6 +2,7 @@
 
 ## Agentes IA
 
+- **[AGENT_FIRST_SUMMARY.md](AGENT_FIRST_SUMMARY.md)** — Resumen operativo y checklist del bloque agent-first (BUILDs 1–10); punto de entrada sintético.
 - **[AGENT_WORKFLOW.md](AGENT_WORKFLOW.md)** — Contrato operativo para agentes en este repo (modos PLAN/BUILD/AUDIT, rutas sensibles, validación).
 - **[SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md)** — Convención `--check`, `--dry-run`, `DRY_RUN=1`, `--yes` y auditoría de comandos mutantes.
 - **[AI_REPO_MAP.md](AI_REPO_MAP.md)** — Mapa operativo por zona (intención, riesgos, validación; complementa STRUCTURE.md).

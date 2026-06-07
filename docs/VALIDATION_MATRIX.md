@@ -4,7 +4,7 @@
 
 Esta matriz indica **qué validar** según el tipo de archivo o zona modificada en dotfiles. Está orientada a agentes IA que cierran un BUILD.
 
-Contrato de comportamiento: [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md). Mapa por zona: [AI_REPO_MAP.md](AI_REPO_MAP.md).
+Resumen y checklist: [AGENT_FIRST_SUMMARY.md](AGENT_FIRST_SUMMARY.md). Contrato: [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md). Mapa por zona: [AI_REPO_MAP.md](AI_REPO_MAP.md).
 
 ---
 

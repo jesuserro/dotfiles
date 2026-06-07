@@ -231,6 +231,7 @@
 │   ├── 📁 plans
 │   │   └── 📝 PLAN_000009.md
 │   ├── 📁 wiki
+│   ├── 📝 AGENT_FIRST_SUMMARY.md
 │   ├── 📝 AGENT_WORKFLOW.md
 │   ├── 📝 AGENT_WORKFLOW_LOOP.md
 │   ├── 📝 AI_PROMPTS_SYSTEM.md

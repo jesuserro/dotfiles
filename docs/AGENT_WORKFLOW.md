@@ -6,7 +6,7 @@ Este documento es el **punto de entrada canónico** para agentes IA (Cursor, Cod
 
 Define cómo actuar, qué evitar y cómo validar cambios. No sustituye la guía de loop vault→proyecto ([AGENT_WORKFLOW_LOOP.md](AGENT_WORKFLOW_LOOP.md) y [ai/AGENT_WORKFLOW_FOR_AGENTS.md](../ai/AGENT_WORKFLOW_FOR_AGENTS.md)); aquí el foco es **operar y modificar dotfiles** de forma segura.
 
-Para el mapa de zonas del repo, ver [AI_REPO_MAP.md](AI_REPO_MAP.md). Para qué validar según archivos tocados, ver [VALIDATION_MATRIX.md](VALIDATION_MATRIX.md). Para flags `--check`, `--dry-run`, `DRY_RUN=1` y `--yes`, ver [SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md).
+**Resumen operativo y checklist:** [AGENT_FIRST_SUMMARY.md](AGENT_FIRST_SUMMARY.md). Para el mapa de zonas del repo, ver [AI_REPO_MAP.md](AI_REPO_MAP.md). Para qué validar según archivos tocados, ver [VALIDATION_MATRIX.md](VALIDATION_MATRIX.md). Para flags `--check`, `--dry-run`, `DRY_RUN=1` y `--yes`, ver [SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md).
 
 ---
 
@@ -195,6 +195,7 @@ Separar claramente lo **implementado**, lo **validado** y lo **pendiente**.
 
 | Documento | Contenido |
 |-----------|-----------|
+| [AGENT_FIRST_SUMMARY.md](AGENT_FIRST_SUMMARY.md) | Resumen BUILDs 1–10, checklist, mapa de comandos |
 | [AI_REPO_MAP.md](AI_REPO_MAP.md) | Mapa operativo por zona |
 | [VALIDATION_MATRIX.md](VALIDATION_MATRIX.md) | Cambio → validación |
 | [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md) | Chuleta diaria y política agentes |

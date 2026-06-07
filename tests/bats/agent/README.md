@@ -20,6 +20,8 @@ make bats-agent
 
 `make agent-validate` includes `bats-agent` (fast index only).
 
+Operativa completa del bloque agent-first: [docs/AGENT_FIRST_SUMMARY.md](../../docs/AGENT_FIRST_SUMMARY.md).
+
 ## Policy
 
 | Do | Don't |
