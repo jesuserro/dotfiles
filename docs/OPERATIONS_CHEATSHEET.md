@@ -51,6 +51,7 @@ chezmoi --source="$HOME/dotfiles" diff
 # apply acotado solo si el reporte o diff lo indican (ver §5–6)
 source ~/.zshrc                 # si cambió PATH tras apply
 make update-check
+github-identity-check          # offline/warn-only por defecto
 dotfiles-update                 # humano: muta sistema, puede usar red
 ```
 
@@ -204,11 +205,14 @@ make bats-docs
 make validate-skills-structure              # read-only: árbol ai/assets/skills/
 make install-mattpocock-skills DRY_RUN=1  # agente: solo simulación
 make update-ai-skills DRY_RUN=1             # agente: previsualizar refresh del catálogo externo
+make clean-runtime-skills                   # dry-run: runtime skills HOME
 ```
 
 - Instalación Matt real (`make install-mattpocock-skills` sin `DRY_RUN`): **humano**; usa red (`npx skills add`).
 - Refresh Matt (`make update-ai-skills` sin `DRY_RUN`): **humano**; usa red; **no** forma parte de `make update`.
 - Skill **local** bajo `ai/assets/skills/` gana sobre catálogo externo Matt.
+- `.claude/` no pertenece al checkout `~/dotfiles`; `make update-check` lo advierte y sugiere limpieza manual, pero no borra.
+- `make clean-runtime-skills` solo inspecciona `~/.claude/skills` y `~/.config/opencode/skills`. Para borrar symlinks rotos hace falta `scripts/clean-runtime-skills.sh --prune-broken-symlinks --yes`.
 
 ---
 
@@ -247,7 +251,10 @@ Detalle: [TESTING.md](TESTING.md).
 | Comando | Mutación | Red | Escenario |
 |---------|----------|-----|-----------|
 | `make update-check` | No | No | Antes de `make update` o trabajo GitNexus largo |
+| `github-identity-check` / `make github-identity-check` | No | No | Verificar remotos, tokens env e identidad GitHub en modo offline |
+| `github-identity-check --online` | No | Sí | Consultar login efectivo y permisos con `gh` |
 | `make update` | Sí | Sí | Mantenimiento diario (humano) |
+| `make clean-runtime-skills` | No | No | Dry-run de symlinks runtime skills |
 | `make update-ai-skills DRY_RUN=1` | No | No | Previsualizar actualización del catálogo externo Matt Pocock Skills |
 | `make update-ai-skills` | Sí | Sí | Refresh explícito del catálogo externo Matt; humano; no forma parte de `make update` |
 | `make chezmoi-drift-report` | No | No | Tras `git pull` / merge |

@@ -27,6 +27,8 @@ make update
 | `make update-wsl` | Ejecuta APT, Node/tooling IA, OpenCode, shell, uv, MCPs e imágenes Docker |
 | `make update-projects` | Actualiza proyectos personales como `~/proyectos/jesuserro` y RenderCV |
 | `make update-check` | Diagnóstico no mutante de requisitos de actualización y MCPs |
+| `make github-identity-check` / `github-identity-check` | Diagnóstico read-only de remotos, cuenta `gh` efectiva y tokens de entorno |
+| `make clean-runtime-skills` | Dry-run de higiene en runtime skills (`~/.claude/skills`, `~/.config/opencode/skills`) |
 | `make update-ai-skills` | Actualiza manualmente la selección opt-in de skills externos; no forma parte de `make update` |
 | `make install-docker-desktop-helper` | Repara explícitamente los symlinks del credential helper de Docker Desktop en WSL |
 | `make excalidraw-start` | Arranca el canvas Docker de Excalidraw bajo demanda |
@@ -67,6 +69,17 @@ El runtime gestionado por defecto es `/usr/bin/node`, coherente con NodeSource/A
 
 `make update-check` diagnostica el Node efectivo, el candidato gestionado y si `make update-tools` podrá autorrecuperarse. No crea overlays, no instala Node y no modifica `PATH`, Cursor Server ni ficheros de shell.
 
+También ejecuta diagnósticos read-only para dos riesgos operativos frecuentes:
+
+- Superficie AI en el checkout: `.claude/` no pertenece a `~/dotfiles`; es runtime de HOME. Si aparece, `update-check` muestra un warning y el comando manual sugerido (`rm -rf ~/dotfiles/.claude/`), pero no borra nada.
+- Identidad GitHub: `github-identity-check --offline --warn-only` muestra remotos, `user.name`, `user.email`, presencia de `GH_TOKEN`/`GITHUB_TOKEN` sin imprimir valores, disponibilidad de `gh` e inferencia conservadora del perfil casa/oficina. Este modo no llama a `gh api` ni `gh repo view`.
+
+Para consultar cuenta efectiva y permisos con red explícita:
+
+```bash
+github-identity-check --online
+```
+
 ## Skills externos opt-in
 
 Matt Pocock Skills es una capa externa de fallback documentada en
@@ -83,6 +96,29 @@ el script elimina symlinks accidentales de Matt bajo `ai/assets/skills/` (esa ru
 queda reservada al catálogo local canónico).
 `make update` no ejecuta este flujo. Si existe un skill local equivalente bajo
 `ai/assets/skills/`, gana el skill local.
+
+## Runtime skills
+
+Las fuentes versionadas de skills viven en `ai/assets/skills/`. Las superficies runtime permitidas para limpieza local son únicamente:
+
+- `~/.claude/skills`
+- `~/.config/opencode/skills`
+
+El checkout no debe contener `.claude/`; si aparece, trátalo como superficie runtime accidental, no como fuente.
+
+Para inspeccionar runtime skills sin borrar:
+
+```bash
+make clean-runtime-skills
+```
+
+El limpiador es dry-run por defecto. Solo borra symlinks rotos con doble intención explícita:
+
+```bash
+scripts/clean-runtime-skills.sh --prune-broken-symlinks --yes
+```
+
+No borra symlinks válidos, archivos regulares, directorios ni roots que sean symlinks. `make update` no ejecuta esta limpieza.
 
 ## pnpm
 

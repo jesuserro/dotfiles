@@ -399,6 +399,7 @@
 │   ├── 🔧 check-azure-tools.sh
 │   ├── 🔧 check-system-deps.sh
 │   ├── 🔧 chezmoi-drift-report.sh
+│   ├── 🔧 clean-runtime-skills.sh
 │   ├── 🔧 diagnose-checkout-ai-surface.sh
 │   ├── 🔧 diagnose-secret-surfaces.sh
 │   ├── 🔧 generate-commands.sh
@@ -432,6 +433,7 @@
 │   ├── 📝 git_start_feature.md
 │   ├── 🔧 git_start_feature.sh
 │   ├── 🔧 git_workflow.sh
+│   ├── 🔧 github-identity-check.sh
 │   ├── 🔧 gitnexus-status.sh
 │   ├── 🔧 install-agent-skills.sh
 │   ├── 🔧 install-agent-tools.sh
@@ -528,12 +530,14 @@
 │   │   │   ├── 📄 agent-validate-report.bats
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
+│   │   │   ├── 📄 clean-runtime-skills.bats
 │   │   │   ├── 📄 diagnose-secret-surfaces.bats
 │   │   │   ├── 📄 docker-desktop-credentials.bats
 │   │   │   ├── 📄 dotfiles-apply.bats
 │   │   │   ├── 📄 dotfiles-update.bats
 │   │   │   ├── 📄 dry-run-guard.bats
 │   │   │   ├── 📄 excalidraw-docker.bats
+│   │   │   ├── 📄 github-identity-check.bats
 │   │   │   ├── 📄 install-agent-skills.bats
 │   │   │   ├── 📄 install-agent-tools.bats
 │   │   │   ├── 📄 install-azure-cli.bats

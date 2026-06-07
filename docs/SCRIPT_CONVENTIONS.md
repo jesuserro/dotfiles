@@ -61,6 +61,8 @@ Representative commands only — not an exhaustive inventory.
 | `scripts/validate-skills-structure.sh` | default | None | `make bats-skills` |
 | `make chezmoi-drift-report` | default | None | `make test-chezmoi` |
 | `make update-check` | default | None | in `agent-validate` |
+| `github-identity-check`, `make github-identity-check` | `--offline --warn-only` | None | `github-identity-check.bats` |
+| `make clean-runtime-skills` | `--dry-run` | None | `clean-runtime-skills.bats` |
 | `make ai-mcp-governance` | default | None (render to `build/`) | MCP bats |
 
 ### Generators
@@ -79,6 +81,7 @@ Representative commands only — not an exhaustive inventory.
 | `scripts/install-agent-skills.sh` | `--dry-run` | network, skills dir | `install-agent-skills.bats` |
 | `make update` / `dotfiles-update` | **no safe agent mode** | full system maintenance | human only |
 | `make update-ai-skills` | `DRY_RUN=1` | network, external catalog | `operations-cheatsheet.bats` |
+| `scripts/clean-runtime-skills.sh` | `--dry-run` default | deletes broken runtime symlinks only with `--prune-broken-symlinks --yes` | `clean-runtime-skills.bats` |
 
 ### Chezmoi / apply wrappers
 
@@ -125,4 +128,6 @@ See [CHEZMOI.md](CHEZMOI.md) § `dotfiles-apply`.
 | `tests/bats/system/dotfiles-apply.bats` | Chezmoi safe preview/apply |
 | `tests/bats/git-hooks/hooks.bats` | `treegen --check` drift without writes |
 | `tests/bats/system/install-*.bats` | per-installer `DRY_RUN` / `--dry-run` |
+| `tests/bats/system/github-identity-check.bats` | GitHub identity diagnostics, token masking, offline mode |
+| `tests/bats/system/clean-runtime-skills.bats` | Runtime skills dry-run and double-confirmed prune |
 | `tests/bats/agent/regression.bats` | meta-index: historical risks → dedicated tests |

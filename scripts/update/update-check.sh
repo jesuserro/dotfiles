@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOTFILES_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+DOTFILES_ROOT="${DOTFILES_DIR:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 # shellcheck source=scripts/update/lib/environment.sh
 source "${SCRIPT_DIR}/lib/environment.sh"
 # shellcheck source=scripts/update/lib/node_runtime.sh
@@ -58,6 +58,18 @@ else
 fi
 if [[ -f "${DOTFILES_ROOT}/ai/assets/mcps/MANIFEST.yaml" ]]; then
 	status OK "MCP manifest present"
+fi
+echo "==> Checkout AI surface"
+if DOTFILES_DIR="${DOTFILES_ROOT}" "${DOTFILES_ROOT}/scripts/diagnose-checkout-ai-surface.sh"; then
+	status OK "Checkout AI runtime surface is clean"
+else
+	status WARN "Checkout AI runtime surface needs manual cleanup; .claude/ belongs in HOME runtime, not the checkout"
+fi
+echo "==> GitHub identity"
+if "${DOTFILES_ROOT}/scripts/github-identity-check.sh" --offline --warn-only; then
+	status OK "GitHub identity diagnostic completed"
+else
+	status WARN "GitHub identity diagnostic reported issues"
 fi
 echo "==> Excalidraw"
 "${SCRIPT_DIR}/update-excalidraw.sh" status || true

@@ -10,6 +10,11 @@ setup() {
 	UPDATE_WSL="${DOTFILES_DIR}/scripts/update/update-wsl.sh"
 	UPDATE_WINDOWS="${DOTFILES_DIR}/scripts/update/update-windows.sh"
 	UPDATE_CHECK="${DOTFILES_DIR}/scripts/update/update-check.sh"
+	setup_temp_dir
+}
+
+teardown() {
+	teardown_temp_dir
 }
 
 assert_bash_script_no_chezmoi_apply() {
@@ -90,6 +95,41 @@ assert_bash_script_no_matt_skills_install() {
 	assert_file_not_matches "${UPDATE_CHECK}" 'winget'
 	assert_file_not_matches "${UPDATE_CHECK}" 'docker pull'
 	assert_file_not_matches "${UPDATE_CHECK}" 'npx skills'
+}
+
+@test "update-check invokes checkout AI surface diagnostic visibly" {
+	grep -q 'diagnose-checkout-ai-surface\.sh' "${UPDATE_CHECK}"
+	grep -q 'Checkout AI surface' "${UPDATE_CHECK}"
+}
+
+@test "update-check includes github identity diagnostic in offline warn-only mode" {
+	grep -q 'github-identity-check\.sh" --offline --warn-only' "${UPDATE_CHECK}"
+	assert_file_not_matches "${UPDATE_CHECK}" 'gh api'
+	assert_file_not_matches "${UPDATE_CHECK}" 'gh repo view'
+}
+
+@test "update-check surfaces .claude diagnostic and does not delete fixture" {
+	local fixture="${TEST_TEMP_DIR}/dotfiles-fixture"
+	mkdir -p "${fixture}/.claude" "${fixture}/scripts"
+	cat >"${fixture}/scripts/diagnose-checkout-ai-surface.sh" <<'EOF'
+#!/usr/bin/env bash
+printf 'WARN: .claude/ exists in checkout\n'
+printf 'rm -rf %s/.claude/\n' "${DOTFILES_DIR}"
+exit 1
+EOF
+	cat >"${fixture}/scripts/github-identity-check.sh" <<'EOF'
+#!/usr/bin/env bash
+printf 'GitHub identity diagnostic fixture\n'
+exit 0
+EOF
+	chmod +x "${fixture}/scripts/diagnose-checkout-ai-surface.sh" "${fixture}/scripts/github-identity-check.sh"
+
+	run env DOTFILES_DIR="${fixture}" bash "${UPDATE_CHECK}"
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"Checkout AI surface"* ]]
+	[[ "${output}" == *".claude/ exists in checkout"* ]]
+	[[ "${output}" == *"belongs in HOME runtime"* ]]
+	[[ -d "${fixture}/.claude" ]]
 }
 
 @test "make -n update-check does not reference mutating installers" {
