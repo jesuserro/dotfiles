@@ -1,7 +1,7 @@
-# ADR: Removal of ups Command (Pointer)
+# ADR: Removal of ups Command
 
 **Date:** 2026-06-07  
-**Status:** Accepted  
+**Status:** Accepted — Closed
 **Author:** jesus
 
 ---
@@ -16,17 +16,21 @@
 
 ### 1. Complete removal — no legacy alias
 
-Remove `ups` entirely. Do **not** provide `ups` as an alias or function pointing to `dotfiles-update`. Do **not** document `ups` as an alternative in operational docs.
+Remove `ups` entirely. Do **not** provide `ups` as an alias, function, or Make target pointing to `dotfiles-update`. Do **not** document `ups` as an alternative in operational docs.
 
 ### 2. Replacement
 
 Daily maintenance: `dotfiles-update` (global) or `make update` (from repo). See ADR 0009.
 
-### 3. Pointer ADR — cleanup in separate handoff
+### 3. Allowed residual mentions
 
-Residual references (changelog, release notes, historical branches) may remain in git history. Operational cleanup and alias removal are part of the **dotfiles-update handoff**, not this agent-first ADR BUILD.
+The following references to `ups` are acceptable:
 
-This ADR does **not** modify zsh aliases, scripts, or docs beyond recording the decision.
+- This ADR and the ADR index
+- Historical entries in `CHANGELOG.md` and `releases/`
+- Anti-regression tests that assert `ups` is absent from aliases, Make targets, and operational docs
+
+Operational docs may state that `ups` is retired and point to `dotfiles-update`.
 
 ---
 
@@ -51,4 +55,4 @@ This ADR does **not** modify zsh aliases, scripts, or docs beyond recording the 
 
 - Replacement ADR: `docs/adr/0009-dotfiles-update-wrapper.md`
 - Update docs: `docs/UPDATE.md`
-- Related handoff: dotfiles-update / ups removal (separate from agent-first BUILD)
+- Regression tests: `tests/bats/system/update-workflow.bats`, `tests/bats/zsh/rc_symlinks.bats`, `tests/bats/docs/documentation-consistency.bats`

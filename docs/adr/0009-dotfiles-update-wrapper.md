@@ -1,7 +1,7 @@
-# ADR: dotfiles-update Global Wrapper (Pointer)
+# ADR: dotfiles-update Global Wrapper
 
 **Date:** 2026-06-07  
-**Status:** Accepted  
+**Status:** Accepted — Implemented
 **Author:** jesus
 
 ---
@@ -21,18 +21,27 @@
 | `make update` | Internal SSOT — targets, scripts, tests in `update.mk` |
 | `dotfiles-update` | Global user-facing wrapper → delegates to `make update` in `$DOTFILES_DIR` |
 
-### 2. Implementation status
+### 2. Implementation
 
-The wrapper `bin/dotfiles-update` and Chezmoi symlink `dot_local/bin/symlink_dotfiles-update.tmpl` implement this decision. This ADR records the architecture; it does **not** modify wrapper or Makefile in the agent-first BUILD.
+| Artifact | Location |
+|----------|----------|
+| Wrapper script | `bin/dotfiles-update` |
+| Chezmoi symlink template | `dot_local/bin/symlink_dotfiles-update.tmpl` → `$HOME/dotfiles/bin/dotfiles-update` |
+| Global command | `~/.local/bin/dotfiles-update` (via Chezmoi apply) |
+| Tests | `tests/bats/system/dotfiles-update.bats` |
 
-### 3. Pointer scope for agent-first BUILD
+The wrapper:
 
-This ADR does **not**:
+1. Resolves `DOTFILES_DIR` (default `$HOME/dotfiles`).
+2. Validates that the directory and its `Makefile` exist.
+3. `cd`s into the repo.
+4. Runs `exec make update "$@"`, propagating arguments.
 
-- Change `bin/dotfiles-update` or `make update` behavior
-- Add new update targets
+It can be invoked from any working directory. Override the repo path with `DOTFILES_DIR` when needed.
 
-Further enhancements belong to the dedicated dotfiles-update handoff if needed.
+### 3. Scope
+
+This ADR does **not** define new update targets or change `make update` semantics. Maintenance logic remains in `update.mk` and `scripts/update/`.
 
 ---
 
@@ -49,7 +58,7 @@ Further enhancements belong to the dedicated dotfiles-update handoff if needed.
 
 ### Neutral
 
-- Chezmoi apply required for `~/.local/bin/dotfiles-update` visibility
+- Chezmoi apply required for `~/.local/bin/dotfiles-update` visibility on a new machine
 
 ---
 

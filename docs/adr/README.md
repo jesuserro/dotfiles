@@ -13,7 +13,7 @@ Contrato agentes: [docs/AGENT_WORKFLOW.md](../AGENT_WORKFLOW.md).
 - Numeración secuencial de cuatro dígitos: `0001`, `0002`, …
 - **Accepted** — decisión vigente (implementada o pointer con dirección aprobada)
 - Las decisiones implementadas deben tener **validación asociada** en tests o targets documentados cuando aplique (ver columna Validación)
-- Los ADR **pointer** (0008–0010) registran decisiones aprobadas cuya implementación vive en handoffs separados
+- Los ADR **pointer** registran decisiones aprobadas cuya implementación vive en handoffs separados (p. ej. 0008)
 
 ## Índice
 
@@ -27,8 +27,8 @@ Contrato agentes: [docs/AGENT_WORKFLOW.md](../AGENT_WORKFLOW.md).
 | [0006](0006-gitnexus-post-commit-policy.md) | GitNexus Post-Commit Best-Effort | Accepted | Hook no bloquea commit | `git-hooks/hooks.bats` |
 | [0007](0007-playwright-docker-via-chezmoi-bin.md) | Playwright Docker via Chezmoi Bin | Accepted | Symlink `playwright-docker` | `playwright-docker.bats` |
 | [0008](0008-git-flow-pr-policy.md) | Git Flow PR Policy | Accepted (pointer) | PR configurable por repo; impl. separada | `git-flow/policy.bats` (policy doc) |
-| [0009](0009-dotfiles-update-wrapper.md) | dotfiles-update Wrapper | Accepted (pointer) | Wrapper global → `make update` | `dotfiles-update.bats` |
-| [0010](0010-ups-removal.md) | Removal of ups | Accepted (pointer) | Sin alias legacy `ups` | Handoff dotfiles-update |
+| [0009](0009-dotfiles-update-wrapper.md) | dotfiles-update Wrapper | Accepted — Implemented | Wrapper global → `make update` | `dotfiles-update.bats`, `update-workflow.bats` |
+| [0010](0010-ups-removal.md) | Removal of ups | Accepted — Closed | Sin alias legacy `ups` | `update-workflow.bats`, `rc_symlinks.bats`, `documentation-consistency.bats` |
 
 ## Relacionados
 

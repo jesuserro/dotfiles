@@ -116,12 +116,13 @@ Fuente canónica de skills: `ai/assets/skills/` (no copiar a `.claude/` dentro d
 No forman parte del cierre BUILDs 1–10; tienen handoffs o ADRs pointer aparte:
 
 - **git-flow PR** — ADR 0008 (pointer)
-- **dotfiles-update / ups** — ADR 0009, 0010
 - Bootstrap máquina nueva — [INSTALL.md](INSTALL.md)
 - Loop vault → spec → issues — [ai/AGENT_WORKFLOW_FOR_AGENTS.md](../ai/AGENT_WORKFLOW_FOR_AGENTS.md)
+
+**Cerrado (BUILD A):** `dotfiles-update` / retirada de `ups` — ADR [0009](adr/0009-dotfiles-update-wrapper.md), [0010](adr/0010-ups-removal.md). Contrato: `make update` (interno) + `dotfiles-update` (global).
 
 ---
 
 ## 6. Estado del bloque
 
-El bloque agent-first queda **cerrado** con BUILD 11: contrato, validación, reporte, Chezmoi seguro, convenciones, regresión y guard `.claude/` documentados y testeados. Mejoras futuras (git-flow PR, dotfiles-update funcional) son frentes independientes.
+El bloque agent-first queda **cerrado** con BUILD 11: contrato, validación, reporte, Chezmoi seguro, convenciones, regresión y guard `.claude/` documentados y testeados. Mejora futura pendiente: **git-flow PR** (ADR 0008, handoff separado).

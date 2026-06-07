@@ -241,15 +241,81 @@ setup() {
 	done
 }
 
-@test "pointer adrs 0008 through 0010 state no functional implementation in adr build" {
-	local file
-	for file in 0008-git-flow-pr-policy 0009-dotfiles-update-wrapper 0010-ups-removal; do
-		grep -qiE 'pointer|handoff|does \*\*not\*\*|no implementation|not in the' \
-			"${ADR_DIR}/${file}.md" || {
-			echo "${file}: missing pointer/no-implementation wording" >&2
+@test "pointer adr 0008 states no functional implementation in adr build" {
+	grep -qiE 'pointer|handoff|does \*\*not\*\*|no implementation|not in the' \
+		"${ADR_DIR}/0008-git-flow-pr-policy.md" || {
+		echo "0008-git-flow-pr-policy: missing pointer/no-implementation wording" >&2
+		return 1
+	}
+}
+
+@test "adr 0009 dotfiles-update is implemented not pending" {
+	local adr="${ADR_DIR}/0009-dotfiles-update-wrapper.md"
+	grep -qiE 'Implemented|implementado' "${adr}" || {
+		echo "0009: missing Implemented status" >&2
+		return 1
+	}
+	run grep -qiE 'pointer|handoff pendiente|Further enhancements belong to the dedicated dotfiles-update handoff' "${adr}"
+	[[ "${status}" -eq 1 ]]
+	grep -q 'bin/dotfiles-update' "${adr}"
+	grep -q 'symlink_dotfiles-update.tmpl' "${adr}"
+	grep -q 'dotfiles-update.bats' "${adr}"
+}
+
+@test "adr 0010 ups removal is closed not pending" {
+	local adr="${ADR_DIR}/0010-ups-removal.md"
+	grep -qiE 'Closed|cerrado' "${adr}" || {
+		echo "0010: missing Closed status" >&2
+		return 1
+	}
+	run grep -qiE 'pointer|handoff|cleanup in separate handoff|Related handoff' "${adr}"
+	[[ "${status}" -eq 1 ]]
+}
+
+@test "AGENT_FIRST_SUMMARY marks dotfiles-update closed not pending" {
+	run grep -qiE 'dotfiles-update.*pendiente|pendiente.*dotfiles-update|dotfiles-update funcional|frente independiente.*dotfiles-update' \
+		"${AGENT_FIRST_SUMMARY}"
+	[[ "${status}" -eq 1 ]]
+	grep -q 'Cerrado (BUILD A)' "${AGENT_FIRST_SUMMARY}"
+	grep -q 'dotfiles-update' "${AGENT_FIRST_SUMMARY}"
+}
+
+@test "adr README lists 0009 and 0010 as implemented or closed" {
+	grep -q '0009.*Implemented' "${ADR_README}"
+	grep -q '0010.*Closed' "${ADR_README}"
+	run grep -q '0009.*pointer' "${ADR_README}"
+	[[ "${status}" -eq 1 ]]
+	run grep -q '0010.*pointer' "${ADR_README}"
+	[[ "${status}" -eq 1 ]]
+}
+
+@test "operational docs recommend dotfiles-update not ups" {
+	local doc
+	for doc in \
+		"${DOTFILES_DIR}/docs/UPDATE.md" \
+		"${DOTFILES_DIR}/docs/OPERATIONS.md" \
+		"${DOTFILES_DIR}/docs/OPERATIONS_CHEATSHEET.md" \
+		"${DOTFILES_DIR}/README.md"; do
+		[[ -f "${doc}" ]] || {
+			echo "missing doc: ${doc}" >&2
+			return 1
+		}
+		grep -q 'dotfiles-update' "${doc}" || {
+			echo "${doc}: missing dotfiles-update" >&2
+			return 1
+		}
+		run grep -Ei '(^|[[:space:]])ups[[:space:]]|use ups|ejecutar ups|\`ups\`' "${doc}"
+		[[ "${status}" -eq 1 ]] || {
+			echo "${doc}: documents ups as active command" >&2
 			return 1
 		}
 	done
+}
+
+@test "UPDATE.md documents make update as internal contract" {
+	local update_doc="${DOTFILES_DIR}/docs/UPDATE.md"
+	grep -q 'make update' "${update_doc}"
+	grep -qE 'interno|desde el repo|desde `~/dotfiles`' "${update_doc}"
 }
 
 @test "docs README and AGENT_WORKFLOW mention adr" {
