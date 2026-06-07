@@ -72,6 +72,7 @@ assert_contains() {
 	assert_contains "${BATS_DIR}/system/playwright-docker.bats" 'symlink_playwright-docker'
 	assert_contains "${BATS_DIR}/chezmoi/smoke.bats" 'playwright-docker'
 	[[ -f "${DOTFILES_DIR}/dot_local/bin/symlink_playwright-docker.tmpl" ]]
+	grep -q 'playwright-docker\.bats' "${MAKEFILE_TESTS}"
 }
 
 @test "regression: Node shadowing by Cursor is covered" {
@@ -80,6 +81,7 @@ assert_contains() {
 	assert_test_file "${BATS_DIR}/system/update-node-runtime.bats"
 	assert_contains "${BATS_DIR}/system/update-node-runtime.bats" 'shadowing'
 	assert_contains "${DOTFILES_DIR}/scripts/update/lib/node_runtime.sh" 'shadowing'
+	grep -q 'update-node-runtime\.bats' "${MAKEFILE_TESTS}"
 }
 
 @test "regression: mcp-server-fetch uvx runtime-managed contract is covered" {
@@ -94,6 +96,7 @@ assert_contains() {
 	assert_contains "${BATS_DIR}/system/dotfiles-update.bats" 'make update'
 	[[ -f "${DOTFILES_DIR}/bin/dotfiles-update" ]]
 	[[ -f "${DOTFILES_DIR}/dot_local/bin/symlink_dotfiles-update.tmpl" ]]
+	grep -q 'dotfiles-update\.bats' "${MAKEFILE_TESTS}"
 	grep -q 'dotfiles-update\.bats' "${DOTFILES_DIR}/scripts/agent-validate-changed.sh"
 }
 
@@ -102,6 +105,16 @@ assert_contains() {
 	assert_contains "${BATS_DIR}/system/dotfiles-apply.bats" 'CHEZMOI_STUB_LOG'
 	assert_contains "${BATS_DIR}/system/dotfiles-apply.bats" '\-\-apply --yes'
 	grep -q 'dotfiles-apply\.bats' "${MAKEFILE_TESTS}"
+}
+
+@test "regression: formerly orphan system bats are wired in bats-system" {
+	assert_contains "${MAKEFILE_TESTS}" 'system/dotfiles-update\.bats'
+	assert_contains "${MAKEFILE_TESTS}" 'system/playwright-docker\.bats'
+	assert_contains "${MAKEFILE_TESTS}" 'system/update-node-runtime\.bats'
+}
+
+@test "regression: checkout has no .claude runtime surface" {
+	[[ ! -d "${DOTFILES_DIR}/.claude" ]]
 }
 
 @test "regression: agent-validate-report handoff report is covered" {

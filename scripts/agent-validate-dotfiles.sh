@@ -44,6 +44,16 @@ run_optional() {
 	fi
 }
 
+guard_checkout_ai_surface() {
+	if [[ ! -d "${DOTFILES_DIR}/.claude" ]]; then
+		return 0
+	fi
+	printf 'ERROR: checkout contains .claude/ — runtime agent surface must not materialize in the repo (ADR 0004)\n' >&2
+	printf 'Remediation: rm -rf %s/.claude/\n' "${DOTFILES_DIR}" >&2
+	printf 'Canonical skills source: %s/ai/assets/skills/\n' "${DOTFILES_DIR}" >&2
+	return 1
+}
+
 main() {
 	log "Dotfiles agent validation gate (read-only)"
 	verbose "DOTFILES_DIR=${DOTFILES_DIR}"
@@ -55,6 +65,9 @@ main() {
 	else
 		warn "Not a git worktree; skipping git diff --check"
 	fi
+
+	run_required "checkout AI surface guard (.claude/)" \
+		guard_checkout_ai_surface || true
 
 	run_required "canonical skills structure" \
 		bash "${DOTFILES_DIR}/scripts/validate-skills-structure.sh" || true

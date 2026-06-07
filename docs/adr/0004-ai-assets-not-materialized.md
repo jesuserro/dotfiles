@@ -41,7 +41,7 @@ Any exception to this rule requires an explicit ADR amendment and a dedicated re
 ### Negative
 
 - Developers must not copy skills into `.claude/skills/` for local experiments inside the repo
-- Stale checkout-local trees must be removed manually when they appear
+- Stale checkout-local trees must be removed manually when they appear (`rm -rf .claude/` from the dotfiles checkout; canonical source remains `ai/assets/skills/`)
 
 ### Neutral
 

@@ -92,7 +92,7 @@ Los agentes editan **plantillas en el repo** (`dot_*`, `dot_local/`, etc.), no s
 ### Skills
 
 - **Fuente canónica:** `ai/assets/skills/` — editar aquí, no en `~/.cursor/skills-cursor/` ni `.claude/skills/` del repo.
-- **No materializar** skills dentro del checkout (sin symlinks ni copias en rutas locales del repo).
+- **No materializar** skills dentro del checkout (sin symlinks ni copias en rutas locales del repo). Si aparece `.claude/` en el checkout: `rm -rf .claude/` (ADR 0004); `make agent-validate` falla con hint de remediación.
 - **Validar estructura:** `make validate-skills-structure` o `./scripts/validate-skills-structure.sh`.
 - **Registrar skills nuevos:** skill [dotfiles-skill-registration](../ai/assets/skills/ops/dotfiles-skill-registration/SKILL.md).
 

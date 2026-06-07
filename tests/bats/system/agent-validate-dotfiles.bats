@@ -22,10 +22,12 @@ setup() {
 }
 
 @test "agent-validate-dotfiles script orchestrates expected validators" {
+	grep -q 'guard_checkout_ai_surface' "${SCRIPT}"
 	grep -q 'validate-skills-structure.sh' "${SCRIPT}"
 	grep -q 'ai-mcp-governance' "${SCRIPT}"
 	grep -q 'agent-validate-changed.sh' "${SCRIPT}"
 	grep -q 'bats-docs' "${SCRIPT}"
+	grep -q 'bats-agent' "${SCRIPT}"
 	grep -q 'update-check' "${SCRIPT}"
 }
 

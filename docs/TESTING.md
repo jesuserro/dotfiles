@@ -117,6 +117,8 @@ Flag conventions (`--check`, `--dry-run`, `DRY_RUN=1`, `--yes`): [SCRIPT_CONVENT
 
 Agent-first regression index (meta-tests, no HOME mutation): `make bats-agent` or `bats tests/bats/agent/regression.bats`. Scenario map: [tests/bats/agent/README.md](../tests/bats/agent/README.md). Included in `make agent-validate`.
 
+`make bats-system` includes formerly orphan suites: `dotfiles-update.bats`, `playwright-docker.bats`, `update-node-runtime.bats`. Checkout guard: `make agent-validate` fails early if `.claude/` exists (ADR 0004); remediation `rm -rf .claude/`.
+
 `make agent-validate-changed` is a lighter, diff-focused gate (also invoked inside `make agent-validate`). By default it runs **local** checks only:
 
 - shell scripts changed since `HEAD`: `shellcheck` + `shfmt`

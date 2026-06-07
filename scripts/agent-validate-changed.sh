@@ -358,6 +358,7 @@ main() {
 	if grep -Eq '^scripts/update/' "${changed_file_list}"; then
 		log "update workflow bats"
 		bats "${DOTFILES_DIR}/tests/bats/system/update-workflow.bats" \
+			"${DOTFILES_DIR}/tests/bats/system/update-node-runtime.bats" \
 			"${DOTFILES_DIR}/tests/bats/system/update-governance.bats"
 	fi
 

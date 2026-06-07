@@ -98,6 +98,7 @@ Usar cuando el BUILD es amplio, toca varias zonas o modifica contratos estructur
 | `scripts/treegen.sh` | `git-hooks/hooks.bats` (`treegen --check`) |
 | `docs/SCRIPT_CONVENTIONS.md` | `dry-run-guard.bats`, `documentation-consistency.bats` |
 | `tests/bats/agent/` (regression index) | `agent/regression.bats`, `make bats-agent` |
+| `bin/dotfiles-update`, `bin/playwright-docker`, `scripts/update/lib/node_runtime.sh` | `bats-system` (`dotfiles-update.bats`, `playwright-docker.bats`, `update-node-runtime.bats`) |
 | Cualquier cambio | `gitleaks` working-tree |
 
 El gate completo `make agent-validate` ejecuta además skills, MCP governance, `agent-validate-changed`, `bats-docs` y `update-check` vía [`scripts/agent-validate-dotfiles.sh`](../scripts/agent-validate-dotfiles.sh).

@@ -448,6 +448,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/install-azure-cli.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-mcp-github.bats)
 	@$(call run_bats,$(BATS_DIR)/system/update-workflow.bats)
+	@$(call run_bats,$(BATS_DIR)/system/update-node-runtime.bats)
 	@$(call run_bats,$(BATS_DIR)/system/update-governance.bats)
 	@$(call run_bats,$(BATS_DIR)/system/docker-desktop-credentials.bats)
 	@$(call run_bats,$(BATS_DIR)/system/excalidraw-docker.bats)
@@ -461,6 +462,8 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-dotfiles.bats)
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-report.bats)
 	@$(call run_bats,$(BATS_DIR)/system/dotfiles-apply.bats)
+	@$(call run_bats,$(BATS_DIR)/system/dotfiles-update.bats)
+	@$(call run_bats,$(BATS_DIR)/system/playwright-docker.bats)
 
 bats-gitnexus:
 	@echo "$(BLUE)==>$(NC) Running GitNexus operational status tests..."
