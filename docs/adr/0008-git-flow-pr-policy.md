@@ -1,7 +1,7 @@
-# ADR: Git Flow PR Policy (Pointer)
+# ADR: Git Flow PR Policy
 
 **Date:** 2026-06-07  
-**Status:** Accepted  
+**Status:** Accepted — Partially implemented
 **Author:** jesus
 
 ---
@@ -10,32 +10,38 @@
 
 The dotfiles repo provides `git feat` and `git rel` helpers for feature branches and releases. Some projects need fast local merges; others need PR-based review, checks, and traceability. A single hardcoded flow does not fit all destination repos.
 
-This ADR records an **approved direction** documented in detail in `docs/GIT_FLOW_POLICY.md`. Implementation is handled in a **separate handoff** — not in the agent-first ADR BUILD.
+This ADR records an **approved direction** documented in detail in `docs/GIT_FLOW_POLICY.md`. Manual PR flows and `--dry-run` are implemented in BUILD B; automatic variants remain pending.
 
 ---
 
 ## Decision
 
-### 1. Configurable flow per repo (planned)
+### 1. Configurable flow per repo
 
 Evolve `git feat` / `git rel` toward a policy-driven model:
 
 - Preserve local merge for fast iteration where configured
-- Optional automatic or guided PR creation for mature projects
+- Optional manual PR creation for mature projects (`FLOW_MODE_TO_*=pr`)
 - Per-destination behavior for `dev` and `main`
 - Integration with project-level `make validate` / `make validate-full` when present
+- `--dry-run` for non-mutating inspection
 
 Configuration via `.git-flow-policy.env` per project (see `docs/examples/git-flow-policy.env`).
 
-### 2. Pointer ADR — no implementation here
+### 2. Implementation status (BUILD B)
 
-This ADR does **not**:
+Implemented:
 
-- Modify `scripts/git_feat.sh`, `scripts/git_rel.sh`, or related aliases
-- Change `git feat` / `git rel` behavior in the current BUILD
-- Implement PR automation
+- `FLOW_MODE_TO_DEV=pr` in `git feat`
+- `FLOW_MODE_TO_MAIN=pr` in `git rel`
+- `git feat --dry-run` and `git rel --dry-run`
+- Policy parsing, validation hooks, and bats tests with stub `gh`
 
-Implementation belongs to the dedicated git-flow policy handoff.
+Still pending:
+
+- `pr_auto` and `pr_immediate`
+- Merge strategy application
+- Full ADR closure
 
 ---
 
@@ -44,15 +50,15 @@ Implementation belongs to the dedicated git-flow policy handoff.
 ### Positive
 
 - Decision recorded for agents and future implementers
-- Avoids rediscovering rationale in chat
+- Manual PR paths available without breaking local legacy defaults
 
 ### Negative
 
-- Behavior until implementation remains the existing git helpers only
+- Behavior for `pr_auto` / `pr_immediate` remains unimplemented
 
 ### Neutral
 
-- Operational detail lives in `docs/GIT_FLOW_POLICY.md` until code catches up
+- Operational detail lives in `docs/GIT_FLOW_POLICY.md`
 
 ---
 

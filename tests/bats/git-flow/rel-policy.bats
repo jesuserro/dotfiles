@@ -90,19 +90,153 @@ EOF
 	[[ "$output" != *"No estás dentro de un repositorio Git"* ]]
 }
 
-@test "git_rel PR mode is explicit and not implemented yet" {
+@test "git_rel PR mode variants beyond pr are explicit and not implemented yet" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	local remote="${TEST_TEMP_DIR}/origin.git"
 	init_rel_repo "$repo" "$remote"
 	cat >"${repo}/.git-flow-policy.env" <<'EOF'
-FLOW_MODE_TO_MAIN=pr
+FLOW_MODE_TO_MAIN=pr_auto
 EOF
 
 	cd "$repo"
 	run bash "$GIT_REL"
 	[[ "$status" -ne 0 ]]
-	[[ "$output" == *"PR mode not implemented yet"* ]]
-	[[ "$output" == *"FLOW_MODE_TO_MAIN=pr"* ]]
+	[[ "$output" == *"PR mode variant not implemented yet"* ]]
+	[[ "$output" == *"FLOW_MODE_TO_MAIN=pr_auto"* ]]
+}
+
+@test "git_rel --dry-run local mode prints planned actions without merge or push" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	init_rel_repo "$repo" "$remote"
+
+	cd "$repo"
+	run bash "$GIT_REL" --dry-run
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"DRY RUN: git rel policy flow (local)"* ]]
+	[[ "$output" == *"Would merge 'dev' into 'main'"* ]]
+	[[ "$output" == *"Would create release tag"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+	[[ "$output" != *"Creando tag"* ]]
+	[[ "$(git branch --show-current)" == "dev" ]]
+}
+
+@test "git_rel --dry-run PR mode prints planned actions without gh pr create" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-rel-dry-run.log"
+	install_gh_stub "$gh_log"
+	init_rel_repo "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_MAIN=pr
+OPEN_BROWSER=false
+EOF
+
+	cd "$repo"
+	run bash "$GIT_REL" --dry-run
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"DRY RUN: git rel policy flow (pr)"* ]]
+	[[ "$output" == *"Would create PR 'dev' -> 'main'"* ]]
+	[[ "$output" == *"Would not create local tag"* ]]
+	[[ "$output" == *"Would not merge locally"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+	[[ ! -s "$gh_log" ]]
+}
+
+@test "git_rel --dry-run without policy prints local legacy flow" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	init_rel_repo "$repo" "$remote"
+
+	cd "$repo"
+	run bash "$GIT_REL" --dry-run
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"DRY RUN: git rel policy flow (local)"* ]]
+	[[ "$output" == *"Would merge 'dev' into 'main'"* ]]
+}
+
+@test "git_rel PR mode pushes dev and creates PR with gh fill" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-rel-pr.log"
+	install_gh_stub "$gh_log"
+	init_rel_repo "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_MAIN=pr
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: add pr policy"
+
+	cd "$repo"
+	run bash "$GIT_REL"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Creating pull request for 'dev' into 'main'"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+	[[ "$output" != *"Creando tag"* ]]
+	[[ "$(git branch --show-current)" == "dev" ]]
+	[[ "$(cat "$gh_log")" == *"pr create --base main --head dev --fill"* ]]
+	[[ "$(cat "$gh_log")" != *"pr merge"* ]]
+	[[ "$(cat "$gh_log")" != *"--web"* ]]
+	run git tag -l 'v*'
+	[[ "$status" -eq 0 ]]
+	[[ -z "$output" ]]
+}
+
+@test "git_rel PR mode respects OPEN_BROWSER with gh web flag" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-rel-web.log"
+	install_gh_stub "$gh_log"
+	init_rel_repo "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_MAIN=pr
+OPEN_BROWSER=true
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: add pr policy with browser"
+
+	cd "$repo"
+	run bash "$GIT_REL"
+	[[ "$status" -eq 0 ]]
+	[[ "$(cat "$gh_log")" == *"--web"* ]]
+}
+
+@test "git_rel PR mode aborts when validation fails before push or PR" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-rel-validation.log"
+	install_gh_stub "$gh_log"
+	init_rel_repo "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_MAIN=pr
+VALIDATE_TO_MAIN=true
+VALIDATE_CMD_TO_MAIN="false"
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: failing pr validation"
+
+	cd "$repo"
+	run bash "$GIT_REL"
+	[[ "$status" -ne 0 ]]
+	[[ "$output" == *"Validation failed:"* ]]
+	[[ ! -s "$gh_log" ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+}
+
+install_gh_stub() {
+	local log="$1"
+	local bin_dir="${TEST_TEMP_DIR}/bin"
+	mkdir -p "$bin_dir"
+	cat >"${bin_dir}/gh" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$GH_STUB_LOG"
+printf 'https://github.com/example/repo/pull/1\n'
+EOF
+	chmod +x "${bin_dir}/gh"
+	export GH_STUB_LOG="$log"
+	export PATH="${bin_dir}:${PATH}"
 }
 
 @test "git_rel validation command runs from repo root and aborts before merge" {

@@ -15,6 +15,7 @@ ARCHIVE_PREFIX="archive/"        # Prefijo para archivar ramas
 GENERATE_CHANGELOG=true          # Generar changelog automáticamente
 GIT_FLOW_REPO_ROOT=""            # Raíz del repo donde se busca la policy
 GIT_FLOW_PRINT_POLICY_ONLY=false # Modo diagnóstico sin operaciones productivas
+GIT_FLOW_DRY_RUN=false           # Inspección sin push, merge, PR ni changelog
 INPUT_NAME=""                    # Nombre de feature recibido por argumento
 
 # 🎨 Colores para el output en consola
@@ -39,6 +40,7 @@ process_arguments() {
 			echo -e "${BLUE}📖 Opciones:${NC}"
 			echo -e "  --no-changelog                      # No generar changelog automáticamente"
 			echo -e "  --print-policy                      # Imprimir la policy efectiva y salir"
+			echo -e "  --dry-run                           # Mostrar acciones sin ejecutarlas"
 			echo -e "  --help, -h                          # Mostrar esta ayuda"
 			echo -e "${BLUE}📖 Flujo:${NC}"
 			echo -e "  1. Resuelve la rama feature por argumento o por rama actual"
@@ -55,6 +57,10 @@ process_arguments() {
 			;;
 		--print-policy)
 			GIT_FLOW_PRINT_POLICY_ONLY=true
+			shift
+			;;
+		--dry-run)
+			GIT_FLOW_DRY_RUN=true
 			shift
 			;;
 		*)
@@ -98,12 +104,56 @@ ensure_supported_flow_mode() {
 
 run_validation_if_enabled() {
 	if [[ "$VALIDATE_TO_DEV" == "true" ]]; then
+		if [[ "$GIT_FLOW_DRY_RUN" == "true" ]]; then
+			echo -e "${BLUE}Would run validation: ${VALIDATE_CMD_TO_DEV}${NC}"
+			return 0
+		fi
 		echo -e "${BLUE}Running validation: ${VALIDATE_CMD_TO_DEV}${NC}"
 		if ! (cd "$GIT_FLOW_REPO_ROOT" && bash -c "$VALIDATE_CMD_TO_DEV"); then
 			echo -e "${RED}❌ Validation failed: ${VALIDATE_CMD_TO_DEV}${NC}"
 			exit 1
 		fi
 	fi
+}
+
+resolve_feature_branch_name() {
+	if branch_exists "$INPUT_NAME"; then
+		FEATURE_BRANCH="$INPUT_NAME"
+	elif branch_exists "${FEATURE_PREFIX}${INPUT_NAME}"; then
+		FEATURE_BRANCH="${FEATURE_PREFIX}${INPUT_NAME}"
+	else
+		echo -e "${RED}❗ La rama '${INPUT_NAME}' ni '${FEATURE_PREFIX}${INPUT_NAME}' existe localmente.${NC}"
+		exit 1
+	fi
+}
+
+print_dry_run_feat_local() {
+	resolve_feature_branch_name
+	echo -e "${BLUE}DRY RUN: git feat local flow${NC}"
+	run_validation_if_enabled
+	echo -e "${BLUE}Would switch to '${DEV_BRANCH}'${NC}"
+	echo -e "${BLUE}Would pull '${DEV_BRANCH}' from '${REMOTE_NAME}'${NC}"
+	echo -e "${BLUE}Would merge '${FEATURE_BRANCH}' into '${DEV_BRANCH}'${NC}"
+	echo -e "${BLUE}Would push '${DEV_BRANCH}' to '${REMOTE_NAME}'${NC}"
+	if [[ "$GENERATE_CHANGELOG" == "true" ]]; then
+		echo -e "${BLUE}Would generate feature changelog${NC}"
+	fi
+	if [[ "$DELETE_FEATURE_BRANCH" == "true" ]]; then
+		echo -e "${BLUE}Would archive/delete feature branch '${FEATURE_BRANCH}'${NC}"
+	else
+		echo -e "${BLUE}Would preserve feature branch '${FEATURE_BRANCH}'${NC}"
+	fi
+}
+
+print_dry_run_feat_pr() {
+	echo -e "${BLUE}DRY RUN: git feat PR flow${NC}"
+	run_validation_if_enabled
+	echo -e "${BLUE}Would push current feature branch '${FEATURE_BRANCH}' to '${REMOTE_NAME}'${NC}"
+	echo -e "${BLUE}Would create PR '${FEATURE_BRANCH}' -> '${DEV_BRANCH}'${NC}"
+	if [[ "$OPEN_BROWSER" == "true" ]]; then
+		echo -e "${BLUE}Would open browser for the pull request${NC}"
+	fi
+	echo -e "${BLUE}Would not merge automatically${NC}"
 }
 
 resolve_feature_input_name() {
@@ -169,6 +219,11 @@ run_pr_flow_to_dev() {
 	local gh_args
 
 	FEATURE_BRANCH="$(resolve_current_feature_branch_for_pr)"
+
+	if [[ "$GIT_FLOW_DRY_RUN" == "true" ]]; then
+		print_dry_run_feat_pr
+		exit 0
+	fi
 
 	check_clean_repo
 	run_validation_if_enabled
@@ -371,15 +426,12 @@ if [[ "$FLOW_MODE_TO_DEV" == "pr" ]]; then
 	run_pr_flow_to_dev
 fi
 
-# 🔍 Detección automática: resuelve si la rama tiene o no prefijo
-if branch_exists "$INPUT_NAME"; then
-	FEATURE_BRANCH="$INPUT_NAME"
-elif branch_exists "${FEATURE_PREFIX}${INPUT_NAME}"; then
-	FEATURE_BRANCH="${FEATURE_PREFIX}${INPUT_NAME}"
-else
-	echo -e "${RED}❗ La rama '${INPUT_NAME}' ni '${FEATURE_PREFIX}${INPUT_NAME}' existe localmente.${NC}"
-	exit 1
+if [[ "$GIT_FLOW_DRY_RUN" == "true" ]]; then
+	print_dry_run_feat_local
+	exit 0
 fi
+
+resolve_feature_branch_name
 
 # Verificar estado del repositorio
 check_clean_repo

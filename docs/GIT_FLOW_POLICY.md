@@ -16,11 +16,14 @@ loading in `git feat` and `git rel`.
 Without `.git-flow-policy.env`, the effective policy preserves the legacy local
 merge defaults.
 
-Implemented in phase 2:
+Implemented:
 
 - `git feat --print-policy` and `git rel --print-policy` print the effective
   policy and exit without merge, push, tag creation, branch deletion, browser
   activity, or working-tree changes.
+- `git feat --dry-run` and `git rel --dry-run` print planned actions without
+  push, merge, PR creation, tag creation, validation execution, or browser
+  activity.
 - `REMOTE_NAME`, `BASE_DEV_BRANCH`, `BASE_MAIN_BRANCH`, and
   `FEATURE_BRANCH_PREFIX` are applied where the legacy scripts previously used
   `origin`, `dev`, `main`, and `feature/`.
@@ -31,18 +34,23 @@ Implemented in phase 2:
 - `FLOW_MODE_TO_DEV=pr` makes `git feat` push the current feature branch and
   create a Pull Request into `BASE_DEV_BRANCH` with GitHub CLI, instead of doing
   a local merge.
+- `FLOW_MODE_TO_MAIN=pr` makes `git rel` push `BASE_DEV_BRANCH`, create a manual
+  Pull Request into `BASE_MAIN_BRANCH` with `gh pr create --fill`, and skip local
+  merge and tag creation.
 - `DELETE_FEATURE_BRANCH=false` makes `git feat` preserve the integrated
   feature branch instead of archiving it. The default keeps the legacy archival
   behavior.
 
 Still not implemented:
 
-- `FLOW_MODE_TO_MAIN=pr` remains blocked in `git rel`.
 - Automatic PR variants (`pr_auto`, `pr_immediate`) remain blocked.
 - Merge strategy policy is parsed and validated, but `git feat` and `git rel`
-  still use their legacy merge behavior.
-- `OPEN_BROWSER` does not change local-mode behavior. In `FLOW_MODE_TO_DEV=pr`,
+  still use their legacy merge behavior in local mode.
+- `OPEN_BROWSER` does not change local-mode behavior. In PR modes,
   `OPEN_BROWSER=false` avoids passing `--web` to `gh pr create`.
+
+Tests under `tests/bats/git-flow/` use a stub `gh` binary and do not create real
+Pull Requests.
 
 ## Print Effective Policy
 
@@ -183,9 +191,18 @@ If the current branch is not a feature branch, or if Git is in detached HEAD,
 the command fails before validation, merge, push, PR creation, changelog
 generation, archive, or branch deletion.
 
+## Dry Run
+
+`git feat --dry-run` and `git rel --dry-run` inspect the effective policy and
+print planned actions without executing validation commands, `git push`, local
+merges, tag creation, branch deletion, or `gh pr create`.
+
+Use dry-run before the first PR-mode release in a repository, or when validating
+policy values copied from another project.
+
 ## Feature PR Mode
 
-`FLOW_MODE_TO_DEV=pr` is implemented for `git feat` only. It requires GitHub CLI
+`FLOW_MODE_TO_DEV=pr` is implemented for `git feat`. It requires GitHub CLI
 (`gh`) on `PATH`.
 
 In this mode, `git feat <name>` must be run from the matching current feature
@@ -207,6 +224,28 @@ If GitHub CLI is not installed, the command fails with:
 
 ```text
 ERROR: FLOW_MODE_TO_DEV=pr requires GitHub CLI (`gh`).
+```
+
+## Release PR Mode
+
+`FLOW_MODE_TO_MAIN=pr` is implemented for `git rel`. It requires GitHub CLI
+(`gh`) on `PATH`.
+
+The PR flow:
+
+- runs `VALIDATE_CMD_TO_MAIN` when `VALIDATE_TO_MAIN=true`;
+- checks out `BASE_DEV_BRANCH` and runs `git pull --ff-only`;
+- pushes `BASE_DEV_BRANCH` to `REMOTE_NAME`;
+- creates a Pull Request with `gh pr create --base "$BASE_MAIN_BRANCH" --head
+  "$BASE_DEV_BRANCH" --fill`;
+- does not checkout `BASE_MAIN_BRANCH` for a local merge;
+- does not create a release tag;
+- does not push `BASE_MAIN_BRANCH`.
+
+If GitHub CLI is not installed, the command fails with:
+
+```text
+ERROR: FLOW_MODE_TO_MAIN=pr requires GitHub CLI (`gh`).
 ```
 
 ## Examples
@@ -271,13 +310,18 @@ VALIDATE_TO_DEV=true
 VALIDATE_CMD_TO_DEV="make validate"
 ```
 
-Future release PR-oriented policy, parsed today but not implemented by `git rel`
-yet:
+Release PR policy:
 
 ```env
 FLOW_MODE_TO_MAIN=pr
-MERGE_STRATEGY_TO_MAIN=squash
+BASE_DEV_BRANCH=dev
+BASE_MAIN_BRANCH=main
+OPEN_BROWSER=false
+VALIDATE_TO_MAIN=true
+VALIDATE_CMD_TO_MAIN="make validate-full"
 ```
+
+`MERGE_STRATEGY_TO_MAIN` is parsed but not applied yet in PR mode.
 
 ## Manual Validation Fixture
 
@@ -353,12 +397,23 @@ EOF
 ~/dotfiles/scripts/git_feat.sh demo
 ```
 
-Release PR mode is still accepted by the parser but intentionally blocked by
-`git rel`:
+Release PR mode is accepted by the parser and creates a manual Pull Request:
 
 ```bash
 cat > .git-flow-policy.env <<'EOF'
 FLOW_MODE_TO_MAIN=pr
+OPEN_BROWSER=false
+EOF
+
+~/dotfiles/scripts/git_rel.sh --dry-run
+~/dotfiles/scripts/git_rel.sh
+```
+
+Automatic PR variants remain blocked:
+
+```bash
+cat > .git-flow-policy.env <<'EOF'
+FLOW_MODE_TO_MAIN=pr_auto
 EOF
 
 ~/dotfiles/scripts/git_rel.sh

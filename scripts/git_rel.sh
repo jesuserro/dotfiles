@@ -16,6 +16,7 @@ MAIN_BRANCH="main"               # Rama principal de producción
 TAG_PREFIX="v"                   # Prefijo para tags de versión
 GIT_FLOW_REPO_ROOT=""            # Raíz del repo donde se busca la policy
 GIT_FLOW_PRINT_POLICY_ONLY=false # Modo diagnóstico sin operaciones productivas
+GIT_FLOW_DRY_RUN=false           # Inspección sin push, merge, PR ni tag
 
 # 🎨 Colores para el output en consola
 GREEN='\033[0;32m'
@@ -35,11 +36,16 @@ process_arguments() {
 			echo -e "  git rel 1.2.3              # Release con versión específica"
 			echo -e "${BLUE}📖 Opciones:${NC}"
 			echo -e "  --print-policy             # Imprimir la policy efectiva y salir"
+			echo -e "  --dry-run                  # Mostrar acciones sin ejecutarlas"
 			echo -e "  --help, -h                 # Mostrar esta ayuda"
 			exit 0
 			;;
 		--print-policy)
 			GIT_FLOW_PRINT_POLICY_ONLY=true
+			shift
+			;;
+		--dry-run)
+			GIT_FLOW_DRY_RUN=true
 			shift
 			;;
 		*)
@@ -70,20 +76,96 @@ load_git_flow_policy() {
 }
 
 ensure_supported_flow_mode() {
-	if [[ "$FLOW_MODE_TO_MAIN" != "local" ]]; then
-		echo -e "${RED}❌ PR mode not implemented yet for git rel: FLOW_MODE_TO_MAIN=${FLOW_MODE_TO_MAIN}${NC}"
+	case "$FLOW_MODE_TO_MAIN" in
+	local | pr)
+		return 0
+		;;
+	*)
+		echo -e "${RED}❌ PR mode variant not implemented yet for git rel: FLOW_MODE_TO_MAIN=${FLOW_MODE_TO_MAIN}${NC}"
 		exit 1
-	fi
+		;;
+	esac
 }
 
 run_validation_if_enabled() {
 	if [[ "$VALIDATE_TO_MAIN" == "true" ]]; then
+		if [[ "$GIT_FLOW_DRY_RUN" == "true" ]]; then
+			echo -e "${BLUE}Would run validation: ${VALIDATE_CMD_TO_MAIN}${NC}"
+			return 0
+		fi
 		echo -e "${BLUE}Running validation: ${VALIDATE_CMD_TO_MAIN}${NC}"
 		if ! (cd "$GIT_FLOW_REPO_ROOT" && bash -c "$VALIDATE_CMD_TO_MAIN"); then
 			echo -e "${RED}❌ Validation failed: ${VALIDATE_CMD_TO_MAIN}${NC}"
 			exit 1
 		fi
 	fi
+}
+
+check_gh_cli_for_pr() {
+	if ! command -v gh &>/dev/null; then
+		echo -e "${RED}ERROR: FLOW_MODE_TO_MAIN=pr requires GitHub CLI (\`gh\`).${NC}"
+		exit 1
+	fi
+}
+
+print_dry_run_rel() {
+	echo -e "${BLUE}DRY RUN: git rel policy flow (${FLOW_MODE_TO_MAIN})${NC}"
+	run_validation_if_enabled
+	if [[ "$FLOW_MODE_TO_MAIN" == "pr" ]]; then
+		echo -e "${BLUE}Would switch to '${DEV_BRANCH}'${NC}"
+		echo -e "${BLUE}Would pull '${DEV_BRANCH}' from '${REMOTE_NAME}' (ff-only)${NC}"
+		echo -e "${BLUE}Would push '${DEV_BRANCH}' to '${REMOTE_NAME}'${NC}"
+		echo -e "${BLUE}Would create PR '${DEV_BRANCH}' -> '${MAIN_BRANCH}'${NC}"
+		echo -e "${BLUE}Would not create local tag${NC}"
+		echo -e "${BLUE}Would not merge locally${NC}"
+		echo -e "${BLUE}Would not push '${MAIN_BRANCH}'${NC}"
+		if [[ "$OPEN_BROWSER" == "true" ]]; then
+			echo -e "${BLUE}Would open browser for the pull request${NC}"
+		fi
+	else
+		echo -e "${BLUE}Would switch to '${DEV_BRANCH}'${NC}"
+		echo -e "${BLUE}Would pull '${DEV_BRANCH}' from '${REMOTE_NAME}'${NC}"
+		echo -e "${BLUE}Would switch to '${MAIN_BRANCH}'${NC}"
+		echo -e "${BLUE}Would pull '${MAIN_BRANCH}' from '${REMOTE_NAME}'${NC}"
+		echo -e "${BLUE}Would merge '${DEV_BRANCH}' into '${MAIN_BRANCH}'${NC}"
+		echo -e "${BLUE}Would create release tag if configured by legacy flow${NC}"
+		echo -e "${BLUE}Would push '${MAIN_BRANCH}' and tags to '${REMOTE_NAME}'${NC}"
+	fi
+}
+
+run_pr_flow_to_main() {
+	local gh_args
+
+	check_gh_cli_for_pr
+
+	echo -e "${YELLOW}Creating pull request for '${DEV_BRANCH}' into '${MAIN_BRANCH}'...${NC}"
+
+	git checkout "$DEV_BRANCH"
+	git pull --ff-only "$REMOTE_NAME" "$DEV_BRANCH"
+
+	if ! git push "$REMOTE_NAME" "$DEV_BRANCH"; then
+		echo -e "${RED}❌ Error al hacer push de la rama '${DEV_BRANCH}'${NC}"
+		exit 1
+	fi
+
+	gh_args=(
+		pr create
+		--base "$MAIN_BRANCH"
+		--head "$DEV_BRANCH"
+		--fill
+	)
+
+	if [[ "$OPEN_BROWSER" == "true" ]]; then
+		gh_args+=(--web)
+	fi
+
+	if ! gh "${gh_args[@]}"; then
+		echo -e "${RED}❌ Error al crear el Pull Request${NC}"
+		exit 1
+	fi
+
+	echo -e "${GREEN}✅ Pull Request creado para '${DEV_BRANCH}' → '${MAIN_BRANCH}'${NC}"
+	exit 0
 }
 
 # Procesar argumentos
@@ -107,6 +189,13 @@ if ! git remote get-url "$REMOTE_NAME" >/dev/null 2>&1; then
 	echo -e "${RED}❌ No hay un remoto '${REMOTE_NAME}' configurado.${NC}"
 	echo -e "${YELLOW}💡 Sugerencia: Configura el remoto con: git remote add ${REMOTE_NAME} <url>${NC}"
 	exit 1
+fi
+
+ensure_supported_flow_mode
+
+if [[ "$GIT_FLOW_DRY_RUN" == "true" ]]; then
+	print_dry_run_rel
+	exit 0
 fi
 
 # 🧼 Validación: working directory debe estar limpio
@@ -291,8 +380,6 @@ generate_version() {
 # 📢 Inicio del flujo
 echo -e "${YELLOW}🚀 Iniciando release de ${DEV_BRANCH} a ${MAIN_BRANCH}...${NC}"
 
-ensure_supported_flow_mode
-
 # Verificar que las ramas existan localmente
 if ! branch_exists "$DEV_BRANCH"; then
 	echo -e "${RED}❗ La rama '${DEV_BRANCH}' no existe localmente.${NC}"
@@ -334,6 +421,10 @@ echo -e "${GREEN}✅ Todas las ramas verificadas correctamente${NC}"
 check_clean_repo
 
 run_validation_if_enabled
+
+if [[ "$FLOW_MODE_TO_MAIN" == "pr" ]]; then
+	run_pr_flow_to_main
+fi
 
 # 🔁 Paso 1: Merge de dev → main (igual que git_feat.sh)
 echo -e "${YELLOW}🔁 Integrando '${DEV_BRANCH}' en '${MAIN_BRANCH}'...${NC}"

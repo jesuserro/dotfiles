@@ -241,12 +241,13 @@ setup() {
 	done
 }
 
-@test "pointer adr 0008 states no functional implementation in adr build" {
-	grep -qiE 'pointer|handoff|does \*\*not\*\*|no implementation|not in the' \
-		"${ADR_DIR}/0008-git-flow-pr-policy.md" || {
-		echo "0008-git-flow-pr-policy: missing pointer/no-implementation wording" >&2
+@test "adr 0008 git-flow PR policy documents partial implementation status" {
+	grep -qiE 'Partially implemented|partial' "${ADR_DIR}/0008-git-flow-pr-policy.md" || {
+		echo "0008: missing partial implementation status" >&2
 		return 1
 	}
+	grep -q 'FLOW_MODE_TO_MAIN=pr' "${ADR_DIR}/0008-git-flow-pr-policy.md"
+	grep -q 'pr_auto' "${ADR_DIR}/0008-git-flow-pr-policy.md"
 }
 
 @test "adr 0009 dotfiles-update is implemented not pending" {

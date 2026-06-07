@@ -31,9 +31,11 @@ See:
 - `docs/examples/git-flow-policy.env`
 
 Without `.git-flow-policy.env`, the legacy local behavior is preserved. Optional
-validation commands already work for feature integration and release
-integration. `FLOW_MODE_TO_DEV=pr` is available for `git feat`; release PR mode
-and alternative merge strategies are reserved for later phases.
+validation commands work for feature integration and release integration.
+`FLOW_MODE_TO_DEV=pr` and `FLOW_MODE_TO_MAIN=pr` create manual Pull Requests.
+`git feat --dry-run` and `git rel --dry-run` preview actions without mutating
+the repository. Automatic PR variants and merge strategies remain for later
+phases.
 
 ## 🛠️ Scripts Disponibles
 

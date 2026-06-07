@@ -430,3 +430,42 @@ EOF
 	[[ "$output" != *"Haciendo merge"* ]]
 	[[ ! -s "$gh_log" ]]
 }
+
+@test "git_feat --dry-run local mode prints planned actions without merge or push" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	init_feat_repo_with_remote "$repo" "$remote"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" --dry-run --no-changelog demo
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"DRY RUN: git feat local flow"* ]]
+	[[ "$output" == *"Would merge 'feature/demo' into 'dev'"* ]]
+	[[ "$output" == *"Would push 'dev' to 'origin'"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+	[[ "$(git branch --show-current)" == "feature/demo" ]]
+}
+
+@test "git_feat --dry-run PR mode prints planned actions without gh pr create" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-feat-dry-run.log"
+	install_gh_stub "$gh_log"
+	init_feat_repo_with_remote "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_DEV=pr
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: pr dry-run policy"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" --dry-run demo
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"DRY RUN: git feat PR flow"* ]]
+	[[ "$output" == *"Would create PR 'feature/demo' -> 'dev'"* ]]
+	[[ "$output" == *"Would not merge automatically"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+	[[ ! -s "$gh_log" ]]
+	[[ "$(git branch --show-current)" == "feature/demo" ]]
+}
