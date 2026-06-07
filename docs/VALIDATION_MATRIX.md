@@ -98,6 +98,8 @@ Usar cuando el BUILD es amplio, toca varias zonas o modifica contratos estructur
 
 El gate completo `make agent-validate` ejecuta además skills, MCP governance, `agent-validate-changed`, `bats-docs` y `update-check` vía [`scripts/agent-validate-dotfiles.sh`](../scripts/agent-validate-dotfiles.sh).
 
+Para adjuntar resultados a handoffs: `make agent-validate-report` → [`scripts/agent-validate-report.sh`](../scripts/agent-validate-report.sh) → `build/agent-validation/latest.md`.
+
 ---
 
 ## 7. Documentos relacionados

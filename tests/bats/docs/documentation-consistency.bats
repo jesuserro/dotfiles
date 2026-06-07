@@ -226,7 +226,9 @@ setup() {
 	local testing="${DOTFILES_DIR}/docs/TESTING.md"
 	grep -q 'make agent-validate-audit' "${testing}"
 	grep -q 'make agent-validate-full' "${testing}"
+	grep -q 'make agent-validate-report' "${testing}"
 	grep -q 'agent-validate-dotfiles.sh' "${testing}"
+	grep -q 'build/agent-validation/latest.md' "${testing}"
 }
 
 @test "AGENT_WORKFLOW.md documents agent-validate-audit" {

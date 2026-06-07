@@ -260,6 +260,7 @@ Detalle: [TESTING.md](TESTING.md).
 | `make ai-doctor` | No | No | Readiness agregado pre-implementación |
 | `make ai-cursor-check` | No | No | Tras materializar MCP en HOME |
 | `make agent-validate` | No | No | Gate dotfiles post-BUILD (read-only) |
+| `make agent-validate-report` | No | No | Gate + informe en `build/agent-validation/latest.md` |
 | `make agent-validate-changed` | No | No | Solo archivos cambiados (local; sin OSV online) |
 | `make agent-validate-audit` | No | No | Auditoría full-repo estricta (lint + security) |
 | `SECURITY_ONLINE=1 make agent-validate-changed` | No | Sí | Cierre humano con escaneo OSV estricto |

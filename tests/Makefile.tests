@@ -48,7 +48,7 @@ NC := \033[0m
 .PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-git-flow bats-prompts bats-skills bats-tmux bats-gitnexus bats-git-hooks
 .PHONY: test-ci test-bats-ci bats-docs test-commands generate-commands validate-commands materialize-commands validate-skills-structure
 .PHONY: deps-check deps-install deps-actions bats-system bats-zsh bats-gitnexus test-deps-check
-.PHONY: quality-check security-check agent-validate agent-validate-audit agent-validate-full agent-validate-changed ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
+.PHONY: quality-check security-check agent-validate agent-validate-audit agent-validate-full agent-validate-changed agent-validate-report ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
 
 help:
 	@echo "Dotfiles — make targets"
@@ -72,6 +72,7 @@ help:
 	@echo "  make agent-validate-changed      Validate changed files only (local; SECURITY_ONLINE=1 for OSV)"
 	@echo "  make agent-validate-audit        Full-repo quality + security audit (strict)"
 	@echo "  make agent-validate-full         agent-validate + agent-validate-audit"
+	@echo "  make agent-validate-report       Run agent-validate and write build/agent-validation/latest.md"
 	@echo "  make deps-check                  Check declarative system dependencies"
 	@echo "  make deps-actions                Show actions for missing dependencies"
 	@echo "  make test-chezmoi                Chezmoi smoke tests"
@@ -190,6 +191,12 @@ agent-validate:
 agent-validate-full: agent-validate agent-validate-audit
 	@echo ""
 	@echo "$(GREEN)==>$(NC) Full agent validation completed"
+
+agent-validate-report:
+	@AGENT_VALIDATE_CMD="$(AGENT_VALIDATE_CMD)" \
+		AGENT_VALIDATE_REPORT_PATH="$(AGENT_VALIDATE_REPORT_PATH)" \
+		AGENT_VALIDATE_REPORT_DIR="$(AGENT_VALIDATE_REPORT_DIR)" \
+		bash $(DOTFILES_DIR)/scripts/agent-validate-report.sh
 
 agent-validate-changed:
 	@SECURITY_ONLINE="$(SECURITY_ONLINE)" bash $(DOTFILES_DIR)/scripts/agent-validate-changed.sh
@@ -451,6 +458,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/install-agent-skills.bats)
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-changed.bats)
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-dotfiles.bats)
+	@$(call run_bats,$(BATS_DIR)/system/agent-validate-report.bats)
 
 bats-gitnexus:
 	@echo "$(BLUE)==>$(NC) Running GitNexus operational status tests..."

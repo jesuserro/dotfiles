@@ -56,6 +56,7 @@ make agent-validate-changed
 make agent-validate
 make agent-validate-audit
 make agent-validate-full
+make agent-validate-report
 ```
 
 ### Bats tests only
@@ -88,6 +89,7 @@ make fmt-shell
 | `SECURITY_ONLINE=1 make agent-validate-changed` | Same as above plus strict `osv-scanner` dependency scan (requires network) |
 | `make agent-validate-audit` | Full strict repository audit: `quality-check` + `security-check` (former `agent-validate` semantics) |
 | `make agent-validate-full` | `agent-validate` + `agent-validate-audit` |
+| `make agent-validate-report` | Runs validation (default: `make agent-validate`) and writes `build/agent-validation/latest.md`; propagates exit code |
 | `make test-bats` | All bats tests (includes chezmoi hooks) |
 | `make test-chezmoi` | Chezmoi bats + `chezmoi-templates` |
 | `make test-ci` | GitHub Actions CI subset: lint + MCP/chezmoi/skills Bats covered by `.github/workflows/test.yml` |
@@ -118,6 +120,8 @@ make fmt-shell
 - **local security**: mandatory `gitleaks` working-tree scan
 
 `make agent-validate-audit` (`quality-check` + `security-check`) is the full-repository strict audit. Use before large releases or when hunting repo-wide lint/security debt — not as the default post-BUILD gate.
+
+`make agent-validate-report` wraps a validation command (override with `AGENT_VALIDATE_CMD=...`) and writes `build/agent-validation/latest.md`. The report is generated even on failure; the target exits non-zero when validation fails. Override report path in tests with `AGENT_VALIDATE_REPORT_PATH`.
 
 **OSV online is not part of the default agent gate.** The default command does not call `osv-scanner` and does not depend on the OSV API. Agents should use `make agent-validate-changed` after small changes; `make agent-validate` for a full dotfiles handoff check.
 

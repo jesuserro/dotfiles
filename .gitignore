@@ -33,6 +33,9 @@ build/commands/
 # MCP dry-run renders + drift-report.json (scripts/generate-mcp-configs.py)
 build/mcps/
 
+# Agent validation reports (scripts/agent-validate-report.sh)
+build/agent-validation/
+
 # Local installer artifact from get.chezmoi.io when mis-invoked
 /bin/chezmoi
 secrets.sops.yaml.old-age1mq3-unreadable
