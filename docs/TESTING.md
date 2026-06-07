@@ -83,7 +83,7 @@ make fmt-shell
 | `make test-lint` | shellcheck + shfmt + yamllint |
 | `make ai-doctor` | Read-only agent readiness: dependencies, update readiness, AI/MCPs, skills, commands and `gitleaks` |
 | `make quality-check` | Full strict repository quality audit: shellcheck + shfmt check + yamllint + actionlint (`-shellcheck=`) when workflows exist |
-| `make security-check` | gitleaks working-tree scan + osv-scanner when supported manifests/lockfiles exist |
+| `make security-check` | gitleaks working-tree scan + osv-scanner when supported manifests/lockfiles exist (OSV best-effort unless `SECURITY_ONLINE=1`) |
 | `make agent-validate` | Dotfiles operational gate (read-only): whitespace, skills, MCP governance, changed files, docs bats, update-check — via `scripts/agent-validate-dotfiles.sh` |
 | `make agent-validate-changed` | Changed-files gate only: shell/YAML/workflow lint + matrix-focused bats + `gitleaks`; OSV online is opt-in |
 | `SECURITY_ONLINE=1 make agent-validate-changed` | Same as above plus strict `osv-scanner` dependency scan (requires network) |
@@ -105,7 +105,7 @@ make fmt-shell
 | yamllint | YAML diagnostics | Yes |
 | actionlint | Workflow diagnostics | Yes |
 | gitleaks | Secret findings | Yes |
-| osv-scanner | Vulnerability findings | Yes |
+| osv-scanner | Vulnerability findings | Yes (strict modes only) |
 
 `make ai-doctor` is the read-only readiness check for agents before implementation. It does not replace targeted tests for the area being changed; it aggregates environment, AI/MCP, skills, commands and `gitleaks` checks so secret leaks are caught before handing off changes. Because it includes `make update-check`, it also surfaces Node runtime shadowing before long GitNexus re-indexing commands.
 
@@ -145,11 +145,14 @@ SECURITY_ONLINE=1 make agent-validate-changed
 |------------|---------|-------------|
 | Clean scan | No reported vulnerabilities | No |
 | Vulnerability findings | Confirmed dependency issues | Yes |
-| `service unavailable` / network errors | External infrastructure failure | Yes (online mode only) |
+| `service unavailable` / network errors with exit ≠ 0 | External infrastructure failure | Yes (`SECURITY_ONLINE=1` only) |
+| `service unavailable` in output with exit 0 | Incomplete remote resolution; **not** a clean pass | No in default/best-effort; Yes with `SECURITY_ONLINE=1` |
 | Tool missing with scan inputs present | Install `osv-scanner` via `make install-agent-tools` | Yes (online mode only) |
 | No supported lockfiles | Scan skipped | No |
 
 A failure with `External dependency failure: osv-scanner service unavailable` is **not** a secret leak and **not** a confirmed vulnerability; it means the online scanner could not reach its service. Retry later or validate offline findings separately.
+
+`make security-check` (used by `make agent-validate-audit`) runs the same OSV helper in **best-effort** mode by default: remote outages warn with `not confirmed clean` and do not block the audit. Use `SECURITY_ONLINE=1 make security-check` (or `SECURITY_ONLINE=1 make agent-validate-full`) when a human pre-merge gate must fail on OSV API outages.
 
 The script uses installed tools when present. On a partially bootstrapped machine it may use temporary verified fallbacks for `yamllint`, `actionlint`, `osv-scanner` (online mode only), and `gitleaks` so the gate remains useful without installing into `HOME`.
 

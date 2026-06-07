@@ -37,8 +37,10 @@ setup() {
 @test "chezmoi-drift-report documents Codex governance and acotado apply" {
 	grep -q 'Codex' "${REPORT}"
 	grep -qE 'acotado|versioned|data\.codex|MM' "${REPORT}"
-	grep -q 'dot_codex/private_config.toml.tmpl' "${REPORT}" ||
+	grep -q 'dot_codex/private_config.toml.tmpl' "${REPORT}" || {
+		# shellcheck disable=SC2088 # drift report documents human-facing ~ path literally
 		grep -q '~/.codex/config.toml' "${REPORT}"
+	}
 }
 
 @test "chezmoi-drift-report mentions acotado launcher apply only as documentation" {

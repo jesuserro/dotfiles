@@ -148,7 +148,7 @@ Tras un BUILD, validar según la zona modificada ([VALIDATION_MATRIX.md](VALIDAT
 | Área MCP | `make ai-mcp-governance` |
 | Solo docs | `make bats-docs` |
 
-Detalle de targets y política OSV: [TESTING.md](TESTING.md).
+Detalle de targets y política OSV: [TESTING.md](TESTING.md). Por defecto, `make agent-validate-changed` y `make security-check` no bloquean por caídas remotas de OSV; `SECURITY_ONLINE=1` activa modo estricto.
 
 Los agentes deben ejecutar **`make agent-validate-changed`** tras cambios pequeños, o **`make agent-validate`** para el gate dotfiles completo al cerrar un BUILD. **`make agent-validate-report`** genera un informe Markdown persistente (incluso si la validación falla); no sustituye corregir los fallos. Ninguno ejecuta `chezmoi apply`, `make update` ni instalaciones.
 

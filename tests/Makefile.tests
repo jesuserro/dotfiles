@@ -179,7 +179,7 @@ quality-check: lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions
 
 security-check: security-gitleaks security-osv
 	@echo ""
-	@echo "$(GREEN)==>$(NC) Security checks completed"
+	@echo "$(GREEN)==>$(NC) Security checks completed (osv-scanner best-effort unless SECURITY_ONLINE=1)"
 
 agent-validate-audit: quality-check security-check
 	@echo ""
@@ -324,17 +324,7 @@ security-gitleaks:
 	@echo "$(GREEN)==>$(NC) gitleaks passed"
 
 security-osv:
-	@echo "$(BLUE)==>$(NC) Running osv-scanner..."
-	@if [ -z "$(OSV_INPUTS)" ]; then \
-		echo "$(YELLOW)==>$(NC) osv-scanner skipped: no supported manifests or lockfiles found"; \
-	elif ! command -v osv-scanner >/dev/null 2>&1; then \
-		echo "Missing security dependency: osv-scanner"; \
-		echo "Run: make install-agent-tools"; \
-		exit 1; \
-	else \
-		osv-scanner scan source -r "$(DOTFILES_DIR)"; \
-		echo "$(GREEN)==>$(NC) osv-scanner passed"; \
-	fi
+	@bash $(DOTFILES_DIR)/scripts/security-osv-scan.sh
 
 fmt-shell:
 	@echo "$(BLUE)==>$(NC) Formatting shell scripts with shfmt..."
@@ -460,6 +450,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/mcp-render-drift.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-agent-skills.bats)
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-changed.bats)
+	@$(call run_bats,$(BATS_DIR)/system/security-osv-scan.bats)
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-dotfiles.bats)
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-report.bats)
 	@$(call run_bats,$(BATS_DIR)/system/dotfiles-apply.bats)
