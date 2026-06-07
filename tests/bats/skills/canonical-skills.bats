@@ -114,6 +114,22 @@ EOF
 	assert_file_not_matches "${DOTFILES_DIR}/AGENTS.md" '\.claude/skills/gitnexus/'
 }
 
+@test "gitnexus runtime applies skip-skills policy for dotfiles checkout" {
+	local runtime="${DOTFILES_DIR}/scripts/lib/gitnexus_runtime.sh"
+	grep -q '_gnx_is_dotfiles_checkout' "${runtime}"
+	grep -q '_gnx_apply_dotfiles_analyze_policy' "${runtime}"
+	grep -q '"--skip-skills"' "${runtime}"
+}
+
+@test "no repo script materializes skills under checkout .claude path" {
+	run grep -REn '(\$\{DOTFILES_DIR\}/\.claude/skills|\$\{DOTFILES_ROOT\}/\.claude/skills)' "${DOTFILES_DIR}/scripts" \
+		--exclude='validate-skills-structure.sh' \
+		--exclude='agent-validate-dotfiles.sh' \
+		--exclude='agent-validate-report.sh' \
+		--exclude='diagnose-checkout-ai-surface.sh'
+	[[ "${status}" -eq 1 ]]
+}
+
 @test "Matt Pocock skills are documented as external fallback only" {
 	[[ -f "${DOTFILES_DIR}/ai/assets/external-skills/mattpocock/POLICY.md" ]]
 	[[ -f "${DOTFILES_DIR}/ai/assets/external-skills/mattpocock/selected-skills.md" ]]

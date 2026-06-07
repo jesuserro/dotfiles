@@ -398,6 +398,7 @@
 │   ├── 🔧 check-azure-tools.sh
 │   ├── 🔧 check-system-deps.sh
 │   ├── 🔧 chezmoi-drift-report.sh
+│   ├── 🔧 diagnose-checkout-ai-surface.sh
 │   ├── 🔧 generate-commands.sh
 │   ├── 🐍 generate-mcp-configs.py
 │   ├── 🔧 git-set-ai-author.sh
@@ -501,6 +502,7 @@
 │   │   ├── 📁 git-hooks
 │   │   │   └── 📄 hooks.bats
 │   │   ├── 📁 gitnexus
+│   │   │   ├── 📄 analyze-dotfiles-policy.bats
 │   │   │   └── 📄 gitnexus-status.bats
 │   │   ├── 📁 helpers
 │   │   │   └── 🔧 common.bash

@@ -46,19 +46,19 @@ fi
 
 if gitnexus_index_in_use "$repo_root"; then
 	echo "WARN: GitNexus post-commit skipped: MCP/index lock is active; index may remain STALE." >&2
-	echo "WARN: Close duplicate Cursor/GitNexus MCP sessions, then run: gnx-analyze-here --force --skip-agents-md" >&2
+	echo "WARN: Close duplicate Cursor/GitNexus MCP sessions, then run: gnx-analyze-here --force --skip-agents-md --skip-skills" >&2
 	exit 0
 fi
 
 timeout_seconds=30
 if ! command -v timeout >/dev/null 2>&1; then
-	echo "WARN: GitNexus post-commit refresh skipped: timeout command not found; run gnx-analyze-here --force --skip-agents-md manually." >&2
+	echo "WARN: GitNexus post-commit refresh skipped: timeout command not found; run gnx-analyze-here --force --skip-agents-md --skip-skills manually." >&2
 	exit 0
 fi
 
 # shellcheck disable=SC2016
 timeout "${timeout_seconds}s" bash -c \
-	'source "$1"; gitnexus_analyze_here --force --skip-agents-md' \
+	'source "$1"; gitnexus_analyze_here --force --skip-agents-md --skip-skills' \
 	bash "$runtime_lib"
 refresh_status=$?
 
@@ -68,11 +68,11 @@ case "$refresh_status" in
 	;;
 124 | 137)
 	echo "WARN: GitNexus post-commit timed out after ${timeout_seconds}s; commit kept." >&2
-	echo "WARN: If Cursor/GitNexus MCP is active, close duplicate sessions and run: gnx-analyze-here --force --skip-agents-md" >&2
+	echo "WARN: If Cursor/GitNexus MCP is active, close duplicate sessions and run: gnx-analyze-here --force --skip-agents-md --skip-skills" >&2
 	;;
 *)
 	echo "WARN: GitNexus post-commit refresh failed with exit code ${refresh_status}; commit kept." >&2
-	echo "WARN: Run: gnx-analyze-here --force --skip-agents-md" >&2
+	echo "WARN: Run: gnx-analyze-here --force --skip-agents-md --skip-skills" >&2
 	;;
 esac
 

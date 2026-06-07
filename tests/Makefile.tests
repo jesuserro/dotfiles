@@ -469,6 +469,8 @@ bats-system: bats-zsh
 bats-gitnexus:
 	@echo "$(BLUE)==>$(NC) Running GitNexus operational status tests..."
 	@$(call run_bats,$(BATS_DIR)/gitnexus/gitnexus-status.bats)
+	@echo "$(BLUE)==>$(NC) Running GitNexus dotfiles analyze policy tests..."
+	@$(call run_bats,$(BATS_DIR)/gitnexus/analyze-dotfiles-policy.bats)
 	@echo "$(BLUE)==>$(NC) Running GitNexus alias tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/gitnexus_aliases.bats)
 

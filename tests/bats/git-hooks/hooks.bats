@@ -262,7 +262,7 @@ EOF
 	run env GNX_TRACE="$trace" bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"MCP/index lock is active"* ]]
-	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md"* ]]
+	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md --skip-skills"* ]]
 	local typo="gnanalyze""-here"
 	[[ "$output" != *"$typo"* ]]
 	[[ ! -f "$trace" ]]
@@ -331,6 +331,7 @@ EOF
 	[[ "$output" == *"refresh failed with exit code 1"* ]]
 	[[ "$output" == *"commit kept"* ]]
 	grep -q -- '--force --skip-agents-md' "$trace"
+	grep -q -- '--skip-skills' "$trace"
 }
 
 @test "post-commit timeout remains successful with a warning" {
@@ -356,7 +357,7 @@ EOF
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"timed out after 30s"* ]]
 	[[ "$output" == *"commit kept"* ]]
-	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md"* ]]
+	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md --skip-skills"* ]]
 	grep -q '^30s ' "$trace"
 }
 
@@ -395,7 +396,7 @@ EOF
 		bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 
 	[[ "$status" -eq 0 ]]
-	grep -q '^analyze \. --force --skip-agents-md:' "$trace"
+	grep -q '^analyze \. --force --skip-agents-md --skip-skills:' "$trace"
 	grep -q 'node-runtime\..*/node:v24.16.0' "$trace"
 }
 
