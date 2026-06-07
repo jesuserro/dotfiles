@@ -236,21 +236,47 @@ git_flow_policy_merge_strategy_flag() {
 	esac
 }
 
+git_flow_policy_is_clean_status_auto_merge_error() {
+	local output="$1"
+
+	grep -Eiq 'Pull request is in clean status|enablePullRequestAutoMerge' <<<"$output"
+}
+
 git_flow_policy_run_pr_merge() {
 	local flow_mode="$1"
 	local merge_strategy="$2"
 	local head_branch="$3"
-	local merge_args=()
 	local strategy_flag
+	local merge_output
+	local merge_status=0
 
 	[[ "$flow_mode" == "pr" ]] && return 0
 
 	strategy_flag="$(git_flow_policy_merge_strategy_flag "$merge_strategy")" || return 1
 
-	merge_args=(pr merge "$head_branch" "$strategy_flag")
-	if [[ "$flow_mode" == "pr_auto" ]]; then
-		merge_args+=(--auto)
+	if [[ "$flow_mode" == "pr_immediate" ]]; then
+		gh pr merge "$head_branch" "$strategy_flag"
+		return $?
 	fi
 
-	gh "${merge_args[@]}"
+	merge_output="$(mktemp "${TMPDIR:-/tmp}/gh-pr-merge.XXXXXX")" || return 1
+
+	gh pr merge "$head_branch" "$strategy_flag" --auto >"$merge_output" 2>&1 || merge_status=$?
+
+	if [[ ${merge_status} -eq 0 ]]; then
+		rm -f "$merge_output"
+		return 0
+	fi
+
+	if git_flow_policy_is_clean_status_auto_merge_error "$(cat "$merge_output")"; then
+		printf 'Note: auto-merge unavailable (PR already clean); merging immediately with strategy %s\n' "$merge_strategy" >&2
+		cat "$merge_output" >&2
+		rm -f "$merge_output"
+		gh pr merge "$head_branch" "$strategy_flag"
+		return $?
+	fi
+
+	cat "$merge_output" >&2
+	rm -f "$merge_output"
+	return "$merge_status"
 }

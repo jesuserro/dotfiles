@@ -43,7 +43,8 @@ auto-merge en dev → main:
 
 - `git feat` hace merge local feature → `dev` tras `make agent-validate`
 - `git rel` crea PR dev → `main` con auto-merge (`pr_auto`) tras
-  `make agent-validate-full`, sujeto a checks de GitHub
+  `make agent-validate-full`, sujeto a checks de GitHub; si GitHub indica que el
+  PR ya está en clean status, hace merge inmediato con la misma estrategia
 - No usa `pr_immediate` por defecto
 - Previsualiza con `--dry-run` antes del primer release en un ciclo
 
