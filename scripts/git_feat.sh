@@ -299,13 +299,17 @@ do_merge "$FEATURE_BRANCH" "$DEV_BRANCH"
 # 📝 Generar changelog de la feature DESPUÉS del merge (usando el commit base guardado)
 generate_feature_changelog "$FEATURE_BRANCH" "$DEV_BRANCH" "$BASE_COMMIT"
 
-# 📦 Archivar la rama feature
-ARCHIVE_BRANCH="${ARCHIVE_PREFIX}${FEATURE_BRANCH}"
-echo -e "${YELLOW}📦 Archivando rama '${FEATURE_BRANCH}' como '${ARCHIVE_BRANCH}'...${NC}"
-git branch -m "$FEATURE_BRANCH" "$ARCHIVE_BRANCH"          # Renombrado local
-git push "$REMOTE_NAME" "$ARCHIVE_BRANCH"                  # Subida rama archivada
-git push "$REMOTE_NAME" --delete "$FEATURE_BRANCH" || true # Eliminación en remoto (ignora error si no existe)
-echo -e "${GREEN}✅ Rama archivada como '${ARCHIVE_BRANCH}' y eliminada la original del remoto.${NC}"
+if [[ "$DELETE_FEATURE_BRANCH" == "true" ]]; then
+	# 📦 Archivar la rama feature
+	ARCHIVE_BRANCH="${ARCHIVE_PREFIX}${FEATURE_BRANCH}"
+	echo -e "${YELLOW}📦 Archivando rama '${FEATURE_BRANCH}' como '${ARCHIVE_BRANCH}'...${NC}"
+	git branch -m "$FEATURE_BRANCH" "$ARCHIVE_BRANCH"          # Renombrado local
+	git push "$REMOTE_NAME" "$ARCHIVE_BRANCH"                  # Subida rama archivada
+	git push "$REMOTE_NAME" --delete "$FEATURE_BRANCH" || true # Eliminación en remoto (ignora error si no existe)
+	echo -e "${GREEN}✅ Rama archivada como '${ARCHIVE_BRANCH}' y eliminada la original del remoto.${NC}"
+else
+	echo -e "${BLUE}INFO: Feature branch preserved by policy: ${FEATURE_BRANCH}${NC}"
+fi
 
 # 🎉 Fin del proceso
 echo -e "${GREEN}🎉 ¡Feature '${INPUT_NAME}' integrada exitosamente en ${DEV_BRANCH}!${NC}"

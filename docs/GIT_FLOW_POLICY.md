@@ -28,6 +28,9 @@ Implemented in phase 2:
   the feature branch.
 - `VALIDATE_TO_MAIN=true` runs `VALIDATE_CMD_TO_MAIN` before `git rel`
   integrates the release branch.
+- `DELETE_FEATURE_BRANCH=false` makes `git feat` preserve the integrated
+  feature branch instead of archiving it. The default keeps the legacy archival
+  behavior.
 
 Still not implemented:
 
@@ -35,8 +38,9 @@ Still not implemented:
   command being run.
 - Merge strategy policy is parsed and validated, but `git feat` and `git rel`
   still use their legacy merge behavior.
-- `DELETE_FEATURE_BRANCH` and `OPEN_BROWSER` are parsed and validated for future
-  policy use, but the current product scripts keep their legacy behavior.
+- `OPEN_BROWSER` is parsed and validated for forward compatibility. It does not
+  currently change local-mode behavior and will become relevant when PR mode is
+  implemented.
 
 ## Print Effective Policy
 
@@ -156,6 +160,9 @@ or branch deletion.
 
 ## Examples
 
+The canonical copyable example lives at
+`docs/examples/git-flow-policy.env`.
+
 Project with no policy:
 
 ```text
@@ -186,7 +193,7 @@ VALIDATE_CMD_TO_MAIN="make validate-full"
 ```
 
 Project that keeps the current local flow, enables both validation gates, and
-records a future-compatible branch retention preference:
+preserves the feature branch after integration:
 
 ```bash
 cat > .git-flow-policy.env <<'EOF'
@@ -198,8 +205,10 @@ DELETE_FEATURE_BRANCH=false
 EOF
 ```
 
-In phase 2, `DELETE_FEATURE_BRANCH=false` is visible in `--print-policy` but does
-not change `git feat` archival behavior yet.
+With `DELETE_FEATURE_BRANCH=false`, `git feat` prints
+`INFO: Feature branch preserved by policy: <branch>` after the merge. With the
+default `DELETE_FEATURE_BRANCH=true`, `git feat` keeps archiving the feature
+branch as `archive/<branch>`.
 
 Future PR-oriented policy, parsed today but not implemented by `git feat` or
 `git rel` yet:

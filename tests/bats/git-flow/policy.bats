@@ -35,6 +35,18 @@ EOF
 	[[ -x "$POLICY_PRINT" ]]
 }
 
+@test "canonical example policy parses successfully" {
+	local example="${DOTFILES_DIR}/docs/examples/git-flow-policy.env"
+	[[ -f "$example" ]]
+
+	run bash "$POLICY_PRINT" --policy-file "$example"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"FLOW_MODE_TO_DEV=local"* ]]
+	[[ "$output" == *"VALIDATE_TO_DEV=true"* ]]
+	[[ "$output" == *"DELETE_FEATURE_BRANCH=false"* ]]
+	[[ "$output" == *"OPEN_BROWSER=true"* ]]
+}
+
 @test "without policy file prints stable legacy defaults" {
 	cd "$TEST_TEMP_DIR"
 	run bash "$POLICY_PRINT"

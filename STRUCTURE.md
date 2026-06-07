@@ -197,6 +197,8 @@
 │   │   ├── 📝 0002-gitnexus-mcp.md
 │   │   ├── 📝 0003-skills-architecture.md
 │   │   └── 📝 template.md
+│   ├── 📁 examples
+│   │   └── 📄 git-flow-policy.env
 │   ├── 📁 linkedin
 │   │   ├── 📁 diagrams
 │   │   │   ├── 📄 ai-workstation-flow.excalidraw

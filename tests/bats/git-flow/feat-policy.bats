@@ -46,6 +46,28 @@ init_feat_repo() {
 	git -C "$repo" commit -q -m "feat: demo"
 }
 
+init_feat_repo_with_remote() {
+	local repo="$1"
+	local remote="$2"
+	git init -q --bare "$remote"
+	mkdir -p "$repo"
+	git init -q "$repo"
+	git -C "$repo" config user.email "test@example.com"
+	git -C "$repo" config user.name "Test User"
+	echo "base" >"$repo/file.txt"
+	git -C "$repo" add file.txt
+	git -C "$repo" commit -q -m "initial"
+	git -C "$repo" branch -M main
+	git -C "$repo" checkout -q -b dev
+	git -C "$repo" remote add origin "$remote"
+	git -C "$repo" push -q origin main dev
+	git -C "$repo" checkout -q -b feature/demo
+	echo "feature" >"$repo/feature.txt"
+	git -C "$repo" add feature.txt
+	git -C "$repo" commit -q -m "feat: demo"
+	git -C "$repo" push -q origin feature/demo
+}
+
 @test "git_feat --print-policy prints defaults without Git operations" {
 	cd "$TEST_TEMP_DIR"
 	run bash "$GIT_FEAT" --print-policy
@@ -132,4 +154,42 @@ EOF
 	[[ "$(cat "$validation_log")" == "validated" ]]
 	[[ "$output" == *"Integrando feature 'demo' en integration"* ]]
 	[[ "$output" != *"ni 'feature/demo' existe"* ]]
+}
+
+@test "git_feat default policy archives the feature branch after merge" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	init_feat_repo_with_remote "$repo" "$remote"
+
+	cd "$repo"
+	run bash -c "printf 's\n' | '${GIT_FEAT}' --no-changelog demo"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Rama archivada como 'archive/feature/demo'"* ]]
+	git show-ref --verify --quiet refs/heads/archive/feature/demo
+	run git show-ref --verify --quiet refs/heads/feature/demo
+	[[ "$status" -ne 0 ]]
+	git ls-remote --exit-code --heads origin archive/feature/demo >/dev/null
+}
+
+@test "git_feat preserves feature branch when DELETE_FEATURE_BRANCH is false" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	init_feat_repo_with_remote "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+DELETE_FEATURE_BRANCH=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: preserve feature branch"
+	git -C "$repo" push -q origin feature/demo
+
+	cd "$repo"
+	run bash -c "printf 's\n' | '${GIT_FEAT}' --no-changelog demo"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"INFO: Feature branch preserved by policy: feature/demo"* ]]
+	git show-ref --verify --quiet refs/heads/feature/demo
+	run git show-ref --verify --quiet refs/heads/archive/feature/demo
+	[[ "$status" -ne 0 ]]
+	git ls-remote --exit-code --heads origin feature/demo >/dev/null
+	run git ls-remote --exit-code --heads origin archive/feature/demo
+	[[ "$status" -ne 0 ]]
 }
