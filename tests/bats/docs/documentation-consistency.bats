@@ -10,6 +10,7 @@ setup() {
 	AGENT_WORKFLOW="${DOTFILES_DIR}/docs/AGENT_WORKFLOW.md"
 	AI_REPO_MAP="${DOTFILES_DIR}/docs/AI_REPO_MAP.md"
 	VALIDATION_MATRIX="${DOTFILES_DIR}/docs/VALIDATION_MATRIX.md"
+	SCRIPT_CONVENTIONS="${DOTFILES_DIR}/docs/SCRIPT_CONVENTIONS.md"
 	AGENTS="${DOTFILES_DIR}/AGENTS.md"
 	DOCS_README="${DOTFILES_DIR}/docs/README.md"
 	AI_README="${DOTFILES_DIR}/ai/README.md"
@@ -105,6 +106,14 @@ setup() {
 	grep -q 'AGENT_WORKFLOW.md' "${DOCS_README}"
 	grep -q 'AI_REPO_MAP.md' "${DOCS_README}"
 	grep -q 'VALIDATION_MATRIX.md' "${DOCS_README}"
+	grep -q 'SCRIPT_CONVENTIONS.md' "${DOCS_README}"
+}
+
+@test "SCRIPT_CONVENTIONS.md exists and distinguishes check from dry-run" {
+	[[ -f "${SCRIPT_CONVENTIONS}" ]]
+	grep -q '`--check`' "${SCRIPT_CONVENTIONS}"
+	grep -q '`--dry-run`' "${SCRIPT_CONVENTIONS}"
+	grep -q 'dotfiles-apply' "${SCRIPT_CONVENTIONS}"
 }
 
 @test "ai/README.md links agent workflow or repo map" {

@@ -6,7 +6,7 @@ Este documento es el **punto de entrada canónico** para agentes IA (Cursor, Cod
 
 Define cómo actuar, qué evitar y cómo validar cambios. No sustituye la guía de loop vault→proyecto ([AGENT_WORKFLOW_LOOP.md](AGENT_WORKFLOW_LOOP.md) y [ai/AGENT_WORKFLOW_FOR_AGENTS.md](../ai/AGENT_WORKFLOW_FOR_AGENTS.md)); aquí el foco es **operar y modificar dotfiles** de forma segura.
 
-Para el mapa de zonas del repo, ver [AI_REPO_MAP.md](AI_REPO_MAP.md). Para qué validar según archivos tocados, ver [VALIDATION_MATRIX.md](VALIDATION_MATRIX.md).
+Para el mapa de zonas del repo, ver [AI_REPO_MAP.md](AI_REPO_MAP.md). Para qué validar según archivos tocados, ver [VALIDATION_MATRIX.md](VALIDATION_MATRIX.md). Para flags `--check`, `--dry-run`, `DRY_RUN=1` y `--yes`, ver [SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md).
 
 ---
 
@@ -25,7 +25,7 @@ Cada handoff debe declarar el modo. Si no está claro, asumir **PLAN** hasta que
 ## 3. Principios de trabajo
 
 - **Cambios pequeños y testeables** — un BUILD acotado por objetivo.
-- **No destructivo por defecto** — preferir validación read-only antes de mutar HOME o sistema.
+- **No destructivo por defecto** — preferir validación read-only antes de mutar HOME o sistema; usar `--check` o `DRY_RUN=1` según [SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md).
 - **Referencias, no duplicación** — enlazar docs canónicos existentes en lugar de copiar bloques largos.
 - **Respetar contratos del repo** — Chezmoi, taxonomía MCP, skills canónicas, hooks Git, [STRUCTURE.md](../STRUCTURE.md) y ADRs en [docs/adr/](adr/README.md).
 - **Secretos** — nunca commitear credenciales en claro; ver [CHEZMOI.md](CHEZMOI.md) y [SECRETS_EXAMPLES.md](SECRETS_EXAMPLES.md).
@@ -33,9 +33,10 @@ Cada handoff debe declarar el modo. Si no está claro, asumir **PLAN** hasta que
 
 ### Prohibido sin instrucción explícita del usuario
 
-- `chezmoi apply` (global o acotado que muta HOME)
-- `make update` (mantenimiento integral del sistema)
-- Instalar paquetes (`apt`, `winget`, `npm install -g`, etc.)
+- `chezmoi apply` (global o acotado que muta HOME); usar `dotfiles-apply` / `--check` para preview
+- `make update` / `dotfiles-update` (mantenimiento integral del sistema)
+- `--yes` en wrappers mutantes (`dotfiles-apply --apply --yes`, etc.)
+- Instalar paquetes (`apt`, `winget`, `npm install -g`, etc.) salvo `DRY_RUN=1` preview
 - Modificar bloques `<!-- gitnexus:* -->` en `AGENTS.md` / `CLAUDE.md`
 - Ejecutar `gnx-analyze-here` o refresh GitNexus por índice stale
 
@@ -124,6 +125,7 @@ Skills: `ai/assets/skills/gitnexus/`.
 [STRUCTURE.md](../STRUCTURE.md) es el inventario estructural del repo, generado por `scripts/treegen.sh`.
 
 - **No editar a mano** — se regenera vía pre-commit hook (`scripts/hooks/pre-commit-treegen.sh`).
+- **Comprobar drift sin escribir** — `scripts/treegen.sh --check .` (exit 0 si está al día).
 - Si añades carpetas o archivos visibles, el hook actualiza y stagea STRUCTURE.md automáticamente.
 - Para **intención y contratos por zona**, usar [AI_REPO_MAP.md](AI_REPO_MAP.md), no STRUCTURE.md.
 

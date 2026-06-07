@@ -264,6 +264,8 @@ Detalle: [TESTING.md](TESTING.md).
 | `dotfiles-apply` | No | No | Preview Chezmoi: `diff` + `status` (default seguro) |
 | `dotfiles-apply --apply` | Sí | Sí | Apply interactivo (confirmar escribiendo `APPLY`) |
 | `dotfiles-apply --apply --yes` | Sí | Sí | Apply no interactivo — solo humano/CI explícito |
+| `scripts/treegen.sh --check .` | No | No | Comprobar drift de `STRUCTURE.md` sin escribir |
+| `make install DRY_RUN=1` | No | No | Simular instalación APT (ver [SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md)) |
 | `make agent-validate-changed` | No | No | Solo archivos cambiados (local; sin OSV online) |
 | `make agent-validate-audit` | No | No | Auditoría full-repo estricta (lint + security) |
 | `SECURITY_ONLINE=1 make agent-validate-changed` | No | Sí | Cierre humano con escaneo OSV estricto |

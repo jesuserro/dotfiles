@@ -113,6 +113,8 @@ make fmt-shell
 
 `dotfiles-apply` is the safe Chezmoi wrapper (preview by default). Tests: `tests/bats/system/dotfiles-apply.bats` (stub `chezmoi`, no real HOME mutation).
 
+Flag conventions (`--check`, `--dry-run`, `DRY_RUN=1`, `--yes`): [SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md). Contract tests: `tests/bats/system/dry-run-guard.bats`, `dotfiles-apply.bats`, `git-hooks/hooks.bats` (`treegen --check`).
+
 `make agent-validate-changed` is a lighter, diff-focused gate (also invoked inside `make agent-validate`). By default it runs **local** checks only:
 
 - shell scripts changed since `HEAD`: `shellcheck` + `shfmt`

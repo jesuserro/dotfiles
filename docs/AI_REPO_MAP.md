@@ -39,7 +39,7 @@ Los agentes suelen trabajar en la capa **fuente del repo** (plantillas, scripts,
 | `ai/assets/handoffs/` | Plantillas handoff PLAN/BUILD/AUDIT para agentes | Plantillas desactualizadas; backticks anidados al copiar | `make bats-docs` |
 | `ai/assets/mcps/` | MANIFEST MCP, perfiles, taxonomía | Drift render; MCP mal clasificado | `make ai-mcp-governance`, `mcp-render-drift.bats` |
 | `ai/runtime/mcp/` | Servidores MCP Python, venv, launchers fuente | Romper contrato launcher; deps runtime | `ai-mcp-governance`, `ai-runtime-uv.bats` |
-| `scripts/` | Scripts shell, librerías (`lib/`) | shellcheck/shfmt drift; efectos secundarios | `make agent-validate-changed`, `make test-lint` |
+| `scripts/` | Scripts shell, librerías (`lib/`) | shellcheck/shfmt drift; efectos secundarios | `make agent-validate-changed`, `make test-lint`; ver [SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md) |
 | `scripts/update/` | Workflow `make update` (WSL, Node, MCPs) | Mutar sistema; shadowing Node | `update-workflow.bats`, `make update-check` |
 | `scripts/hooks/` | Hooks Git versionados (treegen, GitNexus) | Permisos; post-commit bloqueante | `git-hooks/hooks.bats` |
 | `tests/` | Bats, fixtures, Makefile de tests | Tests huérfanos no cableados en CI | `make test-fast`, `make test-ci` |

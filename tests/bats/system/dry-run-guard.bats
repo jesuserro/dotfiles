@@ -1,13 +1,21 @@
 #!/usr/bin/env bats
-# Verifies the DRY_RUN hardening introduced for enterprise WSL bootstrap:
-#   - Make-level guard rejects hyphenated variants (DRY-RUN, dry-run, ...).
-#   - Make-level supported flag (DRY_RUN=1) still routes to dry-run plumbing.
-#   - Script-level safety belt forces dry-run if a hyphen variant slipped via env.
+# Dry-run/check convention guards:
+#   - DRY_RUN hardening (Make + install-system-packages safety belt).
+#   - Documented SCRIPT_CONVENTIONS.md contract.
+#   - Critical mutating wrappers expose a safe preview/check mode.
 
 setup() {
 	load '../helpers/common'
 	DOTFILES_DIR="$(cd "${BATS_TEST_DIRNAME}/../../.." && pwd)"
 	INSTALL_PKGS="${DOTFILES_DIR}/scripts/install-system-packages.sh"
+	CONVENTIONS="${DOTFILES_DIR}/docs/SCRIPT_CONVENTIONS.md"
+	DOTFILES_APPLY="${DOTFILES_DIR}/bin/dotfiles-apply"
+	AGENT_VALIDATE="${DOTFILES_DIR}/scripts/agent-validate-dotfiles.sh"
+	setup_temp_dir
+}
+
+teardown() {
+	teardown_temp_dir
 }
 
 @test "make install DRY-RUN=1 fails fast with clear message and no sudo/apt invocation" {
@@ -53,4 +61,49 @@ setup() {
 	[[ "${output}" == *"Dry run:"* ]]
 	# It must not have actually run apt-get.
 	[[ "${output}" != *"Reading package lists"* ]]
+}
+
+@test "SCRIPT_CONVENTIONS.md documents check dry-run yes and verbose flags" {
+	[[ -f "${CONVENTIONS}" ]]
+	grep -q '^## 1\. Flag semantics' "${CONVENTIONS}"
+	grep -q '`--check`' "${CONVENTIONS}"
+	grep -q '`--dry-run`' "${CONVENTIONS}"
+	grep -q 'DRY_RUN=1' "${CONVENTIONS}"
+	grep -q '`--yes`' "${CONVENTIONS}"
+	grep -q '`--verbose`' "${CONVENTIONS}"
+	grep -q '^## 2\. Agent policy' "${CONVENTIONS}"
+	grep -q '^## 3\. Command audit' "${CONVENTIONS}"
+}
+
+@test "AGENT_WORKFLOW.md links SCRIPT_CONVENTIONS.md" {
+	grep -q 'SCRIPT_CONVENTIONS.md' "${DOTFILES_DIR}/docs/AGENT_WORKFLOW.md"
+}
+
+@test "dotfiles-apply documents check and dry-run as preview aliases" {
+	grep -q '\-\-check' "${DOTFILES_APPLY}"
+	grep -q '\-\-dry-run' "${DOTFILES_APPLY}"
+	local preview_body
+	preview_body="$(awk '/^run_preview\(\) \{/,/^\}/' "${DOTFILES_APPLY}")"
+	[[ "${preview_body}" == *'run_chezmoi diff'* ]]
+	[[ "${preview_body}" == *'run_chezmoi status'* ]]
+	run grep -q 'run_chezmoi apply' <<<"${preview_body}"
+	[[ "${status}" -eq 1 ]]
+}
+
+@test "agent-validate-dotfiles.sh stays read-only" {
+	run grep -q 'chezmoi apply' "${AGENT_VALIDATE}"
+	[[ "${status}" -eq 1 ]]
+	run grep -q 'make update' "${AGENT_VALIDATE}"
+	[[ "${status}" -eq 1 ]]
+}
+
+@test "treegen.sh documents --check in header" {
+	grep -q '\-\-check' "${DOTFILES_DIR}/scripts/treegen.sh"
+	grep -q 'CHECK_MODE' "${DOTFILES_DIR}/scripts/treegen.sh"
+}
+
+@test "dotfiles-update does not pretend to be a dry-run wrapper" {
+	run grep -q '\-\-dry-run' "${DOTFILES_DIR}/bin/dotfiles-update"
+	[[ "${status}" -eq 1 ]]
+	grep -q 'make update' "${DOTFILES_DIR}/bin/dotfiles-update"
 }

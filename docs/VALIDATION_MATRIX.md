@@ -95,6 +95,8 @@ Usar cuando el BUILD es amplio, toca varias zonas o modifica contratos estructur
 | `bin/playwright-docker`, `dot_local/bin/` (playwright) | `playwright-docker.bats` |
 | `bin/dotfiles-update`, symlink template | `dotfiles-update.bats` |
 | `bin/dotfiles-apply`, `dot_local/bin/symlink_dotfiles-apply.tmpl` | `dotfiles-apply.bats` |
+| `scripts/treegen.sh` | `git-hooks/hooks.bats` (`treegen --check`) |
+| `docs/SCRIPT_CONVENTIONS.md` | `dry-run-guard.bats`, `documentation-consistency.bats` |
 | Cualquier cambio | `gitleaks` working-tree |
 
 El gate completo `make agent-validate` ejecuta además skills, MCP governance, `agent-validate-changed`, `bats-docs` y `update-check` vía [`scripts/agent-validate-dotfiles.sh`](../scripts/agent-validate-dotfiles.sh).

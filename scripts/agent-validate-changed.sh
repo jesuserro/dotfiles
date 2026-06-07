@@ -345,8 +345,8 @@ main() {
 		make -C "${DOTFILES_DIR}" test-chezmoi
 	fi
 
-	if grep -Eq '^(scripts/hooks/|\.githooks/)' "${changed_file_list}"; then
-		log "git hooks bats"
+	if grep -Eq '^(scripts/treegen\.sh|scripts/hooks/|\.githooks/)' "${changed_file_list}"; then
+		log "git hooks and treegen bats"
 		bats "${DOTFILES_DIR}/tests/bats/git-hooks/hooks.bats"
 	fi
 
@@ -374,6 +374,11 @@ main() {
 	if grep -Eq '^(bin/dotfiles-apply|dot_local/bin/symlink_dotfiles-apply\.tmpl|tests/bats/system/dotfiles-apply\.bats)' "${changed_file_list}"; then
 		log "dotfiles-apply bats"
 		bats "${DOTFILES_DIR}/tests/bats/system/dotfiles-apply.bats"
+	fi
+
+	if grep -Eq '^(docs/SCRIPT_CONVENTIONS\.md|tests/bats/system/dry-run-guard\.bats)' "${changed_file_list}"; then
+		log "dry-run convention bats"
+		bats "${DOTFILES_DIR}/tests/bats/system/dry-run-guard.bats"
 	fi
 
 	run_local_security_scan

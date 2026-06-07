@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Generate STRUCTURE.md with tree output (excludes build artifacts, deps, etc.)
-# Usage: treegen.sh [--no-stage] [DIR]
+# Usage: treegen.sh [--check|--no-stage] [DIR]
+#   --check     Verify STRUCTURE.md matches the current tree without writing.
 #   --no-stage  Do not stage STRUCTURE.md after updating it.
 #   DIR         Target directory (default: current directory).
 
@@ -13,16 +14,25 @@ export LC_ALL=C.UTF-8
 TREE_IGNORE='.git|.gitnexus|.venv-tools|.claude|node_modules|dist|build|out|.venv|venv|env|.env|target|bin|obj|.vs|.idea|__pycache__|__none__|mypy_cache|.mypy_cache|*.pyc|*.log|*.tmp|*.cache|.ruff_cache|uncommitted|index_*|chunks|wal|*.db|*.db-shm|*.db-wal|logs|var|.nux|.telemetry|compute_logs'
 
 NO_STAGE=0
+CHECK_MODE=0
 TARGET_DIR="."
 target_set=0
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
+	--check)
+		CHECK_MODE=1
+		NO_STAGE=1
+		;;
 	--no-stage)
 		NO_STAGE=1
 		;;
+	-h | --help)
+		sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//'
+		exit 0
+		;;
 	-*)
-		echo "treegen.sh: unknown option: $1" >&2
+		echo "treegen.sh: unknown option: $1 (try --help)" >&2
 		exit 2
 		;;
 	*)
@@ -107,6 +117,19 @@ stage_structure() {
 TEMP_OUTPUT="$(mktemp "${TARGET_DIR}/.STRUCTURE.md.tmp.XXXXXX")"
 trap 'rm -f "$TEMP_OUTPUT"' EXIT
 write_structure "$TEMP_OUTPUT"
+
+if [[ "$CHECK_MODE" -eq 1 ]]; then
+	if [[ ! -f "$OUTPUT" ]]; then
+		echo "DRIFT: $OUTPUT does not exist (run treegen to generate)" >&2
+		exit 1
+	fi
+	if cmp -s "$TEMP_OUTPUT" "$OUTPUT"; then
+		echo "OK: $OUTPUT is up to date"
+		exit 0
+	fi
+	echo "DRIFT: $OUTPUT is outdated (run treegen to regenerate)" >&2
+	exit 1
+fi
 
 if [[ -f "$OUTPUT" ]] && cmp -s "$TEMP_OUTPUT" "$OUTPUT"; then
 	echo "Unchanged: $OUTPUT"

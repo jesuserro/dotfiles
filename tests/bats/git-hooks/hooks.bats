@@ -93,6 +93,33 @@ copy_hook_entrypoints() {
 	[[ -z "$(git -C "$repo" diff --cached --name-only)" ]]
 }
 
+@test "treegen --check passes when STRUCTURE.md is up to date" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	init_repo "$repo"
+	echo "seed" >"$repo/STRUCTURE.md"
+
+	"$TREEGEN" --no-stage "$repo" >/dev/null
+
+	run "$TREEGEN" --check "$repo"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"OK:"* ]]
+}
+
+@test "treegen --check fails on drift without modifying STRUCTURE.md" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local before_hash
+	init_repo "$repo"
+	echo "seed" >"$repo/STRUCTURE.md"
+	before_hash="$(git -C "$repo" hash-object STRUCTURE.md)"
+
+	echo "new-file" >"$repo/drift-marker.txt"
+
+	run "$TREEGEN" --check "$repo"
+	[[ "$status" -eq 1 ]]
+	[[ "$output" == *"DRIFT:"* ]]
+	[[ "$before_hash" == "$(git -C "$repo" hash-object STRUCTURE.md)" ]]
+}
+
 @test "treegen is idempotent when the tree does not change" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	local first_hash first_mtime

@@ -256,6 +256,7 @@
 │   ├── 📝 OPERATIONS_CHEATSHEET.md
 │   ├── 📝 PROMPT_LAUNCHERS.md
 │   ├── 📝 README.md
+│   ├── 📝 SCRIPT_CONVENTIONS.md
 │   ├── 📝 SECRETS_EXAMPLES.md
 │   ├── 📝 SYSTEM_DEPENDENCIES.md
 │   ├── 📝 TESTING.md
