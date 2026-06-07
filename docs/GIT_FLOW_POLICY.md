@@ -35,6 +35,8 @@ Still not implemented:
   command being run.
 - Merge strategy policy is parsed and validated, but `git feat` and `git rel`
   still use their legacy merge behavior.
+- `DELETE_FEATURE_BRANCH` and `OPEN_BROWSER` are parsed and validated for future
+  policy use, but the current product scripts keep their legacy behavior.
 
 ## Print Effective Policy
 
@@ -183,6 +185,22 @@ VALIDATE_CMD_TO_DEV="make validate"
 VALIDATE_CMD_TO_MAIN="make validate-full"
 ```
 
+Project that keeps the current local flow, enables both validation gates, and
+records a future-compatible branch retention preference:
+
+```bash
+cat > .git-flow-policy.env <<'EOF'
+VALIDATE_TO_DEV=true
+VALIDATE_CMD_TO_DEV="make validate"
+VALIDATE_TO_MAIN=true
+VALIDATE_CMD_TO_MAIN="make validate-full"
+DELETE_FEATURE_BRANCH=false
+EOF
+```
+
+In phase 2, `DELETE_FEATURE_BRANCH=false` is visible in `--print-policy` but does
+not change `git feat` archival behavior yet.
+
 Future PR-oriented policy, parsed today but not implemented by `git feat` or
 `git rel` yet:
 
@@ -191,6 +209,88 @@ FLOW_MODE_TO_DEV=pr
 FLOW_MODE_TO_MAIN=pr
 MERGE_STRATEGY_TO_MAIN=squash
 DELETE_FEATURE_BRANCH=false
+```
+
+## Manual Validation Fixture
+
+Use a disposable repository with a disposable bare remote when validating the
+real scripts manually. The scripts may merge, push, archive branches, or create
+tags during normal operation.
+
+```bash
+tmp="$(mktemp -d)"
+remote="${tmp}/origin.git"
+repo="${tmp}/repo"
+
+git init --bare "$remote"
+git init "$repo"
+cd "$repo"
+git config user.email "test@example.com"
+git config user.name "Test User"
+
+echo "seed" > README.md
+git add README.md
+git commit -m "init"
+git branch -M main
+git checkout -b dev
+git remote add origin "$remote"
+git push origin main dev
+
+git checkout -b feature/demo
+echo "change" >> README.md
+git add README.md
+git commit -m "change"
+git push origin feature/demo
+```
+
+Useful checks:
+
+```bash
+~/dotfiles/scripts/git_feat.sh --print-policy
+~/dotfiles/scripts/git_rel.sh --print-policy
+~/dotfiles/scripts/git_flow_policy_print.sh
+```
+
+Validation success path for `git feat`:
+
+```bash
+cat > .git-flow-policy.env <<'EOF'
+VALIDATE_TO_DEV=true
+VALIDATE_CMD_TO_DEV="true"
+EOF
+
+~/dotfiles/scripts/git_feat.sh --no-changelog demo
+```
+
+Validation failure should abort before merge, push, archive, tag creation, or
+branch deletion:
+
+```bash
+cat > .git-flow-policy.env <<'EOF'
+VALIDATE_TO_DEV=true
+VALIDATE_CMD_TO_DEV="false"
+EOF
+
+~/dotfiles/scripts/git_feat.sh demo
+```
+
+PR modes are accepted by the parser but intentionally blocked by the current
+product scripts:
+
+```bash
+cat > .git-flow-policy.env <<'EOF'
+FLOW_MODE_TO_DEV=pr
+EOF
+
+~/dotfiles/scripts/git_feat.sh demo
+```
+
+```bash
+cat > .git-flow-policy.env <<'EOF'
+FLOW_MODE_TO_MAIN=pr
+EOF
+
+~/dotfiles/scripts/git_rel.sh
 ```
 
 ## Security Note
