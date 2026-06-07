@@ -11,7 +11,7 @@ Referencia corta por escenario. Detalle en [OPERATIONS.md](OPERATIONS.md), [CHEZ
 | **Descubrimiento** | `make help` | Índice CLI de targets por riesgo (read-only vs humano/mutante) |
 | **Bootstrap** | `make install*`, `make deps-*` | Paquetes y opt-ins en máquina nueva |
 | **Materialización** | `chezmoi status` / `diff` / apply acotado | Publica plantillas y secretos en HOME |
-| **Mantenimiento** | `make update`, checks read-only | Sistema, npm, imágenes MCP — **no** sustituye Chezmoi |
+| **Mantenimiento** | `dotfiles-update`, checks read-only | Sistema, npm, imágenes MCP — **no** sustituye Chezmoi |
 
 **Regla principal:** tras `git pull` o merge, revisa drift (`make chezmoi-drift-report`, `chezmoi status`/`diff`) y aplica **solo los paths que el reporte indique**. **`chezmoi apply` global no es el flujo normal** del día a día.
 
@@ -44,19 +44,18 @@ source ~/.zshrc
 ## 3. Día normal — casa
 
 ```bash
-cd ~/dotfiles
-git pull
+cd ~/dotfiles && git pull
 make chezmoi-drift-report
 chezmoi --source="$HOME/dotfiles" status
 chezmoi --source="$HOME/dotfiles" diff
 # apply acotado solo si el reporte o diff lo indican (ver §5–6)
 source ~/.zshrc                 # si cambió PATH tras apply
 make update-check
-make update                     # humano: muta sistema, puede usar red
+dotfiles-update                 # humano: muta sistema, puede usar red
 ```
 
 - Si materializaste MCP/Codex/launchers: **`make ai-cursor-check`**.
-- **`make update`:** humano; APT/sudo, npm, Docker pull, WinGet en otra pestaña.
+- **`dotfiles-update`:** humano; APT/sudo, npm, Docker pull, WinGet en otra pestaña. Desde el repo: `make update`.
 
 ---
 

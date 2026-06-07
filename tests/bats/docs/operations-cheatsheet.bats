@@ -17,6 +17,7 @@ setup() {
 @test "cheatsheet mentions critical make targets" {
 	local target
 	for target in \
+		'dotfiles-update' \
 		'make update-check' \
 		'make update' \
 		'make chezmoi-drift-report' \

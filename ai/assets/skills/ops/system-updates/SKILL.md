@@ -13,7 +13,8 @@ Use this skill when changing or diagnosing the dotfiles `make update` workflow, 
 
 ## Public Interface
 
-- `make update` — daily full flow from WSL, with Windows PowerShell tab plus WSL execution and a Linux-only summary
+- `dotfiles-update` — daily full flow from any directory (delegates to `make update` in `$HOME/dotfiles`)
+- `make update` — same flow when invoked from inside the repo
 - `make update-windows` — WinGet plus safe `wsl --update`
 - `make update-wsl` — APT, Node/AI tools, OpenCode, shell, uv, MCPs, services
 - `make update-projects` — personal repositories such as `jesuserro` and RenderCV
@@ -23,7 +24,6 @@ Internal targets such as `update-apt`, `update-tools`, `update-shell`, `update-m
 
 ## Rules
 
-- Do not recreate the removed `ups` command or compatibility aliases.
 - Do not run `wsl --shutdown` from the update flow.
 - Keep partial failures non-fatal: record warnings/incidents and continue.
 - Treat orchestration failures as fatal only when the flow cannot actually start.

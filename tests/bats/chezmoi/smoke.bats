@@ -57,6 +57,13 @@ teardown() {
 	[[ ! -f "$DOTFILES_DIR/.chezmoiscripts/run_after_16_link_playwright_docker.sh.tmpl" ]]
 }
 
+@test "dotfiles-update is a directly managed chezmoi local bin symlink" {
+	local tmpl="$DOTFILES_DIR/dot_local/bin/symlink_dotfiles-update.tmpl"
+	[[ -f "$tmpl" ]]
+	[[ "$(cat "$tmpl")" == '{{ .chezmoi.homeDir }}/dotfiles/bin/dotfiles-update' ]]
+	[[ ! -f "$DOTFILES_DIR/.chezmoiscripts/run_after_16_link_dotfiles_update.sh.tmpl" ]]
+}
+
 @test "symlink_dot_tmux.conf points to repo tmux.conf" {
 	local tmpl="$DOTFILES_DIR/symlink_dot_tmux.conf.tmpl"
 	[[ -f "$tmpl" ]]

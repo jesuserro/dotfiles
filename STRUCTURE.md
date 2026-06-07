@@ -492,6 +492,7 @@
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
 │   │   │   ├── 📄 docker-desktop-credentials.bats
+│   │   │   ├── 📄 dotfiles-update.bats
 │   │   │   ├── 📄 dry-run-guard.bats
 │   │   │   ├── 📄 excalidraw-docker.bats
 │   │   │   ├── 📄 install-agent-skills.bats

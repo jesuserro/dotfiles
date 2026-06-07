@@ -20,13 +20,13 @@ Capa de configuración de usuario para **Ubuntu LTS / WSL2** (Windows 11 Pro): s
 |------|--------------|-----|
 | **Bootstrap** | `make install*`, `make deps-*` | APT, diagnóstico, opt-in (`install-chezmoi`, `install-sops`, `install-zsh-stack`) |
 | **Materialización** | `chezmoi status` / `diff` / `apply` | Symlinks RC, MCPs, `~/.config/mcp-secrets.env` generado, runtime AI |
-| **Mantenimiento** | `make update`, `make ai-cursor-check`, `make ai-mcp-governance` | Sistema y herramientas — **no** sustituye `chezmoi apply` |
+| **Mantenimiento** | `dotfiles-update`, `make ai-cursor-check`, `make ai-mcp-governance` | Sistema y herramientas — **no** sustituye `chezmoi apply` |
 
 ```mermaid
 flowchart LR
     bootstrap["make install*"] --> chezmoi["chezmoi apply"]
     chezmoi --> home["HOME ~/.cursor, ~/.zshrc, mcp-secrets.env"]
-    update["make update"] --> tools["APT, npm, MCP images"]
+    update["dotfiles-update"] --> tools["APT, npm, MCP images"]
 ```
 
 ---
@@ -39,7 +39,7 @@ flowchart LR
 | Publicar plantillas y secretos a HOME | `chezmoi --source=$HOME/dotfiles apply` o `make install-dotfiles DOTFILES_APPLY=1` |
 | Solo recargar aliases/PATH en la sesión | `source ~/.zshrc` |
 | Editar token GitHub, DSN Postgres, MinIO | `sops secrets.sops.yaml` → `chezmoi apply -i scripts` |
-| Actualizar Windows/WSL, APT, npm, OMZ, MCPs | `make update` |
+| Actualizar Windows/WSL, APT, npm, OMZ, MCPs | `dotfiles-update` (o `make update` desde el repo) |
 | Diagnosticar readiness para agentes IA | `make ai-doctor` |
 | Validar Cursor/MCP/skills en HOME | `make ai-cursor-check` |
 | Validar MANIFEST ↔ plantillas en repo | `make ai-mcp-governance` |

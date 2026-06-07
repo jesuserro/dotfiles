@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+
+if [[ ! -d "$DOTFILES_DIR" ]]; then
+	echo "ERROR: dotfiles directory not found: $DOTFILES_DIR" >&2
+	exit 1
+fi
+
+if [[ ! -f "$DOTFILES_DIR/Makefile" ]]; then
+	echo "ERROR: Makefile not found in dotfiles directory: $DOTFILES_DIR" >&2
+	exit 1
+fi
+
+cd "$DOTFILES_DIR"
+
+exec make update "$@"

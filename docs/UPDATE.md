@@ -1,14 +1,28 @@
-# Actualización diaria: `make update`
+# Actualización diaria: `dotfiles-update` y `make update`
 
-`make update` es la interfaz pública de mantenimiento diario de dotfiles. Sustituye al comando histórico `ups`, que ya no existe.
+**Uso diario** (desde cualquier directorio):
 
-> Si acabas de `git pull` o merge, revisa primero drift Chezmoi con `make chezmoi-drift-report` (ver [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)). Antes de `make update`, ejecuta `make update-check` (read-only).
+```bash
+dotfiles-update
+```
+
+**Uso interno** (desde el repo):
+
+```bash
+cd ~/dotfiles
+make update
+```
+
+`dotfiles-update` vive en `~/.local/bin` (Chezmoi) y delega en `make update`. Por defecto usa `$HOME/dotfiles`; override con `DOTFILES_DIR`.
+
+> Si acabas de `git pull` o merge, revisa primero drift Chezmoi con `make chezmoi-drift-report` (ver [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)). Antes de actualizar, ejecuta `make update-check` (read-only).
 
 ## Comandos públicos
 
 | Comando | Uso |
 |---|---|
-| `make update` | Rutina diaria completa: abre Windows PowerShell en otra pestaña y ejecuta WSL, con resumen Linux |
+| `dotfiles-update` | Rutina diaria desde cualquier directorio (delega en `make update`) |
+| `make update` | Mismo flujo, invocado desde `~/dotfiles` |
 | `make update-windows` | Ejecuta WinGet y `wsl --update` desde PowerShell/Windows |
 | `make update-wsl` | Ejecuta APT, Node/tooling IA, OpenCode, shell, uv, MCPs e imágenes Docker |
 | `make update-projects` | Actualiza proyectos personales como `~/proyectos/jesuserro` y RenderCV |
@@ -26,7 +40,7 @@
 |---|---|---|
 | Bootstrap | `make install*`, `make deps-*` | Preparar una máquina |
 | Materialización | `chezmoi apply` | Publicar plantillas, symlinks y secretos en HOME |
-| Mantenimiento | `make update` | Actualizar sistema, runtime y herramientas |
+| Mantenimiento | `dotfiles-update` / `make update` | Actualizar sistema, runtime y herramientas |
 | Proyectos | `make update-projects` | Mantener repos personales fuera del flujo diario |
 
 `make update` no sustituye `chezmoi apply` y no regenera secretos.
