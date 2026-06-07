@@ -21,7 +21,21 @@ En este proyecto conviven dos mecanismos para aplicar cambios. Resumen:
 | **`source ~/.zshrc`** | Recarga en la **sesión actual** de la terminal el contenido de `~/.zshrc`: aliases, PATH, etc. No escribe archivos. | Después de `chezmoi apply` o de `make update` si cambió PATH. |
 | **`chezmoi --source=$HOME/dotfiles apply ~/.cursor/mcp.json ~/.config/opencode/opencode.json ~/.codex/config.toml`** | Propaga solo las configs MCP renderizadas de Cursor, OpenCode y Codex. | Úsalo tras cambios de plantillas MCP como el launcher de GitNexus. Mantiene el arranque estable con binarios/launchers locales en vez de `npx ...@latest` en runtime. |
 
-Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si hay cambios en lo que Chezmoi gestiona) y `source ~/.zshrc` para la sesión actual.
+Flujo típico tras un `git pull`: revisar drift (`dotfiles-apply` o `make chezmoi-drift-report`), aplicar solo si procede (`dotfiles-apply --apply`), y `source ~/.zshrc` para la sesión actual.
+
+### `dotfiles-apply` (wrapper seguro)
+
+Comando global en `~/.local/bin/dotfiles-apply` (symlink Chezmoi → `bin/dotfiles-apply`). Hace pareja con `dotfiles-update`: preview por defecto, apply solo con intención explícita.
+
+| Comando | Efecto |
+|---------|--------|
+| `dotfiles-apply` | `chezmoi diff` + `status` — **no aplica** |
+| `dotfiles-apply --check` | Igual que el default (alias preview) |
+| `dotfiles-apply --check ~/.zshrc` | Preview acotado a paths |
+| `dotfiles-apply --apply` | Pide escribir `APPLY` y luego `chezmoi apply` |
+| `dotfiles-apply --apply --yes` | Apply sin prompt (humano/CI explícito) |
+
+Override: `DOTFILES_DIR=/ruta/al/repo dotfiles-apply`. No sustituye `chezmoi` avanzado; es el camino seguro recomendado antes de mutar HOME.
 
 ---
 
@@ -42,6 +56,7 @@ Flujo típico tras un `git pull`: `chezmoi --source=$HOME/dotfiles apply` (si ha
 | `~/.local/bin/tmux-dotfiles` | `run_after_15_link_tmux_dotfiles` → `$HOME/dotfiles/bin/tmux-dotfiles` |
 | `~/.local/bin/playwright-docker` | `dot_local/bin/symlink_playwright-docker.tmpl` → `$HOME/dotfiles/bin/playwright-docker` |
 | `~/.local/bin/dotfiles-update` | `dot_local/bin/symlink_dotfiles-update.tmpl` → `$HOME/dotfiles/bin/dotfiles-update` |
+| `~/.local/bin/dotfiles-apply` | `dot_local/bin/symlink_dotfiles-apply.tmpl` → `$HOME/dotfiles/bin/dotfiles-apply` |
 
 ### Backup seguro de symlinks gestionados (RC + tmux)
 

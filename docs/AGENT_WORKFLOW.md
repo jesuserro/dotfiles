@@ -76,10 +76,11 @@ Mapa completo con validación por zona: [AI_REPO_MAP.md](AI_REPO_MAP.md).
 
 Dotfiles usa Chezmoi para materializar configuración en HOME. Reglas para agentes:
 
-1. **Drift primero** — tras cambios en plantillas, revisar con `make chezmoi-drift-report` o `chezmoi --source="$HOME/dotfiles" diff` (read-only).
+1. **Drift primero** — tras cambios en plantillas, revisar con `dotfiles-apply`, `dotfiles-apply --check` o `make chezmoi-drift-report` (read-only).
 2. **No apply global** — el flujo normal no es `chezmoi apply` sin paths. Ver [CHEZMOI.md](CHEZMOI.md) y [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md) §5–6.
-3. **Apply acotado** — solo con petición explícita de mutar HOME; preferir paths concretos documentados en la chuleta.
-4. **No ocultar cambios** — mostrar diff antes de cualquier apply autorizado.
+3. **Apply acotado** — solo con petición explícita de mutar HOME; preferir `dotfiles-apply --apply` con paths concretos documentados en la chuleta.
+4. **No ocultar cambios** — `dotfiles-apply` muestra diff/status antes de cualquier apply autorizado.
+5. **Agentes** — usar solo `dotfiles-apply` o `dotfiles-apply --check`; no `--apply --yes` salvo instrucción humana explícita.
 
 Los agentes editan **plantillas en el repo** (`dot_*`, `dot_local/`, etc.), no surfaces en HOME directamente.
 

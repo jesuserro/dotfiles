@@ -45,7 +45,7 @@ Los agentes suelen trabajar en la capa **fuente del repo** (plantillas, scripts,
 | `tests/` | Bats, fixtures, Makefile de tests | Tests huérfanos no cableados en CI | `make test-fast`, `make test-ci` |
 | `.chezmoiscripts/` | Hooks Chezmoi (before/after apply) | Mutan HOME al apply; secretos | `make test-chezmoi`, `make chezmoi-drift-report` |
 | `dot_local/bin/` | Plantillas Chezmoi para binarios en HOME | Symlinks rotos post-apply | `chezmoi/smoke.bats`, bats focalizados |
-| `bin/` | Wrappers repo (`dotfiles-update`, launchers, playwright) | Confundir con runtime Chezmoi en HOME | shellcheck + bats (`playwright-docker.bats`, etc.) |
+| `bin/` | Wrappers repo (`dotfiles-update`, `dotfiles-apply`, launchers, playwright) | Confundir con runtime Chezmoi en HOME | shellcheck + bats (`dotfiles-apply.bats`, etc.) |
 | `zsh/` | Stack zsh, aliases, plugins, RC templates | RC apply no deseado; symlinks | `make test-lint`, `bats-zsh` |
 | `system/packages/` | Dependencias declarativas APT/winget | Paquetes faltantes en máquina nueva | `system-deps.bats`, `make deps-check` |
 
@@ -170,6 +170,7 @@ Matriz detallada: [VALIDATION_MATRIX.md](VALIDATION_MATRIX.md). Stack: [TESTING.
 | `mcp-server-fetch` como uv tool persistente | Debe ser runtime-managed (uvx); ver `update-workflow.bats` |
 | Editar bloques GitNexus en AGENTS.md | Bloque auto-generado — prohibido para agentes |
 | Confundir dotfiles-update con Chezmoi | `dotfiles-update` → `make update`; Chezmoi es capa separada |
+| Apply Chezmoi sin preview | Usar `dotfiles-apply` (preview) antes de `dotfiles-apply --apply` |
 
 ---
 

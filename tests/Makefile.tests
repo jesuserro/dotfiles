@@ -459,6 +459,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-changed.bats)
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-dotfiles.bats)
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-report.bats)
+	@$(call run_bats,$(BATS_DIR)/system/dotfiles-apply.bats)
 
 bats-gitnexus:
 	@echo "$(BLUE)==>$(NC) Running GitNexus operational status tests..."

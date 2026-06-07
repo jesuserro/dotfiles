@@ -231,13 +231,13 @@ main() {
 		esac
 		case "${file}" in
 		*.tmpl) ;;
-		*.sh | *.bash | *.bats | bin/mcp-*-launcher | bin/playwright-docker | bin/dotfiles-update | bin/tmux-dotfiles | local/bin/ai-prompt | local/bin/prompt-*)
+		*.sh | *.bash | *.bats | bin/mcp-*-launcher | bin/playwright-docker | bin/dotfiles-update | bin/dotfiles-apply | bin/tmux-dotfiles | local/bin/ai-prompt | local/bin/prompt-*)
 			printf '%s\n' "${DOTFILES_DIR}/${file}" >>"${shellcheck_files}"
 			;;
 		esac
 		case "${file}" in
 		*.tmpl | *.bats) ;;
-		*.sh | *.bash | bin/mcp-*-launcher | bin/playwright-docker | bin/dotfiles-update | bin/tmux-dotfiles | local/bin/ai-prompt | local/bin/prompt-*)
+		*.sh | *.bash | bin/mcp-*-launcher | bin/playwright-docker | bin/dotfiles-update | bin/dotfiles-apply | bin/tmux-dotfiles | local/bin/ai-prompt | local/bin/prompt-*)
 			printf '%s\n' "${DOTFILES_DIR}/${file}" >>"${shfmt_files}"
 			;;
 		esac
@@ -369,6 +369,11 @@ main() {
 	if grep -Eq '^(bin/dotfiles-update|dot_local/bin/symlink_dotfiles-update\.tmpl|tests/bats/system/dotfiles-update\.bats)' "${changed_file_list}"; then
 		log "dotfiles-update bats"
 		bats "${DOTFILES_DIR}/tests/bats/system/dotfiles-update.bats"
+	fi
+
+	if grep -Eq '^(bin/dotfiles-apply|dot_local/bin/symlink_dotfiles-apply\.tmpl|tests/bats/system/dotfiles-apply\.bats)' "${changed_file_list}"; then
+		log "dotfiles-apply bats"
+		bats "${DOTFILES_DIR}/tests/bats/system/dotfiles-apply.bats"
 	fi
 
 	run_local_security_scan

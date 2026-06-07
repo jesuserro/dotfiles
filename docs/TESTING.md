@@ -111,6 +111,8 @@ make fmt-shell
 
 `make agent-validate` is the **canonical dotfiles gate** for agents after a BUILD. It orchestrates read-only checks and does not run `chezmoi apply`, `make update`, or package installs. It fails if `.claude/skills/` exists in the checkout (ADR 0004).
 
+`dotfiles-apply` is the safe Chezmoi wrapper (preview by default). Tests: `tests/bats/system/dotfiles-apply.bats` (stub `chezmoi`, no real HOME mutation).
+
 `make agent-validate-changed` is a lighter, diff-focused gate (also invoked inside `make agent-validate`). By default it runs **local** checks only:
 
 - shell scripts changed since `HEAD`: `shellcheck` + `shfmt`

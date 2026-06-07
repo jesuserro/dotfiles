@@ -261,6 +261,9 @@ Detalle: [TESTING.md](TESTING.md).
 | `make ai-cursor-check` | No | No | Tras materializar MCP en HOME |
 | `make agent-validate` | No | No | Gate dotfiles post-BUILD (read-only) |
 | `make agent-validate-report` | No | No | Gate + informe en `build/agent-validation/latest.md` |
+| `dotfiles-apply` | No | No | Preview Chezmoi: `diff` + `status` (default seguro) |
+| `dotfiles-apply --apply` | Sí | Sí | Apply interactivo (confirmar escribiendo `APPLY`) |
+| `dotfiles-apply --apply --yes` | Sí | Sí | Apply no interactivo — solo humano/CI explícito |
 | `make agent-validate-changed` | No | No | Solo archivos cambiados (local; sin OSV online) |
 | `make agent-validate-audit` | No | No | Auditoría full-repo estricta (lint + security) |
 | `SECURITY_ONLINE=1 make agent-validate-changed` | No | Sí | Cierre humano con escaneo OSV estricto |

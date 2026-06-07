@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+# Safe Chezmoi preview/apply wrapper for dotfiles (default: read-only preview).
+set -euo pipefail
+
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+CHEZMOI_BIN="${CHEZMOI:-chezmoi}"
+MODE="preview"
+CONFIRM_YES=false
+TARGET_PATHS=()
+
+usage() {
+	cat <<'EOF'
+Usage: dotfiles-apply [options] [paths...]
+
+Safe Chezmoi wrapper for the dotfiles repo. Default mode is read-only preview.
+
+Options:
+  --check, --dry-run   Preview only (same as default; never applies)
+  --apply              Apply changes (requires confirmation or --yes)
+  --yes                Skip interactive confirmation (use with --apply only)
+  -h, --help           Show this help
+
+Examples:
+  dotfiles-apply
+  dotfiles-apply --check
+  dotfiles-apply --check ~/.zshrc
+  dotfiles-apply --apply
+  dotfiles-apply --apply --yes
+  dotfiles-apply --apply ~/.zshrc
+
+Environment:
+  DOTFILES_DIR   Path to dotfiles checkout (default: $HOME/dotfiles)
+  CHEZMOI        Chezmoi binary (default: chezmoi)
+EOF
+}
+
+parse_args() {
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+		--check | --dry-run)
+			MODE="preview"
+			shift
+			;;
+		--apply)
+			MODE="apply"
+			shift
+			;;
+		--yes)
+			CONFIRM_YES=true
+			shift
+			;;
+		-h | --help)
+			usage
+			exit 0
+			;;
+		--)
+			shift
+			TARGET_PATHS+=("$@")
+			return 0
+			;;
+		-*)
+			echo "ERROR: unknown option: $1" >&2
+			usage >&2
+			exit 1
+			;;
+		*)
+			TARGET_PATHS+=("$1")
+			shift
+			;;
+		esac
+	done
+}
+
+validate_dotfiles_dir() {
+	if [[ ! -d "${DOTFILES_DIR}" ]]; then
+		echo "ERROR: dotfiles directory not found: ${DOTFILES_DIR}" >&2
+		exit 1
+	fi
+	if [[ ! -f "${DOTFILES_DIR}/Makefile" && ! -f "${DOTFILES_DIR}/.chezmoi.toml" && ! -f "${DOTFILES_DIR}/.chezmoiroot" ]]; then
+		echo "ERROR: not a dotfiles checkout (missing Makefile, .chezmoi.toml, or .chezmoiroot): ${DOTFILES_DIR}" >&2
+		exit 1
+	fi
+}
+
+validate_chezmoi() {
+	if ! command -v "${CHEZMOI_BIN}" >/dev/null 2>&1; then
+		echo "ERROR: chezmoi not found: ${CHEZMOI_BIN}" >&2
+		exit 1
+	fi
+}
+
+print_header() {
+	printf '==> dotfiles-apply\n'
+	printf '    source: %s\n' "${DOTFILES_DIR}"
+	if [[ "${MODE}" == "apply" ]]; then
+		printf '    mode:   apply (will mutate HOME)\n'
+	else
+		printf '    mode:   preview (read-only)\n'
+	fi
+	if ((${#TARGET_PATHS[@]} > 0)); then
+		printf '    paths:  %s\n' "${TARGET_PATHS[*]}"
+	fi
+}
+
+run_chezmoi() {
+	local -a cmd=("${CHEZMOI_BIN}" "--source=${DOTFILES_DIR}")
+	cmd+=("$@")
+	printf '==> %q ' "${cmd[@]}"
+	printf '\n'
+	"${cmd[@]}"
+}
+
+confirm_apply() {
+	local response
+	if [[ "${CONFIRM_YES}" == "true" ]]; then
+		return 0
+	fi
+	printf 'Type APPLY to run chezmoi apply: ' >&2
+	if ! read -r response; then
+		printf 'Aborted: no changes applied.\n' >&2
+		exit 130
+	fi
+	if [[ "${response}" != "APPLY" ]]; then
+		printf 'Aborted: confirmation did not match APPLY; no changes applied.\n' >&2
+		exit 1
+	fi
+}
+
+run_preview() {
+	print_header
+	run_chezmoi diff "${TARGET_PATHS[@]}"
+	run_chezmoi status "${TARGET_PATHS[@]}"
+	printf '\n'
+	printf 'Preview only — no changes applied.\n'
+	printf 'To apply: dotfiles-apply --apply\n'
+	printf 'To apply without prompt: dotfiles-apply --apply --yes\n'
+}
+
+run_apply() {
+	print_header
+	confirm_apply
+	run_chezmoi apply "${TARGET_PATHS[@]}"
+	printf '\n'
+	printf 'Chezmoi apply completed.\n'
+}
+
+main() {
+	parse_args "$@"
+	validate_dotfiles_dir
+	validate_chezmoi
+	if [[ "${MODE}" == "apply" ]]; then
+		run_apply
+	else
+		run_preview
+	fi
+}
+
+main "$@"
