@@ -11,7 +11,7 @@ Referencia corta por escenario. Detalle en [OPERATIONS.md](OPERATIONS.md), [CHEZ
 | **Descubrimiento** | `make help` | Índice CLI de targets por riesgo (read-only vs humano/mutante) |
 | **Bootstrap** | `make install*`, `make deps-*` | Paquetes y opt-ins en máquina nueva |
 | **Materialización** | `chezmoi status` / `diff` / apply acotado | Publica plantillas y secretos en HOME |
-| **Mantenimiento** | `make update`, checks read-only | Sistema, npm, imágenes MCP — **no** sustituye Chezmoi |
+| **Mantenimiento** | `dotfiles-update`, checks read-only | Sistema, npm, imágenes MCP — **no** sustituye Chezmoi |
 
 **Regla principal:** tras `git pull` o merge, revisa drift (`make chezmoi-drift-report`, `chezmoi status`/`diff`) y aplica **solo los paths que el reporte indique**. **`chezmoi apply` global no es el flujo normal** del día a día.
 
@@ -44,19 +44,18 @@ source ~/.zshrc
 ## 3. Día normal — casa
 
 ```bash
-cd ~/dotfiles
-git pull
+cd ~/dotfiles && git pull
 make chezmoi-drift-report
 chezmoi --source="$HOME/dotfiles" status
 chezmoi --source="$HOME/dotfiles" diff
 # apply acotado solo si el reporte o diff lo indican (ver §5–6)
 source ~/.zshrc                 # si cambió PATH tras apply
 make update-check
-make update                     # humano: muta sistema, puede usar red
+dotfiles-update                 # humano: muta sistema, puede usar red
 ```
 
 - Si materializaste MCP/Codex/launchers: **`make ai-cursor-check`**.
-- **`make update`:** humano; APT/sudo, npm, Docker pull, WinGet en otra pestaña.
+- **`dotfiles-update`:** humano; APT/sudo, npm, Docker pull, WinGet en otra pestaña. Desde el repo: `make update`.
 
 ---
 
@@ -221,7 +220,7 @@ make update-ai-skills DRY_RUN=1             # agente: previsualizar refresh del 
 | MCP | `make mcp-launcher-contract-check`, `make ai-mcp-governance` |
 | GitNexus docs/aliases | `bats tests/bats/zsh/gitnexus_aliases.bats`, `make gitnexus-status` |
 | Skills | `make validate-skills-structure` |
-| General | `make agent-validate-changed` (local); `SECURITY_ONLINE=1 make agent-validate-changed` antes de cerrar si quieres OSV estricto |
+| General | `make agent-validate` (gate dotfiles); `make agent-validate-changed` (solo cambios); `SECURITY_ONLINE=1` para OSV estricto |
 
 Readiness agregado (no sustituye tests focalizados): `make ai-doctor`.
 
@@ -260,7 +259,15 @@ Detalle: [TESTING.md](TESTING.md).
 | `make test-bats-ci` | No | No | Paridad CI / pre-PR |
 | `make ai-doctor` | No | No | Readiness agregado pre-implementación |
 | `make ai-cursor-check` | No | No | Tras materializar MCP en HOME |
-| `make agent-validate-changed` | No | No | Cierre de rama con cambios (local; sin OSV online) |
+| `make agent-validate` | No | No | Gate dotfiles post-BUILD (read-only) |
+| `make agent-validate-report` | No | No | Gate + informe en `build/agent-validation/latest.md` |
+| `dotfiles-apply` | No | No | Preview Chezmoi: `diff` + `status` (default seguro) |
+| `dotfiles-apply --apply` | Sí | Sí | Apply interactivo (confirmar escribiendo `APPLY`) |
+| `dotfiles-apply --apply --yes` | Sí | Sí | Apply no interactivo — solo humano/CI explícito |
+| `scripts/treegen.sh --check .` | No | No | Comprobar drift de `STRUCTURE.md` sin escribir |
+| `make install DRY_RUN=1` | No | No | Simular instalación APT (ver [SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md)) |
+| `make agent-validate-changed` | No | No | Solo archivos cambiados (local; sin OSV online) |
+| `make agent-validate-audit` | No | No | Auditoría full-repo estricta (lint + security) |
 | `SECURITY_ONLINE=1 make agent-validate-changed` | No | Sí | Cierre humano con escaneo OSV estricto |
 
 ---

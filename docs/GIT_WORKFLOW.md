@@ -10,7 +10,7 @@ Esta documentación describe la nueva política de ramas y workflow de Git imple
 |------|-----------|--------------|
 | **`main`** | Producción – solo código estable, testeado y listo para deploy | _Nunca se trabaja directamente aquí_<br>**Rama principal estándar en todos los proyectos** |
 | **`dev`**  | Integración continua – donde confluyen todas las _features_ | Debe ser *siempre* integrable<br>(tests verdes) |
-| **`feature/*`** | Trabajo diario – una rama por funcionalidad, vida corta | Se elimina tras fusionarse en `dev` |
+| **`feature/*`** | Trabajo diario – una rama por funcionalidad, vida corta | Se archiva tras fusionarse en `dev`, salvo policy local |
 | **Tags (`vX.Y.Z`)** | Versión inmutable de lo que hay en `main` | Se crean **solo** después de un release |
 | **`hotfix/*`** (opcional) | Parche crítico sobre `main` | Una vez aceptado, merge a `main` y `dev` |
 
@@ -21,23 +21,60 @@ Esta documentación describe la nueva política de ramas y workflow de Git imple
 3. **Integrar**: `git feat <nombre>` (integra en `dev`)
 4. **Release**: `git rel [<versión>]` (publica `dev` → `main`)
 
+## Git Flow Policy
+
+`git feat` and `git rel` are the **recommended** integration commands. They read
+an optional `.git-flow-policy.env` from the repository root.
+
+See:
+- `docs/GIT_FLOW_POLICY.md`
+- `docs/examples/git-flow-policy.env`
+
+Without `.git-flow-policy.env`, the legacy local behavior is preserved. PR modes
+(`pr`, `pr_auto`, `pr_immediate`) are configurable per destination branch.
+Merge strategies apply to `pr_auto` and `pr_immediate`. Use
+`git feat --dry-run` and `git rel --dry-run` to preview actions without
+mutating the repository.
+
+### Dotfiles (este repo)
+
+El repo dotfiles activa integración local rápida en feature → dev y PR con
+auto-merge en dev → main:
+
+- `git feat` hace merge local feature → `dev` tras `make agent-validate`
+- `git rel` crea PR dev → `main` con auto-merge (`pr_auto`) tras
+  `make agent-validate-full`, sujeto a checks de GitHub
+- No usa `pr_immediate` por defecto
+- Previsualiza con `--dry-run` antes del primer release en un ciclo
+
+Para cambiar temporalmente el comportamiento, edita `.git-flow-policy.env`.
+Ver `docs/GIT_FLOW_POLICY.md`.
+
+### `git pr` (legacy)
+
+`git pr` (`scripts/git_pr.sh`) sigue disponible como comando histórico standalone
+para PR feature → dev con título/descripción enriquecidos. **No lee policy** y
+no sustituye a `git feat`. El flujo recomendado es `git feat` con policy.
+
 ## 🛠️ Scripts Disponibles
 
 ### `scripts/git_feat.sh`
-Integra una rama feature en `dev` y la archiva.
+Integra una rama feature en `dev` y la archiva por defecto.
 
 **Uso:**
 ```bash
-git feat <nombre-feature>
+git feat [nombre-feature]
 ```
 
 **Funcionalidades:**
 - ✅ Valida que estés en un repositorio Git
 - ✅ Verifica working directory limpio
+- ✅ Puede usar la rama feature actual si no pasas argumento
 - ✅ Detecta automáticamente si la rama tiene prefijo `feature/`
 - ✅ Verifica conflictos potenciales
 - ✅ Hace merge de feature → dev
 - ✅ Archiva la rama feature como `archive/feature/nombre`
+- ✅ Puede preservar la rama feature con `DELETE_FEATURE_BRANCH=false`
 - ✅ Elimina la rama original del remoto
 
 ### `scripts/git_rel.sh`
@@ -144,7 +181,10 @@ git start-feature feature/adding-dbt
 
 ### Integrar feature en dev
 ```bash
-# Integrar feature (automáticamente la archiva)
+# Desde feature/adding-dbt, usa la rama actual
+git feat
+
+# Integrar feature (la archiva por defecto)
 git feat adding-dbt
 ```
 
@@ -382,4 +422,4 @@ Los tests se ejecutan en el mismo orden que en tu pipeline de CI/CD:
 
 ---
 
-**¡Disfruta de un flujo Git limpio y predecible! 🚀** 
+**¡Disfruta de un flujo Git limpio y predecible! 🚀**

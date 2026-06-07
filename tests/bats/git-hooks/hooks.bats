@@ -93,6 +93,33 @@ copy_hook_entrypoints() {
 	[[ -z "$(git -C "$repo" diff --cached --name-only)" ]]
 }
 
+@test "treegen --check passes when STRUCTURE.md is up to date" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	init_repo "$repo"
+	echo "seed" >"$repo/STRUCTURE.md"
+
+	"$TREEGEN" --no-stage "$repo" >/dev/null
+
+	run "$TREEGEN" --check "$repo"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"OK:"* ]]
+}
+
+@test "treegen --check fails on drift without modifying STRUCTURE.md" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local before_hash
+	init_repo "$repo"
+	echo "seed" >"$repo/STRUCTURE.md"
+	before_hash="$(git -C "$repo" hash-object STRUCTURE.md)"
+
+	echo "new-file" >"$repo/drift-marker.txt"
+
+	run "$TREEGEN" --check "$repo"
+	[[ "$status" -eq 1 ]]
+	[[ "$output" == *"DRIFT:"* ]]
+	[[ "$before_hash" == "$(git -C "$repo" hash-object STRUCTURE.md)" ]]
+}
+
 @test "treegen is idempotent when the tree does not change" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	local first_hash first_mtime
@@ -235,7 +262,9 @@ EOF
 	run env GNX_TRACE="$trace" bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"MCP/index lock is active"* ]]
-	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md"* ]]
+	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md --skip-skills"* ]]
+	local typo="gnanalyze""-here"
+	[[ "$output" != *"$typo"* ]]
 	[[ ! -f "$trace" ]]
 }
 
@@ -302,6 +331,7 @@ EOF
 	[[ "$output" == *"refresh failed with exit code 1"* ]]
 	[[ "$output" == *"commit kept"* ]]
 	grep -q -- '--force --skip-agents-md' "$trace"
+	grep -q -- '--skip-skills' "$trace"
 }
 
 @test "post-commit timeout remains successful with a warning" {
@@ -327,7 +357,7 @@ EOF
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"timed out after 30s"* ]]
 	[[ "$output" == *"commit kept"* ]]
-	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md"* ]]
+	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md --skip-skills"* ]]
 	grep -q '^30s ' "$trace"
 }
 
@@ -366,7 +396,7 @@ EOF
 		bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 
 	[[ "$status" -eq 0 ]]
-	grep -q '^analyze \. --force --skip-agents-md:' "$trace"
+	grep -q '^analyze \. --force --skip-agents-md --skip-skills:' "$trace"
 	grep -q 'node-runtime\..*/node:v24.16.0' "$trace"
 }
 
@@ -427,6 +457,18 @@ EOF
 @test "GitNexus hook policy documents post-commit best-effort refresh" {
 	local policy="${DOTFILES_DIR}/docs/GITNEXUS_OPERATIONAL_POLICY.md"
 	grep -q 'gnx-analyze-here --force --skip-agents-md' "$policy"
+	grep -q 'gnx-analyze-here --skip-agents-md' "$policy"
 	grep -q '30 segundos' "$policy"
 	grep -q 'MCP/procesos GitNexus' "$policy"
+}
+
+@test "GitNexus hook docs and scripts do not mention gnanalyze typo" {
+	local typo="gnanalyze""-here"
+	run grep -R "$typo" \
+		"${DOTFILES_DIR}/scripts/hooks" \
+		"${DOTFILES_DIR}/docs/GITNEXUS_OPERATIONAL_POLICY.md" \
+		"${DOTFILES_DIR}/docs/INSTALL.md" \
+		"${DOTFILES_DIR}/docs/OPERATIONS_CHEATSHEET.md" \
+		"${DOTFILES_DIR}/tests/bats/git-hooks"
+	[[ "$status" -eq 1 ]]
 }

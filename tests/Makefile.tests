@@ -45,10 +45,10 @@ YELLOW := \033[1;33m
 BLUE := \033[0;34m
 NC := \033[0m
 
-.PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-prompts bats-skills bats-tmux bats-gitnexus bats-git-hooks
+.PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-git-flow bats-prompts bats-skills bats-tmux bats-gitnexus bats-git-hooks
 .PHONY: test-ci test-bats-ci bats-docs test-commands generate-commands validate-commands materialize-commands validate-skills-structure
-.PHONY: deps-check deps-install deps-actions bats-system bats-zsh bats-gitnexus test-deps-check
-.PHONY: quality-check security-check agent-validate agent-validate-changed ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
+.PHONY: deps-check deps-install deps-actions bats-system bats-agent bats-zsh bats-gitnexus test-deps-check
+.PHONY: quality-check security-check agent-validate agent-validate-audit agent-validate-full agent-validate-changed agent-validate-report ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
 
 help:
 	@echo "Dotfiles — make targets"
@@ -68,7 +68,12 @@ help:
 	@echo "  make ai-cursor-check             Check Cursor/MCP readiness in HOME"
 	@echo "  make update-check                Read-only update/runtime diagnostics"
 	@echo "  make ai-doctor                   Read-only AI readiness checks"
-	@echo "  make agent-validate-changed      Validate changed files for agents (local; SECURITY_ONLINE=1 for OSV)"
+	@echo "  make agent-validate              Dotfiles agent gate (read-only; skills, MCP, docs, changed files)"
+	@echo "  make agent-validate-changed      Validate changed files only (local; SECURITY_ONLINE=1 for OSV)"
+	@echo "  make agent-validate-audit        Full-repo quality + security audit (strict)"
+	@echo "  make agent-validate-full         agent-validate + agent-validate-audit"
+	@echo "  make agent-validate-report       Run agent-validate and write build/agent-validation/latest.md"
+	@echo "  make bats-agent                  Agent-first regression index (meta-tests)"
 	@echo "  make deps-check                  Check declarative system dependencies"
 	@echo "  make deps-actions                Show actions for missing dependencies"
 	@echo "  make test-chezmoi                Chezmoi smoke tests"
@@ -95,7 +100,9 @@ help:
 	@echo "  make test-deps-check             Fail-fast check for bats/shellcheck/shfmt/zsh"
 	@echo "  make quality-check               Strict quality audit (shellcheck, shfmt, yamllint, actionlint)"
 	@echo "  make security-check              gitleaks + osv-scanner"
-	@echo "  make agent-validate              quality-check + security-check"
+	@echo "  make agent-validate              Dotfiles operational gate (see scripts/agent-validate-dotfiles.sh)"
+	@echo "  make agent-validate-audit        quality-check + security-check"
+	@echo "  make agent-validate-full         agent-validate + agent-validate-audit"
 	@echo "  make fmt-shell                   Format shell scripts with shfmt"
 	@echo "  make test-install                Install test dependencies (may use network)"
 	@echo "  make generate-commands           Generate command artifacts"
@@ -108,7 +115,7 @@ help:
 # ============================================
 
 test-install:
-	@echo "$(BLUE)==>$NC Installing test dependencies..."
+	@echo "$(BLUE)==>$(NC) Installing test dependencies..."
 	@command -v apt-get &>/dev/null && { \
 		sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck zsh 2>/dev/null || true; \
 	} || true
@@ -117,21 +124,21 @@ test-install:
 	} || true
 	@if ! command -v shfmt &>/dev/null; then \
 		if command -v go &>/dev/null; then \
-			echo "$(BLUE)==>$NC Installing shfmt via Go..."; \
+			echo "$(BLUE)==>$(NC) Installing shfmt via Go..."; \
 			go install mvdan.cc/sh/v3/cmd/shfmt@latest; \
 		else \
-			echo "$(YELLOW)==>$NC shfmt not found. Install via:"; \
+			echo "$(YELLOW)==>$(NC) shfmt not found. Install via:"; \
 			echo "  - apt: sudo apt install shfmt"; \
 			echo "  - go:  go install mvdan.cc/sh/v3/cmd/shfmt@latest"; \
 		fi \
 	fi
 	@if [ ! -d "/usr/share/bats" ] && [ ! -d "$$HOME/.local/share/bats" ]; then \
-		echo "$(BLUE)==>$NC Installing bats-core..."; \
+		echo "$(BLUE)==>$(NC) Installing bats-core..."; \
 		git clone -q https://github.com/bats-core/bats-core.git /tmp/bats-core 2>/dev/null || true; \
 		cd /tmp/bats-core && ./install.sh $$HOME/.local 2>/dev/null || true; \
 		rm -rf /tmp/bats-core; \
 	fi
-	@echo "$(GREEN)==>$NC Test dependencies ready"
+	@echo "$(GREEN)==>$(NC) Test dependencies ready"
 
 # ============================================
 # Preflight: fail-fast for required test/lint deps
@@ -164,19 +171,33 @@ test-deps-check:
 
 test-lint: lint-shellcheck lint-zsh lint-shfmt lint-yaml
 	@echo ""
-	@echo "$(GREEN)==>$NC Lint completed"
+	@echo "$(GREEN)==>$(NC) Lint completed"
 
 quality-check: lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions
 	@echo ""
-	@echo "$(GREEN)==>$NC Quality checks completed"
+	@echo "$(GREEN)==>$(NC) Quality checks completed"
 
 security-check: security-gitleaks security-osv
 	@echo ""
-	@echo "$(GREEN)==>$NC Security checks completed"
+	@echo "$(GREEN)==>$(NC) Security checks completed"
 
-agent-validate: quality-check security-check
+agent-validate-audit: quality-check security-check
 	@echo ""
-	@echo "$(GREEN)==>$NC Agent validation completed"
+	@echo "$(GREEN)==>$(NC) Agent validation audit completed"
+
+agent-validate:
+	@SECURITY_ONLINE="$(SECURITY_ONLINE)" AGENT_VALIDATE_VERBOSE="$(AGENT_VALIDATE_VERBOSE)" \
+		bash $(DOTFILES_DIR)/scripts/agent-validate-dotfiles.sh
+
+agent-validate-full: agent-validate agent-validate-audit
+	@echo ""
+	@echo "$(GREEN)==>$(NC) Full agent validation completed"
+
+agent-validate-report:
+	@AGENT_VALIDATE_CMD="$(AGENT_VALIDATE_CMD)" \
+		AGENT_VALIDATE_REPORT_PATH="$(AGENT_VALIDATE_REPORT_PATH)" \
+		AGENT_VALIDATE_REPORT_DIR="$(AGENT_VALIDATE_REPORT_DIR)" \
+		bash $(DOTFILES_DIR)/scripts/agent-validate-report.sh
 
 agent-validate-changed:
 	@SECURITY_ONLINE="$(SECURITY_ONLINE)" bash $(DOTFILES_DIR)/scripts/agent-validate-changed.sh
@@ -223,9 +244,9 @@ lint-shellcheck:
 		fi; \
 	done; \
 	if [ $$shellcheck_warnings -gt 0 ]; then \
-		echo "$(YELLOW)==>$NC shellcheck: $$shellcheck_warnings file(s) with warnings"; \
+		echo "$(YELLOW)==>$(NC) shellcheck: $$shellcheck_warnings file(s) with warnings"; \
 	else \
-		echo "$(GREEN)==>$NC shellcheck passed"; \
+		echo "$(GREEN)==>$(NC) shellcheck passed"; \
 	fi
 
 lint-zsh:
@@ -258,9 +279,9 @@ lint-shfmt:
 		fi; \
 	done; \
 	if [ $$unformatted -gt 0 ]; then \
-		echo "$(YELLOW)==>$NC shfmt: $$unformatted file(s) differ. Run: make fmt-shell"; \
+		echo "$(YELLOW)==>$(NC) shfmt: $$unformatted file(s) differ. Run: make fmt-shell"; \
 	else \
-		echo "$(GREEN)==>$NC shfmt passed"; \
+		echo "$(GREEN)==>$(NC) shfmt passed"; \
 	fi
 
 lint-yaml:
@@ -272,23 +293,23 @@ lint-yaml:
 		exit 1; \
 	fi
 	@if [ -z "$(YAML_FILES)" ]; then \
-		echo "$(YELLOW)==>$NC yamllint skipped: no YAML files found"; \
+		echo "$(YELLOW)==>$(NC) yamllint skipped: no YAML files found"; \
 	else \
 		yamllint -s $(YAML_FILES); \
-		echo "$(GREEN)==>$NC yamllint passed"; \
+		echo "$(GREEN)==>$(NC) yamllint passed"; \
 	fi
 
 lint-actions:
 	@echo "$(BLUE)==>$(NC) Running actionlint..."
 	@if [ -z "$(GITHUB_WORKFLOWS)" ]; then \
-		echo "$(YELLOW)==>$NC actionlint skipped: no GitHub Actions workflows found"; \
+		echo "$(YELLOW)==>$(NC) actionlint skipped: no GitHub Actions workflows found"; \
 	elif ! command -v actionlint >/dev/null 2>&1; then \
 		echo "Missing validation dependency: actionlint"; \
 		echo "Run: make install-agent-tools"; \
 		exit 1; \
 	else \
 		actionlint -shellcheck= $(GITHUB_WORKFLOWS); \
-		echo "$(GREEN)==>$NC actionlint passed"; \
+		echo "$(GREEN)==>$(NC) actionlint passed"; \
 	fi
 
 security-gitleaks:
@@ -305,20 +326,20 @@ security-gitleaks:
 security-osv:
 	@echo "$(BLUE)==>$(NC) Running osv-scanner..."
 	@if [ -z "$(OSV_INPUTS)" ]; then \
-		echo "$(YELLOW)==>$NC osv-scanner skipped: no supported manifests or lockfiles found"; \
+		echo "$(YELLOW)==>$(NC) osv-scanner skipped: no supported manifests or lockfiles found"; \
 	elif ! command -v osv-scanner >/dev/null 2>&1; then \
 		echo "Missing security dependency: osv-scanner"; \
 		echo "Run: make install-agent-tools"; \
 		exit 1; \
 	else \
 		osv-scanner scan source -r "$(DOTFILES_DIR)"; \
-		echo "$(GREEN)==>$NC osv-scanner passed"; \
+		echo "$(GREEN)==>$(NC) osv-scanner passed"; \
 	fi
 
 fmt-shell:
-	@echo "$(BLUE)==>$NC Formatting shell scripts with shfmt..."
+	@echo "$(BLUE)==>$(NC) Formatting shell scripts with shfmt..."
 	@if ! command -v shfmt &>/dev/null; then \
-		echo "$(RED)==>$NC shfmt not installed. Run: make test-install"; \
+		echo "$(RED)==>$(NC) shfmt not installed. Run: make test-install"; \
 		exit 1; \
 	fi
 	@formatted=0; \
@@ -330,56 +351,56 @@ fmt-shell:
 		fi; \
 	done; \
 	if [ $$formatted -gt 0 ]; then \
-		echo "$(GREEN)==>$NC Formatted $$formatted file(s)"; \
+		echo "$(GREEN)==>$(NC) Formatted $$formatted file(s)"; \
 	else \
-		echo "$(GREEN)==>$NC All files already formatted"; \
+		echo "$(GREEN)==>$(NC) All files already formatted"; \
 	fi
 
 # ============================================
 # Bats tests (human-readable output)
 # ============================================
 
-test-bats: test-deps-check bats-helpers bats-mcp bats-chezmoi bats-skills bats-commands bats-git-ai bats-git-hooks bats-prompts bats-system
+test-bats: test-deps-check bats-helpers bats-mcp bats-chezmoi bats-skills bats-commands bats-git-ai bats-git-flow bats-git-hooks bats-prompts bats-system
 	@echo ""
-	@echo "$(GREEN)==>$NC Bats tests passed"
+	@echo "$(GREEN)==>$(NC) Bats tests passed"
 
-test-bats-fast: test-deps-check bats-helpers bats-mcp bats-skills bats-commands bats-git-ai bats-git-hooks bats-prompts bats-tmux bats-system
+test-bats-fast: test-deps-check bats-helpers bats-mcp bats-skills bats-commands bats-git-ai bats-git-flow bats-git-hooks bats-prompts bats-tmux bats-system
 	@echo ""
-	@echo "$(GREEN)==>$NC Fast bats tests passed"
+	@echo "$(GREEN)==>$(NC) Fast bats tests passed"
 
 bats-helpers:
-	@echo "$(BLUE)==>$NC Checking bats helpers..."
+	@echo "$(BLUE)==>$(NC) Checking bats helpers..."
 	@if [ ! -f "$(BATS_HELPERS)" ]; then \
-		echo "$(RED)==>$NC Helpers not found at $(BATS_HELPERS)"; \
+		echo "$(RED)==>$(NC) Helpers not found at $(BATS_HELPERS)"; \
 		exit 1; \
 	fi
-	@echo "$(GREEN)==>$NC Helpers OK"
+	@echo "$(GREEN)==>$(NC) Helpers OK"
 
 bats-mcp: bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance
-	@echo "$(GREEN)==>$NC MCP tests passed"
+	@echo "$(GREEN)==>$(NC) MCP tests passed"
 
 bats-filesystem:
-	@echo "$(BLUE)==>$NC Running filesystem-launcher tests..."
+	@echo "$(BLUE)==>$(NC) Running filesystem-launcher tests..."
 	@$(call run_bats,$(BATS_DIR)/mcp/filesystem-launcher.bats)
 
 bats-chezmoi-mcp-launchers:
-	@echo "$(BLUE)==>$NC Running chezmoi MCP launcher template tests..."
+	@echo "$(BLUE)==>$(NC) Running chezmoi MCP launcher template tests..."
 	@$(call run_bats,$(BATS_DIR)/mcp/chezmoi-mcp-launcher-templates.bats)
 
 bats-mcp-launcher-contract:
-	@echo "$(BLUE)==>$NC Running MCP launcher contract tests..."
+	@echo "$(BLUE)==>$(NC) Running MCP launcher contract tests..."
 	@$(call run_bats,$(BATS_DIR)/mcp/mcp-launcher-contract-check.bats)
 
 bats-git:
-	@echo "$(BLUE)==>$NC Running git-launcher tests..."
+	@echo "$(BLUE)==>$(NC) Running git-launcher tests..."
 	@$(call run_bats,$(BATS_DIR)/mcp/git-launcher.bats)
 
 bats-governance:
-	@echo "$(BLUE)==>$NC Running validate-governance tests..."
+	@echo "$(BLUE)==>$(NC) Running validate-governance tests..."
 	@$(call run_bats,$(BATS_DIR)/mcp/validate-governance.bats)
 
 bats-chezmoi:
-	@echo "$(BLUE)==>$NC Running chezmoi tests..."
+	@echo "$(BLUE)==>$(NC) Running chezmoi tests..."
 	@$(call run_bats,$(BATS_DIR)/chezmoi/smoke.bats)
 	@$(call run_bats,$(BATS_DIR)/chezmoi/drift-report.bats)
 	@$(call run_bats,$(BATS_DIR)/chezmoi/codex-config-governance.bats)
@@ -389,29 +410,36 @@ bats-chezmoi:
 	@$(call run_bats,$(BATS_DIR)/chezmoi/ai-assets-warnings.bats)
 
 bats-skills:
-	@echo "$(BLUE)==>$NC Running canonical skills tests..."
+	@echo "$(BLUE)==>$(NC) Running canonical skills tests..."
 	@$(call run_bats,$(BATS_DIR)/skills/canonical-skills.bats)
-	@echo "$(BLUE)==>$NC Running validate-skills-structure tests..."
+	@echo "$(BLUE)==>$(NC) Running validate-skills-structure tests..."
 	@$(call run_bats,$(BATS_DIR)/skills/validate-skills-structure.bats)
 
 bats-commands:
-	@echo "$(BLUE)==>$NC Running commands tests..."
+	@echo "$(BLUE)==>$(NC) Running commands tests..."
 	@$(call run_bats,$(BATS_DIR)/commands/validate-commands.bats)
 
 bats-git-ai:
-	@echo "$(BLUE)==>$NC Running git-ai-author tests..."
+	@echo "$(BLUE)==>$(NC) Running git-ai-author tests..."
 	@$(call run_bats,$(BATS_DIR)/git-ai-author.bats)
 
+bats-git-flow:
+	@echo "$(BLUE)==>$(NC) Running Git flow policy tests..."
+	@$(call run_bats,$(BATS_DIR)/git-flow/policy.bats)
+	@$(call run_bats,$(BATS_DIR)/git-flow/feat-policy.bats)
+	@$(call run_bats,$(BATS_DIR)/git-flow/rel-policy.bats)
+	@$(call run_bats,$(BATS_DIR)/git-flow/dotfiles-policy.bats)
+
 bats-prompts:
-	@echo "$(BLUE)==>$NC Running prompt launcher tests..."
+	@echo "$(BLUE)==>$(NC) Running prompt launcher tests..."
 	@$(call run_bats,$(BATS_DIR)/prompts/prompt-launchers.bats)
 
 bats-tmux:
-	@echo "$(BLUE)==>$NC Running tmux launcher tests..."
+	@echo "$(BLUE)==>$(NC) Running tmux launcher tests..."
 	@$(call run_bats,$(BATS_DIR)/tmux/tmux-dotfiles.bats)
 
 bats-system: bats-zsh
-	@echo "$(BLUE)==>$NC Running system dependency tests..."
+	@echo "$(BLUE)==>$(NC) Running system dependency tests..."
 	@$(call run_bats,$(BATS_DIR)/system/system-deps.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-dotfiles.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-uv.bats)
@@ -421,6 +449,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/install-azure-cli.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-mcp-github.bats)
 	@$(call run_bats,$(BATS_DIR)/system/update-workflow.bats)
+	@$(call run_bats,$(BATS_DIR)/system/update-node-runtime.bats)
 	@$(call run_bats,$(BATS_DIR)/system/update-governance.bats)
 	@$(call run_bats,$(BATS_DIR)/system/docker-desktop-credentials.bats)
 	@$(call run_bats,$(BATS_DIR)/system/excalidraw-docker.bats)
@@ -430,19 +459,31 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/mcp-manifest.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-render-drift.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-agent-skills.bats)
+	@$(call run_bats,$(BATS_DIR)/system/agent-validate-changed.bats)
+	@$(call run_bats,$(BATS_DIR)/system/agent-validate-dotfiles.bats)
+	@$(call run_bats,$(BATS_DIR)/system/agent-validate-report.bats)
+	@$(call run_bats,$(BATS_DIR)/system/dotfiles-apply.bats)
+	@$(call run_bats,$(BATS_DIR)/system/dotfiles-update.bats)
+	@$(call run_bats,$(BATS_DIR)/system/playwright-docker.bats)
 
 bats-gitnexus:
-	@echo "$(BLUE)==>$NC Running GitNexus operational status tests..."
+	@echo "$(BLUE)==>$(NC) Running GitNexus operational status tests..."
 	@$(call run_bats,$(BATS_DIR)/gitnexus/gitnexus-status.bats)
-	@echo "$(BLUE)==>$NC Running GitNexus alias tests..."
+	@echo "$(BLUE)==>$(NC) Running GitNexus dotfiles analyze policy tests..."
+	@$(call run_bats,$(BATS_DIR)/gitnexus/analyze-dotfiles-policy.bats)
+	@echo "$(BLUE)==>$(NC) Running GitNexus alias tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/gitnexus_aliases.bats)
 
 bats-git-hooks:
-	@echo "$(BLUE)==>$NC Running repository Git hook tests..."
+	@echo "$(BLUE)==>$(NC) Running repository Git hook tests..."
 	@$(call run_bats,$(BATS_DIR)/git-hooks/hooks.bats)
 
+bats-agent:
+	@echo "$(BLUE)==>$(NC) Running agent regression index..."
+	@$(call run_bats,$(BATS_DIR)/agent/regression.bats)
+
 bats-docs:
-	@echo "$(BLUE)==>$NC Running documentation contract tests..."
+	@echo "$(BLUE)==>$(NC) Running documentation contract tests..."
 	@$(call run_bats,$(BATS_DIR)/system/update-governance.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/make-help.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/operations-cheatsheet.bats)
@@ -452,15 +493,15 @@ bats-docs:
 	@$(call run_bats,$(BATS_DIR)/docs/gitnexus-human-refresh-procedure.bats)
 
 bats-zsh:
-	@echo "$(BLUE)==>$NC Running zsh stack RC symlink tests..."
+	@echo "$(BLUE)==>$(NC) Running zsh stack RC symlink tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/rc_symlinks.bats)
-	@echo "$(BLUE)==>$NC Running Oh My Zsh plugin list tests..."
+	@echo "$(BLUE)==>$(NC) Running Oh My Zsh plugin list tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/omz_plugins.bats)
-	@echo "$(BLUE)==>$NC Running zoxide module tests..."
+	@echo "$(BLUE)==>$(NC) Running zoxide module tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/zoxide.bats)
-	@echo "$(BLUE)==>$NC Running fzf module tests..."
+	@echo "$(BLUE)==>$(NC) Running fzf module tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/fzf.bats)
-	@echo "$(BLUE)==>$NC Running Powerlevel10k cache key tests..."
+	@echo "$(BLUE)==>$(NC) Running Powerlevel10k cache key tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/p10k_cache_keys.bats)
 
 # ============================================
@@ -469,9 +510,9 @@ bats-zsh:
 
 test-ci: test-lint test-bats-ci test-chezmoi
 	@echo ""
-	@echo "$(GREEN)==>$NC CI tests completed"
+	@echo "$(GREEN)==>$(NC) CI tests completed"
 
-test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance bats-chezmoi bats-skills bats-gitnexus bats-git-hooks bats-docs
+test-bats-ci: bats-helpers bats-filesystem bats-chezmoi-mcp-launchers bats-mcp-launcher-contract bats-git bats-governance bats-chezmoi bats-skills bats-git-flow bats-gitnexus bats-git-hooks bats-docs
 
 # ============================================
 # Combined tests
@@ -499,10 +540,10 @@ test-fast: test-deps-check test-lint test-bats-fast
 	@echo "========================================$(NC)"
 
 test-chezmoi: chezmoi-templates bats-chezmoi
-	@echo "$(GREEN)==>$NC Chezmoi smoke tests passed"
+	@echo "$(GREEN)==>$(NC) Chezmoi smoke tests passed"
 
 chezmoi-templates:
-	@echo "$(BLUE)==>$NC Validating MCP template syntax..."
+	@echo "$(BLUE)==>$(NC) Validating MCP template syntax..."
 	@$(call run_chezmoi_templates)
 
 # ============================================
@@ -515,7 +556,7 @@ define run_bats
 	elif [ -x "$(HOME)/.local/bin/bats" ]; then \
 		DOTFILES_DIR="$(DOTFILES_DIR)" $$HOME/.local/bin/bats $(1); \
 	else \
-		echo "$(RED)==>$NC bats not installed. Run: make test-install"; \
+		echo "$(RED)==>$(NC) bats not installed. Run: make test-install"; \
 		exit 1; \
 	fi
 endef
@@ -523,16 +564,16 @@ endef
 define run_bats_ci
 	@if command -v bats &>/dev/null; then \
 		DOTFILES_DIR="$(DOTFILES_DIR)" bats --timing --formatter junit $(1) 2>&1 || { \
-			echo "$(RED)==>$NC Test failed"; \
+			echo "$(RED)==>$(NC) Test failed"; \
 			exit 1; \
 		}; \
 	elif [ -x "$(HOME)/.local/bin/bats" ]; then \
 		DOTFILES_DIR="$(DOTFILES_DIR)" $$HOME/.local/bin/bats --timing --formatter junit $(1) 2>&1 || { \
-			echo "$(RED)==>$NC Test failed"; \
+			echo "$(RED)==>$(NC) Test failed"; \
 			exit 1; \
 		}; \
 	else \
-		echo "$(RED)==>$NC bats not installed. Run: make test-install"; \
+		echo "$(RED)==>$(NC) bats not installed. Run: make test-install"; \
 		exit 1; \
 	fi
 endef
@@ -560,40 +601,40 @@ endef
 # ============================================
 
 generate-commands:
-	@echo "$(BLUE)==>$NC Generating commands..."
+	@echo "$(BLUE)==>$(NC) Generating commands..."
 	@if [ -x "$(DOTFILES_DIR)/scripts/generate-commands.sh" ]; then \
 		$(DOTFILES_DIR)/scripts/generate-commands.sh; \
 	else \
-		echo "$(RED)==>$NC generate-commands.sh not found or not executable"; \
+		echo "$(RED)==>$(NC) generate-commands.sh not found or not executable"; \
 		exit 1; \
 	fi
 
 validate-commands:
-	@echo "$(BLUE)==>$NC Validating commands structure..."
+	@echo "$(BLUE)==>$(NC) Validating commands structure..."
 	@if [ -x "$(DOTFILES_DIR)/scripts/validate-commands-structure.sh" ]; then \
 		$(DOTFILES_DIR)/scripts/validate-commands-structure.sh; \
 	else \
-		echo "$(RED)==>$NC validate-commands-structure.sh not found or not executable"; \
+		echo "$(RED)==>$(NC) validate-commands-structure.sh not found or not executable"; \
 		exit 1; \
 	fi
 
 validate-skills-structure:
-	@echo "$(BLUE)==>$NC Validating skills structure..."
+	@echo "$(BLUE)==>$(NC) Validating skills structure..."
 	@if [ -x "$(DOTFILES_DIR)/scripts/validate-skills-structure.sh" ]; then \
 		$(DOTFILES_DIR)/scripts/validate-skills-structure.sh; \
 	else \
-		echo "$(RED)==>$NC validate-skills-structure.sh not found or not executable"; \
+		echo "$(RED)==>$(NC) validate-skills-structure.sh not found or not executable"; \
 		exit 1; \
 	fi
 
 materialize-commands:
-	@echo "$(BLUE)==>$NC Materializing commands..."
+	@echo "$(BLUE)==>$(NC) Materializing commands..."
 	@if [ -x "$(DOTFILES_DIR)/scripts/materialize-commands.sh" ]; then \
 		$(DOTFILES_DIR)/scripts/materialize-commands.sh; \
 	else \
-		echo "$(RED)==>$NC materialize-commands.sh not found or not executable"; \
+		echo "$(RED)==>$(NC) materialize-commands.sh not found or not executable"; \
 		exit 1; \
 	fi
 
 test-commands: bats-commands validate-commands
-	@echo "$(GREEN)==>$NC Commands tests passed"
+	@echo "$(GREEN)==>$(NC) Commands tests passed"

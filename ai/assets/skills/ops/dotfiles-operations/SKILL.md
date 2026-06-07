@@ -21,7 +21,7 @@ description: Guía operativa canónica para dotfiles en Ubuntu/WSL2. Úsala para
 |-------|-------|------------------|
 | Bootstrap | `make install*`, `make deps-*` | `dotfiles-install` skill |
 | Materialize HOME | `chezmoi status` / `diff` / `apply` | `chezmoi --source=$HOME/dotfiles apply` |
-| Maintain system/tools | `make update`, checks | `make update` then `source ~/.zshrc` if PATH changed; **not** instead of Chezmoi |
+| Maintain system/tools | `dotfiles-update`, checks | `dotfiles-update` then `source ~/.zshrc` if PATH changed; **not** instead of Chezmoi |
 
 ## `source` vs `apply`
 
@@ -30,7 +30,7 @@ description: Guía operativa canónica para dotfiles en Ubuntu/WSL2. Úsala para
 | `zshrc`, `aliases`, `zsh/*` | Edit under `~/dotfiles/` → **`source ~/.zshrc`** (HOME files are symlinks) |
 | `dot_*`, `secrets.sops.yaml`, Chezmoi-managed skills/commands | **`chezmoi --source=$HOME/dotfiles apply`** |
 | Encrypted secrets | **`sops secrets.sops.yaml`** → **`chezmoi apply -i scripts`** (regenerates env) |
-| Windows/WSL, APT, npm global, OMZ, MCP images | **`make update`** |
+| Windows/WSL, APT, npm global, OMZ, MCP images | **`dotfiles-update`** (or `make update` from the repo) |
 
 **Never:** edit `~/.config/mcp-secrets.env` by hand; **`sops -d` to stdout**; recommend **`rcup`**.
 

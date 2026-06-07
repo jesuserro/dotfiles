@@ -240,9 +240,13 @@ ejecutan scraping real ni hacen smoke tests contra internet.
 
 ---
 
-## Uso de `make update`
+## Uso de `dotfiles-update` y `make update`
 
-`make update` actualiza: WinGet en PowerShell, WSL con `wsl --update`, APT, npm global, OpenCode, OMZ, uv, imágenes Docker Excalidraw y runtime MCP.
+**Uso diario:** `dotfiles-update` (desde cualquier directorio; vive en `~/.local/bin` vía Chezmoi).
+
+**Uso interno:** `cd ~/dotfiles && make update`.
+
+Ambos ejecutan el mismo flujo: WinGet en PowerShell, WSL con `wsl --update`, APT, npm global, OpenCode, OMZ, uv, imágenes Docker Excalidraw y runtime MCP.
 
 **No hace:**
 
@@ -253,7 +257,7 @@ ejecutan scraping real ni hacen smoke tests contra internet.
 - Arreglar Docker MCP con Desktop cerrado
 - Rellenar `POSTGRES_DSN` vacío
 
-Tras `make update`, recarga la shell si cambió PATH: `source ~/.zshrc`. Si cambiaste plantillas o secretos en el repo, revisa drift y usa **apply acotado** (ver [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)), no apply global por defecto.
+Tras `dotfiles-update` (o `make update`), recarga la shell si cambió PATH: `source ~/.zshrc`. Si cambiaste plantillas o secretos en el repo, revisa drift y usa **apply acotado** (ver [OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)), no apply global por defecto.
 
 Ver [UPDATE.md](UPDATE.md).
 

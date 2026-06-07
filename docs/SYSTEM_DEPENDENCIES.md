@@ -165,7 +165,8 @@ What these cover:
 - `make ai-doctor`: read-only agent readiness, including dependency inventory, update readiness, AI/MCP checks, skills/commands validation, and a `gitleaks` working-tree secret scan.
 - `make quality-check`: `shellcheck`, `shfmt` in check mode, `yamllint`, and `actionlint -shellcheck=` when `.github/workflows/*.yml|*.yaml` exists. Inline workflow shell is not delegated to actionlint's ShellCheck integration because the repo already has a separate shell lint target and the release workflow embeds changelog text patterns that ShellCheck misparses.
 - `make security-check`: `gitleaks detect --no-git --redact` over the working tree and `osv-scanner scan source -r` when supported manifests/lockfiles exist.
-- `make agent-validate`: quality + security.
+- `make agent-validate`: dotfiles operational gate (`scripts/agent-validate-dotfiles.sh`).
+- `make agent-validate-audit`: quality + security (full-repo strict audit).
 
 Chezmoi templates are not passed raw to `shellcheck` or `shfmt`; those tools do not reliably parse Go template delimiters. The current shell validation covers real shell scripts, launchers and Bats tests. MCP/Chezmoi template syntax remains covered by the existing `chezmoi-templates`, `ai-mcp-render`, and `ai-mcp-drift` paths.
 

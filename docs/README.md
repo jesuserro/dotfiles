@@ -1,5 +1,14 @@
 # Documentación dotfiles
 
+## Agentes IA
+
+- **[AGENT_FIRST_SUMMARY.md](AGENT_FIRST_SUMMARY.md)** — Resumen operativo y checklist del bloque agent-first (BUILDs 1–10); punto de entrada sintético.
+- **[AGENT_WORKFLOW.md](AGENT_WORKFLOW.md)** — Contrato operativo para agentes en este repo (modos PLAN/BUILD/AUDIT, rutas sensibles, validación).
+- **[SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md)** — Convención `--check`, `--dry-run`, `DRY_RUN=1`, `--yes` y auditoría de comandos mutantes.
+- **[AI_REPO_MAP.md](AI_REPO_MAP.md)** — Mapa operativo por zona (intención, riesgos, validación; complementa STRUCTURE.md).
+- **[VALIDATION_MATRIX.md](VALIDATION_MATRIX.md)** — Matriz cambio → validación por tipo de archivo.
+- **[adr/](adr/README.md)** — Architecture Decision Records: decisiones técnicas y memoria arquitectónica.
+
 ## Operaciones
 
 - **[OPERATIONS_CHEATSHEET.md](OPERATIONS_CHEATSHEET.md)** — Chuleta diaria: casa/oficina, drift Chezmoi, apply acotado, MCP, GitNexus, agentes.
@@ -28,6 +37,8 @@
 ## Git
 
 - **[GIT_WORKFLOW.md](GIT_WORKFLOW.md)** — Flujo de trabajo con git (feat, rel, changelog, etc.).
+- **[GIT_FLOW_POLICY.md](GIT_FLOW_POLICY.md)** — Política opt-in por repo para evolucionar el flujo `git feat` / `git rel`.
+- **[examples/git-flow-policy.env](examples/git-flow-policy.env)** — Ejemplo canónico de `.git-flow-policy.env` para copiar en proyectos.
 - **[GIT_REL_INCIDENT.md](GIT_REL_INCIDENT.md)** — Nota operativa de mantenimiento y debugging de `git rel` tras una incidencia real.
 - **[GIT_AI_AUTHOR.md](GIT_AI_AUTHOR.md)** — Autor IA vs committer humano: `git-set-ai-author`, `git-ai-wrapper`, Chezmoi, activación en Cursor, validación.
 - **[GIT_AI_CURSOR_SETTINGS.md](GIT_AI_CURSOR_SETTINGS.md)** — Solo rutas de `User/settings.json` y `git.path` (Linux / WSL + Cursor Windows / override).

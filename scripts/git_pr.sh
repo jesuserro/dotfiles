@@ -38,6 +38,9 @@ process_arguments() {
 			echo -e "  3. Genera título y descripción automáticamente"
 			echo -e "  4. Crea el Pull Request en GitHub"
 			echo -e "  5. Abre el PR en el navegador (opcional)"
+			echo -e "${YELLOW}📖 Nota:${NC}"
+			echo -e "  El flujo recomendado es \`git feat\` con \`.git-flow-policy.env\`."
+			echo -e "  \`git pr\` se mantiene como comando legacy standalone."
 			exit 0
 			;;
 		--no-open)
@@ -221,13 +224,18 @@ create_pull_request() {
 	echo -e "${YELLOW}🚀 Creando Pull Request '${feature_branch}' → '${base_branch}'...${NC}"
 
 	local pr_url=""
+	local pr_created=false
 	if [ "$OPEN_BROWSER" = true ]; then
-		pr_url=$(gh pr create --base "$base_branch" --head "$feature_branch" --title "$pr_title" --body "$pr_description" --web 2>&1)
+		if pr_url=$(gh pr create --base "$base_branch" --head "$feature_branch" --title "$pr_title" --body "$pr_description" --web 2>&1); then
+			pr_created=true
+		fi
 	else
-		pr_url=$(gh pr create --base "$base_branch" --head "$feature_branch" --title "$pr_title" --body "$pr_description" 2>&1)
+		if pr_url=$(gh pr create --base "$base_branch" --head "$feature_branch" --title "$pr_title" --body "$pr_description" 2>&1); then
+			pr_created=true
+		fi
 	fi
 
-	if [ $? -eq 0 ]; then
+	if [ "$pr_created" = true ]; then
 		echo -e "${GREEN}✅ Pull Request creado exitosamente${NC}"
 		if [ "$OPEN_BROWSER" = false ]; then
 			# Extraer URL del output si no se abrió el navegador

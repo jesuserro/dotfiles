@@ -231,13 +231,13 @@ main() {
 		esac
 		case "${file}" in
 		*.tmpl) ;;
-		*.sh | *.bash | *.bats | bin/mcp-*-launcher | local/bin/ai-prompt | local/bin/prompt-*)
+		*.sh | *.bash | *.bats | bin/mcp-*-launcher | bin/playwright-docker | bin/dotfiles-update | bin/dotfiles-apply | bin/tmux-dotfiles | local/bin/ai-prompt | local/bin/prompt-*)
 			printf '%s\n' "${DOTFILES_DIR}/${file}" >>"${shellcheck_files}"
 			;;
 		esac
 		case "${file}" in
 		*.tmpl | *.bats) ;;
-		*.sh | *.bash | bin/mcp-*-launcher | local/bin/ai-prompt | local/bin/prompt-*)
+		*.sh | *.bash | bin/mcp-*-launcher | bin/playwright-docker | bin/dotfiles-update | bin/dotfiles-apply | bin/tmux-dotfiles | local/bin/ai-prompt | local/bin/prompt-*)
 			printf '%s\n' "${DOTFILES_DIR}/${file}" >>"${shfmt_files}"
 			;;
 		esac
@@ -316,6 +316,75 @@ main() {
 		bats "${DOTFILES_DIR}/tests/bats/mcp" \
 			"${DOTFILES_DIR}/tests/bats/chezmoi/ai-runtime-uv.bats" \
 			"${DOTFILES_DIR}/tests/bats/system/mcp-render-drift.bats"
+	fi
+
+	if grep -Eq '^docs/' "${changed_file_list}"; then
+		log "documentation bats"
+		make -C "${DOTFILES_DIR}" bats-docs
+	fi
+
+	if grep -Eq '^ai/assets/handoffs/' "${changed_file_list}"; then
+		log "handoff template contract bats"
+		bats "${DOTFILES_DIR}/tests/bats/docs/documentation-consistency.bats"
+	fi
+
+	if grep -Eq '^ai/assets/skills/' "${changed_file_list}"; then
+		log "skills structure and bats"
+		bash "${DOTFILES_DIR}/scripts/validate-skills-structure.sh"
+		bats "${DOTFILES_DIR}/tests/bats/skills"
+	fi
+
+	if grep -Eq '^ai/assets/commands/' "${changed_file_list}"; then
+		log "commands structure and bats"
+		make -C "${DOTFILES_DIR}" validate-commands
+		bats "${DOTFILES_DIR}/tests/bats/commands"
+	fi
+
+	if grep -Eq '^(\.chezmoiscripts/|dot_)' "${changed_file_list}"; then
+		log "chezmoi template bats"
+		make -C "${DOTFILES_DIR}" test-chezmoi
+	fi
+
+	if grep -Eq '^(scripts/treegen\.sh|scripts/hooks/|\.githooks/)' "${changed_file_list}"; then
+		log "git hooks and treegen bats"
+		bats "${DOTFILES_DIR}/tests/bats/git-hooks/hooks.bats"
+	fi
+
+	if grep -Eq '^zsh/' "${changed_file_list}"; then
+		log "zsh stack bats"
+		make -C "${DOTFILES_DIR}" bats-zsh
+	fi
+
+	if grep -Eq '^scripts/update/' "${changed_file_list}"; then
+		log "update workflow bats"
+		bats "${DOTFILES_DIR}/tests/bats/system/update-workflow.bats" \
+			"${DOTFILES_DIR}/tests/bats/system/update-node-runtime.bats" \
+			"${DOTFILES_DIR}/tests/bats/system/update-governance.bats"
+	fi
+
+	if grep -Eq '^(bin/playwright-docker|dot_local/bin/symlink_playwright-docker\.tmpl|tests/bats/system/playwright-docker\.bats)' "${changed_file_list}"; then
+		log "playwright-docker bats"
+		bats "${DOTFILES_DIR}/tests/bats/system/playwright-docker.bats"
+	fi
+
+	if grep -Eq '^(bin/dotfiles-update|dot_local/bin/symlink_dotfiles-update\.tmpl|tests/bats/system/dotfiles-update\.bats)' "${changed_file_list}"; then
+		log "dotfiles-update bats"
+		bats "${DOTFILES_DIR}/tests/bats/system/dotfiles-update.bats"
+	fi
+
+	if grep -Eq '^(bin/dotfiles-apply|dot_local/bin/symlink_dotfiles-apply\.tmpl|tests/bats/system/dotfiles-apply\.bats)' "${changed_file_list}"; then
+		log "dotfiles-apply bats"
+		bats "${DOTFILES_DIR}/tests/bats/system/dotfiles-apply.bats"
+	fi
+
+	if grep -Eq '^(docs/SCRIPT_CONVENTIONS\.md|tests/bats/system/dry-run-guard\.bats)' "${changed_file_list}"; then
+		log "dry-run convention bats"
+		bats "${DOTFILES_DIR}/tests/bats/system/dry-run-guard.bats"
+	fi
+
+	if grep -Eq '^(tests/bats/agent/|docs/AGENT_WORKFLOW\.md|docs/TESTING\.md|docs/VALIDATION_MATRIX\.md)' "${changed_file_list}"; then
+		log "agent regression index bats"
+		bats "${DOTFILES_DIR}/tests/bats/agent/regression.bats"
 	fi
 
 	run_local_security_scan

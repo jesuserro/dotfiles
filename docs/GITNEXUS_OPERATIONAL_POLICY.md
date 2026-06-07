@@ -17,6 +17,7 @@ Política operativa para agentes y humanos en repos gestionados con dotfiles. Co
 | `CLAUDE.md` | Derivado (bloque GitNexus) | Versionado | Puede regenerarse con analyze; no editar sin petición. |
 | `docs/wiki/` | Derivado | Depende del proyecto | Salida de `gnx-wiki-here`; no generar desde agentes. |
 | `ai/assets/skills/gitnexus/*` | Canónico | Versionado | Política y workflows para agentes. |
+| `.claude/skills/` (checkout dotfiles) | **Prohibido** | Ignorado (`.gitignore`) | Materialización runtime; viola [ADR 0004](adr/0004-ai-assets-not-materialized.md). GitNexus analyze debe usar `--skip-skills`. |
 
 ---
 
@@ -32,7 +33,7 @@ Política operativa para agentes y humanos en repos gestionados con dotfiles. Co
 
 ## Acciones prohibidas salvo petición explícita de Jesús
 
-- `gitnexus analyze` / `npx gitnexus analyze`
+- `gitnexus analyze` / `npx gitnexus analyze` (especialmente en el checkout dotfiles sin `--skip-skills`)
 - `gnx-analyze-here`
 - `gitnexus wiki` / `gnx-wiki-here`
 - `gitnexus clean` / `npx gitnexus clean`
@@ -69,7 +70,7 @@ Comportamiento:
   analyze; omite el refresh con `WARN` (el índice puede quedar **STALE** hasta
   refresh humano). Alineado con la política humana de no analyze con lock activo.
 - Si no hay skip flags, permisos correctos y el índice libre, ejecuta
-  síncronamente `gnx-analyze-here --force --skip-agents-md` con Node gestionado.
+  síncronamente `gnx-analyze-here --force --skip-agents-md --skip-skills` con Node gestionado.
 - El refresh expira tras 30 segundos para no bloquear commits largos.
 - Si analyze falla o expira, avisa con mensaje accionable y sale `0`.
 - Nunca usa background, retries largos, mata procesos MCP, limpia locks,
@@ -83,6 +84,10 @@ make gitnexus-status
 # Si hay varios procesos gitnexus mcp: cerrar sesiones duplicadas de Cursor
 gnx-analyze-here --force --skip-agents-md
 ```
+
+El hook recomienda `--force --skip-agents-md` para recuperación inmediata tras
+un skip/fallo best-effort. El refresh humano normal, tras verificar que no hay
+MCP/lock activo, puede usar el comando canónico sin `--force` documentado abajo.
 
 ---
 
@@ -118,8 +123,21 @@ Ejemplos válidos para que un humano refresque:
 **No ejecutar analyze** si `make gitnexus-status` lista procesos `gitnexus mcp` / `analyze` / `ladybug`, o si el lock en `.gitnexus/lbug` está en uso: cerrar Cursor, desactivar el MCP GitNexus o esperar a que terminen y repetir status hasta que no haya procesos vivos. La presencia de `lbug` con MCP activo es habitual y no autoriza borrar el lock.
 
 El post-commit local instalado explícitamente es la única automatización de
-refresh: usa `--force --skip-agents-md`, timeout y semántica best-effort no
+refresh: usa `--force --skip-agents-md --skip-skills`, timeout y semántica best-effort no
 fatal, pero **no compite** con MCP/lock activo.
+
+### Checkout dotfiles y ADR 0004
+
+En el checkout **dotfiles** (`scripts/lib/gitnexus_runtime.sh` detecta marcadores:
+`.chezmoi.toml`, ADR 0004, `ai/assets/skills/`, `validate-skills-structure.sh`):
+
+- `gnx-analyze-here` inyecta `--skip-skills` automáticamente si falta.
+- El post-commit pasa `--skip-skills` explícitamente además del runtime.
+- **No** materializar `.claude/skills/gitnexus/` en el repo: skills canónicas GitNexus viven en `ai/assets/skills/gitnexus/`; superficies runtime van a HOME vía Chezmoi.
+- `npx gitnexus analyze` directo en dotfiles **no** es el flujo recomendado: instala skills upstream en `.claude/skills/gitnexus/` y viola ADR 0004.
+- Remediación si aparece `.claude/`: `rm -rf .claude/` desde el checkout; usar wrappers `gnx-analyze-here` o `scripts/diagnose-checkout-ai-surface.sh` (read-only).
+
+En **otros repos**, el runtime **no** añade `--skip-skills` por defecto.
 
 ### Procedimiento humano de refresh (dotfiles)
 

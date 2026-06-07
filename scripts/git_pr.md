@@ -1,5 +1,9 @@
 # 🔀 Git Pull Request Script (`git_pr.sh`)
 
+> **Legacy standalone.** El flujo recomendado para integrar features es
+> `git feat` con `.git-flow-policy.env`. Este script se mantiene por
+> compatibilidad histórica; no lee policy ni sustituye a `git feat`.
+
 > **Script automatizado para crear Pull Requests de GitHub desde la terminal con título y descripción generados automáticamente.**
 
 ## 📋 Tabla de Contenidos

@@ -42,6 +42,10 @@ This project is indexed by GitNexus as **dotfiles** (3247 symbols, 3771 relation
 
 <!-- gitnexus:end -->
 
+## Dotfiles agent contract
+
+For the operational contract when working in this repository (modes, sensitive paths, validation, Chezmoi policy), read [docs/AGENT_WORKFLOW.md](docs/AGENT_WORKFLOW.md). Repo zone map: [docs/AI_REPO_MAP.md](docs/AI_REPO_MAP.md).
+
 ## Vault Project Wiki
 
 When a relevant implementation leaves durable knowledge behind, use `ai/assets/skills/ops/vault-project-wiki/SKILL.md` and `docs/VAULT_PROJECT_WIKI_FLOW.md` to decide whether it belongs in `vault_trabajo/projects/<project>/knowledge/...`.

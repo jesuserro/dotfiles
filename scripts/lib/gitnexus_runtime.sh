@@ -16,6 +16,36 @@ _gnx_print_lbug_lock_hint() {
 	echo "Si no hay procesos activos y el fallo persiste, reinicia el IDE/MCP antes de limpiar el indice manualmente."
 }
 
+_gnx_analyze_has_flag() {
+	local flag="$1"
+	shift
+	local arg
+	for arg in "$@"; do
+		[[ "$arg" == "$flag" ]] && return 0
+	done
+	return 1
+}
+
+_gnx_is_dotfiles_checkout() {
+	local repo_root="$1"
+	[[ -f "${repo_root}/.chezmoi.toml" ]] &&
+		[[ -f "${repo_root}/docs/adr/0004-ai-assets-not-materialized.md" ]] &&
+		[[ -d "${repo_root}/ai/assets/skills" ]] &&
+		[[ -f "${repo_root}/scripts/validate-skills-structure.sh" ]]
+}
+
+_gnx_apply_dotfiles_analyze_policy() {
+	local repo_root="$1"
+	local -n _analyze_args=$2
+
+	_gnx_is_dotfiles_checkout "$repo_root" || return 0
+	_gnx_analyze_has_flag "--index-only" "${_analyze_args[@]}" && return 0
+
+	if ! _gnx_analyze_has_flag "--skip-skills" "${_analyze_args[@]}"; then
+		_analyze_args+=("--skip-skills")
+	fi
+}
+
 _gnx_run_gitnexus_analyze() {
 	local gitnexus_bin="$1"
 	shift
@@ -154,10 +184,16 @@ gitnexus_analyze_here() {
 		shift
 	fi
 
+	local analyze_args=(.)
+	if (($# > 0)); then
+		analyze_args+=("$@")
+	fi
+	_gnx_apply_dotfiles_analyze_policy "$repo_root" analyze_args
+
 	echo "Analizando repositorio actual con GitNexus..."
 	(
 		cd "$repo_root" || exit 1
-		_gnx_analyze_with_managed_node . "$@"
+		_gnx_analyze_with_managed_node "${analyze_args[@]}"
 	)
 }
 
@@ -185,9 +221,11 @@ gitnexus_wiki_here() {
 
 	(
 		cd "$repo_root" || exit 1
+		local analyze_args=(.)
+		_gnx_apply_dotfiles_analyze_policy "$repo_root" analyze_args
 		if ! _gnx_with_managed_node status >/dev/null 2>&1; then
 			echo "Indexando repositorio..."
-			_gnx_analyze_with_managed_node || exit $?
+			_gnx_analyze_with_managed_node "${analyze_args[@]}" || exit $?
 		fi
 		echo "Generando wiki en $wiki_output..."
 		_gnx_with_managed_node wiki "$wiki_output" --api-key "$api_key"
