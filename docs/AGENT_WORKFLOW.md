@@ -143,6 +143,7 @@ Tras un BUILD, validar según la zona modificada ([VALIDATION_MATRIX.md](VALIDAT
 | Auditoría full-repo estricta | `make agent-validate-audit` |
 | Pre-merge / release fuerte | `make agent-validate-full` |
 | Reporte para handoff/PR | `make agent-validate-report` → `build/agent-validation/latest.md` |
+| Índice regresión histórica | `make bats-agent` → `tests/bats/agent/regression.bats` |
 | Área Chezmoi | `make test-chezmoi` |
 | Área MCP | `make ai-mcp-governance` |
 | Solo docs | `make bats-docs` |

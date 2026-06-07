@@ -69,6 +69,9 @@ main() {
 	run_required "documentation contract tests" \
 		make -C "${DOTFILES_DIR}" --no-print-directory bats-docs || true
 
+	run_required "agent regression index" \
+		make -C "${DOTFILES_DIR}" --no-print-directory bats-agent || true
+
 	run_required "update readiness (read-only)" \
 		make -C "${DOTFILES_DIR}" --no-print-directory update-check || true
 

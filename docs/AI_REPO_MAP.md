@@ -42,7 +42,7 @@ Los agentes suelen trabajar en la capa **fuente del repo** (plantillas, scripts,
 | `scripts/` | Scripts shell, librerías (`lib/`) | shellcheck/shfmt drift; efectos secundarios | `make agent-validate-changed`, `make test-lint`; ver [SCRIPT_CONVENTIONS.md](SCRIPT_CONVENTIONS.md) |
 | `scripts/update/` | Workflow `make update` (WSL, Node, MCPs) | Mutar sistema; shadowing Node | `update-workflow.bats`, `make update-check` |
 | `scripts/hooks/` | Hooks Git versionados (treegen, GitNexus) | Permisos; post-commit bloqueante | `git-hooks/hooks.bats` |
-| `tests/` | Bats, fixtures, Makefile de tests | Tests huérfanos no cableados en CI | `make test-fast`, `make test-ci` |
+| `tests/` | Bats, fixtures, Makefile de tests | Tests huérfanos no cableados en CI | `make test-fast`, `make test-ci`, `make bats-agent` |
 | `.chezmoiscripts/` | Hooks Chezmoi (before/after apply) | Mutan HOME al apply; secretos | `make test-chezmoi`, `make chezmoi-drift-report` |
 | `dot_local/bin/` | Plantillas Chezmoi para binarios en HOME | Symlinks rotos post-apply | `chezmoi/smoke.bats`, bats focalizados |
 | `bin/` | Wrappers repo (`dotfiles-update`, `dotfiles-apply`, launchers, playwright) | Confundir con runtime Chezmoi en HOME | shellcheck + bats (`dotfiles-apply.bats`, etc.) |

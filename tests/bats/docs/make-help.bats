@@ -19,6 +19,12 @@ setup() {
 	grep -q 'OPERATIONS_CHEATSHEET' <<<"${output}"
 }
 
+@test "make help mentions bats-agent regression index" {
+	run make -C "${DOTFILES_DIR}" help
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"bats-agent"* ]]
+}
+
 @test "make help mentions critical read-only targets" {
 	local target
 	run make -C "${DOTFILES_DIR}" help

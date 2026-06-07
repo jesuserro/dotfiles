@@ -381,6 +381,11 @@ main() {
 		bats "${DOTFILES_DIR}/tests/bats/system/dry-run-guard.bats"
 	fi
 
+	if grep -Eq '^(tests/bats/agent/|docs/AGENT_WORKFLOW\.md|docs/TESTING\.md|docs/VALIDATION_MATRIX\.md)' "${changed_file_list}"; then
+		log "agent regression index bats"
+		bats "${DOTFILES_DIR}/tests/bats/agent/regression.bats"
+	fi
+
 	run_local_security_scan
 
 	if [[ "${SECURITY_ONLINE}" == "1" ]]; then

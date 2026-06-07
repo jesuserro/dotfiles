@@ -47,7 +47,7 @@ NC := \033[0m
 
 .PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-git-flow bats-prompts bats-skills bats-tmux bats-gitnexus bats-git-hooks
 .PHONY: test-ci test-bats-ci bats-docs test-commands generate-commands validate-commands materialize-commands validate-skills-structure
-.PHONY: deps-check deps-install deps-actions bats-system bats-zsh bats-gitnexus test-deps-check
+.PHONY: deps-check deps-install deps-actions bats-system bats-agent bats-zsh bats-gitnexus test-deps-check
 .PHONY: quality-check security-check agent-validate agent-validate-audit agent-validate-full agent-validate-changed agent-validate-report ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
 
 help:
@@ -73,6 +73,7 @@ help:
 	@echo "  make agent-validate-audit        Full-repo quality + security audit (strict)"
 	@echo "  make agent-validate-full         agent-validate + agent-validate-audit"
 	@echo "  make agent-validate-report       Run agent-validate and write build/agent-validation/latest.md"
+	@echo "  make bats-agent                  Agent-first regression index (meta-tests)"
 	@echo "  make deps-check                  Check declarative system dependencies"
 	@echo "  make deps-actions                Show actions for missing dependencies"
 	@echo "  make test-chezmoi                Chezmoi smoke tests"
@@ -470,6 +471,10 @@ bats-gitnexus:
 bats-git-hooks:
 	@echo "$(BLUE)==>$(NC) Running repository Git hook tests..."
 	@$(call run_bats,$(BATS_DIR)/git-hooks/hooks.bats)
+
+bats-agent:
+	@echo "$(BLUE)==>$(NC) Running agent regression index..."
+	@$(call run_bats,$(BATS_DIR)/agent/regression.bats)
 
 bats-docs:
 	@echo "$(BLUE)==>$(NC) Running documentation contract tests..."

@@ -238,6 +238,13 @@ setup() {
 	grep -q 'make agent-validate-report' "${testing}"
 	grep -q 'agent-validate-dotfiles.sh' "${testing}"
 	grep -q 'build/agent-validation/latest.md' "${testing}"
+	grep -q 'bats-agent' "${testing}"
+}
+
+@test "agent regression index is documented" {
+	[[ -f "${DOTFILES_DIR}/tests/bats/agent/README.md" ]]
+	[[ -f "${DOTFILES_DIR}/tests/bats/agent/regression.bats" ]]
+	grep -q 'bats-agent' "${DOTFILES_DIR}/docs/AGENT_WORKFLOW.md"
 }
 
 @test "AGENT_WORKFLOW.md documents agent-validate-audit" {

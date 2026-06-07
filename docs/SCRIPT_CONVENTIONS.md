@@ -125,3 +125,4 @@ See [CHEZMOI.md](CHEZMOI.md) § `dotfiles-apply`.
 | `tests/bats/system/dotfiles-apply.bats` | Chezmoi safe preview/apply |
 | `tests/bats/git-hooks/hooks.bats` | `treegen --check` drift without writes |
 | `tests/bats/system/install-*.bats` | per-installer `DRY_RUN` / `--dry-run` |
+| `tests/bats/agent/regression.bats` | meta-index: historical risks → dedicated tests |
