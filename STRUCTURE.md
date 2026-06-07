@@ -400,6 +400,7 @@
 │   ├── 🔧 check-system-deps.sh
 │   ├── 🔧 chezmoi-drift-report.sh
 │   ├── 🔧 diagnose-checkout-ai-surface.sh
+│   ├── 🔧 diagnose-secret-surfaces.sh
 │   ├── 🔧 generate-commands.sh
 │   ├── 🐍 generate-mcp-configs.py
 │   ├── 🔧 git-set-ai-author.sh
@@ -492,6 +493,7 @@
 │   │   ├── 📁 docs
 │   │   │   ├── 📄 agents-claude-gitnexus-blocks.bats
 │   │   │   ├── 📄 documentation-consistency.bats
+│   │   │   ├── 📄 github-token-policy.bats
 │   │   │   ├── 📄 gitnexus-human-refresh-procedure.bats
 │   │   │   ├── 📄 make-help.bats
 │   │   │   ├── 📄 mcp-taxonomy-consistency.bats
@@ -526,6 +528,7 @@
 │   │   │   ├── 📄 agent-validate-report.bats
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
+│   │   │   ├── 📄 diagnose-secret-surfaces.bats
 │   │   │   ├── 📄 docker-desktop-credentials.bats
 │   │   │   ├── 📄 dotfiles-apply.bats
 │   │   │   ├── 📄 dotfiles-update.bats
@@ -554,6 +557,7 @@
 │   │   ├── 📁 zsh
 │   │   │   ├── 📄 fzf.bats
 │   │   │   ├── 📄 gitnexus_aliases.bats
+│   │   │   ├── 📄 local_startup.bats
 │   │   │   ├── 📄 omz_plugins.bats
 │   │   │   ├── 📄 p10k_cache_keys.bats
 │   │   │   ├── 📄 rc_symlinks.bats

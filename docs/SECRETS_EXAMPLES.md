@@ -44,7 +44,7 @@ mcp:
    make install-dotfiles DOTFILES_APPLY=1
    ```
 
-5. **Verificar:** el script post-apply genera `~/.config/mcp-secrets.env` con `GITHUB_PERSONAL_ACCESS_TOKEN` y `GITHUB_TOKEN`; `~/.secrets/codex.env` queda como adaptador de compatibilidad.
+5. **Verificar:** el script post-apply genera `~/.config/mcp-secrets.env` con `GITHUB_PERSONAL_ACCESS_TOKEN`; `~/.secrets/codex.env` queda como adaptador. No se exportan `GH_TOKEN`/`GITHUB_TOKEN` globalmente.
    **Token:** solo classic (`ghp_`), fine-grained deprecado. Ver [TOKEN_GITHUB_GH.md](TOKEN_GITHUB_GH.md).
 
 ---

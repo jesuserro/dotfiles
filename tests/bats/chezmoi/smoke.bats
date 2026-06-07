@@ -240,6 +240,17 @@ tomllib.loads(content)
 	grep -q 'ln -sf "${HOME}/.config/mcp-secrets.env" "${HOME}/.secrets/codex.env"' "$tmpl"
 }
 
+@test "secrets script does not export GH_TOKEN or GITHUB_TOKEN globally" {
+	local tmpl="$DOTFILES_DIR/.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl"
+	run grep -E 'export GH_TOKEN|export GITHUB_TOKEN' "$tmpl"
+	[[ "${status}" -eq 1 ]]
+}
+
+@test "secrets script keeps GITHUB_PERSONAL_ACCESS_TOKEN for MCP wrappers" {
+	grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN' \
+		"$DOTFILES_DIR/.chezmoiscripts/run_after_00_gen_secrets.sh.tmpl"
+}
+
 @test "docs do not present store-etl secrets as canonical" {
 	assert_tree_not_matches "Secreto can[oó]nico:.*store-etl/secrets.env" \
 		"$DOTFILES_DIR/docs" "$DOTFILES_DIR/codex"

@@ -456,6 +456,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/dotfiles-apply.bats)
 	@$(call run_bats,$(BATS_DIR)/system/dotfiles-update.bats)
 	@$(call run_bats,$(BATS_DIR)/system/playwright-docker.bats)
+	@$(call run_bats,$(BATS_DIR)/system/diagnose-secret-surfaces.bats)
 
 bats-gitnexus:
 	@echo "$(BLUE)==>$(NC) Running GitNexus operational status tests..."
@@ -482,6 +483,7 @@ bats-docs:
 	@$(call run_bats,$(BATS_DIR)/docs/mcp-taxonomy-consistency.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/agents-claude-gitnexus-blocks.bats)
 	@$(call run_bats,$(BATS_DIR)/docs/gitnexus-human-refresh-procedure.bats)
+	@$(call run_bats,$(BATS_DIR)/docs/github-token-policy.bats)
 
 bats-zsh:
 	@echo "$(BLUE)==>$(NC) Running zsh stack RC symlink tests..."
@@ -494,6 +496,8 @@ bats-zsh:
 	@$(call run_bats,$(BATS_DIR)/zsh/fzf.bats)
 	@echo "$(BLUE)==>$(NC) Running Powerlevel10k cache key tests..."
 	@$(call run_bats,$(BATS_DIR)/zsh/p10k_cache_keys.bats)
+	@echo "$(BLUE)==>$(NC) Running zsh local startup / secrets isolation tests..."
+	@$(call run_bats,$(BATS_DIR)/zsh/local_startup.bats)
 
 # ============================================
 # CI targets (human-readable GitHub Actions subset)
