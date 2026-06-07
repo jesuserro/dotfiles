@@ -400,6 +400,7 @@
 │   ├── 🔧 check-system-deps.sh
 │   ├── 🔧 chezmoi-drift-report.sh
 │   ├── 🔧 diagnose-checkout-ai-surface.sh
+│   ├── 🔧 diagnose-secret-surfaces.sh
 │   ├── 🔧 generate-commands.sh
 │   ├── 🐍 generate-mcp-configs.py
 │   ├── 🔧 git-set-ai-author.sh
@@ -527,6 +528,7 @@
 │   │   │   ├── 📄 agent-validate-report.bats
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
+│   │   │   ├── 📄 diagnose-secret-surfaces.bats
 │   │   │   ├── 📄 docker-desktop-credentials.bats
 │   │   │   ├── 📄 dotfiles-apply.bats
 │   │   │   ├── 📄 dotfiles-update.bats

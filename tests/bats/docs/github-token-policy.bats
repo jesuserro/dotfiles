@@ -34,3 +34,9 @@ setup() {
 	run grep -E 'Genera.*GH_TOKEN|export GH_TOKEN|export GITHUB_TOKEN' "${CAMBIAR_DOC}"
 	[[ "${status}" -eq 1 ]]
 }
+
+@test "TOKEN_GITHUB_GH.md documents Codex shell_snapshots policy" {
+	grep -q 'shell_snapshots' "${TOKEN_DOC}"
+	grep -q 'diagnose-secret-surfaces' "${TOKEN_DOC}"
+	grep -q 'rm -f ~/.codex/shell_snapshots' "${TOKEN_DOC}"
+}

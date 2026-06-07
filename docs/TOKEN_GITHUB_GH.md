@@ -47,3 +47,32 @@ gh repo view jesuserro/dotfiles --json nameWithOwner,viewerPermission
 # MCP: token presente sin mostrar valor
 grep -q '^export GITHUB_PERSONAL_ACCESS_TOKEN=' ~/.config/mcp-secrets.env && echo "MCP token configurado"
 ```
+
+## Codex shell snapshots
+
+Codex puede persistir dumps del entorno shell en `~/.codex/shell_snapshots/*.sh` (caché local regenerable, **no** configuración canónica). Si el entorno tenía secretos exportados (p. ej. antes de BUILD 1), esos archivos pueden contener tokens en claro.
+
+**Política:**
+
+- No exportar `GH_TOKEN` / `GITHUB_TOKEN` en shells interactivas (evita regenerar snapshots contaminados).
+- Tras rotar secretos o corregir el entorno, auditar y limpiar snapshots locales.
+- **No** versionar ni commitear snapshots; son solo HOME local.
+
+**Diagnóstico read-only:**
+
+```bash
+scripts/diagnose-secret-surfaces.sh
+# o rutas explícitas:
+scripts/diagnose-secret-surfaces.sh ~/.codex/shell_snapshots
+```
+
+El script lista archivos afectados y muestra contexto **redactado** (`<redacted>`). Nunca imprime valores completos.
+
+**Limpieza local (manual):**
+
+```bash
+rm -f ~/.codex/shell_snapshots/*.sh
+scripts/diagnose-secret-surfaces.sh   # debe salir 0
+```
+
+No borrar `~/.codex/config.toml`, `auth.json`, `prompts/`, `rules/`, `sessions/` ni bases SQLite.

@@ -456,6 +456,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/dotfiles-apply.bats)
 	@$(call run_bats,$(BATS_DIR)/system/dotfiles-update.bats)
 	@$(call run_bats,$(BATS_DIR)/system/playwright-docker.bats)
+	@$(call run_bats,$(BATS_DIR)/system/diagnose-secret-surfaces.bats)
 
 bats-gitnexus:
 	@echo "$(BLUE)==>$(NC) Running GitNexus operational status tests..."
