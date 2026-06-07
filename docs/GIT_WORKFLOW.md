@@ -32,10 +32,12 @@ See:
 
 Without `.git-flow-policy.env`, the legacy local behavior is preserved. Optional
 validation commands work for feature integration and release integration.
-`FLOW_MODE_TO_DEV=pr` and `FLOW_MODE_TO_MAIN=pr` create manual Pull Requests.
-`git feat --dry-run` and `git rel --dry-run` preview actions without mutating
-the repository. Automatic PR variants and merge strategies remain for later
-phases.
+PR modes (`pr`, `pr_auto`, `pr_immediate`) are configurable per destination
+branch. Merge strategies (`MERGE_STRATEGY_TO_DEV`, `MERGE_STRATEGY_TO_MAIN`)
+apply to `pr_auto` and `pr_immediate`. `git feat --dry-run` and
+`git rel --dry-run` preview actions without mutating the repository. Tests use
+a stub `gh` and do not create real Pull Requests; production use requires an
+authenticated GitHub CLI session.
 
 ## 🛠️ Scripts Disponibles
 

@@ -90,19 +90,73 @@ EOF
 	[[ "$output" != *"No estás dentro de un repositorio Git"* ]]
 }
 
-@test "git_rel PR mode variants beyond pr are explicit and not implemented yet" {
+@test "git_rel PR mode pr_auto creates PR and enables auto-merge with strategy" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-rel-auto.log"
+	install_gh_stub "$gh_log"
 	init_rel_repo "$repo" "$remote"
 	cat >"${repo}/.git-flow-policy.env" <<'EOF'
 FLOW_MODE_TO_MAIN=pr_auto
+MERGE_STRATEGY_TO_MAIN=squash
+OPEN_BROWSER=false
 EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: pr_auto policy"
 
 	cd "$repo"
 	run bash "$GIT_REL"
-	[[ "$status" -ne 0 ]]
-	[[ "$output" == *"PR mode variant not implemented yet"* ]]
-	[[ "$output" == *"FLOW_MODE_TO_MAIN=pr_auto"* ]]
+	[[ "$status" -eq 0 ]]
+	[[ "$(cat "$gh_log")" == *"pr create --base main --head dev --fill"* ]]
+	[[ "$(cat "$gh_log")" == *"pr merge dev --squash --auto"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+	[[ "$output" != *"Creando tag"* ]]
+	[[ "$(git branch --show-current)" == "dev" ]]
+	run git tag -l 'v*'
+	[[ -z "$output" ]]
+}
+
+@test "git_rel PR mode pr_immediate merges immediately with merge strategy" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-rel-immediate.log"
+	install_gh_stub "$gh_log"
+	init_rel_repo "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_MAIN=pr_immediate
+MERGE_STRATEGY_TO_MAIN=merge
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: pr_immediate policy"
+
+	cd "$repo"
+	run bash "$GIT_REL"
+	[[ "$status" -eq 0 ]]
+	[[ "$(cat "$gh_log")" == *"pr create --base main --head dev --fill"* ]]
+	[[ "$(cat "$gh_log")" == *"pr merge dev --merge"* ]]
+	[[ "$(cat "$gh_log")" != *"--auto"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+}
+
+@test "git_rel PR mode manual does not call gh pr merge" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-rel-manual.log"
+	install_gh_stub "$gh_log"
+	init_rel_repo "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_MAIN=pr
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: manual pr policy"
+
+	cd "$repo"
+	run bash "$GIT_REL"
+	[[ "$status" -eq 0 ]]
+	[[ "$(cat "$gh_log")" == *"pr create"* ]]
+	[[ "$(cat "$gh_log")" != *"pr merge"* ]]
 }
 
 @test "git_rel --dry-run local mode prints planned actions without merge or push" {
@@ -137,9 +191,48 @@ EOF
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"DRY RUN: git rel policy flow (pr)"* ]]
 	[[ "$output" == *"Would create PR 'dev' -> 'main'"* ]]
-	[[ "$output" == *"Would not create local tag"* ]]
-	[[ "$output" == *"Would not merge locally"* ]]
+	[[ "$output" == *"Would leave PR open for manual review"* ]]
 	[[ "$output" != *"Haciendo merge"* ]]
+	[[ ! -s "$gh_log" ]]
+}
+
+@test "git_rel --dry-run pr_auto mode prints auto-merge plan without gh" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-rel-auto-dry.log"
+	install_gh_stub "$gh_log"
+	init_rel_repo "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_MAIN=pr_auto
+MERGE_STRATEGY_TO_MAIN=squash
+OPEN_BROWSER=false
+EOF
+
+	cd "$repo"
+	run bash "$GIT_REL" --dry-run
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"DRY RUN: git rel policy flow (pr_auto)"* ]]
+	[[ "$output" == *"Would enable auto-merge using strategy: squash"* ]]
+	[[ ! -s "$gh_log" ]]
+}
+
+@test "git_rel --dry-run pr_immediate mode prints immediate merge plan without gh" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-rel-immediate-dry.log"
+	install_gh_stub "$gh_log"
+	init_rel_repo "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_MAIN=pr_immediate
+MERGE_STRATEGY_TO_MAIN=merge
+OPEN_BROWSER=false
+EOF
+
+	cd "$repo"
+	run bash "$GIT_REL" --dry-run
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"DRY RUN: git rel policy flow (pr_immediate)"* ]]
+	[[ "$output" == *"Would merge PR immediately using strategy: merge"* ]]
 	[[ ! -s "$gh_log" ]]
 }
 

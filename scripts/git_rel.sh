@@ -77,11 +77,11 @@ load_git_flow_policy() {
 
 ensure_supported_flow_mode() {
 	case "$FLOW_MODE_TO_MAIN" in
-	local | pr)
+	local | pr | pr_auto | pr_immediate)
 		return 0
 		;;
 	*)
-		echo -e "${RED}❌ PR mode variant not implemented yet for git rel: FLOW_MODE_TO_MAIN=${FLOW_MODE_TO_MAIN}${NC}"
+		echo -e "${RED}❌ Unsupported git rel flow mode: FLOW_MODE_TO_MAIN=${FLOW_MODE_TO_MAIN}${NC}"
 		exit 1
 		;;
 	esac
@@ -103,7 +103,7 @@ run_validation_if_enabled() {
 
 check_gh_cli_for_pr() {
 	if ! command -v gh &>/dev/null; then
-		echo -e "${RED}ERROR: FLOW_MODE_TO_MAIN=pr requires GitHub CLI (\`gh\`).${NC}"
+		echo -e "${RED}ERROR: PR flow modes require GitHub CLI (\`gh\`).${NC}"
 		exit 1
 	fi
 }
@@ -111,11 +111,22 @@ check_gh_cli_for_pr() {
 print_dry_run_rel() {
 	echo -e "${BLUE}DRY RUN: git rel policy flow (${FLOW_MODE_TO_MAIN})${NC}"
 	run_validation_if_enabled
-	if [[ "$FLOW_MODE_TO_MAIN" == "pr" ]]; then
+	if git_flow_policy_is_pr_mode "$FLOW_MODE_TO_MAIN"; then
 		echo -e "${BLUE}Would switch to '${DEV_BRANCH}'${NC}"
 		echo -e "${BLUE}Would pull '${DEV_BRANCH}' from '${REMOTE_NAME}' (ff-only)${NC}"
 		echo -e "${BLUE}Would push '${DEV_BRANCH}' to '${REMOTE_NAME}'${NC}"
 		echo -e "${BLUE}Would create PR '${DEV_BRANCH}' -> '${MAIN_BRANCH}'${NC}"
+		case "$FLOW_MODE_TO_MAIN" in
+		pr)
+			echo -e "${BLUE}Would leave PR open for manual review${NC}"
+			;;
+		pr_auto)
+			echo -e "${BLUE}Would enable auto-merge using strategy: ${MERGE_STRATEGY_TO_MAIN}${NC}"
+			;;
+		pr_immediate)
+			echo -e "${BLUE}Would merge PR immediately using strategy: ${MERGE_STRATEGY_TO_MAIN}${NC}"
+			;;
+		esac
 		echo -e "${BLUE}Would not create local tag${NC}"
 		echo -e "${BLUE}Would not merge locally${NC}"
 		echo -e "${BLUE}Would not push '${MAIN_BRANCH}'${NC}"
@@ -162,6 +173,14 @@ run_pr_flow_to_main() {
 	if ! gh "${gh_args[@]}"; then
 		echo -e "${RED}❌ Error al crear el Pull Request${NC}"
 		exit 1
+	fi
+
+	if [[ "$FLOW_MODE_TO_MAIN" != "pr" ]]; then
+		echo -e "${YELLOW}Applying PR merge policy (${FLOW_MODE_TO_MAIN}, strategy=${MERGE_STRATEGY_TO_MAIN})...${NC}"
+		if ! git_flow_policy_run_pr_merge "$FLOW_MODE_TO_MAIN" "$MERGE_STRATEGY_TO_MAIN" "$DEV_BRANCH"; then
+			echo -e "${RED}❌ Error al aplicar merge del Pull Request${NC}"
+			exit 1
+		fi
 	fi
 
 	echo -e "${GREEN}✅ Pull Request creado para '${DEV_BRANCH}' → '${MAIN_BRANCH}'${NC}"
@@ -422,7 +441,7 @@ check_clean_repo
 
 run_validation_if_enabled
 
-if [[ "$FLOW_MODE_TO_MAIN" == "pr" ]]; then
+if git_flow_policy_is_pr_mode "$FLOW_MODE_TO_MAIN"; then
 	run_pr_flow_to_main
 fi
 

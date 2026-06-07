@@ -102,18 +102,68 @@ EOF
 	[[ "$output" != *"No estás dentro de un repositorio Git"* ]]
 }
 
-@test "git_feat PR mode variants beyond pr are explicit and not implemented yet" {
+@test "git_feat PR mode pr_auto creates PR and enables auto-merge with strategy" {
 	local repo="${TEST_TEMP_DIR}/repo"
-	init_feat_repo "$repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-feat-auto.log"
+	install_gh_stub "$gh_log"
+	init_feat_repo_with_remote "$repo" "$remote"
 	cat >"${repo}/.git-flow-policy.env" <<'EOF'
 FLOW_MODE_TO_DEV=pr_auto
+MERGE_STRATEGY_TO_DEV=squash
+OPEN_BROWSER=false
 EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: pr_auto policy"
 
 	cd "$repo"
 	run bash "$GIT_FEAT" demo
-	[[ "$status" -ne 0 ]]
-	[[ "$output" == *"PR mode variant not implemented yet"* ]]
-	[[ "$output" == *"FLOW_MODE_TO_DEV=pr_auto"* ]]
+	[[ "$status" -eq 0 ]]
+	[[ "$(cat "$gh_log")" == *"pr create --base dev --head feature/demo"* ]]
+	[[ "$(cat "$gh_log")" == *"pr merge feature/demo --squash --auto"* ]]
+	[[ "$(cat "$gh_log")" != *"pr merge feature/demo --merge --auto"* ]]
+}
+
+@test "git_feat PR mode pr_immediate merges immediately with rebase strategy" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-feat-immediate.log"
+	install_gh_stub "$gh_log"
+	init_feat_repo_with_remote "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_DEV=pr_immediate
+MERGE_STRATEGY_TO_DEV=rebase
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: pr_immediate policy"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" demo
+	[[ "$status" -eq 0 ]]
+	[[ "$(cat "$gh_log")" == *"pr create --base dev --head feature/demo"* ]]
+	[[ "$(cat "$gh_log")" == *"pr merge feature/demo --rebase"* ]]
+	[[ "$(cat "$gh_log")" != *"--auto"* ]]
+}
+
+@test "git_feat PR mode manual does not call gh pr merge" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-feat-manual.log"
+	install_gh_stub "$gh_log"
+	init_feat_repo_with_remote "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_DEV=pr
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: manual pr policy"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" demo
+	[[ "$status" -eq 0 ]]
+	[[ "$(cat "$gh_log")" == *"pr create"* ]]
+	[[ "$(cat "$gh_log")" != *"pr merge"* ]]
 }
 
 @test "git_feat validation command runs from repo root and aborts before merge" {
@@ -464,8 +514,52 @@ EOF
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"DRY RUN: git feat PR flow"* ]]
 	[[ "$output" == *"Would create PR 'feature/demo' -> 'dev'"* ]]
-	[[ "$output" == *"Would not merge automatically"* ]]
+	[[ "$output" == *"Would leave PR open for manual review"* ]]
 	[[ "$output" != *"Haciendo merge"* ]]
 	[[ ! -s "$gh_log" ]]
 	[[ "$(git branch --show-current)" == "feature/demo" ]]
+}
+
+@test "git_feat --dry-run pr_auto mode prints auto-merge plan without gh" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-feat-auto-dry.log"
+	install_gh_stub "$gh_log"
+	init_feat_repo_with_remote "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_DEV=pr_auto
+MERGE_STRATEGY_TO_DEV=squash
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: pr_auto dry-run policy"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" --dry-run demo
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"DRY RUN: git feat PR flow (pr_auto)"* ]]
+	[[ "$output" == *"Would enable auto-merge using strategy: squash"* ]]
+	[[ ! -s "$gh_log" ]]
+}
+
+@test "git_feat --dry-run pr_immediate mode prints immediate merge plan without gh" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-feat-immediate-dry.log"
+	install_gh_stub "$gh_log"
+	init_feat_repo_with_remote "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_DEV=pr_immediate
+MERGE_STRATEGY_TO_DEV=rebase
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: pr_immediate dry-run policy"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" --dry-run demo
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"DRY RUN: git feat PR flow (pr_immediate)"* ]]
+	[[ "$output" == *"Would merge PR immediately using strategy: rebase"* ]]
+	[[ ! -s "$gh_log" ]]
 }

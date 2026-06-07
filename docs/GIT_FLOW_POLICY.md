@@ -34,18 +34,21 @@ Implemented:
 - `FLOW_MODE_TO_DEV=pr` makes `git feat` push the current feature branch and
   create a Pull Request into `BASE_DEV_BRANCH` with GitHub CLI, instead of doing
   a local merge.
+- `FLOW_MODE_TO_DEV=pr_auto` and `FLOW_MODE_TO_DEV=pr_immediate` create the PR
+  and then call `gh pr merge` with `--auto` or immediate merge, using
+  `MERGE_STRATEGY_TO_DEV`.
 - `FLOW_MODE_TO_MAIN=pr` makes `git rel` push `BASE_DEV_BRANCH`, create a manual
   Pull Request into `BASE_MAIN_BRANCH` with `gh pr create --fill`, and skip local
   merge and tag creation.
+- `FLOW_MODE_TO_MAIN=pr_auto` and `FLOW_MODE_TO_MAIN=pr_immediate` create the
+  release PR and then call `gh pr merge` with `--auto` or immediate merge, using
+  `MERGE_STRATEGY_TO_MAIN`.
+- `MERGE_STRATEGY_TO_DEV` and `MERGE_STRATEGY_TO_MAIN` map to `gh pr merge`
+  flags (`--merge`, `--squash`, `--rebase`) in `pr_auto` and `pr_immediate`
+  modes only.
 - `DELETE_FEATURE_BRANCH=false` makes `git feat` preserve the integrated
   feature branch instead of archiving it. The default keeps the legacy archival
   behavior.
-
-Still not implemented:
-
-- Automatic PR variants (`pr_auto`, `pr_immediate`) remain blocked.
-- Merge strategy policy is parsed and validated, but `git feat` and `git rel`
-  still use their legacy merge behavior in local mode.
 - `OPEN_BROWSER` does not change local-mode behavior. In PR modes,
   `OPEN_BROWSER=false` avoids passing `--web` to `gh pr create`.
 
@@ -200,16 +203,16 @@ merges, tag creation, branch deletion, or `gh pr create`.
 Use dry-run before the first PR-mode release in a repository, or when validating
 policy values copied from another project.
 
-## Feature PR Mode
+## Feature PR Modes
 
-`FLOW_MODE_TO_DEV=pr` is implemented for `git feat`. It requires GitHub CLI
-(`gh`) on `PATH`.
+Feature PR modes require GitHub CLI (`gh`) on `PATH` and an authenticated
+session outside tests.
 
-In this mode, `git feat <name>` must be run from the matching current feature
+In all PR modes, `git feat <name>` must be run from the matching current feature
 branch. `git feat` without an argument uses the current feature branch through
 the same `FEATURE_BRANCH_PREFIX` rule.
 
-The PR flow:
+Shared PR flow steps:
 
 - runs `VALIDATE_CMD_TO_DEV` when `VALIDATE_TO_DEV=true`;
 - pushes the current feature branch to `REMOTE_NAME`;
@@ -220,18 +223,39 @@ The PR flow:
 - does not generate the legacy feature changelog;
 - does not archive or delete the feature branch.
 
+Mode semantics:
+
+| Mode | After `gh pr create` |
+| --- | --- |
+| `pr` | Leaves the PR open for manual review. No `gh pr merge`. |
+| `pr_auto` | Runs `gh pr merge --auto` with the strategy from `MERGE_STRATEGY_TO_DEV`. |
+| `pr_immediate` | Runs `gh pr merge` immediately with the strategy from `MERGE_STRATEGY_TO_DEV`. Fails if GitHub branch protection or checks block the merge. |
+
+Merge strategy mapping (applies only to `pr_auto` and `pr_immediate`):
+
+| Policy value | `gh pr merge` flag |
+| --- | --- |
+| `merge` | `--merge` |
+| `squash` | `--squash` |
+| `rebase` | `--rebase` |
+
+Recommended defaults: `squash` or `merge` for feature → dev, depending on
+repository policy.
+
 If GitHub CLI is not installed, the command fails with:
 
 ```text
 ERROR: FLOW_MODE_TO_DEV=pr requires GitHub CLI (`gh`).
 ```
 
-## Release PR Mode
+The same error applies to `pr_auto` and `pr_immediate`.
 
-`FLOW_MODE_TO_MAIN=pr` is implemented for `git rel`. It requires GitHub CLI
-(`gh`) on `PATH`.
+## Release PR Modes
 
-The PR flow:
+Release PR modes require GitHub CLI (`gh`) on `PATH` and an authenticated
+session outside tests.
+
+Shared PR flow steps:
 
 - runs `VALIDATE_CMD_TO_MAIN` when `VALIDATE_TO_MAIN=true`;
 - checks out `BASE_DEV_BRANCH` and runs `git pull --ff-only`;
@@ -242,11 +266,23 @@ The PR flow:
 - does not create a release tag;
 - does not push `BASE_MAIN_BRANCH`.
 
+Mode semantics:
+
+| Mode | After `gh pr create` |
+| --- | --- |
+| `pr` | Leaves the PR open for manual review. No `gh pr merge`. |
+| `pr_auto` | Runs `gh pr merge --auto` with the strategy from `MERGE_STRATEGY_TO_MAIN`. |
+| `pr_immediate` | Runs `gh pr merge` immediately with the strategy from `MERGE_STRATEGY_TO_MAIN`. Fails if GitHub branch protection or checks block the merge. |
+
+Recommended default for dev → main: `merge`.
+
 If GitHub CLI is not installed, the command fails with:
 
 ```text
 ERROR: FLOW_MODE_TO_MAIN=pr requires GitHub CLI (`gh`).
 ```
+
+The same error applies to `pr_auto` and `pr_immediate`.
 
 ## Examples
 
@@ -321,7 +357,23 @@ VALIDATE_TO_MAIN=true
 VALIDATE_CMD_TO_MAIN="make validate-full"
 ```
 
-`MERGE_STRATEGY_TO_MAIN` is parsed but not applied yet in PR mode.
+Automatic PR variants with merge strategy:
+
+```env
+FLOW_MODE_TO_DEV=pr_auto
+MERGE_STRATEGY_TO_DEV=squash
+OPEN_BROWSER=false
+VALIDATE_TO_DEV=true
+VALIDATE_CMD_TO_DEV="make validate"
+```
+
+```env
+FLOW_MODE_TO_MAIN=pr_immediate
+MERGE_STRATEGY_TO_MAIN=merge
+OPEN_BROWSER=false
+VALIDATE_TO_MAIN=true
+VALIDATE_CMD_TO_MAIN="make validate-full"
+```
 
 ## Manual Validation Fixture
 
@@ -409,13 +461,16 @@ EOF
 ~/dotfiles/scripts/git_rel.sh
 ```
 
-Automatic PR variants remain blocked:
+Automatic PR variant with dry-run preview:
 
 ```bash
 cat > .git-flow-policy.env <<'EOF'
 FLOW_MODE_TO_MAIN=pr_auto
+MERGE_STRATEGY_TO_MAIN=squash
+OPEN_BROWSER=false
 EOF
 
+~/dotfiles/scripts/git_rel.sh --dry-run
 ~/dotfiles/scripts/git_rel.sh
 ```
 

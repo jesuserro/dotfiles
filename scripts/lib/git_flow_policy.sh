@@ -212,3 +212,45 @@ git_flow_policy_print() {
 		esac
 	done
 }
+
+git_flow_policy_is_pr_mode() {
+	case "$1" in
+	pr | pr_auto | pr_immediate)
+		return 0
+		;;
+	*)
+		return 1
+		;;
+	esac
+}
+
+git_flow_policy_merge_strategy_flag() {
+	case "$1" in
+	merge) printf '%s\n' "--merge" ;;
+	squash) printf '%s\n' "--squash" ;;
+	rebase) printf '%s\n' "--rebase" ;;
+	*)
+		git_flow_policy_error "Invalid merge strategy: ${1}"
+		return 1
+		;;
+	esac
+}
+
+git_flow_policy_run_pr_merge() {
+	local flow_mode="$1"
+	local merge_strategy="$2"
+	local head_branch="$3"
+	local merge_args=()
+	local strategy_flag
+
+	[[ "$flow_mode" == "pr" ]] && return 0
+
+	strategy_flag="$(git_flow_policy_merge_strategy_flag "$merge_strategy")" || return 1
+
+	merge_args=(pr merge "$head_branch" "$strategy_flag")
+	if [[ "$flow_mode" == "pr_auto" ]]; then
+		merge_args+=(--auto)
+	fi
+
+	gh "${merge_args[@]}"
+}

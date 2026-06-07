@@ -26,7 +26,7 @@ Contrato agentes: [docs/AGENT_WORKFLOW.md](../AGENT_WORKFLOW.md).
 | [0005](0005-mcp-runtime-managed-vs-installed.md) | MCP Runtime-Managed vs Installed | Accepted | fetch uvx; no persistent install | `mcp-taxonomy-consistency.bats`, `update-workflow.bats` |
 | [0006](0006-gitnexus-post-commit-policy.md) | GitNexus Post-Commit Best-Effort | Accepted | Hook no bloquea commit | `git-hooks/hooks.bats` |
 | [0007](0007-playwright-docker-via-chezmoi-bin.md) | Playwright Docker via Chezmoi Bin | Accepted | Symlink `playwright-docker` | `playwright-docker.bats` |
-| [0008](0008-git-flow-pr-policy.md) | Git Flow PR Policy | Accepted (pointer) | PR configurable por repo; impl. separada | `git-flow/policy.bats` (policy doc) |
+| [0008](0008-git-flow-pr-policy.md) | Git Flow PR Policy | Accepted — Implemented | PR configurable por repo; pr/pr_auto/pr_immediate | `make bats-git-flow` |
 | [0009](0009-dotfiles-update-wrapper.md) | dotfiles-update Wrapper | Accepted — Implemented | Wrapper global → `make update` | `dotfiles-update.bats`, `update-workflow.bats` |
 | [0010](0010-ups-removal.md) | Removal of ups | Accepted — Closed | Sin alias legacy `ups` | `update-workflow.bats`, `rc_symlinks.bats`, `documentation-consistency.bats` |
 

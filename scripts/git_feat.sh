@@ -92,11 +92,11 @@ load_git_flow_policy() {
 
 ensure_supported_flow_mode() {
 	case "$FLOW_MODE_TO_DEV" in
-	local | pr)
+	local | pr | pr_auto | pr_immediate)
 		return 0
 		;;
 	*)
-		echo -e "${RED}❌ PR mode variant not implemented yet for git feat: FLOW_MODE_TO_DEV=${FLOW_MODE_TO_DEV}${NC}"
+		echo -e "${RED}❌ Unsupported git feat flow mode: FLOW_MODE_TO_DEV=${FLOW_MODE_TO_DEV}${NC}"
 		exit 1
 		;;
 	esac
@@ -146,14 +146,24 @@ print_dry_run_feat_local() {
 }
 
 print_dry_run_feat_pr() {
-	echo -e "${BLUE}DRY RUN: git feat PR flow${NC}"
+	echo -e "${BLUE}DRY RUN: git feat PR flow (${FLOW_MODE_TO_DEV})${NC}"
 	run_validation_if_enabled
 	echo -e "${BLUE}Would push current feature branch '${FEATURE_BRANCH}' to '${REMOTE_NAME}'${NC}"
 	echo -e "${BLUE}Would create PR '${FEATURE_BRANCH}' -> '${DEV_BRANCH}'${NC}"
+	case "$FLOW_MODE_TO_DEV" in
+	pr)
+		echo -e "${BLUE}Would leave PR open for manual review${NC}"
+		;;
+	pr_auto)
+		echo -e "${BLUE}Would enable auto-merge using strategy: ${MERGE_STRATEGY_TO_DEV}${NC}"
+		;;
+	pr_immediate)
+		echo -e "${BLUE}Would merge PR immediately using strategy: ${MERGE_STRATEGY_TO_DEV}${NC}"
+		;;
+	esac
 	if [[ "$OPEN_BROWSER" == "true" ]]; then
 		echo -e "${BLUE}Would open browser for the pull request${NC}"
 	fi
-	echo -e "${BLUE}Would not merge automatically${NC}"
 }
 
 resolve_feature_input_name() {
@@ -182,7 +192,7 @@ resolve_feature_input_name() {
 
 check_gh_cli_for_pr() {
 	if ! command -v gh &>/dev/null; then
-		echo -e "${RED}ERROR: FLOW_MODE_TO_DEV=pr requires GitHub CLI (\`gh\`).${NC}"
+		echo -e "${RED}ERROR: PR flow modes require GitHub CLI (\`gh\`).${NC}"
 		exit 1
 	fi
 }
@@ -192,12 +202,12 @@ resolve_current_feature_branch_for_pr() {
 	current_branch="$(git branch --show-current)"
 
 	if [[ -z "$current_branch" ]]; then
-		echo -e "${RED}❌ FLOW_MODE_TO_DEV=pr requires a named current branch.${NC}" >&2
+		echo -e "${RED}❌ PR mode requires a named current branch.${NC}" >&2
 		exit 1
 	fi
 
 	if [[ "$current_branch" != "$FEATURE_PREFIX"* ]]; then
-		echo -e "${RED}❌ FLOW_MODE_TO_DEV=pr requires current branch to start with '${FEATURE_PREFIX}': ${current_branch}${NC}" >&2
+		echo -e "${RED}❌ PR mode requires current branch to start with '${FEATURE_PREFIX}': ${current_branch}${NC}" >&2
 		exit 1
 	fi
 
@@ -208,7 +218,7 @@ resolve_current_feature_branch_for_pr() {
 	fi
 
 	if [[ "$current_branch" != "$expected_branch" ]]; then
-		echo -e "${RED}❌ FLOW_MODE_TO_DEV=pr must run from '${expected_branch}' (current: '${current_branch}').${NC}" >&2
+		echo -e "${RED}❌ PR mode must run from '${expected_branch}' (current: '${current_branch}').${NC}" >&2
 		exit 1
 	fi
 
@@ -251,6 +261,14 @@ run_pr_flow_to_dev() {
 	if ! gh "${gh_args[@]}"; then
 		echo -e "${RED}❌ Error al crear el Pull Request${NC}"
 		exit 1
+	fi
+
+	if [[ "$FLOW_MODE_TO_DEV" != "pr" ]]; then
+		echo -e "${YELLOW}Applying PR merge policy (${FLOW_MODE_TO_DEV}, strategy=${MERGE_STRATEGY_TO_DEV})...${NC}"
+		if ! git_flow_policy_run_pr_merge "$FLOW_MODE_TO_DEV" "$MERGE_STRATEGY_TO_DEV" "$FEATURE_BRANCH"; then
+			echo -e "${RED}❌ Error al aplicar merge del Pull Request${NC}"
+			exit 1
+		fi
 	fi
 
 	echo -e "${GREEN}✅ Pull Request creado para '${FEATURE_BRANCH}' → '${DEV_BRANCH}'${NC}"
@@ -422,7 +440,7 @@ resolve_feature_input_name
 # 📢 Inicio del flujo
 echo -e "${YELLOW}🚀 Integrando feature '${INPUT_NAME}' en ${DEV_BRANCH}...${NC}"
 
-if [[ "$FLOW_MODE_TO_DEV" == "pr" ]]; then
+if git_flow_policy_is_pr_mode "$FLOW_MODE_TO_DEV"; then
 	run_pr_flow_to_dev
 fi
 
