@@ -79,6 +79,34 @@ EOF
 	chmod +x "${FAKE_BIN}/shfmt"
 }
 
+write_fake_make() {
+	cat >"${FAKE_BIN}/make" <<EOF
+#!/usr/bin/env bash
+printf 'make %s\n' "\$*" >>"${TEST_LOG}"
+exit 0
+EOF
+	chmod +x "${FAKE_BIN}/make"
+}
+
+write_fake_bats() {
+	cat >"${FAKE_BIN}/bats" <<EOF
+#!/usr/bin/env bash
+printf 'bats %s\n' "\$*" >>"${TEST_LOG}"
+exit 0
+EOF
+	chmod +x "${FAKE_BIN}/bats"
+}
+
+write_fake_validate_skills() {
+	mkdir -p "${FAKE_REPO}/scripts"
+	cat >"${FAKE_REPO}/scripts/validate-skills-structure.sh" <<EOF
+#!/usr/bin/env bash
+printf 'validate-skills-structure\n' >>"${TEST_LOG}"
+exit 0
+EOF
+	chmod +x "${FAKE_REPO}/scripts/validate-skills-structure.sh"
+}
+
 add_changed_shell_file() {
 	cat >"${FAKE_REPO}/scripts/changed.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -151,4 +179,36 @@ run_agent_validate() {
 	[[ "${status}" -ne 0 ]]
 	[[ "${output}" == *"Vulnerability findings detected"* ]]
 	! grep -q 'External dependency failure' <<<"${output}"
+}
+
+@test "agent-validate-changed runs docs bats when docs change" {
+	write_fake_make
+	mkdir -p "${FAKE_REPO}/docs"
+	printf '# doc\n' >"${FAKE_REPO}/docs/touch.md"
+	run_agent_validate 0
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"documentation bats"* ]]
+	grep -q 'make.*bats-docs' "${TEST_LOG}"
+}
+
+@test "agent-validate-changed runs skills validation when skills change" {
+	write_fake_validate_skills
+	write_fake_bats
+	mkdir -p "${FAKE_REPO}/ai/assets/skills/ops/fixture-skill"
+	printf '# Fixture\n\n## When to Use\n\nTest.\n' >"${FAKE_REPO}/ai/assets/skills/ops/fixture-skill/SKILL.md"
+	run_agent_validate 0
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"skills structure and bats"* ]]
+	grep -q '^validate-skills-structure$' "${TEST_LOG}"
+	grep -q 'bats .*/tests/bats/skills' "${TEST_LOG}"
+}
+
+@test "agent-validate-changed runs handoff contract bats when handoffs change" {
+	write_fake_bats
+	mkdir -p "${FAKE_REPO}/ai/assets/handoffs"
+	printf '# Handoff\n' >"${FAKE_REPO}/ai/assets/handoffs/touch.md"
+	run_agent_validate 0
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"handoff template contract bats"* ]]
+	grep -q 'documentation-consistency.bats' "${TEST_LOG}"
 }

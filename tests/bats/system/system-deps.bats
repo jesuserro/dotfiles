@@ -171,6 +171,8 @@ EOF
 	[[ "${output}" == *"quality-check:"* ]]
 	[[ "${output}" == *"security-check:"* ]]
 	[[ "${output}" == *"agent-validate:"* ]]
+	[[ "${output}" == *"agent-validate-audit:"* ]]
+	[[ "${output}" == *"agent-validate-full:"* ]]
 	[[ "${output}" == *"agent-validate-changed:"* ]]
 	[[ "${output}" == *"lint-actions:"* ]]
 	[[ "${output}" == *"security-osv:"* ]]

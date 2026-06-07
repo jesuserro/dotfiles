@@ -48,7 +48,7 @@ NC := \033[0m
 .PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-git-flow bats-prompts bats-skills bats-tmux bats-gitnexus bats-git-hooks
 .PHONY: test-ci test-bats-ci bats-docs test-commands generate-commands validate-commands materialize-commands validate-skills-structure
 .PHONY: deps-check deps-install deps-actions bats-system bats-zsh bats-gitnexus test-deps-check
-.PHONY: quality-check security-check agent-validate agent-validate-changed ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
+.PHONY: quality-check security-check agent-validate agent-validate-audit agent-validate-full agent-validate-changed ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
 
 help:
 	@echo "Dotfiles — make targets"
@@ -68,7 +68,10 @@ help:
 	@echo "  make ai-cursor-check             Check Cursor/MCP readiness in HOME"
 	@echo "  make update-check                Read-only update/runtime diagnostics"
 	@echo "  make ai-doctor                   Read-only AI readiness checks"
-	@echo "  make agent-validate-changed      Validate changed files for agents (local; SECURITY_ONLINE=1 for OSV)"
+	@echo "  make agent-validate              Dotfiles agent gate (read-only; skills, MCP, docs, changed files)"
+	@echo "  make agent-validate-changed      Validate changed files only (local; SECURITY_ONLINE=1 for OSV)"
+	@echo "  make agent-validate-audit        Full-repo quality + security audit (strict)"
+	@echo "  make agent-validate-full         agent-validate + agent-validate-audit"
 	@echo "  make deps-check                  Check declarative system dependencies"
 	@echo "  make deps-actions                Show actions for missing dependencies"
 	@echo "  make test-chezmoi                Chezmoi smoke tests"
@@ -95,7 +98,9 @@ help:
 	@echo "  make test-deps-check             Fail-fast check for bats/shellcheck/shfmt/zsh"
 	@echo "  make quality-check               Strict quality audit (shellcheck, shfmt, yamllint, actionlint)"
 	@echo "  make security-check              gitleaks + osv-scanner"
-	@echo "  make agent-validate              quality-check + security-check"
+	@echo "  make agent-validate              Dotfiles operational gate (see scripts/agent-validate-dotfiles.sh)"
+	@echo "  make agent-validate-audit        quality-check + security-check"
+	@echo "  make agent-validate-full         agent-validate + agent-validate-audit"
 	@echo "  make fmt-shell                   Format shell scripts with shfmt"
 	@echo "  make test-install                Install test dependencies (may use network)"
 	@echo "  make generate-commands           Generate command artifacts"
@@ -174,9 +179,17 @@ security-check: security-gitleaks security-osv
 	@echo ""
 	@echo "$(GREEN)==>$(NC) Security checks completed"
 
-agent-validate: quality-check security-check
+agent-validate-audit: quality-check security-check
 	@echo ""
-	@echo "$(GREEN)==>$(NC) Agent validation completed"
+	@echo "$(GREEN)==>$(NC) Agent validation audit completed"
+
+agent-validate:
+	@SECURITY_ONLINE="$(SECURITY_ONLINE)" AGENT_VALIDATE_VERBOSE="$(AGENT_VALIDATE_VERBOSE)" \
+		bash $(DOTFILES_DIR)/scripts/agent-validate-dotfiles.sh
+
+agent-validate-full: agent-validate agent-validate-audit
+	@echo ""
+	@echo "$(GREEN)==>$(NC) Full agent validation completed"
 
 agent-validate-changed:
 	@SECURITY_ONLINE="$(SECURITY_ONLINE)" bash $(DOTFILES_DIR)/scripts/agent-validate-changed.sh
@@ -436,6 +449,8 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/mcp-manifest.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-render-drift.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-agent-skills.bats)
+	@$(call run_bats,$(BATS_DIR)/system/agent-validate-changed.bats)
+	@$(call run_bats,$(BATS_DIR)/system/agent-validate-dotfiles.bats)
 
 bats-gitnexus:
 	@echo "$(BLUE)==>$(NC) Running GitNexus operational status tests..."

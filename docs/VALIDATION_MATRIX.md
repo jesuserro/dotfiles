@@ -62,11 +62,13 @@ Usar cuando el BUILD es amplio, toca varias zonas o modifica contratos estructur
 | `make ai-doctor` | Pre-BUILD o diagnóstico de entorno (read-only) |
 | `make test-fast` | Cambios en scripts, tests o Make sin tocar chezmoi pesado |
 | `make test-ci` | Paridad con CI antes de handoff importante |
-| `make agent-validate` | Auditoría full-repo estricta (`quality-check` + `security-check`) |
+| `make agent-validate` | Gate dotfiles operativo (read-only; orquesta skills, MCP, changed files, docs) |
+| `make agent-validate-audit` | Auditoría full-repo estricta (`quality-check` + `security-check`) |
+| `make agent-validate-full` | `agent-validate` + `agent-validate-audit` |
 | `SECURITY_ONLINE=1 make agent-validate-changed` | Escaneo OSV online (humano/pre-merge; requiere red) |
 | `make chezmoi-drift-report` | Cambios en plantillas Chezmoi — sin apply |
 
-`make agent-validate` puede reportar deuda histórica shellcheck/shfmt en archivos no tocados; no sustituye el gate focalizado post-cambio.
+`make agent-validate-audit` puede reportar deuda histórica shellcheck/shfmt en archivos no tocados; no sustituye el gate focalizado post-cambio.
 
 ---
 
@@ -82,18 +84,19 @@ Usar cuando el BUILD es amplio, toca varias zonas o modifica contratos estructur
 | `Makefile`, `*.mk` | `make -pn` |
 | `system/packages/`, deps scripts | `system-deps.bats` |
 | MCP paths (`ai/assets/mcps/`, `ai/runtime/mcp/`, etc.) | `make ai-mcp-governance` + bats MCP |
+| `docs/` | `make bats-docs` |
+| `ai/assets/handoffs/` | `documentation-consistency.bats` |
+| `ai/assets/skills/` | `validate-skills-structure` + bats skills |
+| `ai/assets/commands/` | `validate-commands` + bats commands |
+| `.chezmoiscripts/`, `dot_*` | `make test-chezmoi` |
+| `scripts/hooks/`, `.githooks/` | `git-hooks/hooks.bats` |
+| `zsh/` | `make bats-zsh` |
+| `scripts/update/` | `update-workflow.bats`, `update-governance.bats` |
+| `bin/playwright-docker`, `dot_local/bin/` (playwright) | `playwright-docker.bats` |
+| `bin/dotfiles-update`, symlink template | `dotfiles-update.bats` |
 | Cualquier cambio | `gitleaks` working-tree |
 
-**Gaps conocidos** (validar manualmente hasta extensión futura del script):
-
-- `ai/assets/skills/` → añadir `make validate-skills-structure` + `make bats-skills`
-- `ai/assets/commands/` → `make validate-commands` + `make bats-commands`
-- `docs/` → `make bats-docs`
-- `.chezmoiscripts/`, `dot_*` → `make test-chezmoi`
-- `scripts/hooks/`, `.githooks/` → `git-hooks/hooks.bats`
-- `zsh/` → `bats-zsh`
-
-La matriz documenta el contrato objetivo; el script se alineará en un BUILD posterior.
+El gate completo `make agent-validate` ejecuta además skills, MCP governance, `agent-validate-changed`, `bats-docs` y `update-check` vía [`scripts/agent-validate-dotfiles.sh`](../scripts/agent-validate-dotfiles.sh).
 
 ---
 

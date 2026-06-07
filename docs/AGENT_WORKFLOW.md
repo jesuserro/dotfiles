@@ -135,15 +135,17 @@ Tras un BUILD, validar según la zona modificada ([VALIDATION_MATRIX.md](VALIDAT
 | Momento | Comando recomendado |
 |---------|---------------------|
 | Pre-implementación (readiness) | `make ai-doctor` |
-| Post-cambio (gate práctico) | `make agent-validate-changed` |
-| Auditoría full-repo (estricta) | `make agent-validate` (= `quality-check` + `security-check`) |
+| Post-BUILD (gate dotfiles) | `make agent-validate` |
+| Post-cambio focalizado | `make agent-validate-changed` |
+| Auditoría full-repo estricta | `make agent-validate-audit` |
+| Pre-merge / release fuerte | `make agent-validate-full` |
 | Área Chezmoi | `make test-chezmoi` |
 | Área MCP | `make ai-mcp-governance` |
 | Solo docs | `make bats-docs` |
 
 Detalle de targets y política OSV: [TESTING.md](TESTING.md).
 
-Los agentes deben ejecutar **`make agent-validate-changed`** al cerrar un BUILD con cambios en el working tree.
+Los agentes deben ejecutar **`make agent-validate-changed`** tras cambios pequeños, o **`make agent-validate`** para el gate dotfiles completo al cerrar un BUILD. Ninguno ejecuta `chezmoi apply`, `make update` ni instalaciones.
 
 ---
 

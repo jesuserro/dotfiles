@@ -222,6 +222,18 @@ setup() {
 	grep -q 'adr/' "${AGENT_WORKFLOW}"
 }
 
+@test "TESTING.md documents agent-validate target hierarchy" {
+	local testing="${DOTFILES_DIR}/docs/TESTING.md"
+	grep -q 'make agent-validate-audit' "${testing}"
+	grep -q 'make agent-validate-full' "${testing}"
+	grep -q 'agent-validate-dotfiles.sh' "${testing}"
+}
+
+@test "AGENT_WORKFLOW.md documents agent-validate-audit" {
+	grep -q 'agent-validate-audit' "${AGENT_WORKFLOW}"
+	grep -q 'agent-validate-full' "${AGENT_WORKFLOW}"
+}
+
 @test "global chezmoi apply is framed as bootstrap or conscious human action" {
 	local doc line
 	for doc in "${GUIA}" "${OPERATIONS}"; do

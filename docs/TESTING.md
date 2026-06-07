@@ -54,6 +54,8 @@ make quality-check
 make security-check
 make agent-validate-changed
 make agent-validate
+make agent-validate-audit
+make agent-validate-full
 ```
 
 ### Bats tests only
@@ -81,9 +83,11 @@ make fmt-shell
 | `make ai-doctor` | Read-only agent readiness: dependencies, update readiness, AI/MCPs, skills, commands and `gitleaks` |
 | `make quality-check` | Full strict repository quality audit: shellcheck + shfmt check + yamllint + actionlint (`-shellcheck=`) when workflows exist |
 | `make security-check` | gitleaks working-tree scan + osv-scanner when supported manifests/lockfiles exist |
-| `make agent-validate-changed` | Practical agent gate: changed shell/YAML/workflow files + relevant focused tests + local security (`gitleaks`); OSV online is opt-in |
+| `make agent-validate` | Dotfiles operational gate (read-only): whitespace, skills, MCP governance, changed files, docs bats, update-check — via `scripts/agent-validate-dotfiles.sh` |
+| `make agent-validate-changed` | Changed-files gate only: shell/YAML/workflow lint + matrix-focused bats + `gitleaks`; OSV online is opt-in |
 | `SECURITY_ONLINE=1 make agent-validate-changed` | Same as above plus strict `osv-scanner` dependency scan (requires network) |
-| `make agent-validate` | Full repository validation: quality-check + security-check |
+| `make agent-validate-audit` | Full strict repository audit: `quality-check` + `security-check` (former `agent-validate` semantics) |
+| `make agent-validate-full` | `agent-validate` + `agent-validate-audit` |
 | `make test-bats` | All bats tests (includes chezmoi hooks) |
 | `make test-chezmoi` | Chezmoi bats + `chezmoi-templates` |
 | `make test-ci` | GitHub Actions CI subset: lint + MCP/chezmoi/skills Bats covered by `.github/workflows/test.yml` |
@@ -103,17 +107,19 @@ make fmt-shell
 
 `make ai-doctor` is the read-only readiness check for agents before implementation. It does not replace targeted tests for the area being changed; it aggregates environment, AI/MCP, skills, commands and `gitleaks` checks so secret leaks are caught before handing off changes. Because it includes `make update-check`, it also surfaces Node runtime shadowing before long GitNexus re-indexing commands.
 
-`make quality-check` and `make agent-validate` are full-repository audits. They are intentionally strict, and can surface existing shellcheck/shfmt debt until that cleanup is handled separately.
+`make agent-validate` is the **canonical dotfiles gate** for agents after a BUILD. It orchestrates read-only checks and does not run `chezmoi apply`, `make update`, or package installs. It fails if `.claude/skills/` exists in the checkout (ADR 0004).
 
-`make agent-validate-changed` is the practical post-change gate for agents. By default it runs **local** checks only:
+`make agent-validate-changed` is a lighter, diff-focused gate (also invoked inside `make agent-validate`). By default it runs **local** checks only:
 
 - shell scripts changed since `HEAD`: `shellcheck` + `shfmt`
 - changed YAML: `yamllint`
 - changed GitHub workflows: `actionlint`
-- focused bats when dependency/MCP paths changed
+- focused bats when paths match [VALIDATION_MATRIX.md](VALIDATION_MATRIX.md) (docs, skills, handoffs, chezmoi, hooks, zsh, update, MCP, deps)
 - **local security**: mandatory `gitleaks` working-tree scan
 
-**OSV online is not part of the default agent gate.** The default command does not call `osv-scanner` and does not depend on the OSV API. Agents should use `make agent-validate-changed` after implementation.
+`make agent-validate-audit` (`quality-check` + `security-check`) is the full-repository strict audit. Use before large releases or when hunting repo-wide lint/security debt — not as the default post-BUILD gate.
+
+**OSV online is not part of the default agent gate.** The default command does not call `osv-scanner` and does not depend on the OSV API. Agents should use `make agent-validate-changed` after small changes; `make agent-validate` for a full dotfiles handoff check.
 
 To run a strict online dependency scan before closing a change (human or pre-merge), use:
 

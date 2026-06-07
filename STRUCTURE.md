@@ -389,6 +389,7 @@
 │   │   ├── 🔧 update-wsl.sh
 │   │   └── 🔧 update.sh
 │   ├── 🔧 agent-validate-changed.sh
+│   ├── 🔧 agent-validate-dotfiles.sh
 │   ├── 🔧 ai-cursor-check.sh
 │   ├── 🔧 check-azure-tools.sh
 │   ├── 🔧 check-system-deps.sh
@@ -509,6 +510,7 @@
 │   │   │   └── 📄 validate-skills-structure.bats
 │   │   ├── 📁 system
 │   │   │   ├── 📄 agent-validate-changed.bats
+│   │   │   ├── 📄 agent-validate-dotfiles.bats
 │   │   │   ├── 📄 ai-cursor-check.bats
 │   │   │   ├── 📄 azure-tools.bats
 │   │   │   ├── 📄 docker-desktop-credentials.bats

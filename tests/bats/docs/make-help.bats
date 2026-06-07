@@ -31,6 +31,7 @@ setup() {
 		'make ai-mcp-governance' \
 		'make update-check' \
 		'make ai-doctor' \
+		'make agent-validate' \
 		'make agent-validate-changed' \
 		'make test-chezmoi' \
 		'make test-bats-ci'; do
