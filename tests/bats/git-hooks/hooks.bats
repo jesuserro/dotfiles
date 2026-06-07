@@ -236,6 +236,8 @@ EOF
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"MCP/index lock is active"* ]]
 	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md"* ]]
+	local typo="gnanalyze""-here"
+	[[ "$output" != *"$typo"* ]]
 	[[ ! -f "$trace" ]]
 }
 
@@ -427,6 +429,18 @@ EOF
 @test "GitNexus hook policy documents post-commit best-effort refresh" {
 	local policy="${DOTFILES_DIR}/docs/GITNEXUS_OPERATIONAL_POLICY.md"
 	grep -q 'gnx-analyze-here --force --skip-agents-md' "$policy"
+	grep -q 'gnx-analyze-here --skip-agents-md' "$policy"
 	grep -q '30 segundos' "$policy"
 	grep -q 'MCP/procesos GitNexus' "$policy"
+}
+
+@test "GitNexus hook docs and scripts do not mention gnanalyze typo" {
+	local typo="gnanalyze""-here"
+	run grep -R "$typo" \
+		"${DOTFILES_DIR}/scripts/hooks" \
+		"${DOTFILES_DIR}/docs/GITNEXUS_OPERATIONAL_POLICY.md" \
+		"${DOTFILES_DIR}/docs/INSTALL.md" \
+		"${DOTFILES_DIR}/docs/OPERATIONS_CHEATSHEET.md" \
+		"${DOTFILES_DIR}/tests/bats/git-hooks"
+	[[ "$status" -eq 1 ]]
 }

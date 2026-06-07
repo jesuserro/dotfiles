@@ -84,6 +84,10 @@ make gitnexus-status
 gnx-analyze-here --force --skip-agents-md
 ```
 
+El hook recomienda `--force --skip-agents-md` para recuperación inmediata tras
+un skip/fallo best-effort. El refresh humano normal, tras verificar que no hay
+MCP/lock activo, puede usar el comando canónico sin `--force` documentado abajo.
+
 ---
 
 ## Node gestionado
