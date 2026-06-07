@@ -28,19 +28,21 @@ Implemented in phase 2:
   the feature branch.
 - `VALIDATE_TO_MAIN=true` runs `VALIDATE_CMD_TO_MAIN` before `git rel`
   integrates the release branch.
+- `FLOW_MODE_TO_DEV=pr` makes `git feat` push the current feature branch and
+  create a Pull Request into `BASE_DEV_BRANCH` with GitHub CLI, instead of doing
+  a local merge.
 - `DELETE_FEATURE_BRANCH=false` makes `git feat` preserve the integrated
   feature branch instead of archiving it. The default keeps the legacy archival
   behavior.
 
 Still not implemented:
 
-- PR modes (`pr`, `pr_auto`, `pr_immediate`) fail clearly when they affect the
-  command being run.
+- `FLOW_MODE_TO_MAIN=pr` remains blocked in `git rel`.
+- Automatic PR variants (`pr_auto`, `pr_immediate`) remain blocked.
 - Merge strategy policy is parsed and validated, but `git feat` and `git rel`
   still use their legacy merge behavior.
-- `OPEN_BROWSER` is parsed and validated for forward compatibility. It does not
-  currently change local-mode behavior and will become relevant when PR mode is
-  implemented.
+- `OPEN_BROWSER` does not change local-mode behavior. In `FLOW_MODE_TO_DEV=pr`,
+  `OPEN_BROWSER=false` avoids passing `--web` to `gh pr create`.
 
 ## Print Effective Policy
 
@@ -158,6 +160,32 @@ Running validation: make validate
 If validation exits non-zero, the script aborts before merge, push, tag creation,
 or branch deletion.
 
+## Feature PR Mode
+
+`FLOW_MODE_TO_DEV=pr` is implemented for `git feat` only. It requires GitHub CLI
+(`gh`) on `PATH`.
+
+In this mode, `git feat <name>` must be run from the matching current feature
+branch. For example, `git feat demo` must run from `feature/demo`, unless
+`FEATURE_BRANCH_PREFIX` changes the expected prefix.
+
+The PR flow:
+
+- runs `VALIDATE_CMD_TO_DEV` when `VALIDATE_TO_DEV=true`;
+- pushes the current feature branch to `REMOTE_NAME`;
+- creates a Pull Request with `gh pr create --base "$BASE_DEV_BRANCH" --head
+  "$current_branch"`;
+- does not checkout `BASE_DEV_BRANCH`;
+- does not merge locally;
+- does not generate the legacy feature changelog;
+- does not archive or delete the feature branch.
+
+If GitHub CLI is not installed, the command fails with:
+
+```text
+ERROR: FLOW_MODE_TO_DEV=pr requires GitHub CLI (`gh`).
+```
+
 ## Examples
 
 The canonical copyable example lives at
@@ -210,14 +238,22 @@ With `DELETE_FEATURE_BRANCH=false`, `git feat` prints
 default `DELETE_FEATURE_BRANCH=true`, `git feat` keeps archiving the feature
 branch as `archive/<branch>`.
 
-Future PR-oriented policy, parsed today but not implemented by `git feat` or
-`git rel` yet:
+Feature PR policy:
 
 ```env
 FLOW_MODE_TO_DEV=pr
+BASE_DEV_BRANCH=dev
+OPEN_BROWSER=false
+VALIDATE_TO_DEV=true
+VALIDATE_CMD_TO_DEV="make validate"
+```
+
+Future release PR-oriented policy, parsed today but not implemented by `git rel`
+yet:
+
+```env
 FLOW_MODE_TO_MAIN=pr
 MERGE_STRATEGY_TO_MAIN=squash
-DELETE_FEATURE_BRANCH=false
 ```
 
 ## Manual Validation Fixture
@@ -283,16 +319,19 @@ EOF
 ~/dotfiles/scripts/git_feat.sh demo
 ```
 
-PR modes are accepted by the parser but intentionally blocked by the current
-product scripts:
+Feature PR mode pushes the current feature branch and creates a Pull Request:
 
 ```bash
 cat > .git-flow-policy.env <<'EOF'
 FLOW_MODE_TO_DEV=pr
+OPEN_BROWSER=false
 EOF
 
 ~/dotfiles/scripts/git_feat.sh demo
 ```
+
+Release PR mode is still accepted by the parser but intentionally blocked by
+`git rel`:
 
 ```bash
 cat > .git-flow-policy.env <<'EOF'

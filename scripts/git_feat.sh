@@ -83,10 +83,15 @@ load_git_flow_policy() {
 }
 
 ensure_supported_flow_mode() {
-	if [[ "$FLOW_MODE_TO_DEV" != "local" ]]; then
-		echo -e "${RED}❌ PR mode not implemented yet for git feat: FLOW_MODE_TO_DEV=${FLOW_MODE_TO_DEV}${NC}"
+	case "$FLOW_MODE_TO_DEV" in
+	local | pr)
+		return 0
+		;;
+	*)
+		echo -e "${RED}❌ PR mode variant not implemented yet for git feat: FLOW_MODE_TO_DEV=${FLOW_MODE_TO_DEV}${NC}"
 		exit 1
-	fi
+		;;
+	esac
 }
 
 run_validation_if_enabled() {
@@ -97,6 +102,78 @@ run_validation_if_enabled() {
 			exit 1
 		fi
 	fi
+}
+
+check_gh_cli_for_pr() {
+	if ! command -v gh &>/dev/null; then
+		echo -e "${RED}ERROR: FLOW_MODE_TO_DEV=pr requires GitHub CLI (\`gh\`).${NC}"
+		exit 1
+	fi
+}
+
+resolve_current_feature_branch_for_pr() {
+	local current_branch expected_branch
+	current_branch="$(git branch --show-current)"
+
+	if [[ -z "$current_branch" ]]; then
+		echo -e "${RED}❌ FLOW_MODE_TO_DEV=pr requires a named current branch.${NC}" >&2
+		exit 1
+	fi
+
+	if [[ "$current_branch" != "$FEATURE_PREFIX"* ]]; then
+		echo -e "${RED}❌ FLOW_MODE_TO_DEV=pr requires current branch to start with '${FEATURE_PREFIX}': ${current_branch}${NC}" >&2
+		exit 1
+	fi
+
+	if [[ "$INPUT_NAME" == "$FEATURE_PREFIX"* ]]; then
+		expected_branch="$INPUT_NAME"
+	else
+		expected_branch="${FEATURE_PREFIX}${INPUT_NAME}"
+	fi
+
+	if [[ "$current_branch" != "$expected_branch" ]]; then
+		echo -e "${RED}❌ FLOW_MODE_TO_DEV=pr must run from '${expected_branch}' (current: '${current_branch}').${NC}" >&2
+		exit 1
+	fi
+
+	printf '%s\n' "$current_branch"
+}
+
+run_pr_flow_to_dev() {
+	local gh_args
+
+	FEATURE_BRANCH="$(resolve_current_feature_branch_for_pr)"
+
+	check_clean_repo
+	run_validation_if_enabled
+	check_gh_cli_for_pr
+
+	echo -e "${YELLOW}Creating pull request for '${FEATURE_BRANCH}' into '${DEV_BRANCH}'...${NC}"
+
+	if ! git push -u "$REMOTE_NAME" "$FEATURE_BRANCH"; then
+		echo -e "${RED}❌ Error al hacer push de la rama '${FEATURE_BRANCH}'${NC}"
+		exit 1
+	fi
+
+	gh_args=(
+		pr create
+		--base "$DEV_BRANCH"
+		--head "$FEATURE_BRANCH"
+		--title "$FEATURE_BRANCH"
+		--body "Created by git feat policy flow."
+	)
+
+	if [[ "$OPEN_BROWSER" == "true" ]]; then
+		gh_args+=(--web)
+	fi
+
+	if ! gh "${gh_args[@]}"; then
+		echo -e "${RED}❌ Error al crear el Pull Request${NC}"
+		exit 1
+	fi
+
+	echo -e "${GREEN}✅ Pull Request creado para '${FEATURE_BRANCH}' → '${DEV_BRANCH}'${NC}"
+	exit 0
 }
 
 # Procesar argumentos y obtener el nombre de la feature
@@ -268,6 +345,10 @@ if [ -z "$INPUT_NAME" ]; then
 	echo "👉 Ejemplo: git feat mi-nueva-funcionalidad"
 	echo "👉 O usa: git feat --help"
 	exit 1
+fi
+
+if [[ "$FLOW_MODE_TO_DEV" == "pr" ]]; then
+	run_pr_flow_to_dev
 fi
 
 # 🔍 Detección automática: resuelve si la rama tiene o no prefijo

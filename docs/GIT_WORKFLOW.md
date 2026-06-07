@@ -32,8 +32,8 @@ See:
 
 Without `.git-flow-policy.env`, the legacy local behavior is preserved. Optional
 validation commands already work for feature integration and release
-integration. PR mode and alternative merge strategies are reserved for a later
-phase.
+integration. `FLOW_MODE_TO_DEV=pr` is available for `git feat`; release PR mode
+and alternative merge strategies are reserved for later phases.
 
 ## 🛠️ Scripts Disponibles
 

@@ -68,6 +68,20 @@ init_feat_repo_with_remote() {
 	git -C "$repo" push -q origin feature/demo
 }
 
+install_gh_stub() {
+	local log="$1"
+	local bin_dir="${TEST_TEMP_DIR}/bin"
+	mkdir -p "$bin_dir"
+	cat >"${bin_dir}/gh" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$GH_STUB_LOG"
+printf 'https://github.com/example/repo/pull/1\n'
+EOF
+	chmod +x "${bin_dir}/gh"
+	export GH_STUB_LOG="$log"
+	export PATH="${bin_dir}:${PATH}"
+}
+
 @test "git_feat --print-policy prints defaults without Git operations" {
 	cd "$TEST_TEMP_DIR"
 	run bash "$GIT_FEAT" --print-policy
@@ -88,18 +102,18 @@ EOF
 	[[ "$output" != *"No estás dentro de un repositorio Git"* ]]
 }
 
-@test "git_feat PR mode is explicit and not implemented yet" {
+@test "git_feat PR mode variants beyond pr are explicit and not implemented yet" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	init_feat_repo "$repo"
 	cat >"${repo}/.git-flow-policy.env" <<'EOF'
-FLOW_MODE_TO_DEV=pr
+FLOW_MODE_TO_DEV=pr_auto
 EOF
 
 	cd "$repo"
 	run bash "$GIT_FEAT" demo
 	[[ "$status" -ne 0 ]]
-	[[ "$output" == *"PR mode not implemented yet"* ]]
-	[[ "$output" == *"FLOW_MODE_TO_DEV=pr"* ]]
+	[[ "$output" == *"PR mode variant not implemented yet"* ]]
+	[[ "$output" == *"FLOW_MODE_TO_DEV=pr_auto"* ]]
 }
 
 @test "git_feat validation command runs from repo root and aborts before merge" {
@@ -192,4 +206,101 @@ EOF
 	git ls-remote --exit-code --heads origin feature/demo >/dev/null
 	run git ls-remote --exit-code --heads origin archive/feature/demo
 	[[ "$status" -ne 0 ]]
+}
+
+@test "git_feat PR mode validates pushes current feature branch and creates PR" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/upstream.git"
+	local validation_log="${TEST_TEMP_DIR}/pr-validation.log"
+	local gh_log="${TEST_TEMP_DIR}/gh.log"
+	install_gh_stub "$gh_log"
+
+	git init -q --bare "$remote"
+	mkdir -p "$repo"
+	git init -q "$repo"
+	git -C "$repo" config user.email "test@example.com"
+	git -C "$repo" config user.name "Test User"
+	echo "base" >"$repo/file.txt"
+	git -C "$repo" add file.txt
+	git -C "$repo" commit -q -m "initial"
+	git -C "$repo" branch -M main
+	git -C "$repo" checkout -q -b integration
+	git -C "$repo" remote add upstream "$remote"
+	git -C "$repo" push -q upstream main integration
+	git -C "$repo" checkout -q -b topic/demo
+	echo "topic" >"$repo/topic.txt"
+	git -C "$repo" add topic.txt
+	git -C "$repo" commit -q -m "feat: topic"
+	cat >"${repo}/.git-flow-policy.env" <<EOF
+FLOW_MODE_TO_DEV=pr
+REMOTE_NAME=upstream
+BASE_DEV_BRANCH=integration
+FEATURE_BRANCH_PREFIX=topic/
+VALIDATE_TO_DEV=true
+VALIDATE_CMD_TO_DEV="printf validated > '${validation_log}'"
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: add pr policy"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" demo
+	[[ "$status" -eq 0 ]]
+	[[ "$(cat "$validation_log")" == "validated" ]]
+	[[ "$output" == *"Creating pull request for 'topic/demo' into 'integration'"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+	[[ "$output" != *"Archivando rama"* ]]
+	[[ "$(git branch --show-current)" == "topic/demo" ]]
+	git ls-remote --exit-code --heads upstream topic/demo >/dev/null
+	[[ "$(cat "$gh_log")" == *"pr create --base integration --head topic/demo"* ]]
+	[[ "$(cat "$gh_log")" != *"--web"* ]]
+	run git show-ref --verify --quiet refs/heads/archive/topic/demo
+	[[ "$status" -ne 0 ]]
+}
+
+@test "git_feat PR mode aborts when validation fails before push or PR" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh.log"
+	install_gh_stub "$gh_log"
+	init_feat_repo_with_remote "$repo" "$remote"
+	git -C "$repo" push -q origin --delete feature/demo
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_DEV=pr
+VALIDATE_TO_DEV=true
+VALIDATE_CMD_TO_DEV="false"
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: failing pr validation"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" demo
+	[[ "$status" -ne 0 ]]
+	[[ "$output" == *"Validation failed:"* ]]
+	run git ls-remote --exit-code --heads origin feature/demo
+	[[ "$status" -ne 0 ]]
+	[[ ! -s "$gh_log" ]]
+}
+
+@test "git_feat PR mode requires the current branch to match feature prefix" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh.log"
+	install_gh_stub "$gh_log"
+	init_feat_repo_with_remote "$repo" "$remote"
+	git -C "$repo" checkout -q dev
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_DEV=pr
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: pr policy on dev"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" demo
+	[[ "$status" -ne 0 ]]
+	[[ "$output" == *"requires current branch to start with 'feature/'"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+	[[ ! -s "$gh_log" ]]
 }
