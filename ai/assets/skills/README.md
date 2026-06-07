@@ -91,6 +91,7 @@ Visible skill names follow semantic origin, not just repository location:
 - `ops/dotfiles-operations/` - `Dotfiles operations` (Chezmoi, secrets, update vs apply; daily ops)
 - `ops/dotfiles-install/` - `Dotfiles bootstrap install`
 - `ops/dotfiles-skill-registration/` - `Dotfiles Skill Registration`
+- `ops/dotfiles-agent-review/` - `Dotfiles Agent Review` (post-change read-only review checklist)
 - `ops/vault-development-acceleration/` - `Vault Development Acceleration`
 - `ops/vault-review-diff/` - `Vault Review Diff`
 - `ops/vault-detect-errors/` - `Vault Detect Errors`

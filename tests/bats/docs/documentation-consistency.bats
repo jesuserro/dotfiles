@@ -13,6 +13,9 @@ setup() {
 	AGENTS="${DOTFILES_DIR}/AGENTS.md"
 	DOCS_README="${DOTFILES_DIR}/docs/README.md"
 	AI_README="${DOTFILES_DIR}/ai/README.md"
+	HANDOFFS_DIR="${DOTFILES_DIR}/ai/assets/handoffs"
+	SKILLS_README="${DOTFILES_DIR}/ai/assets/skills/README.md"
+	AGENT_REVIEW_SKILL="${DOTFILES_DIR}/ai/assets/skills/ops/dotfiles-agent-review/SKILL.md"
 }
 
 @test "GUIA_MCP_AI.md mentions make chezmoi-drift-report" {
@@ -104,6 +107,70 @@ setup() {
 
 @test "ai/README.md links agent workflow or repo map" {
 	grep -qE 'AGENT_WORKFLOW\.md|AI_REPO_MAP\.md' "${AI_README}"
+}
+
+@test "handoffs README and five templates exist" {
+	[[ -f "${HANDOFFS_DIR}/README.md" ]]
+	local template
+	for template in cursor-plan cursor-build cursor-audit codex-build chatgpt-review; do
+		[[ -f "${HANDOFFS_DIR}/${template}.md" ]] || {
+			echo "missing template: ${template}.md" >&2
+			return 1
+		}
+	done
+}
+
+@test "each handoff template has required sections" {
+	local template file
+	for template in cursor-plan cursor-build cursor-audit codex-build chatgpt-review; do
+		file="${HANDOFFS_DIR}/${template}.md"
+		grep -qi 'modo de trabajo' "${file}" || {
+			echo "${template}: missing modo de trabajo" >&2
+			return 1
+		}
+		grep -qi 'alcance permitido' "${file}" || {
+			echo "${template}: missing alcance permitido" >&2
+			return 1
+		}
+		grep -qi 'fuera de alcance' "${file}" || {
+			echo "${template}: missing fuera de alcance" >&2
+			return 1
+		}
+		grep -qi 'formato de informe' "${file}" || {
+			echo "${template}: missing formato de informe" >&2
+			return 1
+		}
+	done
+}
+
+@test "handoff templates avoid triple-backtick code fences" {
+	local template file
+	for template in cursor-plan cursor-build cursor-audit codex-build chatgpt-review README; do
+		file="${HANDOFFS_DIR}/${template}.md"
+		run grep -q '```' "${file}"
+		[[ "${status}" -eq 1 ]] || {
+			echo "${template}: contains triple backticks" >&2
+			return 1
+		}
+	done
+}
+
+@test "dotfiles-agent-review skill exists with required sections" {
+	[[ -f "${AGENT_REVIEW_SKILL}" ]]
+	grep -q '^name: dotfiles-agent-review' "${AGENT_REVIEW_SKILL}"
+	grep -q '## When to Use' "${AGENT_REVIEW_SKILL}"
+	grep -q '## Inputs Expected' "${AGENT_REVIEW_SKILL}"
+	grep -q '## Checklist' "${AGENT_REVIEW_SKILL}"
+	grep -q '## Output' "${AGENT_REVIEW_SKILL}"
+}
+
+@test "AGENT_WORKFLOW.md links handoffs and dotfiles-agent-review skill" {
+	grep -q 'ai/assets/handoffs' "${AGENT_WORKFLOW}"
+	grep -q 'dotfiles-agent-review' "${AGENT_WORKFLOW}"
+}
+
+@test "skills README registers dotfiles-agent-review" {
+	grep -q 'dotfiles-agent-review' "${SKILLS_README}"
 }
 
 @test "global chezmoi apply is framed as bootstrap or conscious human action" {

@@ -144,7 +144,7 @@ Referencias:
 
 ## Agent workflow (vault + issues + repo)
 
-Contrato operativo para cambios **en dotfiles**: [docs/AGENT_WORKFLOW.md](../docs/AGENT_WORKFLOW.md). Mapa de zonas: [docs/AI_REPO_MAP.md](../docs/AI_REPO_MAP.md).
+Contrato operativo para cambios **en dotfiles**: [docs/AGENT_WORKFLOW.md](../docs/AGENT_WORKFLOW.md). Mapa de zonas: [docs/AI_REPO_MAP.md](../docs/AI_REPO_MAP.md). Plantillas handoff: [ai/assets/handoffs/](assets/handoffs/).
 
 Tutorial paso a paso: [Agent Workflow Loop](../docs/AGENT_WORKFLOW_LOOP.md).
 

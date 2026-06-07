@@ -36,6 +36,7 @@ Los agentes suelen trabajar en la capa **fuente del repo** (plantillas, scripts,
 | `docs/` | Documentación operativa, contratos, ADRs | Inconsistencia entre docs; duplicar chuletas | `make bats-docs` |
 | `ai/` | Hub IA: runtime, assets, adapters | Confundir fuente vs surface en HOME | `make validate-skills-structure`, `make ai-mcp-governance` |
 | `ai/assets/skills/` | Skills globales canónicos (SSOT) | Materializar en checkout; symlinks; duplicar vault | `validate-skills-structure`, `make bats-skills` |
+| `ai/assets/handoffs/` | Plantillas handoff PLAN/BUILD/AUDIT para agentes | Plantillas desactualizadas; backticks anidados al copiar | `make bats-docs` |
 | `ai/assets/mcps/` | MANIFEST MCP, perfiles, taxonomía | Drift render; MCP mal clasificado | `make ai-mcp-governance`, `mcp-render-drift.bats` |
 | `ai/runtime/mcp/` | Servidores MCP Python, venv, launchers fuente | Romper contrato launcher; deps runtime | `ai-mcp-governance`, `ai-runtime-uv.bats` |
 | `scripts/` | Scripts shell, librerías (`lib/`) | shellcheck/shfmt drift; efectos secundarios | `make agent-validate-changed`, `make test-lint` |

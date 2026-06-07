@@ -149,15 +149,23 @@ Los agentes deben ejecutar **`make agent-validate-changed`** al cerrar un BUILD 
 
 ## 10. Handoffs
 
-Para pedir trabajo a agentes, usar handoffs con:
+Plantillas versionadas en [ai/assets/handoffs/](../ai/assets/handoffs/) — copiar en el chat y rellenar placeholders.
 
-- **Modo** (PLAN / BUILD / AUDIT)
-- **Alcance** y **fuera de alcance** explícitos
-- **Comandos de validación** esperados al final
-- **Formato de informe** (ver §11)
-- **Criterios de aceptación** verificables
+| Plantilla | Modo | Uso |
+|-----------|------|-----|
+| `cursor-plan.md` | PLAN | Diagnóstico sin implementar |
+| `cursor-build.md` | BUILD | Implementación acotada |
+| `cursor-audit.md` | AUDIT | Revisión read-only |
+| `codex-build.md` | BUILD | Implementación explícita (Codex) |
+| `chatgpt-review.md` | REVIEW | Revisión externa con material aportado |
 
-Plantillas versionadas en `ai/assets/handoffs/` están previstas en el roadmap agent-first; mientras tanto, seguir la estructura del ejemplo en [ai/AGENT_WORKFLOW_FOR_AGENTS.md](../ai/AGENT_WORKFLOW_FOR_AGENTS.md) §9.
+Índice y convenciones: [ai/assets/handoffs/README.md](../ai/assets/handoffs/README.md).
+
+Cada handoff debe declarar modo, alcance, fuera de alcance, validación y criterios de aceptación. Para loop vault→proyecto, ver también [ai/AGENT_WORKFLOW_FOR_AGENTS.md](../ai/AGENT_WORKFLOW_FOR_AGENTS.md) §9.
+
+### Revisión post-cambio
+
+Para auditar un BUILD o diff en dotfiles, usar la skill [Dotfiles Agent Review](../ai/assets/skills/ops/dotfiles-agent-review/SKILL.md) (`dotfiles-agent-review`). Es read-only por defecto; no sustituye `make agent-validate-changed`.
 
 ---
 
@@ -190,4 +198,6 @@ Separar claramente lo **implementado**, lo **validado** y lo **pendiente**.
 | [MCP_TAXONOMY.md](MCP_TAXONOMY.md) | Taxonomía MCP |
 | [STRUCTURE.md](../STRUCTURE.md) | Árbol del repositorio |
 | [ai/AGENT_WORKFLOW_FOR_AGENTS.md](../ai/AGENT_WORKFLOW_FOR_AGENTS.md) | Loop vault → spec → issues |
+| [ai/assets/handoffs/README.md](../ai/assets/handoffs/README.md) | Plantillas handoff PLAN/BUILD/AUDIT |
+| [dotfiles-agent-review](../ai/assets/skills/ops/dotfiles-agent-review/SKILL.md) | Skill revisión post-cambio |
 | [AGENT_WORKFLOW_LOOP.md](AGENT_WORKFLOW_LOOP.md) | Tutorial humano del loop |
