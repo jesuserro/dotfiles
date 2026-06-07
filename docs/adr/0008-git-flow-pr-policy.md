@@ -34,7 +34,7 @@ Configuration via `.git-flow-policy.env` per project (see `docs/examples/git-flo
 | Mode | Behavior |
 | --- | --- |
 | `pr` | Create PR, leave open for manual review |
-| `pr_auto` | Create PR, enable auto-merge with configured strategy |
+| `pr_auto` | Create PR, enable auto-merge with configured strategy; if GitHub reports clean status, merge immediately with the same strategy |
 | `pr_immediate` | Create PR, merge immediately with configured strategy |
 
 Merge strategy maps to `gh pr merge` flags: `merge` → `--merge`, `squash` → `--squash`, `rebase` → `--rebase`. Strategy applies only in `pr_auto` and `pr_immediate`.

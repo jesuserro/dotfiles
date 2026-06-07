@@ -124,6 +124,82 @@ EOF
 	[[ "$(cat "$gh_log")" != *"pr merge feature/demo --merge --auto"* ]]
 }
 
+install_gh_stub_configurable() {
+	local log="$1"
+	local auto_error_mode="${2:-success}"
+	local bin_dir="${TEST_TEMP_DIR}/bin"
+	mkdir -p "$bin_dir"
+	cat >"${bin_dir}/gh" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$GH_STUB_LOG"
+if [[ "$*" == *"pr merge"* && "$*" == *"--auto"* ]]; then
+	case "${GH_AUTO_ERROR:-success}" in
+	clean)
+		printf 'GraphQL: Pull request Pull request is in clean status (enablePullRequestAutoMerge)\n' >&2
+		exit 1
+		;;
+	other)
+		printf 'GraphQL: merge not allowed due to repository rules\n' >&2
+		exit 1
+		;;
+	esac
+fi
+if [[ "$*" == *"pr create"* ]]; then
+	printf 'https://github.com/example/repo/pull/1\n'
+fi
+exit 0
+EOF
+	chmod +x "${bin_dir}/gh"
+	export GH_STUB_LOG="$log"
+	export GH_AUTO_ERROR="$auto_error_mode"
+	export PATH="${bin_dir}:${PATH}"
+}
+
+@test "git_feat PR mode pr_auto falls back to immediate merge on clean status" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-feat-auto-clean.log"
+	install_gh_stub_configurable "$gh_log" clean
+	init_feat_repo_with_remote "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_DEV=pr_auto
+MERGE_STRATEGY_TO_DEV=merge
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: pr_auto clean fallback"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" demo
+	[[ "$status" -eq 0 ]]
+	grep -qx 'pr merge feature/demo --merge --auto' "$gh_log"
+	grep -qx 'pr merge feature/demo --merge' "$gh_log"
+	[[ "$output" == *"auto-merge unavailable (PR already clean)"* ]]
+}
+
+@test "git_feat PR mode pr_auto does not fallback on unrelated gh merge errors" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-feat-auto-other.log"
+	install_gh_stub_configurable "$gh_log" other
+	init_feat_repo_with_remote "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_DEV=pr_auto
+MERGE_STRATEGY_TO_DEV=merge
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: pr_auto other error"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" demo
+	[[ "$status" -ne 0 ]]
+	local feat_output="$output"
+	grep -qx 'pr merge feature/demo --merge --auto' "$gh_log"
+	run ! grep -qx 'pr merge feature/demo --merge' "$gh_log"
+	[[ "$feat_output" == *"Error al aplicar merge del Pull Request"* ]]
+}
+
 @test "git_feat PR mode pr_immediate merges immediately with rebase strategy" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	local remote="${TEST_TEMP_DIR}/origin.git"

@@ -288,7 +288,7 @@ Mode semantics:
 | Mode | After `gh pr create` |
 | --- | --- |
 | `pr` | Leaves the PR open for manual review. No `gh pr merge`. |
-| `pr_auto` | Runs `gh pr merge --auto` with the strategy from `MERGE_STRATEGY_TO_DEV`. |
+| `pr_auto` | Runs `gh pr merge --auto` with the strategy from `MERGE_STRATEGY_TO_DEV`. If GitHub reports the PR is already in clean status (`enablePullRequestAutoMerge`), falls back to immediate `gh pr merge` with the same strategy. |
 | `pr_immediate` | Runs `gh pr merge` immediately with the strategy from `MERGE_STRATEGY_TO_DEV`. Fails if GitHub branch protection or checks block the merge. |
 
 Merge strategy mapping (applies only to `pr_auto` and `pr_immediate`):
@@ -331,7 +331,7 @@ Mode semantics:
 | Mode | After `gh pr create` |
 | --- | --- |
 | `pr` | Leaves the PR open for manual review. No `gh pr merge`. |
-| `pr_auto` | Runs `gh pr merge --auto` with the strategy from `MERGE_STRATEGY_TO_MAIN`. |
+| `pr_auto` | Runs `gh pr merge --auto` with the strategy from `MERGE_STRATEGY_TO_MAIN`. If GitHub reports the PR is already in clean status (`enablePullRequestAutoMerge`), falls back to immediate `gh pr merge` with the same strategy. |
 | `pr_immediate` | Runs `gh pr merge` immediately with the strategy from `MERGE_STRATEGY_TO_MAIN`. Fails if GitHub branch protection or checks block the merge. |
 
 Recommended default for dev → main: `merge`.
