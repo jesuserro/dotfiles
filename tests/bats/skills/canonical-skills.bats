@@ -21,6 +21,11 @@ teardown() {
 
 @test "no duplicate .claude/skills tree in dotfiles repo" {
 	[[ ! -d "${DOTFILES_DIR}/.claude/skills" ]]
+	[[ ! -d "${DOTFILES_DIR}/.claude" ]]
+}
+
+@test "gitignore blocks checkout-local .claude runtime surface" {
+	grep -qE '^\.claude/?$' "${DOTFILES_DIR}/.gitignore"
 }
 
 @test "ai assets hook publishes canonical skills to Claude Code personal skills path" {

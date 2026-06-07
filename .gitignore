@@ -45,5 +45,5 @@ secrets.sops.yaml.new
 secrets.sops.yaml.bak
 *.sops.yaml.bak
 
-# Duplicate agent skills (canonical: ai/assets/skills)
-.claude/skills/
+# Agent runtime surface — must not materialize in checkout (ADR 0004; canonical: ai/assets/skills)
+.claude/
