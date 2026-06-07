@@ -58,9 +58,10 @@ make install-dotfiles DOTFILES_APPLY=1
 
 Esto ejecutará el script post-apply que:
 - Descifra `secrets.sops.yaml`
-- Genera `~/.config/mcp-secrets.env` con `GITHUB_TOKEN`, `GITHUB_PERSONAL_ACCESS_TOKEN` y `GH_TOKEN`
+- Genera `~/.config/mcp-secrets.env` con `GITHUB_PERSONAL_ACCESS_TOKEN` (para MCP/wrappers)
 - Mantiene `~/.secrets/codex.env` como adaptador hacia `~/.config/mcp-secrets.env`
 - Puede mantener `~/.config/store-etl/secrets.env` solo como compatibilidad legacy
+- **No** exporta `GH_TOKEN` ni `GITHUB_TOKEN` (evita anular `gh auth switch`)
 
 ### 5. Verificar
 
@@ -86,5 +87,5 @@ Si `sops secrets.sops.yaml` falla con error de descifrado, verifica que la clave
 
 ## Para store-etl
 
-- **Cursor/Codex**: Al reiniciar Cursor o abrir el proyecto, cargará el nuevo token desde `~/.config/mcp-secrets.env` o desde el adaptador `~/.secrets/codex.env`.
-- **Terminal**: Si tienes una sesión abierta, haz `source ~/.secrets/codex.env` para recargar las variables.
+- **Cursor/Codex**: Al reiniciar Cursor o abrir el proyecto, el wrapper MCP GitHub cargará el token desde `~/.config/mcp-secrets.env` (vía `~/.secrets/codex.env`).
+- **Terminal (`gh`)**: Usa `gh auth switch --user jesuserro` (casa) o `gh auth switch --user jesus-ixatu` (oficina). Abre shell nueva tras apply. Ver [TOKEN_GITHUB_GH.md](TOKEN_GITHUB_GH.md).

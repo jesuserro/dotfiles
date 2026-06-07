@@ -93,7 +93,7 @@ chezmoi --source="$HOME/dotfiles" diff
 | **Launchers MCP** (`~/.local/share/chezmoi/bin/mcp-*`) | Apply acotado de esos launchers |
 | **Configs MCP** (Cursor/OpenCode/Codex) | Apply acotado de `mcp.json` / `opencode.json` / `config.toml` |
 | **Scripts `R` en status** | Hooks que se ejecutarían en apply (`R` = Run); ruido esperado. Ver `make chezmoi-drift-report` y [CHEZMOI.md](CHEZMOI.md). No apply global para “limpiar”; no implica secretos rotos |
-| **Secretos** (`mcp-secrets.env`) | Solo con decisión explícita: `sops secrets.sops.yaml` → `chezmoi apply -i scripts` |
+| **Secretos** (`mcp-secrets.env`) | Solo con decisión explícita: `sops secrets.sops.yaml` → `chezmoi apply -i scripts`. Genera `GITHUB_PERSONAL_ACCESS_TOKEN` para MCP; **no** exporta `GH_TOKEN`/`GITHUB_TOKEN` en shell. Ver [TOKEN_GITHUB_GH.md](TOKEN_GITHUB_GH.md) |
 
 ---
 

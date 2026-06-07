@@ -492,6 +492,7 @@
 │   │   ├── 📁 docs
 │   │   │   ├── 📄 agents-claude-gitnexus-blocks.bats
 │   │   │   ├── 📄 documentation-consistency.bats
+│   │   │   ├── 📄 github-token-policy.bats
 │   │   │   ├── 📄 gitnexus-human-refresh-procedure.bats
 │   │   │   ├── 📄 make-help.bats
 │   │   │   ├── 📄 mcp-taxonomy-consistency.bats
@@ -554,6 +555,7 @@
 │   │   ├── 📁 zsh
 │   │   │   ├── 📄 fzf.bats
 │   │   │   ├── 📄 gitnexus_aliases.bats
+│   │   │   ├── 📄 local_startup.bats
 │   │   │   ├── 📄 omz_plugins.bats
 │   │   │   ├── 📄 p10k_cache_keys.bats
 │   │   │   ├── 📄 rc_symlinks.bats
