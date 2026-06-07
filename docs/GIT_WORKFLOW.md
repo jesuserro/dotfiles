@@ -42,12 +42,13 @@ Integra una rama feature en `dev` y la archiva por defecto.
 
 **Uso:**
 ```bash
-git feat <nombre-feature>
+git feat [nombre-feature]
 ```
 
 **Funcionalidades:**
 - ✅ Valida que estés en un repositorio Git
 - ✅ Verifica working directory limpio
+- ✅ Puede usar la rama feature actual si no pasas argumento
 - ✅ Detecta automáticamente si la rama tiene prefijo `feature/`
 - ✅ Verifica conflictos potenciales
 - ✅ Hace merge de feature → dev
@@ -159,6 +160,9 @@ git start-feature feature/adding-dbt
 
 ### Integrar feature en dev
 ```bash
+# Desde feature/adding-dbt, usa la rama actual
+git feat
+
 # Integrar feature (la archiva por defecto)
 git feat adding-dbt
 ```

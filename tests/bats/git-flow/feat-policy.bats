@@ -208,6 +208,110 @@ EOF
 	[[ "$status" -ne 0 ]]
 }
 
+@test "git_feat without argument uses current feature branch in local mode" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	init_feat_repo_with_remote "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+DELETE_FEATURE_BRANCH=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: preserve current feature branch"
+	git -C "$repo" push -q origin feature/demo
+
+	cd "$repo"
+	run bash -c "printf 's\n' | '${GIT_FEAT}' --no-changelog"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Integrando 'feature/demo' en 'dev'"* ]]
+	[[ "$output" == *"INFO: Feature branch preserved by policy: feature/demo"* ]]
+	git show-ref --verify --quiet refs/heads/feature/demo
+}
+
+@test "git_feat without argument outside feature branch fails before merge" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	init_feat_repo_with_remote "$repo" "$remote"
+	git -C "$repo" checkout -q dev
+
+	cd "$repo"
+	run bash "$GIT_FEAT" --no-changelog
+	[[ "$status" -ne 0 ]]
+	[[ "$output" == *"ERROR: git feat without a branch argument must be run from a feature/ branch."* ]]
+	[[ "$output" == *"Current branch: dev"* ]]
+	[[ "$output" == *"Expected prefix: feature/"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+	run git show-ref --verify --quiet refs/heads/archive/feature/demo
+	[[ "$status" -ne 0 ]]
+}
+
+@test "git_feat without argument in detached HEAD fails clearly" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	init_feat_repo_with_remote "$repo" "$remote"
+	git -C "$repo" checkout -q --detach HEAD
+
+	cd "$repo"
+	run bash "$GIT_FEAT" --no-changelog
+	[[ "$status" -ne 0 ]]
+	[[ "$output" == *"ERROR: git feat without a branch argument requires a named current branch."* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+}
+
+@test "git_feat without argument respects configured feature prefix" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	git init -q --bare "$remote"
+	mkdir -p "$repo"
+	git init -q "$repo"
+	git -C "$repo" config user.email "test@example.com"
+	git -C "$repo" config user.name "Test User"
+	echo "base" >"$repo/file.txt"
+	git -C "$repo" add file.txt
+	git -C "$repo" commit -q -m "initial"
+	git -C "$repo" branch -M main
+	git -C "$repo" checkout -q -b integration
+	git -C "$repo" remote add origin "$remote"
+	git -C "$repo" push -q origin main integration
+	git -C "$repo" checkout -q -b feat/demo
+	echo "feat" >"$repo/feat.txt"
+	git -C "$repo" add feat.txt
+	git -C "$repo" commit -q -m "feat: custom prefix"
+	git -C "$repo" push -q origin feat/demo
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+BASE_DEV_BRANCH=integration
+FEATURE_BRANCH_PREFIX=feat/
+DELETE_FEATURE_BRANCH=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: custom prefix policy"
+	git -C "$repo" push -q origin feat/demo
+
+	cd "$repo"
+	run bash -c "printf 's\n' | '${GIT_FEAT}' --no-changelog"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Integrando 'feat/demo' en 'integration'"* ]]
+	[[ "$output" == *"INFO: Feature branch preserved by policy: feat/demo"* ]]
+}
+
+@test "git_feat without argument rejects branch outside configured feature prefix" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	init_feat_repo_with_remote "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FEATURE_BRANCH_PREFIX=feat/
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: custom prefix mismatch"
+
+	cd "$repo"
+	run bash "$GIT_FEAT" --no-changelog
+	[[ "$status" -ne 0 ]]
+	[[ "$output" == *"ERROR: git feat without a branch argument must be run from a feat/ branch."* ]]
+	[[ "$output" == *"Current branch: feature/demo"* ]]
+	[[ "$output" == *"Expected prefix: feat/"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+}
+
 @test "git_feat PR mode validates pushes current feature branch and creates PR" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	local remote="${TEST_TEMP_DIR}/upstream.git"
@@ -256,6 +360,28 @@ EOF
 	[[ "$(cat "$gh_log")" != *"--web"* ]]
 	run git show-ref --verify --quiet refs/heads/archive/topic/demo
 	[[ "$status" -ne 0 ]]
+}
+
+@test "git_feat PR mode without argument uses current feature branch" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local remote="${TEST_TEMP_DIR}/origin.git"
+	local gh_log="${TEST_TEMP_DIR}/gh-no-arg.log"
+	install_gh_stub "$gh_log"
+	init_feat_repo_with_remote "$repo" "$remote"
+	cat >"${repo}/.git-flow-policy.env" <<'EOF'
+FLOW_MODE_TO_DEV=pr
+OPEN_BROWSER=false
+EOF
+	git -C "$repo" add .git-flow-policy.env
+	git -C "$repo" commit -q -m "test: pr policy without arg"
+
+	cd "$repo"
+	run bash "$GIT_FEAT"
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Creating pull request for 'feature/demo' into 'dev'"* ]]
+	[[ "$output" != *"Haciendo merge"* ]]
+	[[ "$(git branch --show-current)" == "feature/demo" ]]
+	[[ "$(cat "$gh_log")" == *"pr create --base dev --head feature/demo"* ]]
 }
 
 @test "git_feat PR mode aborts when validation fails before push or PR" {

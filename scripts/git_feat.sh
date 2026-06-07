@@ -29,9 +29,10 @@ process_arguments() {
 	while [[ $# -gt 0 ]]; do
 		case $1 in
 		--help | -h)
-			echo -e "${BLUE}📖 Uso: git feat <nombre-feature> [opciones]${NC}"
+			echo -e "${BLUE}📖 Uso: git feat [nombre-feature] [opciones]${NC}"
 			echo -e "${BLUE}📖 Descripción: Integra una rama feature en dev y la archiva${NC}"
 			echo -e "${BLUE}📖 Ejemplos:${NC}"
+			echo -e "  git feat                         # Usa la rama feature actual"
 			echo -e "  git feat mi-nueva-funcionalidad     # Rama 'feature/mi-nueva-funcionalidad'"
 			echo -e "  git feat feature/login-system       # Rama 'feature/login-system'"
 			echo -e "  git feat login-system               # Rama 'feature/login-system'"
@@ -40,11 +41,12 @@ process_arguments() {
 			echo -e "  --print-policy                      # Imprimir la policy efectiva y salir"
 			echo -e "  --help, -h                          # Mostrar esta ayuda"
 			echo -e "${BLUE}📖 Flujo:${NC}"
-			echo -e "  1. Se mueve a rama 'dev'"
-			echo -e "  2. Hace merge de tu feature en dev"
-			echo -e "  3. Genera changelog de la feature después del merge (opcional)"
-			echo -e "  4. Archiva tu rama feature"
-			echo -e "  5. Termina en rama 'dev'"
+			echo -e "  1. Resuelve la rama feature por argumento o por rama actual"
+			echo -e "  2. Se mueve a rama 'dev'"
+			echo -e "  3. Hace merge de tu feature en dev"
+			echo -e "  4. Genera changelog de la feature después del merge (opcional)"
+			echo -e "  5. Archiva tu rama feature"
+			echo -e "  6. Termina en rama 'dev'"
 			exit 0
 			;;
 		--no-changelog)
@@ -102,6 +104,30 @@ run_validation_if_enabled() {
 			exit 1
 		fi
 	fi
+}
+
+resolve_feature_input_name() {
+	local current_branch
+
+	if [[ -n "$INPUT_NAME" ]]; then
+		return 0
+	fi
+
+	current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+
+	if [[ -z "$current_branch" || "$current_branch" == "HEAD" ]]; then
+		echo "ERROR: git feat without a branch argument requires a named current branch." >&2
+		exit 1
+	fi
+
+	if [[ "$current_branch" != "$FEATURE_PREFIX"* ]]; then
+		echo "ERROR: git feat without a branch argument must be run from a ${FEATURE_PREFIX} branch." >&2
+		echo "Current branch: ${current_branch}" >&2
+		echo "Expected prefix: ${FEATURE_PREFIX}" >&2
+		exit 1
+	fi
+
+	INPUT_NAME="$current_branch"
 }
 
 check_gh_cli_for_pr() {
@@ -334,18 +360,12 @@ EOF
 	fi
 }
 
-# 📢 Inicio del flujo
-echo -e "${YELLOW}🚀 Integrando feature '${INPUT_NAME}' en ${DEV_BRANCH}...${NC}"
-
 ensure_supported_flow_mode
 
-# 📛 Validación de argumentos
-if [ -z "$INPUT_NAME" ]; then
-	echo -e "${RED}❗ ERROR: Debes pasar el nombre de la rama feature como argumento.${NC}"
-	echo "👉 Ejemplo: git feat mi-nueva-funcionalidad"
-	echo "👉 O usa: git feat --help"
-	exit 1
-fi
+resolve_feature_input_name
+
+# 📢 Inicio del flujo
+echo -e "${YELLOW}🚀 Integrando feature '${INPUT_NAME}' en ${DEV_BRANCH}...${NC}"
 
 if [[ "$FLOW_MODE_TO_DEV" == "pr" ]]; then
 	run_pr_flow_to_dev

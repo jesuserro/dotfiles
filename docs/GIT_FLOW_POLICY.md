@@ -160,14 +160,37 @@ Running validation: make validate
 If validation exits non-zero, the script aborts before merge, push, tag creation,
 or branch deletion.
 
+## Feature Branch Resolution
+
+`git feat <name>` keeps its legacy explicit-argument behavior. When run without
+a branch argument, `git feat` uses the current branch only if it starts with the
+effective `FEATURE_BRANCH_PREFIX`.
+
+For example, with the default prefix:
+
+```bash
+git checkout feature/demo
+git feat
+```
+
+is equivalent to:
+
+```bash
+git feat feature/demo
+```
+
+If the current branch is not a feature branch, or if Git is in detached HEAD,
+the command fails before validation, merge, push, PR creation, changelog
+generation, archive, or branch deletion.
+
 ## Feature PR Mode
 
 `FLOW_MODE_TO_DEV=pr` is implemented for `git feat` only. It requires GitHub CLI
 (`gh`) on `PATH`.
 
 In this mode, `git feat <name>` must be run from the matching current feature
-branch. For example, `git feat demo` must run from `feature/demo`, unless
-`FEATURE_BRANCH_PREFIX` changes the expected prefix.
+branch. `git feat` without an argument uses the current feature branch through
+the same `FEATURE_BRANCH_PREFIX` rule.
 
 The PR flow:
 
