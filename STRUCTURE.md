@@ -15,6 +15,7 @@
 │   ├── 📄 run_after_15_link_tmux_dotfiles.sh.tmpl
 │   └── 📄 run_before_00_backup_rc_files.sh.tmpl
 ├── 📁 .cursor
+│   ├── 📁 plans
 │   └── 📁 rules
 │       └── 📄 aliases-conventions.mdc
 ├── 📁 .githooks
@@ -229,6 +230,7 @@
 │   │   └── 📝 dotfiles-install.md
 │   ├── 📁 plans
 │   │   └── 📝 PLAN_000009.md
+│   ├── 📁 wiki
 │   ├── 📝 AGENT_FIRST_SUMMARY.md
 │   ├── 📝 AGENT_WORKFLOW.md
 │   ├── 📝 AGENT_WORKFLOW_LOOP.md
@@ -268,6 +270,10 @@
 ├── 📁 dot_codex
 │   └── 📄 private_config.toml.tmpl
 ├── 📁 dot_config
+│   ├── 📁 codex
+│   │   └── 📁 prompts
+│   ├── 📁 cursor
+│   │   └── 📁 commands
 │   ├── 📁 mcp
 │   │   ├── 📁 servers
 │   │   │   └── 📄 .keep
@@ -300,6 +306,7 @@
 │   ├── 📝 branch_feature_17-adding-nuevas-herramientas-ia.md
 │   ├── 📝 branch_feature_18-adding-mejoras-de-auditor_a.md
 │   ├── 📝 branch_feature_19-resolver-shellchecks.md
+│   ├── 📝 branch_feature_2-fixing-gitnexus.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_20-refactoring-chezmoi.md
 │   ├── 📝 branch_feature_22-adding-git-hooks.md
@@ -613,7 +620,6 @@
 ├── 🔨 install.mk
 ├── 📄 modelcontextprotocol-server-postgres-0.6.2.tgz
 ├── ⚙️ secrets.sops.yaml
-├── 📄 secrets.sops.yaml.old-age1mq3-unreadable
 ├── 📄 symlink_dot_aliases.tmpl
 ├── 📄 symlink_dot_codex_mcp
 ├── 📄 symlink_dot_p10k.zsh.tmpl
