@@ -24,6 +24,21 @@ teardown() {
 	[[ ! -d "${DOTFILES_DIR}/.claude" ]]
 }
 
+@test "canonical skills do not instruct agents to use checkout-local .claude/skills" {
+	local matches
+	matches="$(
+		grep -REn '\.claude/skills' "${DOTFILES_DIR}/ai/assets/skills" \
+			| grep -Ev '[~]/\.claude/skills|not `?\.claude/skills|violates .*\.claude/skills|\.claude/skills.*violates' \
+			|| true
+	)"
+
+	if [[ -n "${matches}" ]]; then
+		printf 'Forbidden checkout-local .claude/skills references found under ai/assets/skills:\n' >&2
+		printf '%s\n' "${matches}" >&2
+		return 1
+	fi
+}
+
 @test "gitignore blocks checkout-local .claude runtime surface" {
 	grep -qE '^\.claude/?$' "${DOTFILES_DIR}/.gitignore"
 }
