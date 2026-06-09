@@ -459,6 +459,7 @@
 │   ├── 🔧 mcp-launcher-contract-check.sh
 │   ├── 🔧 security-osv-scan.sh
 │   ├── 🔧 set-default-shell-zsh.sh
+│   ├── 🔧 shell-audit-check.sh
 │   ├── 🔧 show-system-deps-actions.sh
 │   ├── 🔧 show_branches_with_dates.sh
 │   ├── 🔧 system_info.sh
@@ -554,6 +555,7 @@
 │   │   │   ├── 📄 mcp-render-drift.bats
 │   │   │   ├── 📄 playwright-docker.bats
 │   │   │   ├── 📄 security-osv-scan.bats
+│   │   │   ├── 📄 shell-audit-check.bats
 │   │   │   ├── 📄 system-deps.bats
 │   │   │   ├── 📄 update-governance.bats
 │   │   │   ├── 📄 update-node-runtime.bats

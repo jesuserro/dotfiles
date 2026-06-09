@@ -45,7 +45,7 @@ YELLOW := \033[1;33m
 BLUE := \033[0;34m
 NC := \033[0m
 
-.PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help bats-git-ai bats-git-flow bats-prompts bats-skills bats-tmux bats-gitnexus bats-git-hooks
+.PHONY: test test-fast test-lint test-bats test-bats-fast test-chezmoi test-install fmt-shell help shell-audit-check bats-git-ai bats-git-flow bats-prompts bats-skills bats-tmux bats-gitnexus bats-git-hooks
 .PHONY: test-ci test-bats-ci bats-docs test-commands generate-commands validate-commands materialize-commands validate-skills-structure
 .PHONY: deps-check deps-install deps-actions bats-system bats-agent bats-zsh bats-gitnexus test-deps-check
 .PHONY: quality-check security-check agent-validate agent-validate-audit agent-validate-full agent-validate-changed agent-validate-report ai-doctor lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions security-gitleaks security-osv
@@ -73,6 +73,7 @@ help:
 	@echo "  make agent-validate-audit        Full-repo quality + security audit (strict)"
 	@echo "  make agent-validate-full         agent-validate + agent-validate-audit"
 	@echo "  make agent-validate-report       Run agent-validate and write build/agent-validation/latest.md"
+	@echo "  make shell-audit-check           Focused shell audit without historical/template noise"
 	@echo "  make bats-agent                  Agent-first regression index (meta-tests)"
 	@echo "  make deps-check                  Check declarative system dependencies"
 	@echo "  make deps-actions                Show actions for missing dependencies"
@@ -95,6 +96,7 @@ help:
 	@echo "  make test-fast                   Lint + bats without chezmoi/* tests"
 	@echo "  make test-ci                     GitHub Actions CI subset"
 	@echo "  make test-lint                   shellcheck, zsh -n, shfmt, yamllint"
+	@echo "  make shell-audit-check           Strict focused shell audit for agents"
 	@echo "  make test-bats                   All bats tests (preflight included)"
 	@echo "  make test-commands               Commands tests only"
 	@echo "  make test-deps-check             Fail-fast check for bats/shellcheck/shfmt/zsh"
@@ -172,6 +174,9 @@ test-deps-check:
 test-lint: lint-shellcheck lint-zsh lint-shfmt lint-yaml
 	@echo ""
 	@echo "$(GREEN)==>$(NC) Lint completed"
+
+shell-audit-check:
+	@bash $(DOTFILES_DIR)/scripts/shell-audit-check.sh
 
 quality-check: lint-shellcheck lint-zsh lint-shfmt lint-yaml lint-actions
 	@echo ""
@@ -450,6 +455,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/mcp-manifest.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-render-drift.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-agent-skills.bats)
+	@$(call run_bats,$(BATS_DIR)/system/shell-audit-check.bats)
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-changed.bats)
 	@$(call run_bats,$(BATS_DIR)/system/security-osv-scan.bats)
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-dotfiles.bats)

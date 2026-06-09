@@ -52,6 +52,7 @@ make test-lint
 make ai-doctor
 make quality-check
 make security-check
+make shell-audit-check
 make agent-validate-changed
 make agent-validate
 make agent-validate-audit
@@ -84,6 +85,7 @@ make fmt-shell
 | `make ai-doctor` | Read-only agent readiness: dependencies, update readiness, AI/MCPs, skills, commands and `gitleaks` |
 | `make quality-check` | Full strict repository quality audit: shellcheck + shfmt check + yamllint + actionlint (`-shellcheck=`) when workflows exist |
 | `make security-check` | gitleaks working-tree scan + osv-scanner when supported manifests/lockfiles exist (OSV best-effort unless `SECURITY_ONLINE=1`) |
+| `make shell-audit-check` | Focused read-only shell audit for agent-maintained shell surfaces, without raw Chezmoi templates or historical drift noise |
 | `make agent-validate` | Dotfiles operational gate (read-only): whitespace, skills, MCP governance, changed files, docs bats, update-check — via `scripts/agent-validate-dotfiles.sh` |
 | `make agent-validate-changed` | Changed-files gate only: shell/YAML/workflow lint + matrix-focused bats + `gitleaks`; OSV online is opt-in |
 | `SECURITY_ONLINE=1 make agent-validate-changed` | Same as above plus strict `osv-scanner` dependency scan (requires network) |
@@ -110,6 +112,8 @@ make fmt-shell
 `make ai-doctor` is the read-only readiness check for agents before implementation. It does not replace targeted tests for the area being changed; it aggregates environment, AI/MCP, skills, commands and `gitleaks` checks so secret leaks are caught before handing off changes. Because it includes `make update-check`, it also surfaces Node runtime shadowing before long GitNexus re-indexing commands.
 
 `make agent-validate` is the **canonical dotfiles gate** for agents after a BUILD. It orchestrates read-only checks and does not run `chezmoi apply`, `make update`, or package installs. It fails if `.claude/skills/` exists in the checkout (ADR 0004).
+
+`make shell-audit-check` is the focused shell gate for agent changes that touch maintained shell surfaces. It runs `shellcheck -S warning` on tracked shell scripts in `bin/`, `scripts/**/*.sh`, and `tests/bats/**/*.bats`; `shfmt -d` on tracked shell scripts in `bin/` and `scripts/**/*.sh`; and `zsh -n` on `zsh/*.zsh`. It discovers files with `git ls-files`, is read-only, and intentionally excludes raw Chezmoi templates, `.githooks/`, `tmux/`, `termux/`, non-shell files, examples, and Bats shfmt drift.
 
 `dotfiles-apply` is the safe Chezmoi wrapper (preview by default). Tests: `tests/bats/system/dotfiles-apply.bats` (stub `chezmoi`, no real HOME mutation).
 
