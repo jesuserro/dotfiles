@@ -267,6 +267,8 @@ tomllib.loads(content)
 @test "shell policy defines canonical npm global prefix for Codex and GitNexus" {
 	grep -q 'export NPM_CONFIG_PREFIX="$HOME/.npm-global"' "$DOTFILES_DIR/zsh/00-env.zsh"
 	grep -q 'path_prepend "\$NPM_CONFIG_PREFIX/bin"' "$DOTFILES_DIR/zsh/10-path.zsh"
+	grep -q 'path_prepend "\$HOME/.local/bin"' "$DOTFILES_DIR/zsh/10-path.zsh"
+	grep -q 'Agent-first local commands should win over npm-global shims' "$DOTFILES_DIR/zsh/10-path.zsh"
 	grep -q '"@openai/codex"' "$DOTFILES_DIR/scripts/update/update-wsl.sh"
 	run grep -R 'npm update -g codex' "$DOTFILES_DIR/scripts/update" "$DOTFILES_DIR/aliases"
 	[[ "${status}" -ne 0 ]]

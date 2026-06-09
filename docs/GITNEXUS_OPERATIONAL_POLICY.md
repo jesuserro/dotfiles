@@ -23,11 +23,35 @@ Política operativa para agentes y humanos en repos gestionados con dotfiles. Co
 
 ## Acciones permitidas a agentes
 
-- `make gitnexus-status` — estado read-only (índice, lock, Node, artefactos).
+- `make gitnexus-status` — estado read-only (índice, lock, Node, **path alignment**, artefactos).
 - Lectura con **MCP GitNexus** (`gitnexus_query`, `gitnexus_context`, `gitnexus_impact`, `gitnexus_detect_changes`, recursos `gitnexus://…`).
 - `make update-check` — precheck Node/runtime (read-only).
 - Inspección de docs, `meta.json` (si existe) y código fuente por medios habituales.
 - El post-commit local instalado explícitamente con `make install-git-hooks` puede ejecutar el refresh best-effort descrito abajo; los agentes no lo invocan directamente.
+
+---
+
+## Canonical GitNexus for agents
+
+**Instalación real (npm):** `~/.npm-global/bin/gitnexus` — mantenida por `scripts/install-gitnexus.sh` y `make update-wsl`.
+
+**Ruta canónica agent-first:** `~/.local/bin/gitnexus` — symlink controlado hacia la instalación npm (`~/.local/bin/gitnexus` → `~/.npm-global/bin/gitnexus`). La crean/actualizan install y update vía [`scripts/lib/gitnexus_canonical.sh`](../scripts/lib/gitnexus_canonical.sh).
+
+**MCP:** `mcp-gitnexus-launcher` ejecuta `~/.local/bin/gitnexus mcp`.
+
+**Terminal:** en una shell nueva (`exec zsh -l`), `command -v gitnexus` debe resolver `~/.local/bin/gitnexus` (`zsh/10-path.zsh` da precedencia a `~/.local/bin` sobre npm-global).
+
+`make gitnexus-status` incluye la sección **`GitNexus path alignment`**: compara PATH, binarios conocidos, procesos MCP vivos y versiones. Si hay desalineación o versiones distintas, puede aparecer `storage version mismatch` en MCP aunque el índice esté `FRESH`.
+
+| Rol | Regla |
+|-----|-------|
+| **Canonical agent path** | `~/.local/bin/gitnexus` (symlink a npm-global) |
+| **Real install path** | `~/.npm-global/bin/gitnexus` |
+| **Agents should not use** | `npx gitnexus`; invocar directamente npm-global si sombrea la ruta canónica; Node inyectado por IDE `<22` |
+| **Agents may use** | `make gitnexus-status`; MCP read-only cuando path alignment es OK; fallback manual (`rg`/grep + tests focalizados) cuando status advierte y el scope está acotado |
+| **Agents must not without Jesús** | `gnx-analyze-here`; `analyze`/`index`/`refresh`/`clean`; borrar `.gitnexus/lbug`; editar bloques `<!-- gitnexus:* -->` generados |
+
+**Post-alineación humana:** recargar shell; ejecutar `scripts/install-gitnexus.sh` o `make update-wsl --section tools`; reiniciar MCP GitNexus en Cursor; verificar con `make gitnexus-status`. Opcional: `rm -rf ~/.local/lib/node_modules/gitnexus` si queda instalación npm antigua huérfana (solo tras confirmar symlink correcto). No reindexar salvo que persista `storage version mismatch` tras reiniciar MCP.
 
 ---
 

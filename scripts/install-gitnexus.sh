@@ -103,6 +103,14 @@ if npm install -g --prefix="$NPM_CONFIG_PREFIX" "$gitnexus_spec" 2>&1; then
 		exit 1
 	}
 	echo -e "${GREEN}✓${NC} GitNexus CLI instalado correctamente"
+	# shellcheck source=scripts/lib/gitnexus_canonical.sh
+	source "${DOTFILES_DIR:-$HOME/dotfiles}/scripts/lib/gitnexus_canonical.sh"
+	if gitnexus_ensure_canonical_symlink; then
+		echo -e "${GREEN}✓${NC} Symlink canónico agent-first creado"
+	else
+		echo -e "${RED}❌ Error creando symlink canónico en ~/.local/bin/gitnexus${NC}"
+		exit 1
+	fi
 	if command -v gitnexus &>/dev/null; then
 		echo -e "${GREEN}✓${NC} gitnexus disponible en PATH: $(which gitnexus)"
 		echo -e "${GREEN}✓${NC} Versión: $(gitnexus --version 2>/dev/null || echo 'versión no disponible')"

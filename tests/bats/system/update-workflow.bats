@@ -833,6 +833,7 @@ if [[ "\$1" == "view" ]]; then
 fi
 if [[ "\$1" == "install" && "\$*" == *"gitnexus@latest"* ]]; then
   printf '1.6.6\n' >"${TEST_TEMP_DIR}/gitnexus-version"
+  mkdir -p "${npm_prefix}/lib/node_modules/gitnexus/scripts"
   cat >"${npm_prefix}/lib/node_modules/gitnexus/package.json" <<'PKG'
 {
   "name": "gitnexus",
@@ -842,6 +843,9 @@ if [[ "\$1" == "install" && "\$*" == *"gitnexus@latest"* ]]; then
   }
 }
 PKG
+  for script in materialize-vendor-grammars.cjs build-tree-sitter-dart.cjs build-tree-sitter-proto.cjs build-tree-sitter-swift.cjs; do
+    printf 'process.exit(0)\n' >"${npm_prefix}/lib/node_modules/gitnexus/scripts/\${script}"
+  done
 fi
 if [[ "\$1" == "install" && "\$*" == *"corepack@latest"* ]]; then
   cat >"${npm_prefix}/bin/corepack" <<'COREPACK'
@@ -858,6 +862,7 @@ EOF
 #!/usr/bin/env bash
 case "\$1" in --version) printf 'gitnexus %s\n' "\$(cat "${TEST_TEMP_DIR}/gitnexus-version")";; *) exit 0;; esac
 EOF
+	ln -sf "${stub_dir}/gitnexus" "${npm_prefix}/bin/gitnexus"
 	cat >"${stub_dir}/corepack" <<'EOF'
 #!/usr/bin/env bash
 echo "corepack $*"

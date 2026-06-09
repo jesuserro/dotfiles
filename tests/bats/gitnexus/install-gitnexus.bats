@@ -57,7 +57,7 @@ if [[ "\$1" == "--version" ]]; then
 fi
 exec "${real_node}" "\$@"
 EOF
-cat >"${stub_dir}/npm" <<EOF
+	cat >"${stub_dir}/npm" <<EOF
 #!/usr/bin/env bash
 case "\$1" in
   root)
@@ -70,7 +70,12 @@ case "\$1" in
     ;;
   install)
     printf '%s\n' "\$*" >"${args_log}"
-    mkdir -p "${npm_prefix}/lib/node_modules/gitnexus/scripts"
+    mkdir -p "${npm_prefix}/lib/node_modules/gitnexus/scripts" "${npm_prefix}/bin"
+    cat >"${npm_prefix}/bin/gitnexus" <<'BIN'
+#!/usr/bin/env bash
+case "$1" in --version) echo "gitnexus 1.6.6";; *) exit 0;; esac
+BIN
+    chmod +x "${npm_prefix}/bin/gitnexus"
     exit 0
     ;;
 esac
@@ -85,6 +90,7 @@ EOF
 
 	run env -u NPM_CONFIG_PREFIX -u DOTFILES_NPM_PREFIX \
 		HOME="$fake_home" \
+		DOTFILES_DIR="${DOTFILES_DIR}" \
 		PATH="${stub_dir}:/usr/bin:/bin" \
 		bash "$INSTALL_GITNEXUS"
 	[[ "$status" -eq 0 ]]
@@ -126,6 +132,12 @@ case "\$1" in
     ;;
   install)
     printf '%s\n' "\$*" >"${args_log}"
+    mkdir -p "${npm_prefix}/bin"
+    cat >"${npm_prefix}/bin/gitnexus" <<'BIN'
+#!/usr/bin/env bash
+case "$1" in --version) echo "gitnexus 1.6.6";; *) exit 0;; esac
+BIN
+    chmod +x "${npm_prefix}/bin/gitnexus"
     exit 0
     ;;
 esac
@@ -140,6 +152,7 @@ EOF
 
 	run env -u NPM_CONFIG_PREFIX \
 		HOME="$fake_home" \
+		DOTFILES_DIR="${DOTFILES_DIR}" \
 		DOTFILES_NPM_PREFIX="$npm_prefix" \
 		GITNEXUS_VERSION=1.6.6 \
 		PATH="${stub_dir}:/usr/bin:/bin" \
@@ -148,6 +161,63 @@ EOF
 	[[ "$status" -eq 0 ]]
 	grep -q -- "install -g --prefix=${npm_prefix} gitnexus@1.6.6" "$args_log"
 	grep -q '^build-tree-sitter-dart.cjs$' "$postinstall_log"
+}
+
+@test "install-gitnexus creates canonical symlink to npm-global GitNexus" {
+	local fake_home="${TEST_TEMP_DIR}/home-symlink"
+	local stub_dir="${TEST_TEMP_DIR}/bin-symlink"
+	local npm_prefix="${fake_home}/.npm-global"
+	local args_log="${TEST_TEMP_DIR}/gitnexus-install-symlink-args.log"
+	local postinstall_log="${TEST_TEMP_DIR}/gitnexus-install-symlink-postinstall.log"
+	local real_node
+	real_node="$(command -v node)"
+	mkdir -p "$stub_dir" "$fake_home"
+
+	cat >"${stub_dir}/node" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "--version" ]]; then
+  echo "v24.15.0"
+  exit 0
+fi
+exec "${real_node}" "\$@"
+EOF
+	cat >"${stub_dir}/npm" <<EOF
+#!/usr/bin/env bash
+case "\$1" in
+  root)
+    echo "${npm_prefix}/lib/node_modules"
+    exit 0
+    ;;
+  --version)
+    echo "11.16.0"
+    exit 0
+    ;;
+  install)
+    printf '%s\n' "\$*" >"${args_log}"
+    mkdir -p "${npm_prefix}/lib/node_modules/gitnexus/scripts" "${npm_prefix}/bin"
+    cat >"${npm_prefix}/bin/gitnexus" <<'BIN'
+#!/usr/bin/env bash
+case "$1" in --version) echo "gitnexus 1.6.6";; *) exit 0;; esac
+BIN
+    chmod +x "${npm_prefix}/bin/gitnexus"
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+	write_fake_gitnexus_package "${npm_prefix}/lib/node_modules/gitnexus" "$postinstall_log"
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm"
+
+	run env -u NPM_CONFIG_PREFIX -u DOTFILES_NPM_PREFIX \
+		HOME="$fake_home" \
+		DOTFILES_DIR="${DOTFILES_DIR}" \
+		PATH="${stub_dir}:/usr/bin:/bin" \
+		bash "$INSTALL_GITNEXUS"
+
+	[[ "$status" -eq 0 ]]
+	[[ -L "${fake_home}/.local/bin/gitnexus" ]]
+	[[ "$(readlink -f "${fake_home}/.local/bin/gitnexus")" == "$(readlink -f "${npm_prefix}/bin/gitnexus")" ]]
+	[[ "$output" == *"Canonical agent GitNexus:"* ]]
 }
 
 @test "install-gitnexus fails clearly when npm ignore-scripts is enabled" {

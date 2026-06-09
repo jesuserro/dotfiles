@@ -500,7 +500,13 @@ run_tools() {
 	update_global_npm_tool_if_needed "WSL" "ast-grep CLI" "${LOG_DIR}/wsl-ast-grep.log" "$npm_prefix" "@ast-grep/cli" "latest" ast-grep --version --
 	update_global_npm_tool_if_needed "WSL" "GitNexus CLI" "${LOG_DIR}/wsl-gitnexus.log" "$npm_prefix" "gitnexus" "latest" gitnexus --version --
 	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" != "FAIL" && "${RUN_STEP_LAST_RESULT_STATUS:-}" != "WARN" ]] && command -v gitnexus >/dev/null 2>&1; then
-		result_ok "WSL" "GitNexus" "usable: $(gitnexus --version 2>/dev/null || echo version unknown)"
+		# shellcheck source=scripts/lib/gitnexus_canonical.sh
+		source "${DOTFILES_ROOT}/scripts/lib/gitnexus_canonical.sh"
+		if gitnexus_ensure_canonical_symlink >>"${LOG_DIR}/wsl-gitnexus-canonical.log" 2>&1; then
+			result_ok "WSL" "GitNexus" "usable: $(gitnexus --version 2>/dev/null || echo version unknown)"
+		else
+			result_fail "WSL" "GitNexus" "installed but canonical ~/.local/bin/gitnexus symlink failed"
+		fi
 	elif [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" ]]; then
 		:
 	else
