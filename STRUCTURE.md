@@ -306,6 +306,7 @@
 │   ├── 📝 branch_feature_17-adding-nuevas-herramientas-ia.md
 │   ├── 📝 branch_feature_18-adding-mejoras-de-auditor_a.md
 │   ├── 📝 branch_feature_19-resolver-shellchecks.md
+│   ├── 📝 branch_feature_2-fixing-gitnexus.md
 │   ├── 📝 branch_feature_2-refactorai-crear-ai-workstation-framework-en-dotfiles-runtime-mcp-skills-adapters.md
 │   ├── 📝 branch_feature_20-refactoring-chezmoi.md
 │   ├── 📝 branch_feature_22-adding-git-hooks.md
@@ -458,6 +459,7 @@
 │   ├── 🔧 mcp-launcher-contract-check.sh
 │   ├── 🔧 security-osv-scan.sh
 │   ├── 🔧 set-default-shell-zsh.sh
+│   ├── 🔧 shell-audit-check.sh
 │   ├── 🔧 show-system-deps-actions.sh
 │   ├── 🔧 show_branches_with_dates.sh
 │   ├── 🔧 system_info.sh
@@ -509,7 +511,8 @@
 │   │   │   └── 📄 hooks.bats
 │   │   ├── 📁 gitnexus
 │   │   │   ├── 📄 analyze-dotfiles-policy.bats
-│   │   │   └── 📄 gitnexus-status.bats
+│   │   │   ├── 📄 gitnexus-status.bats
+│   │   │   └── 📄 install-gitnexus.bats
 │   │   ├── 📁 helpers
 │   │   │   └── 🔧 common.bash
 │   │   ├── 📁 mcp
@@ -552,6 +555,7 @@
 │   │   │   ├── 📄 mcp-render-drift.bats
 │   │   │   ├── 📄 playwright-docker.bats
 │   │   │   ├── 📄 security-osv-scan.bats
+│   │   │   ├── 📄 shell-audit-check.bats
 │   │   │   ├── 📄 system-deps.bats
 │   │   │   ├── 📄 update-governance.bats
 │   │   │   ├── 📄 update-node-runtime.bats

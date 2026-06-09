@@ -23,7 +23,7 @@ Not every command implements every flag. Use only what the command documents.
 - **`--check`** — read-only validation: “is the repo/HOME/artifact already correct?” No simulation of writes.
 - **`dry-run` / `DRY_RUN=1`** — the command would mutate something; show the plan without executing installs, apply, or destructive writes.
 
-Read-only validators (`validate-skills-structure.sh`, `make agent-validate`, `make bats-docs`) do **not** need `--dry-run`.
+Read-only validators (`validate-skills-structure.sh`, `make shell-audit-check`, `make agent-validate`, `make bats-docs`) do **not** need `--dry-run`.
 
 Generators may use `--check` for drift and default/`--write` for output — follow each script’s help.
 
@@ -39,7 +39,7 @@ Use **`DRY_RUN=1`** (underscore). Hyphenated variants (`DRY-RUN=1`, `dry-run=1`)
 |--------------------------------------------|-------------------------------------|
 | `--check`, preview/default modes | `--yes` on any mutating wrapper |
 | `dotfiles-apply` / `dotfiles-apply --check` | `dotfiles-apply --apply` / `--apply --yes` |
-| `make agent-validate`, `make agent-validate-changed` | `make update`, `dotfiles-update` |
+| `make agent-validate`, `make agent-validate-changed`, `make shell-audit-check` | `make update`, `dotfiles-update` |
 | `make bats-*`, `make test-chezmoi` (no real apply) | `make install*` without `DRY_RUN=1` |
 | `DRY_RUN=1` previews | `chezmoi apply`, package installs |
 | `scripts/treegen.sh --check` | `scripts/treegen.sh` (writes `STRUCTURE.md`) |
@@ -58,6 +58,7 @@ Representative commands only — not an exhaustive inventory.
 |---------|-----------|------|------------|
 | `make agent-validate` | default | None (read-only gate) | `make agent-validate` |
 | `make agent-validate-changed` | default | None | after small diffs |
+| `make shell-audit-check` | default | None | `shell-audit-check.bats` |
 | `scripts/validate-skills-structure.sh` | default | None | `make bats-skills` |
 | `make chezmoi-drift-report` | default | None | `make test-chezmoi` |
 | `make update-check` | default | None | in `agent-validate` |
@@ -126,6 +127,7 @@ See [CHEZMOI.md](CHEZMOI.md) § `dotfiles-apply`.
 |-----------|------------------|
 | `tests/bats/system/dry-run-guard.bats` | `DRY_RUN=1` vs hyphen variants; mutating command guards |
 | `tests/bats/system/dotfiles-apply.bats` | Chezmoi safe preview/apply |
+| `tests/bats/system/shell-audit-check.bats` | Focused shell audit scope, exclusions, and read-only behavior |
 | `tests/bats/git-hooks/hooks.bats` | `treegen --check` drift without writes |
 | `tests/bats/system/install-*.bats` | per-installer `DRY_RUN` / `--dry-run` |
 | `tests/bats/system/github-identity-check.bats` | GitHub identity diagnostics, token masking, offline mode |

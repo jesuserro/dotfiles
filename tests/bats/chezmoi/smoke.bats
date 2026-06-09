@@ -270,7 +270,7 @@ tomllib.loads(content)
 	grep -q '"@openai/codex"' "$DOTFILES_DIR/scripts/update/update-wsl.sh"
 	run grep -R 'npm update -g codex' "$DOTFILES_DIR/scripts/update" "$DOTFILES_DIR/aliases"
 	[[ "${status}" -ne 0 ]]
-	grep -q 'NPM_CONFIG_PREFIX="\${NPM_CONFIG_PREFIX:-\$HOME/.npm-global}"' "$DOTFILES_DIR/scripts/install-gitnexus.sh"
+	grep -q 'NPM_CONFIG_PREFIX="\${NPM_CONFIG_PREFIX:-\${DOTFILES_NPM_PREFIX:-\$HOME/.npm-global}}"' "$DOTFILES_DIR/scripts/install-gitnexus.sh"
 	run grep -q 'local_prefix="\$HOME/.local"' "$DOTFILES_DIR/scripts/update/update-wsl.sh"
 	[[ "${status}" -ne 0 ]]
 	assert_file_not_contains "$DOTFILES_DIR/scripts/install-gitnexus.sh" 'local_prefix="\$HOME/.local"'

@@ -25,6 +25,23 @@ description: "Use when the user wants to know what will break if they change som
 
 > If "Index is stale" → run `make gitnexus-status`. Do not auto-refresh; ask Jesús before `gnx-analyze-here`.
 
+## Fallback
+
+Use GitNexus when it provides useful symbol or process signal. For small
+shell/Bats/docs/wrapper changes, do not block if GitNexus returns `storage
+version mismatch`, `Transport closed`, `Target not found`, or no useful
+shell/Bats symbols.
+
+In that case:
+
+```
+- Do not auto-refresh, analyze, index, or clean GitNexus.
+- Use manual rg/grep blast-radius review.
+- Run focused Bats or area tests.
+- Continue only if scope is narrow and tests pass.
+- Report one line: GitNexus unavailable; fallback used manual rg + focused Bats.
+```
+
 ## Checklist
 
 ```

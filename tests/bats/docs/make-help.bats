@@ -39,6 +39,7 @@ setup() {
 		'make ai-doctor' \
 		'make agent-validate' \
 		'make agent-validate-report' \
+		'make shell-audit-check' \
 		'make agent-validate-changed' \
 		'make test-chezmoi' \
 		'make test-bats-ci'; do

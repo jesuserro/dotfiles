@@ -30,6 +30,21 @@ setup() {
 	grep -qi 'No borrar' "${POLICY}"
 }
 
+@test "policy documents GitNexus fallback for shell and Bats micro-builds" {
+	grep -q 'storage version mismatch' "${POLICY}"
+	grep -q 'Transport closed' "${POLICY}"
+	grep -q 'Target not found' "${POLICY}"
+	grep -qiE 'ausencia de símbolos|sin símbolos' "${POLICY}"
+	grep -qi 'shell/Bats' "${POLICY}"
+	grep -qi 'no bloquea micro-BUILDs' "${POLICY}"
+	grep -Eq '`rg`/grep|rg/grep' "${POLICY}"
+	grep -qiE 'Bats|tests focalizados' "${POLICY}"
+	grep -q 'gnx-analyze-here' "${POLICY}"
+	grep -qi 'aprobación explícita de Jesús' "${POLICY}"
+	grep -q 'AGENTS.md' "${POLICY}"
+	grep -q 'CLAUDE.md' "${POLICY}"
+}
+
 @test "cheatsheet contains short human refresh flow with status and skip-agents-md" {
 	grep -q '### Refresh humano del índice' "${CHEATSHEET}"
 	grep -q 'make gitnexus-status' "${CHEATSHEET}"

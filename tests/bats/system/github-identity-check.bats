@@ -93,6 +93,17 @@ make_repo() {
 	[[ "${output}" == *"Inferred profile: oficina/fork"* ]]
 }
 
+@test "IXATU organization remotes are classified as oficina fork" {
+	local repo="${TEST_TEMP_DIR}/repo-office-ixatu"
+	make_repo "${repo}" "https://github.com/IXATU/dotfiles.git" "https://github.com/jesuserro/dotfiles.git"
+
+	cd "${repo}"
+	run env HOME="${HOME_DIR}" bash "${SCRIPT}" --offline --warn-only
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"Inferred profile: oficina/fork"* ]]
+	[[ "${output}" != *"Unable to infer profile from remotes"* ]]
+}
+
 @test "unexpected remote warns but warn-only exits zero" {
 	local repo="${TEST_TEMP_DIR}/repo-unknown"
 	make_repo "${repo}" "git@github.com:someone/else.git"

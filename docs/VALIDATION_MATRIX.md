@@ -23,7 +23,7 @@ Resumen y checklist: [AGENT_FIRST_SUMMARY.md](AGENT_FIRST_SUMMARY.md). Contrato:
 | Zona | Validación mínima | Validación extendida | Notas de riesgo |
 |------|-------------------|----------------------|-----------------|
 | `zsh/*` | `make test-lint`, `bats-zsh` | `make chezmoi-drift-report` | RC y symlinks afectan shell interactivo |
-| `scripts/*` | `make agent-validate-changed` | `make test-lint`, `make test-fast` | shellcheck/shfmt estrictos en archivos cambiados |
+| `scripts/*` | `make agent-validate-changed` | `make shell-audit-check`, `make test-lint`, `make test-fast` | shellcheck/shfmt estrictos en archivos cambiados; `shell-audit-check` es auditoría focalizada, no sustituto de `test-lint` |
 | `scripts/update/*` | `update-workflow.bats` | `make update-check` | No ejecutar `make update` sin permiso |
 | `scripts/hooks/*` | `git-hooks/hooks.bats` | `make bats-docs` si cambia doc asociada | post-commit GitNexus puede ser best-effort |
 | `ai/assets/skills/*` | `make validate-skills-structure` | `make bats-skills` | No materializar skills en checkout |
@@ -33,7 +33,7 @@ Resumen y checklist: [AGENT_FIRST_SUMMARY.md](AGENT_FIRST_SUMMARY.md). Contrato:
 | `tests/*` | `make test-fast` | `make test` o `make test-ci` | Verificar que nuevos bats estén cableados en Makefile.tests |
 | `.chezmoiscripts/*` | `make test-chezmoi` | `make chezmoi-drift-report` | Hooks mutan HOME en apply |
 | `dot_local/bin/*` | `make agent-validate-changed` | `make test-chezmoi`, bats focalizados (p. ej. `playwright-docker.bats`) | Symlinks Chezmoi |
-| `bin/*` | `make agent-validate-changed` | `make test-lint`, bats del wrapper | Launchers y utilidades globales |
+| `bin/*` | `make agent-validate-changed` | `make shell-audit-check`, `make test-lint`, bats del wrapper | Launchers y utilidades globales; `shell-audit-check` es auditoría focalizada, no sustituto de `test-lint` |
 | `system/packages/*` | `system-deps.bats` | `make deps-check` | Deps declarativas máquina nueva |
 | `Makefile`, `*.mk` | `make -pn` (parse) | `make test-fast`, `system-deps.bats` si afecta deps | Targets rotos bloquean todo el repo |
 

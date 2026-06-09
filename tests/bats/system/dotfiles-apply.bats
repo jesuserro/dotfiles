@@ -18,7 +18,23 @@ setup() {
 	cat >"${STUB_BIN}/chezmoi" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"${CHEZMOI_STUB_LOG}"
-exit 0
+case "$2" in
+diff)
+	if [[ -n "${CHEZMOI_STUB_DIFF_OUTPUT:-}" ]]; then
+		printf '%b' "${CHEZMOI_STUB_DIFF_OUTPUT}"
+	fi
+	exit 0
+	;;
+status)
+	if [[ -n "${CHEZMOI_STUB_STATUS_OUTPUT:-}" ]]; then
+		printf '%b' "${CHEZMOI_STUB_STATUS_OUTPUT}"
+	fi
+	exit "${CHEZMOI_STUB_STATUS_EXIT:-0}"
+	;;
+*)
+	exit 0
+	;;
+esac
 EOF
 	chmod +x "${STUB_BIN}/chezmoi"
 }
@@ -31,6 +47,9 @@ run_apply() {
 	run env \
 		DOTFILES_DIR="${FIXTURE}" \
 		CHEZMOI_STUB_LOG="${STUB_LOG}" \
+		CHEZMOI_STUB_DIFF_OUTPUT="${CHEZMOI_STUB_DIFF_OUTPUT:-}" \
+		CHEZMOI_STUB_STATUS_OUTPUT="${CHEZMOI_STUB_STATUS_OUTPUT:-}" \
+		CHEZMOI_STUB_STATUS_EXIT="${CHEZMOI_STUB_STATUS_EXIT:-0}" \
 		PATH="${STUB_BIN}:${PATH}" \
 		bash "${LAUNCHER}" "$@"
 }
@@ -127,6 +146,47 @@ stub_has_apply() {
 	run_apply --check "${HOME}/.zshrc"
 	[[ "${status}" -eq 0 ]]
 	[[ "$(stub_invocations)" == *"${HOME}/.zshrc"* ]]
+}
+
+@test "--check summarizes only expected chezmoiscripts Run status entries" {
+	CHEZMOI_STUB_STATUS_OUTPUT=$' R .chezmoiscripts/00_backup_rc_files.sh\n' run_apply --check
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"INFO: Only expected .chezmoiscripts Run entries detected (1)."* ]]
+	[[ "${output}" == *"OK: No non-script Chezmoi status entries detected."* ]]
+	[[ "${output}" != *$'\n R .chezmoiscripts/00_backup_rc_files.sh\n'* ]]
+}
+
+@test "--check keeps real status entries visible" {
+	CHEZMOI_STUB_STATUS_OUTPUT=$' M .zshrc\n' run_apply --check
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *" M .zshrc"* ]]
+	[[ "${output}" != *"Only expected .chezmoiscripts Run entries"* ]]
+}
+
+@test "--check suppresses benign Run status but keeps mixed real drift" {
+	CHEZMOI_STUB_STATUS_OUTPUT=$' R .chezmoiscripts/00_backup_rc_files.sh\n M .zshrc\n' run_apply --check
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *" M .zshrc"* ]]
+	[[ "${output}" == *"INFO: Suppressed expected .chezmoiscripts Run entries: 1."* ]]
+	[[ "${output}" != *$'\n R .chezmoiscripts/00_backup_rc_files.sh\n'* ]]
+}
+
+@test "--check does not filter chezmoiscripts from diff output" {
+	CHEZMOI_STUB_DIFF_OUTPUT=$'diff --git a/.chezmoiscripts/00_backup_rc_files.sh b/.chezmoiscripts/00_backup_rc_files.sh\n+script body\n' \
+		CHEZMOI_STUB_STATUS_OUTPUT=$' R .chezmoiscripts/00_backup_rc_files.sh\n' \
+		run_apply --check
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"diff --git a/.chezmoiscripts/00_backup_rc_files.sh b/.chezmoiscripts/00_backup_rc_files.sh"* ]]
+	[[ "${output}" == *"+script body"* ]]
+	[[ "${output}" == *"INFO: Only expected .chezmoiscripts Run entries detected (1)."* ]]
+}
+
+@test "--check preserves status failures and exit code" {
+	CHEZMOI_STUB_STATUS_OUTPUT=$'status exploded\n' CHEZMOI_STUB_STATUS_EXIT=42 run_apply --check
+	[[ "${status}" -eq 42 ]]
+	[[ "${output}" == *"status exploded"* ]]
+	[[ "${output}" != *"Only expected .chezmoiscripts Run entries"* ]]
+	[[ "${output}" != *"Suppressed expected .chezmoiscripts Run entries"* ]]
 }
 
 @test "--apply forwards optional paths to chezmoi apply" {

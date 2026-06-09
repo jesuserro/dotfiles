@@ -53,7 +53,7 @@ This pattern is used in:
 
 The CLI is installed globally but separately from the MCP:
 
-- **Installation**: `npm install -g --prefix=~/.npm-global gitnexus@latest`
+- **Installation**: `scripts/install-gitnexus.sh`
 - **Update**: Via `make update`
 - **Location**: `~/.npm-global/bin/gitnexus`
 

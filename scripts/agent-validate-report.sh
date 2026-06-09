@@ -5,7 +5,11 @@ set -euo pipefail
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 REPORT_DIR="${AGENT_VALIDATE_REPORT_DIR:-${DOTFILES_DIR}/build/agent-validation}"
 REPORT_PATH="${AGENT_VALIDATE_REPORT_PATH:-${REPORT_DIR}/latest.md}"
-VALIDATE_CMD="${AGENT_VALIDATE_CMD:-make agent-validate}"
+DEFAULT_TARGET="agent-validate"
+VALIDATE_TARGET="${AGENT_VALIDATE_TARGET:-}"
+VALIDATE_CMD_LEGACY="${AGENT_VALIDATE_CMD:-}"
+COMMAND_TEXT="make ${DEFAULT_TARGET}"
+UNSUPPORTED_SELECTOR_MESSAGE="ERROR: unsupported validation selector for agent-validate-report. Use AGENT_VALIDATE_TARGET with one of: agent-validate agent-validate-changed agent-validate-full agent-validate-audit test-fast"
 TMP_OUTPUT="$(mktemp -t agent-validate-report.XXXXXX)"
 
 cleanup() {
@@ -21,13 +25,72 @@ git_value() {
 	fi
 }
 
+is_allowed_target() {
+	case "$1" in
+	agent-validate | agent-validate-changed | agent-validate-full | agent-validate-audit | test-fast)
+		return 0
+		;;
+	*)
+		return 1
+		;;
+	esac
+}
+
+legacy_cmd_to_target() {
+	case "$1" in
+	"make agent-validate")
+		printf '%s\n' 'agent-validate'
+		;;
+	"make agent-validate-changed")
+		printf '%s\n' 'agent-validate-changed'
+		;;
+	"make agent-validate-full")
+		printf '%s\n' 'agent-validate-full'
+		;;
+	"make agent-validate-audit")
+		printf '%s\n' 'agent-validate-audit'
+		;;
+	"make test-fast")
+		printf '%s\n' 'test-fast'
+		;;
+	*)
+		return 1
+		;;
+	esac
+}
+
+resolve_target() {
+	local target
+
+	if [[ -n "${VALIDATE_TARGET}" ]]; then
+		target="${VALIDATE_TARGET}"
+	elif [[ -n "${VALIDATE_CMD_LEGACY}" ]]; then
+		if ! target="$(legacy_cmd_to_target "${VALIDATE_CMD_LEGACY}")"; then
+			printf '%s\n' "${UNSUPPORTED_SELECTOR_MESSAGE}" >&2
+			printf '%s\n' "${UNSUPPORTED_SELECTOR_MESSAGE}" >"${TMP_OUTPUT}"
+			return 2
+		fi
+		printf 'WARN: AGENT_VALIDATE_CMD is deprecated; use AGENT_VALIDATE_TARGET=%s\n' "${target}" >"${TMP_OUTPUT}"
+	else
+		target="${DEFAULT_TARGET}"
+	fi
+
+	if ! is_allowed_target "${target}"; then
+		printf '%s\n' "${UNSUPPORTED_SELECTOR_MESSAGE}" >&2
+		printf '%s\n' "${UNSUPPORTED_SELECTOR_MESSAGE}" >"${TMP_OUTPUT}"
+		return 2
+	fi
+
+	printf '%s\n' "${target}"
+}
+
 run_validation() {
+	local target="$1"
 	local exit_code=0
 	(
 		cd "${DOTFILES_DIR}"
-		# shellcheck disable=SC2086
-		eval "${VALIDATE_CMD}"
-	) >"${TMP_OUTPUT}" 2>&1 || exit_code=$?
+		make "${target}"
+	) >>"${TMP_OUTPUT}" 2>&1 || exit_code=$?
 	printf '%s' "${exit_code}"
 }
 
@@ -61,7 +124,7 @@ write_report() {
 
 		printf '## Command\n\n'
 		printf '    cd %s\n' "${DOTFILES_DIR}"
-		printf '    %s\n\n' "${VALIDATE_CMD}"
+		printf '    %s\n\n' "${COMMAND_TEXT}"
 
 		printf '## Output\n\n'
 		printf '```text\n'
@@ -98,10 +161,19 @@ write_report() {
 }
 
 main() {
-	local exit_code
-	exit_code="$(run_validation)"
-	write_report "${exit_code}"
-	return "${exit_code}"
+	local exit_code target
+
+	if target="$(resolve_target)"; then
+		COMMAND_TEXT="make ${target}"
+		exit_code="$(run_validation "${target}")"
+		write_report "${exit_code}"
+		return "${exit_code}"
+	else
+		exit_code=$?
+		COMMAND_TEXT='(not run: unsupported selector)'
+		write_report "${exit_code}"
+		return "${exit_code}"
+	fi
 }
 
 main "$@"

@@ -92,7 +92,7 @@ infer_profile() {
 	local upstream="$2"
 	if [[ "${origin}" == "jesuserro/dotfiles" ]]; then
 		printf 'personal/casa\n'
-	elif [[ "${origin}" == "jesus-ixatu/dotfiles" && "${upstream}" == "jesuserro/dotfiles" ]]; then
+	elif [[ "${upstream}" == "jesuserro/dotfiles" && ("${origin}" == "jesus-ixatu/dotfiles" || "${origin}" == "IXATU/dotfiles") ]]; then
 		printf 'oficina/fork\n'
 	else
 		printf 'unknown\n'
@@ -209,7 +209,7 @@ fi
 
 profile="$(infer_profile "${origin_repo}" "${upstream_repo}")"
 if [[ "${profile}" == "unknown" ]]; then
-	warn "Unable to infer profile from remotes; expected personal jesuserro/dotfiles or office fork jesus-ixatu/dotfiles with upstream jesuserro/dotfiles"
+	warn "Unable to infer profile from remotes; expected personal jesuserro/dotfiles or office fork jesus-ixatu/dotfiles or IXATU/dotfiles with upstream jesuserro/dotfiles"
 else
 	ok "Inferred profile: ${profile}"
 fi
