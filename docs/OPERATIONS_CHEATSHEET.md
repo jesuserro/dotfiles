@@ -268,6 +268,7 @@ Detalle: [TESTING.md](TESTING.md).
 | `make ai-doctor` | No | No | Readiness agregado pre-implementación |
 | `make ai-cursor-check` | No | No | Tras materializar MCP en HOME |
 | `make agent-validate` | No | No | Gate dotfiles post-BUILD (read-only) |
+| `make shell-audit-check` | No | No | Auditoría shell focalizada para agentes |
 | `make agent-validate-report` | No | No | Gate + informe en `build/agent-validation/latest.md` |
 | `dotfiles-apply` | No | No | Preview Chezmoi: `diff` + `status` (default seguro) |
 | `dotfiles-apply --apply` | Sí | Sí | Apply interactivo (confirmar escribiendo `APPLY`) |

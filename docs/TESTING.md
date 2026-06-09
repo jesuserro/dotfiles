@@ -81,7 +81,7 @@ make fmt-shell
 |--------|-------------|
 | `make test` | Preflight + lint + all bats + MCP template JSON validation |
 | `make test-fast` | Preflight + lint + bats without `chezmoi/*` tests |
-| `make test-lint` | shellcheck + shfmt + yamllint |
+| `make test-lint` | shellcheck + zsh -n + shfmt + yamllint |
 | `make ai-doctor` | Read-only agent readiness: dependencies, update readiness, AI/MCPs, skills, commands and `gitleaks` |
 | `make quality-check` | Full strict repository quality audit: shellcheck + shfmt check + yamllint + actionlint (`-shellcheck=`) when workflows exist |
 | `make security-check` | gitleaks working-tree scan + osv-scanner when supported manifests/lockfiles exist (OSV best-effort unless `SECURITY_ONLINE=1`) |

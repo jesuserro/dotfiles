@@ -96,7 +96,6 @@ help:
 	@echo "  make test-fast                   Lint + bats without chezmoi/* tests"
 	@echo "  make test-ci                     GitHub Actions CI subset"
 	@echo "  make test-lint                   shellcheck, zsh -n, shfmt, yamllint"
-	@echo "  make shell-audit-check           Strict focused shell audit for agents"
 	@echo "  make test-bats                   All bats tests (preflight included)"
 	@echo "  make test-commands               Commands tests only"
 	@echo "  make test-deps-check             Fail-fast check for bats/shellcheck/shfmt/zsh"
