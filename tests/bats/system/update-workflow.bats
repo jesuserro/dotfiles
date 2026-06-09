@@ -834,7 +834,13 @@ fi
 if [[ "\$1" == "install" && "\$*" == *"gitnexus@latest"* ]]; then
   printf '1.6.6\n' >"${TEST_TEMP_DIR}/gitnexus-version"
   cat >"${npm_prefix}/lib/node_modules/gitnexus/package.json" <<'PKG'
-{"name":"gitnexus","version":"1.6.6"}
+{
+  "name": "gitnexus",
+  "version": "1.6.6",
+  "scripts": {
+    "postinstall": "node scripts/materialize-vendor-grammars.cjs && node scripts/build-tree-sitter-dart.cjs && node scripts/build-tree-sitter-proto.cjs && node scripts/build-tree-sitter-swift.cjs"
+  }
+}
 PKG
 fi
 if [[ "\$1" == "install" && "\$*" == *"corepack@latest"* ]]; then
@@ -1030,9 +1036,23 @@ fi
 if [[ "\$1" == "install" && "\$*" == *"gitnexus@latest"* ]]; then
   echo 1 >"${TEST_TEMP_DIR}/gitnexus-install-count"
   printf '1.6.6\n' >"${TEST_TEMP_DIR}/gitnexus-version"
+  mkdir -p "${npm_prefix}/lib/node_modules/gitnexus/scripts"
   cat >"${npm_prefix}/lib/node_modules/gitnexus/package.json" <<'PKG'
-{"name":"gitnexus","version":"1.6.6"}
+{
+  "name": "gitnexus",
+  "version": "1.6.6",
+  "scripts": {
+    "postinstall": "node scripts/materialize-vendor-grammars.cjs && node scripts/build-tree-sitter-dart.cjs && node scripts/build-tree-sitter-proto.cjs && node scripts/build-tree-sitter-swift.cjs"
+  }
+}
 PKG
+  for script in materialize-vendor-grammars.cjs build-tree-sitter-dart.cjs build-tree-sitter-proto.cjs build-tree-sitter-swift.cjs; do
+    cat >"${npm_prefix}/lib/node_modules/gitnexus/scripts/\${script}" <<SCRIPT
+#!/usr/bin/env node
+const fs = require('fs');
+fs.appendFileSync('${TEST_TEMP_DIR}/gitnexus-postinstall.log', '\${script}\\n');
+SCRIPT
+  done
   echo "changed 1 package"
   exit 0
 fi
@@ -1062,7 +1082,59 @@ EOF
 	[[ "$output" == *"OK    GitNexus CLI ("* ]]
 	[[ "$output" == *"GitNexus CLI           1.6.5          1.6.6          updated"* ]]
 	[[ "$(cat "${TEST_TEMP_DIR}/gitnexus-install-count")" -eq 1 ]]
+	grep -q '^build-tree-sitter-dart.cjs$' "${TEST_TEMP_DIR}/gitnexus-postinstall.log"
 	grep -q $'GitNexus CLI\t1.6.5\t1.6.6\tupdated' "${TEST_TEMP_DIR}/run-npm-update/tool-snapshot.tsv"
+}
+
+@test "global npm helper refuses GitNexus update when npm ignore-scripts is enabled" {
+	local fake_home="${TEST_TEMP_DIR}/home-npm-gitnexus-ignore"
+	local stub_dir="${TEST_TEMP_DIR}/npm-gitnexus-ignore-bin"
+	local npm_prefix="${fake_home}/.npm-global"
+	mkdir -p "$stub_dir" "$npm_prefix/bin"
+	write_global_npm_package "$npm_prefix" "gitnexus" "1.6.5"
+	make_passthrough_node_stub "$stub_dir" "v24.11.1"
+	cat >"${stub_dir}/npm" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == "root" && "\$2" == "-g" ]]; then
+  echo "${npm_prefix}/lib/node_modules"
+  exit 0
+fi
+if [[ "\$1" == "view" ]]; then
+  echo "1.6.6"
+  exit 0
+fi
+if [[ "\$1" == "config" && "\$2" == "get" && "\$3" == "ignore-scripts" ]]; then
+  echo "true"
+  exit 0
+fi
+if [[ "\$1" == "install" ]]; then
+  echo "install should not run" >&2
+  exit 91
+fi
+exit 0
+EOF
+	cat >"${stub_dir}/gitnexus" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "gitnexus 1.6.5";; *) exit 0;; esac
+EOF
+	local script="${TEST_TEMP_DIR}/npm-gitnexus-ignore.sh"
+	cat >"$script" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+set -- --section none
+HOME="${fake_home}"
+NPM_CONFIG_PREFIX="${npm_prefix}"
+PATH="${stub_dir}:/usr/bin:/bin"
+DOTFILES_UPDATE_RUN_DIR="${TEST_TEMP_DIR}/run-npm-gitnexus-ignore"
+source "${DOTFILES_DIR}/scripts/update/update-wsl.sh"
+update_global_npm_tool_if_needed "WSL" "GitNexus CLI" "${TEST_TEMP_DIR}/run-npm-gitnexus-ignore/gitnexus.log" "${npm_prefix}" "gitnexus" "latest" gitnexus --version --
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm" "${stub_dir}/gitnexus" "$script"
+
+	run "$script"
+	[[ "$status" -eq 0 ]]
+	grep -q $'FAIL\tWSL\tGitNexus CLI\tnpm ignore-scripts is enabled; GitNexus requires postinstall scripts' "${TEST_TEMP_DIR}/run-npm-gitnexus-ignore/wsl-results.tsv"
+	[[ "$output" != *"install should not run"* ]]
 }
 
 @test "global npm helper installs missing tool and records installed snapshot" {
@@ -1119,6 +1191,7 @@ EOF
 	[[ "$output" == *"INFO  Codex CLI is not installed; installing latest available version 0.133.0"* ]]
 	[[ "$output" == *"0.133.0"* ]]
 	[[ "$output" == *"installed"* ]]
+	[[ ! -e "${TEST_TEMP_DIR}/gitnexus-postinstall.log" ]]
 	grep -q $'Codex CLI\t\t0.133.0\tinstalled' "${TEST_TEMP_DIR}/run-npm-install/tool-snapshot.tsv"
 }
 

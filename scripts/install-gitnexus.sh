@@ -41,16 +41,67 @@ if [[ -z "${node_major}" || "${node_major}" -lt 22 ]]; then
 fi
 
 # Prefijo npm global canónico en espacio de usuario
-export NPM_CONFIG_PREFIX="${NPM_CONFIG_PREFIX:-$HOME/.npm-global}"
+export NPM_CONFIG_PREFIX="${NPM_CONFIG_PREFIX:-${DOTFILES_NPM_PREFIX:-$HOME/.npm-global}}"
 export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
+
+npm_ignore_scripts_enabled() {
+	local configured="${NPM_CONFIG_IGNORE_SCRIPTS:-${npm_config_ignore_scripts:-}}" value
+	case "$configured" in
+	1 | true | TRUE | yes | YES | on | ON) return 0 ;;
+	esac
+
+	value="$(npm config get ignore-scripts 2>/dev/null | head -n 1 | tr -d '\r' || true)"
+	case "$value" in
+	1 | true | TRUE | yes | YES | on | ON) return 0 ;;
+	esac
+	return 1
+}
+
+run_gitnexus_postinstall_scripts() {
+	local gitnexus_dir="$1"
+	local postinstall script
+
+	if [[ ! -d "$gitnexus_dir/scripts" ]]; then
+		echo -e "${YELLOW}⚠️${NC} No se encontraron scripts postinstall de GitNexus en ${gitnexus_dir}"
+		return 1
+	fi
+
+	postinstall="$(node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.stdout.write(pkg.scripts && pkg.scripts.postinstall ? pkg.scripts.postinstall : "");' "${gitnexus_dir}/package.json" 2>/dev/null || true)"
+	if [[ -z "$postinstall" ]]; then
+		echo -e "${YELLOW}⚠️${NC} GitNexus no declara script postinstall en package.json"
+		return 1
+	fi
+
+	for script in ${postinstall//&&/ }; do
+		[[ "$script" == scripts/*.cjs ]] || continue
+		if [[ -f "${gitnexus_dir}/${script}" ]]; then
+			(
+				cd "$gitnexus_dir" || exit 1
+				node "$script"
+			)
+		fi
+	done
+}
 
 # Instalar gitnexus globalmente en el prefijo npm de usuario
 echo ""
-echo -e "${YELLOW}⏳${NC} Instalando gitnexus@latest globalmente..."
+gitnexus_spec="gitnexus@${GITNEXUS_VERSION:-latest}"
+echo -e "${YELLOW}⏳${NC} Instalando ${gitnexus_spec} globalmente..."
 
 mkdir -p "$NPM_CONFIG_PREFIX/bin" "$NPM_CONFIG_PREFIX/lib/node_modules"
 
-if npm install -g --prefix="$NPM_CONFIG_PREFIX" gitnexus@latest 2>&1; then
+if npm_ignore_scripts_enabled; then
+	echo -e "${RED}❌ Error: npm ignore-scripts está activo; GitNexus necesita ejecutar postinstall para preparar gramáticas tree-sitter${NC}"
+	echo "Desactiva ignore-scripts para instalar GitNexus correctamente."
+	exit 1
+fi
+
+if npm install -g --prefix="$NPM_CONFIG_PREFIX" "$gitnexus_spec" 2>&1; then
+	gitnexus_dir="$(npm root -g --prefix="$NPM_CONFIG_PREFIX")/gitnexus"
+	run_gitnexus_postinstall_scripts "$gitnexus_dir" || {
+		echo -e "${RED}❌ Error preparando gramáticas nativas de GitNexus${NC}"
+		exit 1
+	}
 	echo -e "${GREEN}✓${NC} GitNexus CLI instalado correctamente"
 	if command -v gitnexus &>/dev/null; then
 		echo -e "${GREEN}✓${NC} gitnexus disponible en PATH: $(which gitnexus)"

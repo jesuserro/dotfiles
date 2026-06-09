@@ -194,6 +194,7 @@ EOF
 	grep -q '^gitnexus:analyze \. --skip-agents-md$' "$trace"
 	grep -q 'gitnexus-node:.*/node-runtime\.[^:]*\/node:v24.15.0' "$trace"
 	assert_file_not_contains "$trace" 'gitnexus-node:.*v20.18.2'
+	[[ "$output" != *"bad option: -n"* ]]
 }
 
 @test "gnx-analyze-here accepts leading -- before GitNexus flags" {

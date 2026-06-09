@@ -15,7 +15,6 @@
 │   ├── 📄 run_after_15_link_tmux_dotfiles.sh.tmpl
 │   └── 📄 run_before_00_backup_rc_files.sh.tmpl
 ├── 📁 .cursor
-│   ├── 📁 plans
 │   └── 📁 rules
 │       └── 📄 aliases-conventions.mdc
 ├── 📁 .githooks
@@ -230,7 +229,6 @@
 │   │   └── 📝 dotfiles-install.md
 │   ├── 📁 plans
 │   │   └── 📝 PLAN_000009.md
-│   ├── 📁 wiki
 │   ├── 📝 AGENT_FIRST_SUMMARY.md
 │   ├── 📝 AGENT_WORKFLOW.md
 │   ├── 📝 AGENT_WORKFLOW_LOOP.md
@@ -270,10 +268,6 @@
 ├── 📁 dot_codex
 │   └── 📄 private_config.toml.tmpl
 ├── 📁 dot_config
-│   ├── 📁 codex
-│   │   └── 📁 prompts
-│   ├── 📁 cursor
-│   │   └── 📁 commands
 │   ├── 📁 mcp
 │   │   ├── 📁 servers
 │   │   │   └── 📄 .keep
@@ -509,7 +503,8 @@
 │   │   │   └── 📄 hooks.bats
 │   │   ├── 📁 gitnexus
 │   │   │   ├── 📄 analyze-dotfiles-policy.bats
-│   │   │   └── 📄 gitnexus-status.bats
+│   │   │   ├── 📄 gitnexus-status.bats
+│   │   │   └── 📄 install-gitnexus.bats
 │   │   ├── 📁 helpers
 │   │   │   └── 🔧 common.bash
 │   │   ├── 📁 mcp
@@ -618,6 +613,7 @@
 ├── 🔨 install.mk
 ├── 📄 modelcontextprotocol-server-postgres-0.6.2.tgz
 ├── ⚙️ secrets.sops.yaml
+├── 📄 secrets.sops.yaml.old-age1mq3-unreadable
 ├── 📄 symlink_dot_aliases.tmpl
 ├── 📄 symlink_dot_codex_mcp
 ├── 📄 symlink_dot_p10k.zsh.tmpl

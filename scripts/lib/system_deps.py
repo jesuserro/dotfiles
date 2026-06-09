@@ -90,7 +90,7 @@ def _action_for_package(package):
         "gitnexus": {
             "kind": "installer",
             "summary": "Install GitNexus CLI in the user npm prefix used by this repo.",
-            "command": 'npm install -g --prefix="$HOME/.npm-global" gitnexus@latest',
+            "command": "scripts/install-gitnexus.sh",
         },
         "ast-grep": {
             "kind": "installer",
