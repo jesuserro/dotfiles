@@ -85,7 +85,7 @@ teardown() {
 	local preview_body
 	preview_body="$(awk '/^run_preview\(\) \{/,/^\}/' "${DOTFILES_APPLY}")"
 	[[ "${preview_body}" == *'run_chezmoi diff'* ]]
-	[[ "${preview_body}" == *'run_chezmoi status'* ]]
+	[[ "${preview_body}" == *'run_chezmoi_status_preview'* ]]
 	run grep -q 'run_chezmoi apply' <<<"${preview_body}"
 	[[ "${status}" -eq 1 ]]
 }

@@ -110,6 +110,46 @@ run_chezmoi() {
 	"${cmd[@]}"
 }
 
+run_chezmoi_status_preview() {
+	local -a cmd=("${CHEZMOI_BIN}" "--source=${DOTFILES_DIR}" status)
+	cmd+=("$@")
+	local output status_code line benign_count=0 real_count=0
+	printf '==> %q ' "${cmd[@]}"
+	printf '\n'
+
+	set +e
+	output="$("${cmd[@]}" 2>&1)"
+	status_code=$?
+	set -e
+
+	if [[ "${status_code}" -ne 0 ]]; then
+		if [[ -n "${output}" ]]; then
+			printf '%s\n' "${output}"
+		fi
+		return "${status_code}"
+	fi
+
+	if [[ -z "${output}" ]]; then
+		return 0
+	fi
+
+	while IFS= read -r line || [[ -n "${line}" ]]; do
+		if [[ "${line}" =~ ^[[:space:]]*R[[:space:]]+\.chezmoiscripts/ ]]; then
+			((benign_count += 1))
+			continue
+		fi
+		printf '%s\n' "${line}"
+		((real_count += 1))
+	done <<<"${output}"
+
+	if ((benign_count > 0 && real_count == 0)); then
+		printf 'INFO: Only expected .chezmoiscripts Run entries detected (%d).\n' "${benign_count}"
+		printf 'OK: No non-script Chezmoi status entries detected.\n'
+	elif ((benign_count > 0)); then
+		printf 'INFO: Suppressed expected .chezmoiscripts Run entries: %d.\n' "${benign_count}"
+	fi
+}
+
 confirm_apply() {
 	local response
 	if [[ "${CONFIRM_YES}" == "true" ]]; then
@@ -129,7 +169,7 @@ confirm_apply() {
 run_preview() {
 	print_header
 	run_chezmoi diff "${TARGET_PATHS[@]}"
-	run_chezmoi status "${TARGET_PATHS[@]}"
+	run_chezmoi_status_preview "${TARGET_PATHS[@]}"
 	printf '\n'
 	printf 'Preview only — no changes applied.\n'
 	printf 'To apply: dotfiles-apply --apply\n'
