@@ -180,7 +180,7 @@ Chezmoi templates are not passed raw to `shellcheck` or `shfmt`; those tools do 
 - `corepack`: ships with the Node stack; validate with `corepack --version`
 - `pnpm`: `npm install --global corepack@latest` then `corepack prepare pnpm@latest-11 --activate`
 - `codex`: `npm install -g --prefix="$HOME/.npm-global" @openai/codex@latest`
-- `gitnexus`: `scripts/install-gitnexus.sh` (installs in the user npm prefix and runs GitNexus grammar postinstall scripts)
+- `gitnexus`: `scripts/install-gitnexus.sh` (installs in `~/.npm-global`, runs GitNexus grammar postinstall scripts, and materializes agent-first symlink `~/.local/bin/gitnexus` → `~/.npm-global/bin/gitnexus` via `scripts/lib/gitnexus_canonical.sh`; same symlink step runs in `make update-wsl`)
 - `@ast-grep/cli`: `make install-agent-tools` or `npm install -g --prefix="$HOME/.npm-global" @ast-grep/cli@latest`
 - `actionlint`: `make install-agent-tools` (official `rhysd/actionlint` GitHub release, checksum verified)
 - `osv-scanner`: `make install-agent-tools` (official `google/osv-scanner` GitHub release, checksum verified)

@@ -64,6 +64,28 @@ bats_require_minimum_version 1.5.0
 	grep -q '\$HOME/.local/bin/gitnexus' "${SCRIPT}"
 }
 
+@test "gitnexus-status reports OK when canonical symlinks to npm-global with same version" {
+	local repo="${TEST_TEMP_DIR}/symlink-aligned"
+	local fake_home="${TEST_TEMP_DIR}/home-symlink-aligned"
+	local npm_global="${fake_home}/.npm-global/bin/gitnexus"
+	local canonical="${fake_home}/.local/bin/gitnexus"
+	init_git_repo "$repo"
+	mkdir -p "$(dirname "$npm_global")" "$(dirname "$canonical")"
+	write_fake_gitnexus "$npm_global" "1.6.6"
+	ln -sfn "$npm_global" "$canonical"
+
+	run_gitnexus_status "$repo" \
+		HOME="$fake_home" \
+		PATH="${fake_home}/.local/bin:/usr/bin:/bin" \
+		GITNEXUS_CANONICAL_BIN="$canonical" \
+		GITNEXUS_STATUS_PS_CMD='true'
+
+	[[ "${status}" -eq 0 ]]
+	[[ "${output}" == *"PATH GitNexus matches canonical agent path."* ]]
+	[[ "${output}" != *"GitNexus CLI/MCP version mismatch"* ]]
+	[[ "${output}" == *"agent-safe for read-only impact/context."* ]]
+}
+
 @test "gitnexus-status reports OK when PATH matches canonical GitNexus" {
 	local repo="${TEST_TEMP_DIR}/path-aligned"
 	local fake_home="${TEST_TEMP_DIR}/home-aligned"

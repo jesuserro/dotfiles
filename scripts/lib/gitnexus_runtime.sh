@@ -68,8 +68,12 @@ _gnx_run_gitnexus_analyze() {
 
 _gnx_resolve_gitnexus_bin() {
 	local npm_prefix="${NPM_CONFIG_PREFIX:-${DOTFILES_NPM_PREFIX:-$HOME/.npm-global}}"
+	local canonical_bin="${HOME}/.local/bin/gitnexus"
 
-	if command -v gitnexus >/dev/null 2>&1; then
+	if [[ -x "$canonical_bin" ]]; then
+		echo "$canonical_bin"
+		return 0
+	elif command -v gitnexus >/dev/null 2>&1; then
 		command -v gitnexus
 		return 0
 	elif [[ -x "$npm_prefix/bin/gitnexus" ]]; then

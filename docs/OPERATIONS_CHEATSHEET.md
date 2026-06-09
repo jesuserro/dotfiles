@@ -150,6 +150,8 @@ Referencia agentes: [MCP_QUICKREF.md](MCP_QUICKREF.md).
 
 ## 8. GitNexus
 
+**Rutas:** instalación real `~/.npm-global/bin/gitnexus`; ruta canónica agent-first `~/.local/bin/gitnexus` (symlink). MCP y `command -v gitnexus` en shell nueva deben usar la canónica. Tras install/update: `exec zsh -l`, reiniciar MCP GitNexus, `make gitnexus-status`.
+
 | Quién | Permitido |
 |-------|-----------|
 | **Agentes** | `make gitnexus-status` (incluye **path alignment**); MCP GitNexus read-only cuando alignment OK |

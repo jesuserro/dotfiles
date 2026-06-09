@@ -46,8 +46,8 @@ Layers describe *purpose*; default **activation** for global agents follows the 
 | **Scope** | Global (multi-repo) |
 | **Config Pattern** | `mcp-gitnexus-launcher` → `~/.local/bin/gitnexus mcp` (sin npx en runtime) |
 | **Index Location** | `~/.gitnexus/` |
-| **CLI (agent-first canonical)** | `~/.local/bin/gitnexus` — ver path alignment en `make gitnexus-status` |
-| **CLI (human maintenance)** | `make update-wsl` instala en `~/.npm-global`; alinear PATH/MCP es M6B |
+| **CLI (real npm install)** | `~/.npm-global/bin/gitnexus` — `make update-wsl` / `scripts/install-gitnexus.sh` |
+| **CLI (agent-first canonical)** | `~/.local/bin/gitnexus` → symlink a npm-global; ver `make gitnexus-status` |
 | **Wiki Output** | `docs/wiki/` (per project) |
 | **LLM Required** | Yes (OpenAI API key for wiki) |
 

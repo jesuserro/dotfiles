@@ -373,6 +373,7 @@
 │   │   ├── 🔧 git-ai-common.sh
 │   │   ├── 🔧 git-ai-cursor-path.sh
 │   │   ├── 🔧 git_flow_policy.sh
+│   │   ├── 🔧 gitnexus_canonical.sh
 │   │   ├── 🔧 gitnexus_runtime.sh
 │   │   ├── 🔧 install_common.sh
 │   │   ├── 🔧 osv_scan.sh
@@ -511,6 +512,7 @@
 │   │   │   └── 📄 hooks.bats
 │   │   ├── 📁 gitnexus
 │   │   │   ├── 📄 analyze-dotfiles-policy.bats
+│   │   │   ├── 📄 gitnexus-canonical-symlink.bats
 │   │   │   ├── 📄 gitnexus-status.bats
 │   │   │   └── 📄 install-gitnexus.bats
 │   │   ├── 📁 helpers
