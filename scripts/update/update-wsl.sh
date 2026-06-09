@@ -179,9 +179,22 @@ npm_dist_tag_version() {
 	npm view "${package_name}@${dist_tag}" version 2>/dev/null | head -n 1 | tr -d '\r'
 }
 
+npm_ignore_scripts_enabled() {
+	local configured="${NPM_CONFIG_IGNORE_SCRIPTS:-${npm_config_ignore_scripts:-}}" value
+	case "$configured" in
+	1 | true | TRUE | yes | YES | on | ON) return 0 ;;
+	esac
+
+	value="$(npm config get ignore-scripts 2>/dev/null | head -n 1 | tr -d '\r' || true)"
+	case "$value" in
+	1 | true | TRUE | yes | YES | on | ON) return 0 ;;
+	esac
+	return 1
+}
+
 run_gitnexus_postinstall_scripts() {
 	local area="$1" log_file="$2" npm_prefix="$3"
-	local gitnexus_dir script
+	local gitnexus_dir postinstall script
 
 	gitnexus_dir="$(npm root -g --prefix="$npm_prefix" 2>/dev/null)/gitnexus"
 	if [[ ! -d "$gitnexus_dir/scripts" ]]; then
@@ -191,16 +204,21 @@ run_gitnexus_postinstall_scripts() {
 		return 1
 	fi
 
-	for script in \
-		materialize-vendor-grammars.cjs \
-		build-tree-sitter-dart.cjs \
-		build-tree-sitter-proto.cjs \
-		build-tree-sitter-swift.cjs; do
-		if [[ -f "${gitnexus_dir}/scripts/${script}" ]]; then
-			append_log_line "$log_file" "postinstall: node scripts/${script}"
+	postinstall="$(node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.stdout.write(pkg.scripts && pkg.scripts.postinstall ? pkg.scripts.postinstall : "");' "${gitnexus_dir}/package.json" 2>/dev/null || true)"
+	if [[ -z "$postinstall" ]]; then
+		append_log_line "$log_file" "postinstall: GitNexus package.json does not declare postinstall"
+		result_fail "$area" "GitNexus CLI" "postinstall script not declared"
+		RUN_STEP_LAST_RESULT_STATUS="FAIL"
+		return 1
+	fi
+
+	for script in ${postinstall//&&/ }; do
+		[[ "$script" == scripts/*.cjs ]] || continue
+		if [[ -f "${gitnexus_dir}/${script}" ]]; then
+			append_log_line "$log_file" "postinstall: node ${script}"
 			(
 				cd "$gitnexus_dir" || exit 1
-				node "scripts/${script}"
+				node "$script"
 			) >>"$log_file" 2>&1 || {
 				result_fail "$area" "GitNexus CLI" "postinstall ${script} failed"
 				RUN_STEP_LAST_RESULT_STATUS="FAIL"
@@ -394,6 +412,13 @@ update_global_npm_tool_if_needed() {
 		else
 			info "${name} is not installed; installing latest available version ${remote_version}"
 		fi
+	fi
+
+	if [[ "$package_name" == "gitnexus" ]] && npm_ignore_scripts_enabled; then
+		append_log_line "$log_file" "precheck: npm ignore-scripts is enabled; GitNexus grammar postinstall cannot be trusted"
+		result_fail "$area" "$name" "npm ignore-scripts is enabled; GitNexus requires postinstall scripts"
+		RUN_STEP_LAST_RESULT_STATUS="FAIL"
+		return 0
 	fi
 
 	run_npm_step "$area" "$name" "$log_file" npm install -g --prefix="$npm_prefix" "${package_name}@${dist_tag}"

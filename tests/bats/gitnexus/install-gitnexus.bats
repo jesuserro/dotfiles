@@ -17,6 +17,15 @@ write_fake_gitnexus_package() {
 	local log_file="$2"
 	local script
 	mkdir -p "${package_dir}/scripts"
+	cat >"${package_dir}/package.json" <<'PKG'
+{
+  "name": "gitnexus",
+  "version": "1.6.6",
+  "scripts": {
+    "postinstall": "node scripts/materialize-vendor-grammars.cjs && node scripts/build-tree-sitter-dart.cjs && node scripts/build-tree-sitter-proto.cjs && node scripts/build-tree-sitter-swift.cjs"
+  }
+}
+PKG
 	for script in \
 		materialize-vendor-grammars.cjs \
 		build-tree-sitter-dart.cjs \
@@ -139,4 +148,36 @@ EOF
 	[[ "$status" -eq 0 ]]
 	grep -q -- "install -g --prefix=${npm_prefix} gitnexus@1.6.6" "$args_log"
 	grep -q '^build-tree-sitter-dart.cjs$' "$postinstall_log"
+}
+
+@test "install-gitnexus fails clearly when npm ignore-scripts is enabled" {
+	local fake_home="${TEST_TEMP_DIR}/home-ignore"
+	local stub_dir="${TEST_TEMP_DIR}/bin-ignore"
+	mkdir -p "$stub_dir" "$fake_home"
+
+	cat >"${stub_dir}/node" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in --version) echo "v24.15.0";; *) exit 0;; esac
+EOF
+	cat >"${stub_dir}/npm" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in
+  --version) echo "11.16.0"; exit 0 ;;
+  config) echo "true"; exit 0 ;;
+  install) echo "install should not run" >&2; exit 91 ;;
+esac
+exit 0
+EOF
+	chmod +x "${stub_dir}/node" "${stub_dir}/npm"
+
+	run env -u NPM_CONFIG_PREFIX -u DOTFILES_NPM_PREFIX \
+		HOME="$fake_home" \
+		NPM_CONFIG_IGNORE_SCRIPTS=true \
+		PATH="${stub_dir}:/usr/bin:/bin" \
+		bash "$INSTALL_GITNEXUS"
+
+	[[ "$status" -eq 1 ]]
+	[[ "$output" == *"ignore-scripts"* ]]
+	[[ "$output" == *"GitNexus necesita ejecutar postinstall"* ]]
+	[[ "$output" != *"install should not run"* ]]
 }
