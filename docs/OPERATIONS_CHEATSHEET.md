@@ -152,7 +152,7 @@ Referencia agentes: [MCP_QUICKREF.md](MCP_QUICKREF.md).
 
 | Quién | Permitido |
 |-------|-----------|
-| **Agentes** | `make gitnexus-status`; MCP GitNexus read-only (`gitnexus_query`, `gitnexus_context`, `gitnexus_impact`, …) |
+| **Agentes** | `make gitnexus-status` (incluye **path alignment**); MCP GitNexus read-only cuando alignment OK |
 | **Humanos** | `gnx-analyze-here`, `gnx-wiki-here`, `gnx-serve`, `gnx-map` — solo con decisión explícita |
 
 **Prohibido para agentes (salvo petición explícita de Jesús):**

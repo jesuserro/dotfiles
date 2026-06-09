@@ -23,11 +23,28 @@ Política operativa para agentes y humanos en repos gestionados con dotfiles. Co
 
 ## Acciones permitidas a agentes
 
-- `make gitnexus-status` — estado read-only (índice, lock, Node, artefactos).
+- `make gitnexus-status` — estado read-only (índice, lock, Node, **path alignment**, artefactos).
 - Lectura con **MCP GitNexus** (`gitnexus_query`, `gitnexus_context`, `gitnexus_impact`, `gitnexus_detect_changes`, recursos `gitnexus://…`).
 - `make update-check` — precheck Node/runtime (read-only).
 - Inspección de docs, `meta.json` (si existe) y código fuente por medios habituales.
 - El post-commit local instalado explícitamente con `make install-git-hooks` puede ejecutar el refresh best-effort descrito abajo; los agentes no lo invocan directamente.
+
+---
+
+## Canonical GitNexus for agents
+
+**Ruta canónica agent-first:** `~/.local/bin/gitnexus` (usada por `mcp-gitnexus-launcher`).
+
+`make gitnexus-status` incluye la sección **`GitNexus path alignment`**: compara PATH, binarios conocidos, procesos MCP vivos y versiones. Si hay desalineación o versiones distintas, puede aparecer `storage version mismatch` en MCP aunque el índice esté `FRESH`.
+
+| Rol | Regla |
+|-----|-------|
+| **Canonical agent path** | `~/.local/bin/gitnexus` |
+| **Agents should not use** | `npx gitnexus`; `~/.npm-global/bin/gitnexus` si sombrea la ruta canónica; Node inyectado por IDE `<22` |
+| **Agents may use** | `make gitnexus-status`; MCP read-only cuando path alignment es OK; fallback manual (`rg`/grep + tests focalizados) cuando status advierte y el scope está acotado |
+| **Agents must not without Jesús** | `gnx-analyze-here`; `analyze`/`index`/`refresh`/`clean`; borrar `.gitnexus/lbug`; editar bloques `<!-- gitnexus:* -->` generados |
+
+La alineación real de instalación/update/PATH (M6B) queda fuera de M6A; este bloque es política y diagnóstico read-only.
 
 ---
 

@@ -13,7 +13,12 @@ In dotfiles/WSL, agents use read-only status first. Mutating CLI commands requir
 make gitnexus-status
 ```
 
-Read-only: index freshness (`FRESH`/`STALE`/`NO_INDEX`), lock file, Node runtime, artifacts. See `docs/GITNEXUS_OPERATIONAL_POLICY.md`.
+Read-only: index freshness (`FRESH`/`STALE`/`NO_INDEX`), lock file, Node runtime, **GitNexus path alignment** (canonical `~/.local/bin/gitnexus`, PATH vs MCP, version mismatch risk), artifacts. See `docs/GITNEXUS_OPERATIONAL_POLICY.md`.
+
+Interpretación rápida de path alignment:
+
+- `OK: GitNexus path alignment is agent-safe` → MCP read-only (`query`, `context`, `impact`, …) es fiable.
+- `WARN` de PATH/MCP/version → no refrescar; usar fallback manual o pedir a Jesús alineación M6B.
 
 ## Commands
 
