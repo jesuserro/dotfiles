@@ -41,16 +41,45 @@ if [[ -z "${node_major}" || "${node_major}" -lt 22 ]]; then
 fi
 
 # Prefijo npm global canónico en espacio de usuario
-export NPM_CONFIG_PREFIX="${NPM_CONFIG_PREFIX:-$HOME/.npm-global}"
+export NPM_CONFIG_PREFIX="${NPM_CONFIG_PREFIX:-${DOTFILES_NPM_PREFIX:-$HOME/.npm-global}}"
 export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
+
+run_gitnexus_postinstall_scripts() {
+	local gitnexus_dir="$1"
+	local script
+
+	if [[ ! -d "$gitnexus_dir/scripts" ]]; then
+		echo -e "${YELLOW}⚠️${NC} No se encontraron scripts postinstall de GitNexus en ${gitnexus_dir}"
+		return 1
+	fi
+
+	for script in \
+		materialize-vendor-grammars.cjs \
+		build-tree-sitter-dart.cjs \
+		build-tree-sitter-proto.cjs \
+		build-tree-sitter-swift.cjs; do
+		if [[ -f "${gitnexus_dir}/scripts/${script}" ]]; then
+			(
+				cd "$gitnexus_dir" || exit 1
+				node "scripts/${script}"
+			)
+		fi
+	done
+}
 
 # Instalar gitnexus globalmente en el prefijo npm de usuario
 echo ""
-echo -e "${YELLOW}⏳${NC} Instalando gitnexus@latest globalmente..."
+gitnexus_spec="gitnexus@${GITNEXUS_VERSION:-latest}"
+echo -e "${YELLOW}⏳${NC} Instalando ${gitnexus_spec} globalmente..."
 
 mkdir -p "$NPM_CONFIG_PREFIX/bin" "$NPM_CONFIG_PREFIX/lib/node_modules"
 
-if npm install -g --prefix="$NPM_CONFIG_PREFIX" gitnexus@latest 2>&1; then
+if npm install -g --prefix="$NPM_CONFIG_PREFIX" "$gitnexus_spec" 2>&1; then
+	gitnexus_dir="$(npm root -g --prefix="$NPM_CONFIG_PREFIX")/gitnexus"
+	run_gitnexus_postinstall_scripts "$gitnexus_dir" || {
+		echo -e "${RED}❌ Error preparando gramáticas nativas de GitNexus${NC}"
+		exit 1
+	}
 	echo -e "${GREEN}✓${NC} GitNexus CLI instalado correctamente"
 	if command -v gitnexus &>/dev/null; then
 		echo -e "${GREEN}✓${NC} gitnexus disponible en PATH: $(which gitnexus)"

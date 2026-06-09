@@ -36,14 +36,13 @@ _gnx_is_dotfiles_checkout() {
 
 _gnx_apply_dotfiles_analyze_policy() {
 	local repo_root="$1"
-	local -n _analyze_args=$2
+	shift
 
-	_gnx_is_dotfiles_checkout "$repo_root" || return 0
-	_gnx_analyze_has_flag "--index-only" "${_analyze_args[@]}" && return 0
+	_gnx_is_dotfiles_checkout "$repo_root" || return 1
+	_gnx_analyze_has_flag "--index-only" "$@" && return 1
+	_gnx_analyze_has_flag "--skip-skills" "$@" && return 1
 
-	if ! _gnx_analyze_has_flag "--skip-skills" "${_analyze_args[@]}"; then
-		_analyze_args+=("--skip-skills")
-	fi
+	return 0
 }
 
 _gnx_run_gitnexus_analyze() {
@@ -188,7 +187,9 @@ gitnexus_analyze_here() {
 	if (($# > 0)); then
 		analyze_args+=("$@")
 	fi
-	_gnx_apply_dotfiles_analyze_policy "$repo_root" analyze_args
+	if _gnx_apply_dotfiles_analyze_policy "$repo_root" "${analyze_args[@]}"; then
+		analyze_args+=("--skip-skills")
+	fi
 
 	echo "Analizando repositorio actual con GitNexus..."
 	(
@@ -222,7 +223,9 @@ gitnexus_wiki_here() {
 	(
 		cd "$repo_root" || exit 1
 		local analyze_args=(.)
-		_gnx_apply_dotfiles_analyze_policy "$repo_root" analyze_args
+		if _gnx_apply_dotfiles_analyze_policy "$repo_root" "${analyze_args[@]}"; then
+			analyze_args+=("--skip-skills")
+		fi
 		if ! _gnx_with_managed_node status >/dev/null 2>&1; then
 			echo "Indexando repositorio..."
 			_gnx_analyze_with_managed_node "${analyze_args[@]}" || exit $?

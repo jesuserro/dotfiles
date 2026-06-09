@@ -179,6 +179,37 @@ npm_dist_tag_version() {
 	npm view "${package_name}@${dist_tag}" version 2>/dev/null | head -n 1 | tr -d '\r'
 }
 
+run_gitnexus_postinstall_scripts() {
+	local area="$1" log_file="$2" npm_prefix="$3"
+	local gitnexus_dir script
+
+	gitnexus_dir="$(npm root -g --prefix="$npm_prefix" 2>/dev/null)/gitnexus"
+	if [[ ! -d "$gitnexus_dir/scripts" ]]; then
+		append_log_line "$log_file" "postinstall: GitNexus scripts directory not found at ${gitnexus_dir}"
+		result_fail "$area" "GitNexus CLI" "postinstall scripts not found"
+		RUN_STEP_LAST_RESULT_STATUS="FAIL"
+		return 1
+	fi
+
+	for script in \
+		materialize-vendor-grammars.cjs \
+		build-tree-sitter-dart.cjs \
+		build-tree-sitter-proto.cjs \
+		build-tree-sitter-swift.cjs; do
+		if [[ -f "${gitnexus_dir}/scripts/${script}" ]]; then
+			append_log_line "$log_file" "postinstall: node scripts/${script}"
+			(
+				cd "$gitnexus_dir" || exit 1
+				node "scripts/${script}"
+			) >>"$log_file" 2>&1 || {
+				result_fail "$area" "GitNexus CLI" "postinstall ${script} failed"
+				RUN_STEP_LAST_RESULT_STATUS="FAIL"
+				return 1
+			}
+		fi
+	done
+}
+
 pnpm_version_line() {
 	pnpm --version 2>/dev/null | head -n 1 | tr -d '\r'
 }
@@ -368,6 +399,9 @@ update_global_npm_tool_if_needed() {
 	run_npm_step "$area" "$name" "$log_file" npm install -g --prefix="$npm_prefix" "${package_name}@${dist_tag}"
 	if [[ "${RUN_STEP_LAST_RESULT_STATUS:-}" == "FAIL" ]]; then
 		return 0
+	fi
+	if [[ "$package_name" == "gitnexus" ]]; then
+		run_gitnexus_postinstall_scripts "$area" "$log_file" "$npm_prefix" || return 0
 	fi
 	after="$(probe_version_line "${probe_cmd[@]}" || true)"
 	record_version_transition "$area" "$name" "$before" "$after"
