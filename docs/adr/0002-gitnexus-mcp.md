@@ -4,6 +4,8 @@
 **Status:** Accepted  
 **Author:** jesus
 
+**Status update — 2026-06-09:** This ADR is superseded in part by the agent-first GitNexus runtime policy (M6A/M6B). GitNexus MCP is launched through the dotfiles MCP launcher (`mcp-gitnexus-launcher`, materialized under `~/.local/share/chezmoi/bin/`) and resolves the canonical agent path `~/.local/bin/gitnexus`. The real npm-managed installation is `~/.npm-global/bin/gitnexus`; `~/.local/bin/gitnexus` is materialized as the agent-facing symlink to that binary. Agents must not use `npx gitnexus@latest` as the default MCP or analysis path. Agents should run `make gitnexus-status` before relying on read-only impact/context. Operational detail: [`docs/GITNEXUS_OPERATIONAL_POLICY.md`](../GITNEXUS_OPERATIONAL_POLICY.md), [`docs/MCP_QUICKREF.md`](../MCP_QUICKREF.md).
+
 ---
 
 ## Context
@@ -31,33 +33,36 @@ GitNexus is classified as a **Knowledge/Semantic MCP** in the three-layer archit
 
 ### 2. MCP Execution Pattern
 
-The MCP always uses `@latest` to ensure freshness:
+**Current (agent-first):** Productive MCP clients (Cursor, OpenCode, Codex) invoke the materialized launcher, which executes `~/.local/bin/gitnexus mcp` without `npx` at runtime:
 
 ```json
 {
   "mcpServers": {
     "gitnexus": {
-      "command": "npx",
-      "args": ["-y", "gitnexus@latest", "mcp"]
+      "command": "~/.local/share/chezmoi/bin/mcp-gitnexus-launcher"
     }
   }
 }
 ```
 
-This pattern is used in:
-- Cursor: `~/.cursor/mcp.json`
-- OpenCode: `~/.config/opencode/opencode.json`
-- Codex: `~/.codex/config.toml`
+The launcher resolves `~/.local/bin/gitnexus` first (see operational policy for `MCP_GITNEXUS_BIN` override).
 
-### 3. CLI Installation Separately
+**Historical (2026-03):** An earlier pattern used `npx -y gitnexus@latest mcp` in client configs. That path is **not** the current default for agents: it may bind to IDE-injected Node and bypass the managed npm install.
 
-The CLI is installed globally but separately from the MCP:
+### 3. CLI Installation and Canonical Agent Path
 
-- **Installation**: `scripts/install-gitnexus.sh`
-- **Update**: Via `make update`
-- **Location**: `~/.npm-global/bin/gitnexus`
+The CLI is installed globally via npm but exposed to agents through a canonical symlink:
 
-This avoids sudo permission issues and keeps the CLI independent from MCP clients.
+| Role | Path |
+|------|------|
+| Real npm install | `~/.npm-global/bin/gitnexus` |
+| Canonical agent path | `~/.local/bin/gitnexus` → `~/.npm-global/bin/gitnexus` |
+
+- **Installation**: `scripts/install-gitnexus.sh` (also materializes the canonical symlink)
+- **Update**: `make update-wsl` / `make update` (tools section)
+- **Alignment check**: `make gitnexus-status` (read-only; includes path alignment)
+
+This avoids sudo permission issues and keeps one managed version for terminal, MCP, and `gnx-*` aliases.
 
 ### 4. Multi-Repo Index Architecture
 
@@ -130,17 +135,21 @@ Without an API key, `gnx-wiki-here` provides clear guidance.
 
 | Command | Purpose |
 |---------|---------|
-| `make update` | Updates GitNexus CLI |
-| `gnx-serve` | Starts local HTTP server |
-| `gnx-analyze-here` | Indexes current repo |
-| `gnx-map` | Analyzes + serves |
-| `gnx-wiki-here` | Generates wiki (requires API key) |
+| `make gitnexus-status` | Read-only index/lock/Node/path alignment (agents) |
+| `make update` | Updates GitNexus CLI and canonical symlink |
+| `gnx-serve` | Starts local HTTP server (human) |
+| `gnx-analyze-here` | Indexes current repo (human) |
+| `gnx-map` | Analyzes + serves (human) |
+| `gnx-wiki-here` | Generates wiki (human; requires API key) |
 
 ---
 
 ## References
 
 - MCP Governance ADR: `docs/adr/0001-mcp-governance.md`
+- Operational policy: `docs/GITNEXUS_OPERATIONAL_POLICY.md`
 - MCP Quick Reference: `docs/MCP_QUICKREF.md`
-- GitNexus CLI: `scripts/install-gitnexus.sh`
+- Canonical symlink helper: `scripts/lib/gitnexus_canonical.sh`
+- GitNexus CLI install: `scripts/install-gitnexus.sh`
+- MCP launcher: `bin/mcp-gitnexus-launcher`
 - GitNexus skills: `ai/assets/skills/gitnexus/`
