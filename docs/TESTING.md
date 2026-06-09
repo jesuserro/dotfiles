@@ -129,7 +129,7 @@ Agent-first regression index (meta-tests, no HOME mutation): `make bats-agent` o
 
 `make agent-validate-audit` (`quality-check` + `security-check`) is the full-repository strict audit. Use before large releases or when hunting repo-wide lint/security debt — not as the default post-BUILD gate.
 
-`make agent-validate-report` wraps a validation command (override with `AGENT_VALIDATE_CMD=...`) and writes `build/agent-validation/latest.md`. The report is generated even on failure; the target exits non-zero when validation fails. Override report path in tests with `AGENT_VALIDATE_REPORT_PATH`.
+`make agent-validate-report` wraps an allowlisted validation target and writes `build/agent-validation/latest.md`. Override with `AGENT_VALIDATE_TARGET` using one of: `agent-validate`, `agent-validate-changed`, `agent-validate-full`, `agent-validate-audit`, `test-fast`. The deprecated `AGENT_VALIDATE_CMD` compatibility variable only accepts exact values like `make agent-validate-changed`; arbitrary shell commands are rejected. The report is generated even on failure; the target exits non-zero when validation fails. Override report path in tests with `AGENT_VALIDATE_REPORT_PATH`.
 
 **OSV online is not part of the default agent gate.** The default command does not call `osv-scanner` and does not depend on the OSV API. Agents should use `make agent-validate-changed` after small changes; `make agent-validate` for a full dotfiles handoff check.
 

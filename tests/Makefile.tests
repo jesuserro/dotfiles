@@ -194,7 +194,8 @@ agent-validate-full: agent-validate agent-validate-audit
 	@echo "$(GREEN)==>$(NC) Full agent validation completed"
 
 agent-validate-report:
-	@AGENT_VALIDATE_CMD="$(AGENT_VALIDATE_CMD)" \
+	@AGENT_VALIDATE_TARGET="$(AGENT_VALIDATE_TARGET)" \
+		AGENT_VALIDATE_CMD="$(AGENT_VALIDATE_CMD)" \
 		AGENT_VALIDATE_REPORT_PATH="$(AGENT_VALIDATE_REPORT_PATH)" \
 		AGENT_VALIDATE_REPORT_DIR="$(AGENT_VALIDATE_REPORT_DIR)" \
 		bash $(DOTFILES_DIR)/scripts/agent-validate-report.sh
