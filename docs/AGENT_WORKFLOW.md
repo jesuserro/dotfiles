@@ -112,7 +112,8 @@ Guía práctica: [GUIA_MCP_AI.md](GUIA_MCP_AI.md), [MCP_QUICKREF.md](MCP_QUICKRE
 Este repo está indexado por GitNexus. Los agentes deben:
 
 - Usar herramientas MCP GitNexus en modo read-only (`gitnexus_query`, `gitnexus_context`, `gitnexus_impact`, etc.).
-- Ejecutar `gitnexus_impact` antes de editar funciones o métodos significativos.
+- Ejecutar `gitnexus_impact` antes de editar funciones o métodos significativos cuando exista un símbolo útil y GitNexus esté disponible.
+- Para micro-BUILDs acotados de shell/Bats/docs/wrappers, si GitNexus falla por `storage version mismatch`, `Transport closed`, `Target not found` o no aporta símbolos/impacto útil, usar fallback manual (`rg`/grep + tests focalizados) según [GITNEXUS_OPERATIONAL_POLICY.md](GITNEXUS_OPERATIONAL_POLICY.md).
 - Consultar `make gitnexus-status` si hay aviso de índice stale — **no** auto-refrescar.
 - Respetar locks y política post-commit documentada en [GITNEXUS_OPERATIONAL_POLICY.md](GITNEXUS_OPERATIONAL_POLICY.md).
 

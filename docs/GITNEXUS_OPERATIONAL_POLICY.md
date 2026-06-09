@@ -44,6 +44,38 @@ Política operativa para agentes y humanos en repos gestionados con dotfiles. Co
 
 ---
 
+## Fallback para GitNexus no disponible o sin señal
+
+GitNexus es una señal auxiliar fuerte para cambios con símbolos claros,
+refactors, arquitectura o blast radius amplio. No bloquea micro-BUILDs
+acotados de shell, Bats, Markdown, docs o wrappers delgados cuando no puede
+calcular impacto útil.
+
+Si las herramientas MCP o de impacto devuelven `storage version mismatch`,
+`Transport closed`, `Target not found`, ausencia de símbolos útiles o sin
+impacto útil en shell/Bats:
+
+1. No refrescar el índice.
+2. No ejecutar `gnx-analyze-here`, `gitnexus analyze`, `gitnexus index`,
+   `gitnexus refresh` ni `gitnexus clean`.
+3. Registrar una línea breve con el motivo y el fallback usado.
+4. Usar `rg`/grep manual para blast radius y revisar callers/targets
+   relevantes.
+5. Ejecutar Bats o tests focalizados del área cambiada.
+6. Continuar solo si el scope está acotado y las validaciones pasan.
+
+`make gitnexus-status` sigue siendo diagnóstico read-only aceptable. Cualquier
+refresh, reparación de storage o edición de bloques `<!-- gitnexus:* -->` en
+`AGENTS.md` / `CLAUDE.md` requiere aprobación explícita de Jesús.
+
+Plantilla de reporte breve:
+
+```text
+GitNexus: unavailable for impact (storage version mismatch). Fallback used: manual rg + focused Bats. Not blocking this shell/Bats micro-BUILD.
+```
+
+---
+
 ## Locks (`.gitnexus/lbug`)
 
 Flujo recomendado:
