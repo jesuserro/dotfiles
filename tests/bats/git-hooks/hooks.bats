@@ -262,7 +262,7 @@ EOF
 	run env GNX_TRACE="$trace" bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"MCP/index lock is active"* ]]
-	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md --skip-skills"* ]]
+	[[ "$output" == *"gnx-analyze-here --skip-agents-md"* ]]
 	local typo="gnanalyze""-here"
 	[[ "$output" != *"$typo"* ]]
 	[[ ! -f "$trace" ]]
@@ -330,8 +330,11 @@ EOF
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"refresh failed with exit code 1"* ]]
 	[[ "$output" == *"commit kept"* ]]
-	grep -q -- '--force --skip-agents-md' "$trace"
-	grep -q -- '--skip-skills' "$trace"
+	grep -q -- '--skip-agents-md' "$trace"
+	run grep -q -- '--skip-skills' "$trace"
+	[[ "$status" -ne 0 ]]
+	run grep -q -- '--force' "$trace"
+	[[ "$status" -ne 0 ]]
 }
 
 @test "post-commit timeout remains successful with a warning" {
@@ -357,19 +360,20 @@ EOF
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"timed out after 30s"* ]]
 	[[ "$output" == *"commit kept"* ]]
-	[[ "$output" == *"gnx-analyze-here --force --skip-agents-md --skip-skills"* ]]
+	[[ "$output" == *"gnx-analyze-here --skip-agents-md"* ]]
 	grep -q '^30s ' "$trace"
 }
 
 @test "post-commit uses the shared managed Node runtime without aliases" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	local fake_bin="${TEST_TEMP_DIR}/fake-bin"
+	local fake_home="${TEST_TEMP_DIR}/home"
 	local managed_node="${TEST_TEMP_DIR}/managed/node"
 	local trace="${TEST_TEMP_DIR}/trace"
 	init_repo "$repo"
 	copy_post_commit "$repo"
 	copy_gitnexus_runtime "$repo"
-	mkdir -p "$fake_bin" "$(dirname "$managed_node")"
+	mkdir -p "$fake_bin" "$(dirname "$managed_node")" "$fake_home"
 
 	cat >"$fake_bin/node" <<'EOF'
 #!/usr/bin/env bash
@@ -390,13 +394,14 @@ EOF
 	chmod +x "$fake_bin/node" "$managed_node" "$fake_bin/pgrep" "$fake_bin/gitnexus"
 
 	run env \
+		HOME="$fake_home" \
 		GNX_TRACE="$trace" \
 		DOTFILES_MANAGED_NODE_BIN="$managed_node" \
 		PATH="$fake_bin:$PATH" \
 		bash -c "cd '$repo' && '$repo/scripts/hooks/post-commit-gitnexus.sh'"
 
 	[[ "$status" -eq 0 ]]
-	grep -q '^analyze \. --force --skip-agents-md --skip-skills:' "$trace"
+	grep -q '^analyze \. --skip-agents-md:' "$trace"
 	grep -q 'node-runtime\..*/node:v24.16.0' "$trace"
 }
 
