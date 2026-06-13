@@ -6,7 +6,10 @@ This repo now includes local stdio MCP wrappers for:
 - Tempo (OTEL traces)
 - Loki (LogQL)
 
-Existing MCPs in `codex/config.toml` were left unchanged.
+Productive Codex MCP configuration lives in
+[`dot_codex/private_config.toml.tmpl`](../dot_codex/private_config.toml.tmpl)
+(materialized to `~/.codex/config.toml` by Chezmoi). Server implementations are under
+[`ai/runtime/mcp/servers/`](../ai/runtime/mcp/servers/).
 
 ## Installed components
 

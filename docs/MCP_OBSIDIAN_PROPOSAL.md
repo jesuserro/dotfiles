@@ -80,7 +80,7 @@ exec npx -y "@bitbonsai/mcpvault@latest" "$VAULT_PATH"
 }
 ```
 
-**Codex (`dot_codex/config.toml.tmpl`):**
+**Codex (`dot_codex/private_config.toml.tmpl`):**
 ```toml
 [mcp_servers.obsidian]
 command = "{{ .chezmoi.homeDir }}/.local/share/chezmoi/bin/mcp-obsidian-launcher"

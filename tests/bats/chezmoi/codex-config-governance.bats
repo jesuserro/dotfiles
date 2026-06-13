@@ -63,6 +63,10 @@ tomllib.loads(sys.stdin.read())
 	[[ ! -f "${DOTFILES_DIR}/dot_codex/.chezmoiattributes" ]]
 }
 
+@test "no legacy root codex config should exist" {
+	[[ ! -f "${DOTFILES_DIR}/codex/config.toml" ]]
+}
+
 @test "chezmoi diff for Codex does not propose new mode 100644" {
 	skip_if_command_missing chezmoi
 	[[ -f "${HOME}/.codex/config.toml" ]] || skip "HOME Codex config absent"

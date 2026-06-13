@@ -21,7 +21,7 @@ ai/runtime/mcp/
 ```
 
 - **Venv:** `~/.config/ai/runtime/.venv`
-- **Templates:** `dot_codex/config.toml.tmpl`; project-specific `store-etl` MCP configuration lives in the `store-etl` repository, not in dotfiles.
+- **Templates:** `dot_codex/private_config.toml.tmpl`; project-specific `store-etl` MCP configuration lives in the `store-etl` repository, not in dotfiles.
 - **Rutas en templates:**
   - `command`: `{{ .chezmoi.homeDir }}/.config/ai/runtime/.venv/bin/python`
   - `args`: `{{ .chezmoi.sourceDir }}/ai/runtime/mcp/servers/<name>/server.py`

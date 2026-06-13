@@ -198,8 +198,7 @@
 │   └── 📝 SKILLS_ARCHITECTURE.md
 ├── 📁 codex
 │   ├── 📝 README-mcp.md
-│   ├── 📝 README.md
-│   └── ⚙️ config.toml
+│   └── 📝 README.md
 ├── 📁 docs
 │   ├── 📁 adr
 │   │   ├── 📝 0001-mcp-governance.md
