@@ -16,10 +16,13 @@ jobs:
       - name: Install test tooling
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq shellcheck shfmt yamllint python3 python3-yaml bats zsh
+          sudo apt-get install -y -qq shellcheck shfmt yamllint python3 python3-yaml bats zsh gitleaks
 
       - name: MCP governance
         run: make ai-mcp-governance
+
+      - name: Secret scan (gitleaks)
+        run: make security-gitleaks
 
       - name: CI test suite
         run: make test-ci

@@ -56,7 +56,15 @@ if ! command -v tree &>/dev/null; then
 fi
 
 OUTPUT="$TARGET_DIR/STRUCTURE.md"
-RAW_TREE="$(cd "$TARGET_DIR" && tree -a -I "$TREE_IGNORE" --dirsfirst -n --noreport --charset UTF-8 -F . 2>/dev/null)" || true
+if ! RAW_TREE="$(cd "$TARGET_DIR" && tree -a -I "$TREE_IGNORE" --dirsfirst -n --noreport --charset UTF-8 -F . 2>&1)"; then
+	echo "treegen.sh: tree command failed" >&2
+	printf '%s\n' "$RAW_TREE" >&2
+	exit 1
+fi
+if [[ -z "${RAW_TREE//[[:space:]]/}" ]]; then
+	echo "treegen.sh: tree produced empty output; refusing to write STRUCTURE.md" >&2
+	exit 1
+fi
 
 # Add icons: 📁 dirs, 📝 .md, 🐍 .py, 🐳 Docker/hcl, ⚙️ config, 🔒 lock, 🐚 sh/zsh, 🗄️ sql, 📊 csv, 📕 pdf, 🖼️ img, 📓 ipynb, 📋 xml/log, 🪟 ps1, 🔨 make, 📄 rest
 # Prefix "── " is 3 chars (U+2500 U+2500 space), so name starts at RSTART+3

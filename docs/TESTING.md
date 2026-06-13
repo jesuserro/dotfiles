@@ -37,7 +37,7 @@ make install SKIP_EXTERNAL=1
 make test
 ```
 
-### Fast tests (excludes chezmoi/* bats and MCP template JSON checks)
+### Fast tests (excludes chezmoi bats; includes system and tmux)
 ```bash
 make test-fast
 ```
@@ -77,24 +77,45 @@ make fmt-shell
 
 ## Targets
 
+### Target matrix
+
+| Target | Runs | Omits / notes | When to use |
+|--------|------|---------------|-------------|
+| `make test-ci` | `test-lint` + `test-bats-ci` + `chezmoi-templates` | Omits `bats-system` (install/update/zsh), `bats-tmux`, `bats-commands`, `bats-prompts`, `bats-git-ai`, `bats-agent` | **CI parity** — matches [`.github/workflows/test.yml`](../.github/workflows/test.yml) |
+| `make test` | `test-deps-check` + `test-lint` + `test-bats` + `chezmoi-templates` | Omits `bats-gitnexus`, `bats-docs`, `bats-agent`, `bats-tmux` | Broad local regression (heavy) |
+| `make test-fast` | `test-deps-check` + `test-lint` + `test-bats-fast` | Omits `bats-chezmoi`, `bats-gitnexus`, `bats-docs`, `bats-agent`; **not** a superset of CI | Quick local loop |
+| `make test-bats` | Preflight + MCP, chezmoi, skills, commands, git-flow, git-hooks, prompts, system bats | Not all bats files — see orphan note below | Local bats debugging |
+| `make agent-validate-changed` | Diff-focused lint + matrix bats + `gitleaks` | Not a full replacement for `test-ci` | **Default post-BUILD** check |
+| `make agent-validate` | Broader handoff gate via `scripts/agent-validate-dotfiles.sh` (incl. `bats-docs`, `bats-agent` index) | Heavier than changed-only | Pre-handoff / pre-merge human review |
+
+**Pre-PR recommendation:**
+
+```bash
+# Scoped changes
+make agent-validate-changed
+
+# Before pushing / CI parity
+make test-ci
+
+# Before handoff or larger changes
+make agent-validate
+```
+
+Some Bats files exist under `tests/bats/` but are **not wired** into `test-bats`, `test-fast`, or `test-ci` (for example `store-etl-ops-workdir.bats`). Wiring them is deferred; run individual `.bats` files manually when needed.
+
+### Other targets
+
 | Target | Description |
 |--------|-------------|
-| `make test` | Preflight + lint + all bats + MCP template JSON validation |
-| `make test-fast` | Preflight + lint + bats without `chezmoi/*` tests |
 | `make test-lint` | shellcheck + zsh -n + shfmt + yamllint |
 | `make ai-doctor` | Read-only agent readiness: dependencies, update readiness, AI/MCPs, skills, commands and `gitleaks` |
 | `make quality-check` | Full strict repository quality audit: shellcheck + shfmt check + yamllint + actionlint (`-shellcheck=`) when workflows exist |
 | `make security-check` | gitleaks working-tree scan + osv-scanner when supported manifests/lockfiles exist (OSV best-effort unless `SECURITY_ONLINE=1`) |
 | `make shell-audit-check` | Focused read-only shell audit for agent-maintained shell surfaces, without raw Chezmoi templates or historical drift noise |
-| `make agent-validate` | Dotfiles operational gate (read-only): whitespace, skills, MCP governance, changed files, docs bats, update-check — via `scripts/agent-validate-dotfiles.sh` |
-| `make agent-validate-changed` | Changed-files gate only: shell/YAML/workflow lint + matrix-focused bats + `gitleaks`; OSV online is opt-in |
-| `SECURITY_ONLINE=1 make agent-validate-changed` | Same as above plus strict `osv-scanner` dependency scan (requires network) |
 | `make agent-validate-audit` | Full strict repository audit: `quality-check` + `security-check` (former `agent-validate` semantics) |
 | `make agent-validate-full` | `agent-validate` + `agent-validate-audit` |
 | `make agent-validate-report` | Runs validation (default: `make agent-validate`) and writes `build/agent-validation/latest.md`; propagates exit code |
-| `make test-bats` | All bats tests (includes chezmoi hooks) |
 | `make test-chezmoi` | Chezmoi bats + `chezmoi-templates` |
-| `make test-ci` | GitHub Actions CI subset: lint + MCP/chezmoi/skills Bats covered by `.github/workflows/test.yml` |
 | `make test-install` | Install dependencies |
 | `make fmt-shell` | Format shell scripts |
 
@@ -121,7 +142,7 @@ Flag conventions (`--check`, `--dry-run`, `DRY_RUN=1`, `--yes`): [SCRIPT_CONVENT
 
 Agent-first regression index (meta-tests, no HOME mutation): `make bats-agent` or `bats tests/bats/agent/regression.bats`. Scenario map: [tests/bats/agent/README.md](../tests/bats/agent/README.md). Included in `make agent-validate`.
 
-`make bats-system` includes formerly orphan suites: `dotfiles-update.bats`, `playwright-docker.bats`, `update-node-runtime.bats`. Checkout guard: `make agent-validate` fails early if `.claude/` exists (ADR 0004); remediation `rm -rf .claude/`.
+`make bats-system` includes several system suites (`dotfiles-update.bats`, `playwright-docker.bats`, `update-node-runtime.bats`, and others). Some documented Bats files are still unwired — see the orphan note in the target matrix above. Checkout guard: `make agent-validate` fails early if `.claude/` exists (ADR 0004); remediation `rm -rf .claude/`.
 
 `make agent-validate-changed` is a lighter, diff-focused gate (also invoked inside `make agent-validate`). By default it runs **local** checks only:
 
@@ -220,7 +241,7 @@ Gitleaks uses the default rules plus the repo-local `.gitleaks.toml`. The only c
 
 ## CI
 
-Pull requests ejecutan [`.github/workflows/test.yml`](../.github/workflows/test.yml): `make ai-mcp-governance` y `make test-ci`. Ese target es el subset de CI actual: lint tolerante, MCP/launchers, hooks Chezmoi seleccionados y skills canónicos. Para la suite local más amplia usa `make test-fast` o `make test`.
+Pull requests run [`.github/workflows/test.yml`](../.github/workflows/test.yml): `make ai-mcp-governance`, `make security-gitleaks` (gitleaks-only secret scan — not full `make security-check`), and `make test-ci`. That target is the CI subset (lint, MCP/chezmoi/skills/gitnexus/docs bats, chezmoi-templates). It does **not** run `bats-system` install/update suites or `osv-scanner`. For broader local regression use `make test` or `make test-fast` — neither is equivalent to CI; see the target matrix above.
 
 ## Next candidates
 
