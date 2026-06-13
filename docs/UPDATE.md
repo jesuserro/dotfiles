@@ -63,6 +63,15 @@ package_id<TAB>package_name<TAB>version_before<TAB>version_target<TAB>version_af
 
 Los estados por paquete son `OK` cuando el comando termina y la versión final se verifica o se infiere razonablemente, `WARN` cuando el comando termina pero la verificación queda ambigua, y `FAIL` cuando el comando devuelve un exit code no cero. `windows-results.tsv` mantiene el contrato de resumen de 4 columnas para compatibilidad con el flujo global.
 
+El flujo Windows conserva cuatro artefactos WinGet por run:
+
+- `windows-results.tsv` — contrato global de resultados Windows.
+- `windows-winget-results.tsv` — detalle de upgrades/retry paquete a paquete.
+- `windows-winget-snapshot.tsv` — snapshot curado de herramientas relevantes.
+- `windows-winget-inventory.tsv` — inventario completo de cobertura WinGet.
+
+El inventario completo clasifica paquetes como `upgradeable`, `covered-no-update`, `unknown-version` o `ambiguous-or-unmanaged`; el estado `missing` se reserva para herramientas curadas esperadas que no aparecen en el snapshot. La consola muestra solo un resumen compacto de cobertura y la ruta del TSV; con `-Verbose` puede mostrar una vista previa corta del inventario.
+
 `--include-unknown` es opt-in: usar `-IncludeUnknown` al invocar `scripts/update/update-windows.ps1` o exportar `DOTFILES_WINGET_INCLUDE_UNKNOWN=1` antes de lanzar `make update`. Para reintentar solo fallidos, usar `-RetryFailedFromTsv <windows-winget-results.tsv>`; desde WSL, `DOTFILES_WINGET_RETRY_FAILED_FROM_TSV=/mnt/c/.../windows-winget-results.tsv` se traduce con `wslpath -w` antes de abrir PowerShell.
 
 El parser operativo de resultados por paquete vive en `scripts/update/update-windows.ps1`. El script `scripts/update/parse-winget-log.py` es auxiliar para diagnóstico/tests desde WSL y no es dependencia runtime obligatoria de Windows. Ambos se validan contra fixtures pequeños en `tests/fixtures/winget/` para reducir drift semántico sin consolidar los parsers.

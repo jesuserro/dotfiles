@@ -1506,10 +1506,9 @@ PY
 	grep -q 'ValidateSet("OK", "WARN", "FAIL")' "$ps1"
 	grep -q 'Where-Object { \$_.status -ne "OK" }' "$ps1"
 	grep -q 'Retry failed packages: .*RetryFailedFromTsv' "$ps1"
-	grep -q 'if (\$includeUnknownEnabled) { \$listArguments += "--include-unknown" }' "$ps1"
+	grep -q '\$includeUnknownListArguments = @("upgrade", "--include-unknown"' "$ps1"
+	grep -q 'Update-WinGetInventory .*IncludeUnknownEnabled \$includeUnknownEnabled' "$ps1"
 	grep -q 'if (\$IncludeUnknownEnabled) { \$arguments += "--include-unknown" }' "$ps1"
-	run grep -Fq '@("upgrade", "--include-unknown"' "$ps1"
-	[[ "$status" -ne 0 ]]
 }
 
 @test "WSL Windows launchers bridge WinGet include-unknown and TSV retry flags" {
@@ -1607,6 +1606,72 @@ PY
 	grep -q $'OK\tWindows\tWinGet package workflow self-test\tpackage workflow helpers passed' "${run_dir}/windows-results.tsv"
 	grep -q $'package_id\tpackage_name\tversion_before\tversion_target\tversion_after\tstatus\texit_code\tduration_seconds\tlog_path\tmessage' "${run_dir}/windows-winget-results.tsv"
 	grep -q $'JohnMacFarlane.Pandoc\tPandoc\t3.7.0\t3.8.0\t\tFAIL\t1618' "${run_dir}/windows-winget-results.tsv"
+}
+
+@test "PowerShell WinGet inventory classifies coverage without selecting unknown versions by default" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	local run_dir="${TEST_TEMP_DIR}/winget-inventory-selftest"
+	if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+		run powershell.exe -NoProfile -Command 'exit 0'
+		if [[ "$status" -ne 0 ]]; then
+			skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+		fi
+		run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$ps1")" -RunDir "$(wslpath -w "$run_dir")" -SelfTestWinGetInventory
+	elif command -v pwsh >/dev/null 2>&1; then
+		run pwsh -NoProfile -File "$ps1" -RunDir "$run_dir" -SelfTestWinGetInventory
+	else
+		skip "requires powershell.exe or pwsh"
+	fi
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"WinGet coverage"* ]]
+	[[ "$output" == *"Inventory: "* ]]
+	[[ "$output" == *"Tracked tools"* ]]
+	[[ "$output" != *$'\nLoose App\t'* ]]
+	grep -q $'package_id\tpackage_name\tinstalled_version\tavailable_version\tsource\tcoverage_status\tupdate_selected\tmessage' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'JohnMacFarlane.Pandoc\tPandoc\t3.10\t\twinget\tcovered-no-update\tfalse' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'GitHub.cli\tGitHub CLI\t2.94.0\t2.95.0\twinget\tupgradeable\ttrue' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'Anysphere.Cursor\tCursor\t3.7.27\t3.8.0\twinget\tunknown-version\tfalse' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'\tLoose App\t1.0\t\t\tambiguous-or-unmanaged\tfalse' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'tool\tpackage_id\tversion_before\tversion_after\tresult' "${run_dir}/windows-winget-snapshot.tsv"
+	grep -q $'Cursor\tAnysphere.Cursor\t3.7.27\t3.7.27\tunchanged' "${run_dir}/windows-winget-snapshot.tsv"
+}
+
+@test "PowerShell WinGet inventory selects unknown versions only with IncludeUnknown" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	local run_dir="${TEST_TEMP_DIR}/winget-inventory-include-unknown"
+	if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+		run powershell.exe -NoProfile -Command 'exit 0'
+		if [[ "$status" -ne 0 ]]; then
+			skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+		fi
+		run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$ps1")" -RunDir "$(wslpath -w "$run_dir")" -SelfTestWinGetInventory -IncludeUnknown
+	elif command -v pwsh >/dev/null 2>&1; then
+		run pwsh -NoProfile -File "$ps1" -RunDir "$run_dir" -SelfTestWinGetInventory -IncludeUnknown
+	else
+		skip "requires powershell.exe or pwsh"
+	fi
+	[[ "$status" -eq 0 ]]
+	grep -q $'Anysphere.Cursor\tCursor\t3.7.27\t3.8.0\twinget\tunknown-version\ttrue' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'Cursor\tAnysphere.Cursor\t3.7.27\t3.8.0\tpending' "${run_dir}/windows-winget-snapshot.tsv"
+}
+
+@test "PowerShell WinGet verbose inventory can show inventory preview" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	local run_dir="${TEST_TEMP_DIR}/winget-inventory-verbose"
+	if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+		run powershell.exe -NoProfile -Command 'exit 0'
+		if [[ "$status" -ne 0 ]]; then
+			skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+		fi
+		run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$ps1")" -RunDir "$(wslpath -w "$run_dir")" -SelfTestWinGetInventory -Verbose
+	elif command -v pwsh >/dev/null 2>&1; then
+		run pwsh -NoProfile -File "$ps1" -RunDir "$run_dir" -SelfTestWinGetInventory -Verbose
+	else
+		skip "requires powershell.exe or pwsh"
+	fi
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"WinGet inventory preview"* ]]
+	[[ "$output" == *"Loose App"* ]]
 }
 
 @test "PowerShell WinGet quiet presentation hides empty plan and full log paths" {
