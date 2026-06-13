@@ -85,6 +85,9 @@ EOF
 	if is_truthy "${DOTFILES_WINGET_INCLUDE_UNKNOWN:-}"; then
 		powershell_args+=(-IncludeUnknown)
 	fi
+	if is_truthy "${DOTFILES_WINGET_SHOW_INVENTORY:-}"; then
+		powershell_args+=(-ShowInventory)
+	fi
 	if [[ -n "${DOTFILES_WINGET_RETRY_FAILED_FROM_TSV:-}" ]]; then
 		retry_tsv_win="$(to_windows_path "$DOTFILES_WINGET_RETRY_FAILED_FROM_TSV")"
 		powershell_args+=(-RetryFailedFromTsv "$retry_tsv_win")

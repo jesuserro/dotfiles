@@ -18,6 +18,9 @@ if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>
 	if is_truthy "${DOTFILES_WINGET_INCLUDE_UNKNOWN:-}"; then
 		powershell_args+=(-IncludeUnknown)
 	fi
+	if is_truthy "${DOTFILES_WINGET_SHOW_INVENTORY:-}"; then
+		powershell_args+=(-ShowInventory)
+	fi
 	if [[ -n "${DOTFILES_WINGET_RETRY_FAILED_FROM_TSV:-}" ]]; then
 		powershell_args+=(-RetryFailedFromTsv "$(wslpath -w "$DOTFILES_WINGET_RETRY_FAILED_FROM_TSV")")
 	fi

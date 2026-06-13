@@ -1476,6 +1476,7 @@ PY
 	grep -q 'Get-WinGetPackagePlanFromText' "$ps1"
 	grep -q 'Write-WinGetNoPackages -ElapsedSeconds \$packageListElapsed' "$ps1"
 	grep -q '\[switch\]\$IncludeUnknown' "$ps1"
+	grep -q '\[switch\]\$ShowInventory' "$ps1"
 	grep -q '\[string\]\$RetryFailedFromTsv' "$ps1"
 	grep -q '\$WinGetResultFile = Join-Path \$RunDir "windows-winget-results.tsv"' "$ps1"
 }
@@ -1515,11 +1516,15 @@ PY
 	local update="${DOTFILES_DIR}/scripts/update/update.sh"
 	local update_windows="${DOTFILES_DIR}/scripts/update/update-windows.sh"
 	grep -q 'DOTFILES_WINGET_INCLUDE_UNKNOWN' "$update"
+	grep -q 'DOTFILES_WINGET_SHOW_INVENTORY' "$update"
 	grep -q 'DOTFILES_WINGET_RETRY_FAILED_FROM_TSV' "$update"
+	grep -q -- 'powershell_args+=(-ShowInventory)' "$update"
 	grep -q 'to_windows_path "\$DOTFILES_WINGET_RETRY_FAILED_FROM_TSV"' "$update"
 	grep -q -- '-RetryFailedFromTsv "\$retry_tsv_win"' "$update"
 	grep -q 'DOTFILES_WINGET_INCLUDE_UNKNOWN' "$update_windows"
+	grep -q 'DOTFILES_WINGET_SHOW_INVENTORY' "$update_windows"
 	grep -q 'DOTFILES_WINGET_RETRY_FAILED_FROM_TSV' "$update_windows"
+	grep -q -- 'powershell_args+=(-ShowInventory)' "$update_windows"
 	grep -q 'wslpath -w "\$DOTFILES_WINGET_RETRY_FAILED_FROM_TSV"' "$update_windows"
 }
 
@@ -1625,9 +1630,11 @@ PY
 	[[ "$status" -eq 0 ]]
 	[[ "$output" == *"WinGet coverage"* ]]
 	[[ "$output" == *"Inventory: "* ]]
-	[[ "$output" == *"Tracked tools"* ]]
+	[[ "$output" == *"WinGet managed apps"* ]]
+	[[ "$output" != *"Tracked tools"* ]]
 	[[ "$output" != *$'\nLoose App\t'* ]]
 	[[ "$output" == *"Duplicate package ids:"* ]]
+	printf '%s\n' "$output" | grep -Eq 'Pandoc[[:space:]]+JohnMacFarlane\.Pandoc[[:space:]]+3\.10[[:space:]]+3\.10[[:space:]]+unchanged'
 	grep -q $'package_id\tpackage_name\tinstalled_version\tavailable_version\tsource\tcoverage_status\tupdate_selected\tduplicate_count\tmessage' "${run_dir}/windows-winget-inventory.tsv"
 	grep -q $'JohnMacFarlane.Pandoc\tPandoc\t3.10\t\twinget\tcovered-no-update\tfalse\t1' "${run_dir}/windows-winget-inventory.tsv"
 	grep -q $'GitHub.cli\tGitHub CLI\t2.94.0\t2.95.0\twinget\tupgradeable\ttrue\t2' "${run_dir}/windows-winget-inventory.tsv"
@@ -1640,6 +1647,34 @@ PY
 	for file in windows-winget-inventory.tsv windows-winget-snapshot.tsv windows-winget-results.tsv; do
 		[[ "$(xxd -p -l 3 "${run_dir}/${file}")" != "efbbbf" ]]
 	done
+}
+
+@test "PowerShell WinGet ShowInventory remains accepted for managed apps output" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	local run_dir="${TEST_TEMP_DIR}/winget-inventory-show"
+	if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+		run powershell.exe -NoProfile -Command 'exit 0'
+		if [[ "$status" -ne 0 ]]; then
+			skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+		fi
+		run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$ps1")" -RunDir "$(wslpath -w "$run_dir")" -SelfTestWinGetInventory -ShowInventory
+	elif command -v pwsh >/dev/null 2>&1; then
+		run pwsh -NoProfile -File "$ps1" -RunDir "$run_dir" -SelfTestWinGetInventory -ShowInventory
+	else
+		skip "requires powershell.exe or pwsh"
+	fi
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"WinGet managed apps"* ]]
+	[[ "$output" == *"Package"* ]]
+	[[ "$output" == *"Before"* ]]
+	[[ "$output" == *"After"* ]]
+	[[ "$output" == *"Result"* ]]
+	printf '%s\n' "$output" | grep -Eq 'Pandoc[[:space:]]+JohnMacFarlane\.Pandoc[[:space:]]+3\.10[[:space:]]+3\.10[[:space:]]+unchanged'
+	printf '%s\n' "$output" | grep -Eq 'GitHub CLI[[:space:]]+GitHub\.cli[[:space:]]+2\.94\.0[[:space:]]+2\.95\.0[[:space:]]+updated'
+	printf '%s\n' "$output" | grep -Eq 'Failing Tool[[:space:]]+Example\.FailingTool[[:space:]]+1\.0[[:space:]]+1\.0[[:space:]]+failed'
+	printf '%s\n' "$output" | grep -Eq 'Cursor[[:space:]]+Anysphere\.Cursor[[:space:]]+3\.7\.27[[:space:]]+3\.7\.27[[:space:]]+unknown-version'
+	[[ "$output" != *"Loose App"* ]]
+	[[ "$output" != *"ambiguous-or-unmanaged"* ]]
 }
 
 @test "PowerShell WinGet inventory selects unknown versions only with IncludeUnknown" {

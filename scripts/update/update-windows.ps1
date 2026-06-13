@@ -2,6 +2,7 @@
 param(
   [string]$RunDir = "",
   [switch]$IncludeUnknown,
+  [switch]$ShowInventory,
   [string]$RetryFailedFromTsv = "",
   [switch]$SelfTestNativeArguments,
   [switch]$SelfTestWinGetConsoleText,
@@ -1033,6 +1034,81 @@ function Get-WslConsoleSummary {
   return "WSL: up to date"
 }
 
+function Format-WinGetSummaryValue {
+  param([AllowNull()][object]$Value, [int]$Width)
+  $text = if ($null -eq $Value) { "" } else { [string]$Value }
+  if (($Width -gt 3) -and ($text.Length -gt $Width)) {
+    return $text.Substring(0, $Width - 3) + "..."
+  }
+  return $text
+}
+
+function Get-WinGetManagedInventoryDisplayRows {
+  if (-not (Test-Path $WinGetInventoryFile)) { return @() }
+  $inventoryRows = @(Import-Csv -Path $WinGetInventoryFile -Delimiter "`t" -ErrorAction SilentlyContinue | Where-Object {
+    $_.coverage_status -in @("covered-no-update", "upgradeable", "unknown-version")
+  })
+  $resultRowsById = @{}
+  if (Test-Path $WinGetResultFile) {
+    foreach ($row in @(Import-Csv -Path $WinGetResultFile -Delimiter "`t" -ErrorAction SilentlyContinue)) {
+      if (-not [string]::IsNullOrWhiteSpace($row.package_id)) {
+        $resultRowsById[$row.package_id] = $row
+      }
+    }
+  }
+
+  $displayRows = New-Object System.Collections.ArrayList
+  foreach ($row in $inventoryRows) {
+    $before = $row.installed_version
+    $after = $row.installed_version
+    $result = "unchanged"
+    $resultRow = if ($resultRowsById.ContainsKey($row.package_id)) { $resultRowsById[$row.package_id] } else { $null }
+
+    if ($row.coverage_status -eq "upgradeable") {
+      if ($null -ne $resultRow) {
+        $before = if ([string]::IsNullOrWhiteSpace($resultRow.version_before)) { $row.installed_version } else { $resultRow.version_before }
+        if ($resultRow.status -eq "OK") {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $resultRow.version_target } else { $resultRow.version_after }
+          $result = "updated"
+        } elseif ($resultRow.status -eq "FAIL") {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $before } else { $resultRow.version_after }
+          $result = "failed"
+        } else {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $before } else { $resultRow.version_after }
+          $result = "warning"
+        }
+      } else {
+        $result = "pending"
+      }
+    } elseif ($row.coverage_status -eq "unknown-version") {
+      $result = "unknown-version"
+      if ($null -ne $resultRow) {
+        $before = if ([string]::IsNullOrWhiteSpace($resultRow.version_before)) { $row.installed_version } else { $resultRow.version_before }
+        if ($resultRow.status -eq "OK") {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $row.installed_version } else { $resultRow.version_after }
+          $result = "updated"
+        } elseif ($resultRow.status -eq "FAIL") {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $before } else { $resultRow.version_after }
+          $result = "failed"
+        } else {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $before } else { $resultRow.version_after }
+          $result = "warning"
+        }
+      }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($after)) { $after = $before }
+    [void]$displayRows.Add([pscustomobject]@{
+      PackageName = $row.package_name
+      PackageId = $row.package_id
+      Before = $before
+      After = $after
+      Result = $result
+    })
+  }
+  return @($displayRows)
+}
+
 function Write-WindowsSemanticSummary {
   $resultRows = @()
   if (Test-Path $ResultFile) {
@@ -1075,15 +1151,15 @@ function Write-WindowsSemanticSummary {
     Write-Host ("  Inventory: {0}" -f $WinGetInventoryFile)
   }
 
-  if (Test-Path $WinGetSnapshotFile) {
-    $snapshotRows = @(Import-Csv -Path $WinGetSnapshotFile -Delimiter "`t" -ErrorAction SilentlyContinue)
-    if ($snapshotRows.Count -gt 0) {
-      Write-Host "Tracked tools"
-      Write-Host ("  {0,-22} {1,-27} {2,-10} {3,-10} {4,-10}" -f "Tool", "Id", "Before", "After", "Result")
-      Write-Host ("  {0,-22} {1,-27} {2,-10} {3,-10} {4,-10}" -f "----------------------", "---------------------------", "----------", "----------", "----------")
-      foreach ($row in $snapshotRows) {
-        Write-Host ("  {0,-22} {1,-27} {2,-10} {3,-10} {4,-10}" -f $row.tool, $row.package_id, $row.version_before, $row.version_after, $row.result)
-      }
+  $managedRows = @(Get-WinGetManagedInventoryDisplayRows)
+  if ($managedRows.Count -gt 0) {
+    Write-Host "WinGet managed apps"
+    Write-Host ("  {0,-34} {1,-44} {2,-14} {3,-14} {4,-15}" -f "Package", "Id", "Before", "After", "Result")
+    Write-Host ("  {0,-34} {1,-44} {2,-14} {3,-14} {4,-15}" -f "----------------------------------", "--------------------------------------------", "--------------", "--------------", "---------------")
+    foreach ($row in $managedRows) {
+      $packageName = Format-WinGetSummaryValue $row.PackageName 34
+      $packageId = Format-WinGetSummaryValue $row.PackageId 44
+      Write-Host ("  {0,-34} {1,-44} {2,-14} {3,-14} {4,-15}" -f $packageName, $packageId, $row.Before, $row.After, $row.Result)
     }
   }
 
@@ -1225,6 +1301,7 @@ if ($SelfTestWinGetInventory) {
     "GitHub CLI                   GitHub.cli                 2.94.0    winget"
     "GitHub CLI Preview           GitHub.cli                 2.94.0    winget"
     "Pandoc                       JohnMacFarlane.Pandoc      3.10      winget"
+    "Failing Tool                 Example.FailingTool        1.0       winget"
     "Visual Studio Code           Microsoft.VisualStudioCode 1.124.2   winget"
     "Cursor                       Anysphere.Cursor           3.7.27    winget"
     "WSL                          Microsoft.WSL              2.7.8     winget"
@@ -1234,7 +1311,8 @@ if ($SelfTestWinGetInventory) {
     "Name                         Id                         Version   Available Source"
     "---------------------------------------------------------------------------------"
     "GitHub CLI                   GitHub.cli                 2.94.0    2.95.0    winget"
-    "1 upgrades available."
+    "Failing Tool                 Example.FailingTool        1.0       2.0       winget"
+    "2 upgrades available."
   ) -join [Environment]::NewLine
   $includeUnknownUpgrade = @(
     "Name                         Id                         Version   Available Source"
@@ -1244,12 +1322,14 @@ if ($SelfTestWinGetInventory) {
     "2 upgrades available."
   ) -join [Environment]::NewLine
   Update-WinGetInventory -InstalledText $installed -NormalUpgradeText $normalUpgrade -IncludeUnknownUpgradeText $includeUnknownUpgrade -IncludeUnknownEnabled (Get-WinGetIncludeUnknownEnabled)
+  Add-WinGetDetailedResult "GitHub.cli" "GitHub CLI" "2.94.0" "2.95.0" "2.95.0" "OK" 0 4 "logs/windows-winget-upgrade-001-GitHub.cli.log" "updated successfully"
+  Add-WinGetDetailedResult "Example.FailingTool" "Failing Tool" "1.0" "2.0" "" "FAIL" 1618 5 "logs/windows-winget-upgrade-002-Example.FailingTool.log" (Get-WinGetKnownMessage 1618 "")
   $script:WinGetConsoleSummary = [pscustomobject]@{
-    Planned = 1
-    Updated = 0
-    Failed = 0
+    Planned = 2
+    Updated = 1
+    Failed = 1
     NoPackages = $false
-    FailedRows = @()
+    FailedRows = @([pscustomobject]@{ package_name = "Failing Tool"; package_id = "Example.FailingTool"; exit_code = 1618 })
     RetryMode = $false
   }
   $script:WslConsoleSummary = "WSL: Ubuntu, version 2, up to date"
