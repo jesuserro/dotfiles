@@ -164,6 +164,23 @@ copy_hook_entrypoints() {
 	[[ "$c_hash" == "$(git -C "$repo" hash-object STRUCTURE.md)" ]]
 }
 
+@test "treegen fails when tree produces empty output" {
+	local repo="${TEST_TEMP_DIR}/repo"
+	local fake_bin="${TEST_TEMP_DIR}/bin"
+	mkdir -p "$repo" "$fake_bin"
+	echo "dummy" >"$repo/file.txt"
+	cat >"$fake_bin/tree" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+	chmod +x "$fake_bin/tree"
+
+	run env PATH="${fake_bin}:${PATH}" bash -c "\"$TREEGEN\" \"$repo\" 2>&1"
+	[[ "$status" -eq 1 ]]
+	[[ "$output" == *"tree produced empty output"* ]]
+	[[ ! -f "$repo/STRUCTURE.md" ]]
+}
+
 @test "pre-commit skips when STRUCTURE.md does not exist" {
 	local repo="${TEST_TEMP_DIR}/repo"
 	init_repo "$repo"

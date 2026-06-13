@@ -241,7 +241,7 @@ Gitleaks uses the default rules plus the repo-local `.gitleaks.toml`. The only c
 
 ## CI
 
-Pull requests run [`.github/workflows/test.yml`](../.github/workflows/test.yml): `make ai-mcp-governance` and `make test-ci`. That target is the CI subset (lint, MCP/chezmoi/skills/gitnexus/docs bats, chezmoi-templates). It does **not** run `bats-system` install/update suites. For broader local regression use `make test` or `make test-fast` — neither is equivalent to CI; see the target matrix above.
+Pull requests run [`.github/workflows/test.yml`](../.github/workflows/test.yml): `make ai-mcp-governance`, `make security-gitleaks` (gitleaks-only secret scan — not full `make security-check`), and `make test-ci`. That target is the CI subset (lint, MCP/chezmoi/skills/gitnexus/docs bats, chezmoi-templates). It does **not** run `bats-system` install/update suites or `osv-scanner`. For broader local regression use `make test` or `make test-fast` — neither is equivalent to CI; see the target matrix above.
 
 ## Next candidates
 
