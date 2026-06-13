@@ -1466,17 +1466,18 @@ PY
 
 @test "PowerShell Windows logging keeps WSL and WinGet encoding contracts explicit" {
 	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
-	grep -q 'Run-NativeLiveLogged "WinGet packages".*"utf8"' "$ps1"
 	grep -q '\$winGetListName = "WinGet packages to upgrade"' "$ps1"
 	grep -q 'Run-NativeLogged \$winGetListName.*"windows-winget-list.log".*"utf8" \$false \$false' "$ps1"
 	grep -q 'Run-NativeLogged "WSL status".*"unicode"' "$ps1"
 	grep -q 'Run-NativeLogged "WSL update".*"unicode"' "$ps1"
 	grep -q -- '--disable-interactivity' "$ps1"
-	grep -q 'Updating \$winGetPackageCount packages with WinGet\.\.\.' "$ps1"
 	grep -q 'Write-Host "Full log: \$log"' "$ps1"
 	grep -q 'Get-WinGetConsoleText' "$ps1"
-	grep -q 'Get-WinGetUpgradeCount' "$ps1"
-	grep -q 'Write-WinGetListStatus \$winGetListName' "$ps1"
+	grep -q 'Get-WinGetPackagePlanFromText' "$ps1"
+	grep -q 'Write-WinGetNoPackages -ElapsedSeconds \$packageListElapsed' "$ps1"
+	grep -q '\[switch\]\$IncludeUnknown' "$ps1"
+	grep -q '\[string\]\$RetryFailedFromTsv' "$ps1"
+	grep -q '\$WinGetResultFile = Join-Path \$RunDir "windows-winget-results.tsv"' "$ps1"
 }
 
 @test "PowerShell WinGet upgrade runner uses ProcessStartInfo and live filtered console output" {
@@ -1488,11 +1489,39 @@ PY
 	grep -Fq '$psi.RedirectStandardError = $true' "$ps1"
 	grep -Fq 'Get-WinGetConsoleLine $line' "$ps1"
 	grep -Fq '[System.IO.File]::WriteAllText($log, $content, $encoding)' "$ps1"
-	grep -Fq 'Run-NativeLiveLogged "WinGet packages" "windows-winget-upgrade.log" "winget" @("upgrade", "--all", "--include-unknown", "--silent", "--accept-package-agreements", "--accept-source-agreements") "utf8" "Updating $winGetPackageCount packages with WinGet..." $true' "$ps1"
+	grep -q 'function Invoke-WinGetPackageUpgrades' "$ps1"
+	grep -Fq '$arguments = @("upgrade", "--id", $package.PackageId, "--exact", "--silent", "--accept-package-agreements", "--accept-source-agreements")' "$ps1"
+	grep -Fq 'windows-winget-upgrade-{0:D3}-{1}.log' "$ps1"
+	run grep -q -- '--all' "$ps1"
+	[[ "$status" -ne 0 ]]
 	run grep -q 'Tee-Object -FilePath \$log' "$ps1"
 	[[ "$status" -ne 0 ]]
 	run grep -q 'Run-NativeLogged "WinGet packages"' "$ps1"
 	[[ "$status" -ne 0 ]]
+}
+
+@test "PowerShell WinGet workflow has TSV retry contract and opt-in unknown versions" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	grep -Fq 'package_id`tpackage_name`tversion_before`tversion_target`tversion_after`tstatus`texit_code`tduration_seconds`tlog_path`tmessage' "$ps1"
+	grep -q 'ValidateSet("OK", "WARN", "FAIL")' "$ps1"
+	grep -q 'Where-Object { \$_.status -ne "OK" }' "$ps1"
+	grep -q 'Retry failed packages: .*RetryFailedFromTsv' "$ps1"
+	grep -q 'if (\$includeUnknownEnabled) { \$listArguments += "--include-unknown" }' "$ps1"
+	grep -q 'if (\$IncludeUnknownEnabled) { \$arguments += "--include-unknown" }' "$ps1"
+	run grep -Fq '@("upgrade", "--include-unknown"' "$ps1"
+	[[ "$status" -ne 0 ]]
+}
+
+@test "WSL Windows launchers bridge WinGet include-unknown and TSV retry flags" {
+	local update="${DOTFILES_DIR}/scripts/update/update.sh"
+	local update_windows="${DOTFILES_DIR}/scripts/update/update-windows.sh"
+	grep -q 'DOTFILES_WINGET_INCLUDE_UNKNOWN' "$update"
+	grep -q 'DOTFILES_WINGET_RETRY_FAILED_FROM_TSV' "$update"
+	grep -q 'to_windows_path "\$DOTFILES_WINGET_RETRY_FAILED_FROM_TSV"' "$update"
+	grep -q -- '-RetryFailedFromTsv "\$retry_tsv_win"' "$update"
+	grep -q 'DOTFILES_WINGET_INCLUDE_UNKNOWN' "$update_windows"
+	grep -q 'DOTFILES_WINGET_RETRY_FAILED_FROM_TSV' "$update_windows"
+	grep -q 'wslpath -w "\$DOTFILES_WINGET_RETRY_FAILED_FROM_TSV"' "$update_windows"
 }
 
 @test "PowerShell native runner passes arguments to child processes" {
@@ -1559,6 +1588,101 @@ PY
 	grep -q $'OK\tWindows\tWinGet package parser self-test\tfixtures matched' "${run_dir}/windows-results.tsv"
 }
 
+@test "PowerShell WinGet package workflow self-test covers TSV retry helpers" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	local run_dir="${TEST_TEMP_DIR}/winget-workflow-selftest"
+	if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+		run powershell.exe -NoProfile -Command 'exit 0'
+		if [[ "$status" -ne 0 ]]; then
+			skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+		fi
+		run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$ps1")" -RunDir "$(wslpath -w "$run_dir")" -SelfTestWinGetPackageWorkflow
+	elif command -v pwsh >/dev/null 2>&1; then
+		run pwsh -NoProfile -File "$ps1" -RunDir "$run_dir" -SelfTestWinGetPackageWorkflow
+	else
+		skip "requires powershell.exe or pwsh"
+	fi
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"OK WinGet package workflow self-test passed"* ]]
+	grep -q $'OK\tWindows\tWinGet package workflow self-test\tpackage workflow helpers passed' "${run_dir}/windows-results.tsv"
+	grep -q $'package_id\tpackage_name\tversion_before\tversion_target\tversion_after\tstatus\texit_code\tduration_seconds\tlog_path\tmessage' "${run_dir}/windows-winget-results.tsv"
+	grep -q $'JohnMacFarlane.Pandoc\tPandoc\t3.7.0\t3.8.0\t\tFAIL\t1618' "${run_dir}/windows-winget-results.tsv"
+}
+
+@test "PowerShell WinGet quiet presentation hides empty plan and full log paths" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	local run_dir="${TEST_TEMP_DIR}/winget-presentation-empty"
+	if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+		run powershell.exe -NoProfile -Command 'exit 0'
+		if [[ "$status" -ne 0 ]]; then
+			skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+		fi
+		run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$ps1")" -RunDir "$(wslpath -w "$run_dir")" -SelfTestWinGetPresentationNoPackages
+	elif command -v pwsh >/dev/null 2>&1; then
+		run pwsh -NoProfile -File "$ps1" -RunDir "$run_dir" -SelfTestWinGetPresentationNoPackages
+	else
+		skip "requires powershell.exe or pwsh"
+	fi
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"==> WinGet"* ]]
+	[[ "$output" == *"OK sources updated in 3s"* ]]
+	[[ "$output" == *"OK no packages to upgrade in 4s"* ]]
+	[[ "$output" == *"==> Summary"* ]]
+	[[ "$output" == *"WinGet: no packages to upgrade"* ]]
+	[[ "$output" == *"Logs: "* ]]
+	[[ "$output" != *"WinGet upgrade plan"* ]]
+	[[ "$output" != *"0 packages will be upgraded"* ]]
+	[[ "$output" != *"Full log:"* ]]
+	[[ "$output" != *"Full WinGet source log:"* ]]
+	[[ "$output" != *"Full WinGet package list log:"* ]]
+}
+
+@test "PowerShell WinGet verbose presentation may show detailed log paths" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	local run_dir="${TEST_TEMP_DIR}/winget-presentation-verbose"
+	if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+		run powershell.exe -NoProfile -Command 'exit 0'
+		if [[ "$status" -ne 0 ]]; then
+			skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+		fi
+		run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$ps1")" -RunDir "$(wslpath -w "$run_dir")" -SelfTestWinGetPresentationNoPackages -Verbose
+	elif command -v pwsh >/dev/null 2>&1; then
+		run pwsh -NoProfile -File "$ps1" -RunDir "$run_dir" -SelfTestWinGetPresentationNoPackages -Verbose
+	else
+		skip "requires powershell.exe or pwsh"
+	fi
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"windows-winget-source.log"* ]]
+	[[ "$output" == *"windows-winget-list.log"* ]]
+}
+
+@test "PowerShell WinGet warning presentation shows failed package log and retry command" {
+	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
+	local run_dir="${TEST_TEMP_DIR}/winget-presentation-warnings"
+	if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
+		run powershell.exe -NoProfile -Command 'exit 0'
+		if [[ "$status" -ne 0 ]]; then
+			skip "powershell.exe is present but not runnable in this environment (WSL interop unavailable; status=$status)"
+		fi
+		run powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$ps1")" -RunDir "$(wslpath -w "$run_dir")" -SelfTestWinGetPresentationWarnings
+	elif command -v pwsh >/dev/null 2>&1; then
+		run pwsh -NoProfile -File "$ps1" -RunDir "$run_dir" -SelfTestWinGetPresentationWarnings
+	else
+		skip "requires powershell.exe or pwsh"
+	fi
+	[[ "$status" -eq 0 ]]
+	[[ "$output" == *"Plan:"* ]]
+	[[ "$output" == *"Upgrading:"* ]]
+	[[ "$output" == *"WARN failed exit 1618; log:"* ]]
+	[[ "$output" == *"WARN Windows update completed with warnings"* ]]
+	[[ "$output" == *"WinGet: 1 updated, 1 failed"* ]]
+	[[ "$output" == *"Failed:"* ]]
+	[[ "$output" == *"Pandoc [JohnMacFarlane.Pandoc] exit 1618"* ]]
+	[[ "$output" == *"Retry:"* ]]
+	[[ "$output" == *"RetryFailedFromTsv"* ]]
+	[[ "$output" == *"Logs: "* ]]
+}
+
 @test "PowerShell live native runner writes output before child exits and preserves WARN result" {
 	command -v powershell.exe >/dev/null 2>&1 || skip "requires powershell.exe accessible from WSL (Windows interop)"
 	command -v wslpath >/dev/null 2>&1 || skip "requires wslpath to pass repo paths to powershell.exe"
@@ -1602,7 +1726,7 @@ PY
 @test "PowerShell tab prints step output and Windows summary" {
 	local ps1="${DOTFILES_DIR}/scripts/update/update-windows.ps1"
 	grep -q 'Write-Host "==> \$Name"' "$ps1"
-	grep -q 'Write-Host "==> Windows summary"' "$ps1"
+	grep -q 'Write-Host "==> Summary"' "$ps1"
 	grep -q 'ReadToEndAsync' "$ps1"
 }
 

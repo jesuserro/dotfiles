@@ -53,7 +53,17 @@ Desde Ubuntu/WSL, `make update` crea un directorio de ejecución en una ruta vis
 
 PowerShell escribe logs, `windows-results.tsv` y su propio resumen final. WSL no espera a `windows.done` ni bloquea su resumen por el estado de Windows; como máximo informa que la actualización Windows se abrió en una ventana separada.
 
-La consola PowerShell muestra primero `WinGet packages to upgrade`, con la tabla de paquetes pendientes. Después, `WinGet packages` anuncia cuántos paquetes actualizará, muestra la salida de instalación en tiempo real y la guarda a la vez en `windows-winget-upgrade.log`. La instalación usa `winget upgrade --all --include-unknown --silent --accept-package-agreements --accept-source-agreements --disable-interactivity`; si WinGet devuelve errores parciales, Windows los registra como `WARN` y mantiene el log completo como fuente de detalle.
+La consola PowerShell muestra primero `WinGet packages to upgrade`, con la tabla de paquetes pendientes, y después imprime un plan normalizado con `Package`, `Id`, versión actual y versión disponible. La instalación no usa `winget upgrade --all` como ejecución principal: recorre los paquetes uno a uno con `winget upgrade --id <package_id> --exact --silent --accept-package-agreements --accept-source-agreements`, muestra el progreso de cada paquete en tiempo real y conserva logs separados como `logs/windows-winget-upgrade-001-GitHub.cli.log`.
+
+WinGet escribe además `windows-winget-results.tsv`, un TSV real con este header:
+
+```text
+package_id<TAB>package_name<TAB>version_before<TAB>version_target<TAB>version_after<TAB>status<TAB>exit_code<TAB>duration_seconds<TAB>log_path<TAB>message
+```
+
+Los estados por paquete son `OK` cuando el comando termina y la versión final se verifica o se infiere razonablemente, `WARN` cuando el comando termina pero la verificación queda ambigua, y `FAIL` cuando el comando devuelve un exit code no cero. `windows-results.tsv` mantiene el contrato de resumen de 4 columnas para compatibilidad con el flujo global.
+
+`--include-unknown` es opt-in: usar `-IncludeUnknown` al invocar `scripts/update/update-windows.ps1` o exportar `DOTFILES_WINGET_INCLUDE_UNKNOWN=1` antes de lanzar `make update`. Para reintentar solo fallidos, usar `-RetryFailedFromTsv <windows-winget-results.tsv>`; desde WSL, `DOTFILES_WINGET_RETRY_FAILED_FROM_TSV=/mnt/c/.../windows-winget-results.tsv` se traduce con `wslpath -w` antes de abrir PowerShell.
 
 El parser operativo de resultados por paquete vive en `scripts/update/update-windows.ps1`. El script `scripts/update/parse-winget-log.py` es auxiliar para diagnóstico/tests desde WSL y no es dependencia runtime obligatoria de Windows. Ambos se validan contra fixtures pequeños en `tests/fixtures/winget/` para reducir drift semántico sin consolidar los parsers.
 

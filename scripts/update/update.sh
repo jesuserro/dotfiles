@@ -76,11 +76,20 @@ EOF
 		info "Windows update not launched: wt.exe, powershell.exe or wslpath unavailable."
 		return 0
 	fi
-	local ps1 run_win script_win
+	local ps1 run_win script_win retry_tsv_win
+	local -a powershell_args
 	ps1="${SCRIPT_DIR}/update-windows.ps1"
 	run_win="$(to_windows_path "$RUN_DIR")"
 	script_win="$(to_windows_path "$ps1")"
-	if wt.exe -w 0 new-tab --title "make update - Windows" powershell.exe -NoExit -ExecutionPolicy Bypass -File "$script_win" -RunDir "$run_win" \; focus-tab -t 0 >/dev/null 2>&1; then
+	powershell_args=(-NoExit -ExecutionPolicy Bypass -File "$script_win" -RunDir "$run_win")
+	if is_truthy "${DOTFILES_WINGET_INCLUDE_UNKNOWN:-}"; then
+		powershell_args+=(-IncludeUnknown)
+	fi
+	if [[ -n "${DOTFILES_WINGET_RETRY_FAILED_FROM_TSV:-}" ]]; then
+		retry_tsv_win="$(to_windows_path "$DOTFILES_WINGET_RETRY_FAILED_FROM_TSV")"
+		powershell_args+=(-RetryFailedFromTsv "$retry_tsv_win")
+	fi
+	if wt.exe -w 0 new-tab --title "make update - Windows" powershell.exe "${powershell_args[@]}" \; focus-tab -t 0 >/dev/null 2>&1; then
 		info "Windows update opened in separate PowerShell window; see that window for Windows results."
 	else
 		info "Windows update not launched: could not open PowerShell tab."

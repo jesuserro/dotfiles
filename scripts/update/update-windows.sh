@@ -14,7 +14,14 @@ if [[ "${OS:-}" == "Windows_NT" ]]; then
 fi
 
 if command -v powershell.exe >/dev/null 2>&1 && command -v wslpath >/dev/null 2>&1; then
-	powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "${SCRIPT_DIR}/update-windows.ps1")" -RunDir "$(wslpath -w "$RUN_DIR")"
+	powershell_args=(-NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "${SCRIPT_DIR}/update-windows.ps1")" -RunDir "$(wslpath -w "$RUN_DIR")")
+	if is_truthy "${DOTFILES_WINGET_INCLUDE_UNKNOWN:-}"; then
+		powershell_args+=(-IncludeUnknown)
+	fi
+	if [[ -n "${DOTFILES_WINGET_RETRY_FAILED_FROM_TSV:-}" ]]; then
+		powershell_args+=(-RetryFailedFromTsv "$(wslpath -w "$DOTFILES_WINGET_RETRY_FAILED_FROM_TSV")")
+	fi
+	powershell.exe "${powershell_args[@]}"
 else
 	echo "powershell.exe and wslpath are required to run Windows update from WSL" >&2
 	exit 1
