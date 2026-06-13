@@ -33,11 +33,28 @@ $WinGetSnapshotFile = Join-Path $RunDir "windows-winget-snapshot.tsv"
 $WinGetInventoryFile = Join-Path $RunDir "windows-winget-inventory.tsv"
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 Set-Content -Path $ResultFile -Value "" -Encoding UTF8
-Set-Content -Path $WinGetResultFile -Value "package_id`tpackage_name`tversion_before`tversion_target`tversion_after`tstatus`texit_code`tduration_seconds`tlog_path`tmessage" -Encoding UTF8
-Set-Content -Path $WinGetSnapshotFile -Value "tool`tpackage_id`tversion_before`tversion_after`tresult" -Encoding UTF8
-Set-Content -Path $WinGetInventoryFile -Value "package_id`tpackage_name`tinstalled_version`tavailable_version`tsource`tcoverage_status`tupdate_selected`tmessage" -Encoding UTF8
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
+
+$script:Utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+
+function Write-TsvNoBom {
+  param([string]$Path, [string[]]$Lines)
+  [System.IO.File]::WriteAllLines($Path, $Lines, $script:Utf8NoBom)
+}
+
+function Add-TsvLineNoBom {
+  param([string]$Path, [string]$Line)
+  [System.IO.File]::AppendAllText($Path, $Line + [Environment]::NewLine, $script:Utf8NoBom)
+}
+
+function Initialize-WinGetTsvFiles {
+  Write-TsvNoBom -Path $WinGetResultFile -Lines @("package_id`tpackage_name`tversion_before`tversion_target`tversion_after`tstatus`texit_code`tduration_seconds`tlog_path`tmessage")
+  Write-TsvNoBom -Path $WinGetSnapshotFile -Lines @("tool`tpackage_id`tversion_before`tversion_after`tresult")
+  Write-TsvNoBom -Path $WinGetInventoryFile -Lines @("package_id`tpackage_name`tinstalled_version`tavailable_version`tsource`tcoverage_status`tupdate_selected`tduplicate_count`tmessage")
+}
+
+Initialize-WinGetTsvFiles
 
 function Add-Result {
   param([string]$Status, [string]$Name, [string]$Message)
@@ -432,7 +449,7 @@ function Add-WinGetDetailedResult {
     $LogPath,
     $Message
   ) | ForEach-Object { ConvertTo-TsvValue $_ }
-  Add-Content -Path $WinGetResultFile -Value ($fields -join "`t") -Encoding UTF8
+  Add-TsvLineNoBom -Path $WinGetResultFile -Line ($fields -join "`t")
 }
 
 function Add-WinGetInventoryResult {
@@ -444,6 +461,7 @@ function Add-WinGetInventoryResult {
     [string]$Source,
     [ValidateSet("upgradeable", "covered-no-update", "unknown-version", "ambiguous-or-unmanaged", "missing")][string]$CoverageStatus,
     [bool]$UpdateSelected,
+    [int]$DuplicateCount = 1,
     [string]$Message
   )
   $selectedText = if ($UpdateSelected) { "true" } else { "false" }
@@ -455,9 +473,10 @@ function Add-WinGetInventoryResult {
     $Source,
     $CoverageStatus,
     $selectedText,
+    $DuplicateCount,
     $Message
   ) | ForEach-Object { ConvertTo-TsvValue $_ }
-  Add-Content -Path $WinGetInventoryFile -Value ($fields -join "`t") -Encoding UTF8
+  Add-TsvLineNoBom -Path $WinGetInventoryFile -Line ($fields -join "`t")
 }
 
 function Add-WinGetSnapshotResult {
@@ -469,7 +488,7 @@ function Add-WinGetSnapshotResult {
     [string]$Result
   )
   $fields = @($Tool, $PackageId, $VersionBefore, $VersionAfter, $Result) | ForEach-Object { ConvertTo-TsvValue $_ }
-  Add-Content -Path $WinGetSnapshotFile -Value ($fields -join "`t") -Encoding UTF8
+  Add-TsvLineNoBom -Path $WinGetSnapshotFile -Line ($fields -join "`t")
 }
 
 function Test-Truthy {
@@ -654,6 +673,18 @@ function New-WinGetRowMap {
   return $map
 }
 
+function Get-WinGetDuplicateCounts {
+  param([object[]]$Rows)
+  $counts = @{}
+  foreach ($row in $Rows) {
+    $key = Get-WinGetRowKey $row
+    if ([string]::IsNullOrWhiteSpace($key)) { continue }
+    if (-not $counts.ContainsKey($key)) { $counts[$key] = 0 }
+    $counts[$key]++
+  }
+  return $counts
+}
+
 function Update-WinGetInventory {
   param(
     [string]$InstalledText,
@@ -661,19 +692,21 @@ function Update-WinGetInventory {
     [string]$IncludeUnknownUpgradeText,
     [bool]$IncludeUnknownEnabled
   )
-  Set-Content -Path $WinGetInventoryFile -Value "package_id`tpackage_name`tinstalled_version`tavailable_version`tsource`tcoverage_status`tupdate_selected`tmessage" -Encoding UTF8
-  Set-Content -Path $WinGetSnapshotFile -Value "tool`tpackage_id`tversion_before`tversion_after`tresult" -Encoding UTF8
+  Write-TsvNoBom -Path $WinGetInventoryFile -Lines @("package_id`tpackage_name`tinstalled_version`tavailable_version`tsource`tcoverage_status`tupdate_selected`tduplicate_count`tmessage")
+  Write-TsvNoBom -Path $WinGetSnapshotFile -Lines @("tool`tpackage_id`tversion_before`tversion_after`tresult")
 
   $installedRows = @(Get-WinGetTableRowsFromText $InstalledText)
   $normalUpgradeRows = @(Get-WinGetPackagePlanFromText $NormalUpgradeText)
   $includeUnknownRows = @(Get-WinGetPackagePlanFromText $IncludeUnknownUpgradeText)
   $normalMap = New-WinGetRowMap $normalUpgradeRows
   $includeUnknownMap = New-WinGetRowMap $includeUnknownRows
+  $duplicateCounts = Get-WinGetDuplicateCounts $installedRows
   $seen = @{}
   $inventoryRows = New-Object System.Collections.ArrayList
 
   foreach ($row in $installedRows) {
     $key = Get-WinGetRowKey $row
+    $duplicateCount = if (-not [string]::IsNullOrWhiteSpace($key) -and $duplicateCounts.ContainsKey($key)) { [int]$duplicateCounts[$key] } else { 1 }
     $status = "covered-no-update"
     $available = ""
     $selected = $false
@@ -692,6 +725,9 @@ function Update-WinGetInventory {
       $selected = $IncludeUnknownEnabled
       $message = if ($IncludeUnknownEnabled) { "selected by include-unknown opt-in" } else { "not selected; include-unknown is opt-in" }
     }
+    if ($duplicateCount -gt 1) {
+      $message = "$message; multiple installed entries share the same WinGet package id"
+    }
     [void]$inventoryRows.Add([pscustomobject]@{
       PackageId = $row.PackageId
       PackageName = $row.PackageName
@@ -700,6 +736,7 @@ function Update-WinGetInventory {
       Source = $row.Source
       CoverageStatus = $status
       UpdateSelected = $selected
+      DuplicateCount = $duplicateCount
       Message = $message
     })
     if (-not [string]::IsNullOrWhiteSpace($key)) { $seen[$key] = $true }
@@ -717,12 +754,13 @@ function Update-WinGetInventory {
       Source = $row.Source
       CoverageStatus = if ($normalMap.ContainsKey($key)) { "upgradeable" } else { "unknown-version" }
       UpdateSelected = $selected
+      DuplicateCount = 1
       Message = if ($selected) { "selected by include-unknown opt-in" } else { "not selected; include-unknown is opt-in" }
     })
   }
 
   foreach ($item in $inventoryRows) {
-    Add-WinGetInventoryResult $item.PackageId $item.PackageName $item.InstalledVersion $item.AvailableVersion $item.Source $item.CoverageStatus $item.UpdateSelected $item.Message
+    Add-WinGetInventoryResult $item.PackageId $item.PackageName $item.InstalledVersion $item.AvailableVersion $item.Source $item.CoverageStatus $item.UpdateSelected $item.DuplicateCount $item.Message
   }
 
   $rows = @(Import-Csv -Path $WinGetInventoryFile -Delimiter "`t" -ErrorAction SilentlyContinue)
@@ -731,6 +769,7 @@ function Update-WinGetInventory {
     Upgradeable = @($rows | Where-Object { $_.coverage_status -eq "upgradeable" }).Count
     Unknown = @($rows | Where-Object { $_.coverage_status -eq "unknown-version" }).Count
     Ambiguous = @($rows | Where-Object { $_.coverage_status -eq "ambiguous-or-unmanaged" }).Count
+    Duplicates = @($rows | Where-Object { [int]($_.duplicate_count) -gt 1 } | Select-Object -ExpandProperty package_id -Unique).Count
   }
 
   Write-WinGetTrackedToolsSnapshot -InventoryRows $rows
@@ -959,7 +998,7 @@ function Set-WinGetConsoleSummary {
   $nonOk = @($rows | Where-Object { $_.status -ne "OK" })
   if (Test-Path $WinGetInventoryFile) {
     $inventoryRows = @(Import-Csv -Path $WinGetInventoryFile -Delimiter "`t" -ErrorAction SilentlyContinue)
-    Set-Content -Path $WinGetSnapshotFile -Value "tool`tpackage_id`tversion_before`tversion_after`tresult" -Encoding UTF8
+    Write-TsvNoBom -Path $WinGetSnapshotFile -Lines @("tool`tpackage_id`tversion_before`tversion_after`tresult")
     Write-WinGetTrackedToolsSnapshot -InventoryRows $inventoryRows
   }
   $script:WinGetConsoleSummary = [pscustomobject]@{
@@ -1032,6 +1071,7 @@ function Write-WindowsSemanticSummary {
     Write-Host ("  Upgrade candidates:         {0}" -f $script:WinGetInventorySummary.Upgradeable)
     Write-Host ("  Unknown-version candidates: {0}" -f $script:WinGetInventorySummary.Unknown)
     Write-Host ("  Ambiguous/unmanaged:        {0}" -f $script:WinGetInventorySummary.Ambiguous)
+    Write-Host ("  Duplicate package ids:      {0}" -f $script:WinGetInventorySummary.Duplicates)
     Write-Host ("  Inventory: {0}" -f $WinGetInventoryFile)
   }
 
@@ -1183,6 +1223,7 @@ if ($SelfTestWinGetInventory) {
     "Name                         Id                         Version   Source"
     "--------------------------------------------------------------------------"
     "GitHub CLI                   GitHub.cli                 2.94.0    winget"
+    "GitHub CLI Preview           GitHub.cli                 2.94.0    winget"
     "Pandoc                       JohnMacFarlane.Pandoc      3.10      winget"
     "Visual Studio Code           Microsoft.VisualStudioCode 1.124.2   winget"
     "Cursor                       Anysphere.Cursor           3.7.27    winget"

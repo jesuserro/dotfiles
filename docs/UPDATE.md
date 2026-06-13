@@ -68,9 +68,15 @@ El flujo Windows conserva cuatro artefactos WinGet por run:
 - `windows-results.tsv` — contrato global de resultados Windows.
 - `windows-winget-results.tsv` — detalle de upgrades/retry paquete a paquete.
 - `windows-winget-snapshot.tsv` — snapshot curado de herramientas relevantes.
-- `windows-winget-inventory.tsv` — inventario completo de cobertura WinGet.
+- `windows-winget-inventory.tsv` — inventario completo de cobertura WinGet, escrito como UTF-8 sin BOM.
 
-El inventario completo clasifica paquetes como `upgradeable`, `covered-no-update`, `unknown-version` o `ambiguous-or-unmanaged`; el estado `missing` se reserva para herramientas curadas esperadas que no aparecen en el snapshot. La consola muestra solo un resumen compacto de cobertura y la ruta del TSV; con `-Verbose` puede mostrar una vista previa corta del inventario.
+El inventario completo usa este header:
+
+```text
+package_id<TAB>package_name<TAB>installed_version<TAB>available_version<TAB>source<TAB>coverage_status<TAB>update_selected<TAB>duplicate_count<TAB>message
+```
+
+Clasifica paquetes como `upgradeable`, `covered-no-update`, `unknown-version` o `ambiguous-or-unmanaged`; el estado `missing` se reserva para herramientas curadas esperadas que no aparecen en el snapshot. Si varias entradas instaladas comparten `package_id`, conserva la clasificación principal, rellena `duplicate_count` y lo indica en `message`. La consola muestra solo un resumen compacto de cobertura, incluyendo `Duplicate package ids`, y la ruta del TSV; con `-Verbose` puede mostrar una vista previa corta del inventario.
 
 `--include-unknown` es opt-in: usar `-IncludeUnknown` al invocar `scripts/update/update-windows.ps1` o exportar `DOTFILES_WINGET_INCLUDE_UNKNOWN=1` antes de lanzar `make update`. Para reintentar solo fallidos, usar `-RetryFailedFromTsv <windows-winget-results.tsv>`; desde WSL, `DOTFILES_WINGET_RETRY_FAILED_FROM_TSV=/mnt/c/.../windows-winget-results.tsv` se traduce con `wslpath -w` antes de abrir PowerShell.
 

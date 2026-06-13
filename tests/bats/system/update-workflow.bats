@@ -1627,13 +1627,19 @@ PY
 	[[ "$output" == *"Inventory: "* ]]
 	[[ "$output" == *"Tracked tools"* ]]
 	[[ "$output" != *$'\nLoose App\t'* ]]
-	grep -q $'package_id\tpackage_name\tinstalled_version\tavailable_version\tsource\tcoverage_status\tupdate_selected\tmessage' "${run_dir}/windows-winget-inventory.tsv"
-	grep -q $'JohnMacFarlane.Pandoc\tPandoc\t3.10\t\twinget\tcovered-no-update\tfalse' "${run_dir}/windows-winget-inventory.tsv"
-	grep -q $'GitHub.cli\tGitHub CLI\t2.94.0\t2.95.0\twinget\tupgradeable\ttrue' "${run_dir}/windows-winget-inventory.tsv"
-	grep -q $'Anysphere.Cursor\tCursor\t3.7.27\t3.8.0\twinget\tunknown-version\tfalse' "${run_dir}/windows-winget-inventory.tsv"
-	grep -q $'\tLoose App\t1.0\t\t\tambiguous-or-unmanaged\tfalse' "${run_dir}/windows-winget-inventory.tsv"
+	[[ "$output" == *"Duplicate package ids:"* ]]
+	grep -q $'package_id\tpackage_name\tinstalled_version\tavailable_version\tsource\tcoverage_status\tupdate_selected\tduplicate_count\tmessage' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'JohnMacFarlane.Pandoc\tPandoc\t3.10\t\twinget\tcovered-no-update\tfalse\t1' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'GitHub.cli\tGitHub CLI\t2.94.0\t2.95.0\twinget\tupgradeable\ttrue\t2' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'GitHub.cli\tGitHub CLI Preview\t2.94.0\t2.95.0\twinget\tupgradeable\ttrue\t2' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q 'multiple installed entries share the same WinGet package id' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'Anysphere.Cursor\tCursor\t3.7.27\t3.8.0\twinget\tunknown-version\tfalse\t1' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'\tLoose App\t1.0\t\t\tambiguous-or-unmanaged\tfalse\t1' "${run_dir}/windows-winget-inventory.tsv"
 	grep -q $'tool\tpackage_id\tversion_before\tversion_after\tresult' "${run_dir}/windows-winget-snapshot.tsv"
 	grep -q $'Cursor\tAnysphere.Cursor\t3.7.27\t3.7.27\tunchanged' "${run_dir}/windows-winget-snapshot.tsv"
+	for file in windows-winget-inventory.tsv windows-winget-snapshot.tsv windows-winget-results.tsv; do
+		[[ "$(xxd -p -l 3 "${run_dir}/${file}")" != "efbbbf" ]]
+	done
 }
 
 @test "PowerShell WinGet inventory selects unknown versions only with IncludeUnknown" {
@@ -1651,7 +1657,7 @@ PY
 		skip "requires powershell.exe or pwsh"
 	fi
 	[[ "$status" -eq 0 ]]
-	grep -q $'Anysphere.Cursor\tCursor\t3.7.27\t3.8.0\twinget\tunknown-version\ttrue' "${run_dir}/windows-winget-inventory.tsv"
+	grep -q $'Anysphere.Cursor\tCursor\t3.7.27\t3.8.0\twinget\tunknown-version\ttrue\t1' "${run_dir}/windows-winget-inventory.tsv"
 	grep -q $'Cursor\tAnysphere.Cursor\t3.7.27\t3.8.0\tpending' "${run_dir}/windows-winget-snapshot.tsv"
 }
 
@@ -1700,6 +1706,9 @@ PY
 	[[ "$output" != *"Full log:"* ]]
 	[[ "$output" != *"Full WinGet source log:"* ]]
 	[[ "$output" != *"Full WinGet package list log:"* ]]
+	[[ "$(wc -l <"${run_dir}/windows-winget-results.tsv")" -eq 1 ]]
+	grep -q $'package_id\tpackage_name\tversion_before\tversion_target\tversion_after\tstatus\texit_code\tduration_seconds\tlog_path\tmessage' "${run_dir}/windows-winget-results.tsv"
+	[[ "$(xxd -p -l 3 "${run_dir}/windows-winget-results.tsv")" != "efbbbf" ]]
 }
 
 @test "PowerShell WinGet verbose presentation may show detailed log paths" {
