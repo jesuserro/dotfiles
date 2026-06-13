@@ -1479,6 +1479,8 @@ PY
 	grep -q '\[switch\]\$ShowInventory' "$ps1"
 	grep -q '\[string\]\$RetryFailedFromTsv' "$ps1"
 	grep -q '\$WinGetResultFile = Join-Path \$RunDir "windows-winget-results.tsv"' "$ps1"
+	grep -q 'function Get-WinGetSummaryResultColor' "$ps1"
+	grep -q 'Write-Host \$line -ForegroundColor \$color' "$ps1"
 }
 
 @test "PowerShell WinGet upgrade runner uses ProcessStartInfo and live filtered console output" {

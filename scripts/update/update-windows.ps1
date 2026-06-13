@@ -1043,6 +1043,15 @@ function Format-WinGetSummaryValue {
   return $text
 }
 
+function Get-WinGetSummaryResultColor {
+  param([AllowNull()][object]$Result)
+  $text = if ($null -eq $Result) { "" } else { ([string]$Result).ToLowerInvariant() }
+  if ($text -in @("updated", "installed")) { return "Green" }
+  if ($text -in @("failed", "fail")) { return "Red" }
+  if (($text -like "*warn*") -or ($text -like "*skipped*") -or ($text -like "*unknown*") -or ($text -like "*ambiguous*")) { return "Yellow" }
+  return ""
+}
+
 function Get-WinGetManagedInventoryDisplayRows {
   if (-not (Test-Path $WinGetInventoryFile)) { return @() }
   $inventoryRows = @(Import-Csv -Path $WinGetInventoryFile -Delimiter "`t" -ErrorAction SilentlyContinue | Where-Object {
@@ -1159,7 +1168,13 @@ function Write-WindowsSemanticSummary {
     foreach ($row in $managedRows) {
       $packageName = Format-WinGetSummaryValue $row.PackageName 34
       $packageId = Format-WinGetSummaryValue $row.PackageId 44
-      Write-Host ("  {0,-34} {1,-44} {2,-14} {3,-14} {4,-15}" -f $packageName, $packageId, $row.Before, $row.After, $row.Result)
+      $line = "  {0,-34} {1,-44} {2,-14} {3,-14} {4,-15}" -f $packageName, $packageId, $row.Before, $row.After, $row.Result
+      $color = Get-WinGetSummaryResultColor $row.Result
+      if ([string]::IsNullOrWhiteSpace($color)) {
+        Write-Host $line
+      } else {
+        Write-Host $line -ForegroundColor $color
+      }
     }
   }
 
