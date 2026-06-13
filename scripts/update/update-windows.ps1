@@ -1,25 +1,61 @@
+[CmdletBinding()]
 param(
   [string]$RunDir = "",
+  [switch]$IncludeUnknown,
+  [switch]$ShowInventory,
+  [string]$RetryFailedFromTsv = "",
   [switch]$SelfTestNativeArguments,
   [switch]$SelfTestWinGetConsoleText,
   [switch]$SelfTestWinGetPackageResults,
+  [switch]$SelfTestWinGetPackageWorkflow,
+  [switch]$SelfTestWinGetInventory,
+  [switch]$SelfTestWinGetPresentationNoPackages,
+  [switch]$SelfTestWinGetPresentationWarnings,
   [switch]$SelfTestLiveLogging
 )
 
 $ErrorActionPreference = "Continue"
 if ([string]::IsNullOrWhiteSpace($RunDir)) {
-  if ($SelfTestNativeArguments -or $SelfTestWinGetConsoleText -or $SelfTestWinGetPackageResults -or $SelfTestLiveLogging) {
+  if ($SelfTestNativeArguments -or $SelfTestWinGetConsoleText -or $SelfTestWinGetPackageResults -or $SelfTestWinGetPackageWorkflow -or $SelfTestWinGetInventory -or $SelfTestWinGetPresentationNoPackages -or $SelfTestWinGetPresentationWarnings -or $SelfTestLiveLogging) {
     $RunDir = Join-Path ([System.IO.Path]::GetTempPath()) ("dotfiles-update-native-args-" + [System.Guid]::NewGuid().ToString("N"))
   } else {
-    throw "RunDir is required"
+    $runRoot = if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+      Join-Path $env:LOCALAPPDATA "dotfiles\update-runs"
+    } else {
+      Join-Path ([System.IO.Path]::GetTempPath()) "dotfiles\update-runs"
+    }
+    $RunDir = Join-Path $runRoot ("{0}-{1}" -f (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssZ"), $PID)
   }
 }
 $LogDir = Join-Path $RunDir "logs"
 $ResultFile = Join-Path $RunDir "windows-results.tsv"
+$WinGetResultFile = Join-Path $RunDir "windows-winget-results.tsv"
+$WinGetSnapshotFile = Join-Path $RunDir "windows-winget-snapshot.tsv"
+$WinGetInventoryFile = Join-Path $RunDir "windows-winget-inventory.tsv"
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 Set-Content -Path $ResultFile -Value "" -Encoding UTF8
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
+
+$script:Utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+
+function Write-TsvNoBom {
+  param([string]$Path, [string[]]$Lines)
+  [System.IO.File]::WriteAllLines($Path, $Lines, $script:Utf8NoBom)
+}
+
+function Add-TsvLineNoBom {
+  param([string]$Path, [string]$Line)
+  [System.IO.File]::AppendAllText($Path, $Line + [Environment]::NewLine, $script:Utf8NoBom)
+}
+
+function Initialize-WinGetTsvFiles {
+  Write-TsvNoBom -Path $WinGetResultFile -Lines @("package_id`tpackage_name`tversion_before`tversion_target`tversion_after`tstatus`texit_code`tduration_seconds`tlog_path`tmessage")
+  Write-TsvNoBom -Path $WinGetSnapshotFile -Lines @("tool`tpackage_id`tversion_before`tversion_after`tresult")
+  Write-TsvNoBom -Path $WinGetInventoryFile -Lines @("package_id`tpackage_name`tinstalled_version`tavailable_version`tsource`tcoverage_status`tupdate_selected`tduplicate_count`tmessage")
+}
+
+Initialize-WinGetTsvFiles
 
 function Add-Result {
   param([string]$Status, [string]$Name, [string]$Message)
@@ -67,7 +103,9 @@ function Invoke-NativeLiveProcess {
     [string[]]$NativeArguments,
     [string]$LogPath,
     [string]$OutputEncoding = "utf8",
-    [scriptblock]$ConsoleLineFilter = $null
+    [scriptblock]$ConsoleLineFilter = $null,
+    [bool]$DisplayOutput = $true,
+    [bool]$VerboseOutput = $false
   )
   $encoding = Get-NativeEncoding $OutputEncoding
   $argumentString = Join-NativeArguments -NativeArguments $NativeArguments
@@ -105,7 +143,9 @@ function Invoke-NativeLiveProcess {
           $writer.WriteLine($line)
           $writer.Flush()
           $displayLine = if ($null -eq $ConsoleLineFilter) { $line } else { & $ConsoleLineFilter $line }
-          if (-not [string]::IsNullOrWhiteSpace($displayLine)) { Write-Host $displayLine }
+          if ($DisplayOutput -and (-not [string]::IsNullOrWhiteSpace($displayLine))) {
+            if ($VerboseOutput) { Write-Verbose $displayLine } else { Write-Host $displayLine }
+          }
           $stdoutTask = $process.StandardOutput.ReadLineAsync()
         }
       }
@@ -117,7 +157,9 @@ function Invoke-NativeLiveProcess {
           $writer.WriteLine($line)
           $writer.Flush()
           $displayLine = if ($null -eq $ConsoleLineFilter) { $line } else { & $ConsoleLineFilter $line }
-          if (-not [string]::IsNullOrWhiteSpace($displayLine)) { Write-Host $displayLine }
+          if ($DisplayOutput -and (-not [string]::IsNullOrWhiteSpace($displayLine))) {
+            if ($VerboseOutput) { Write-Verbose $displayLine } else { Write-Host $displayLine }
+          }
           $stderrTask = $process.StandardError.ReadLineAsync()
         }
       }
@@ -135,9 +177,11 @@ function Invoke-WinGetLiveFiltered {
     [string[]]$NativeArguments,
     [string]$LogPath,
     [string]$OutputEncoding = "utf8",
-    [string]$FileName = "winget"
+    [string]$FileName = "winget",
+    [bool]$DisplayOutput = $true,
+    [bool]$VerboseOutput = $false
   )
-  return Invoke-NativeLiveProcess -FileName $FileName -NativeArguments $NativeArguments -LogPath $LogPath -OutputEncoding $OutputEncoding -ConsoleLineFilter { param($line) Get-WinGetConsoleLine $line }
+  return Invoke-NativeLiveProcess -FileName $FileName -NativeArguments $NativeArguments -LogPath $LogPath -OutputEncoding $OutputEncoding -ConsoleLineFilter { param($line) Get-WinGetConsoleLine $line } -DisplayOutput $DisplayOutput -VerboseOutput $VerboseOutput
 }
 
 function Run-NativeLogged {
@@ -213,6 +257,12 @@ function Run-NativeLogged {
   $script:LastRunCode = $code
   $script:LastRunContent = if ($null -eq $content) { "" } else { $content }
   $script:LastRunElapsed = $elapsed
+  if (-not $DisplayStep) {
+    Write-Verbose "$Name log: $log"
+    if (-not [string]::IsNullOrWhiteSpace($script:LastRunContent)) {
+      Write-Verbose $script:LastRunContent
+    }
+  }
 }
 
 function Run-NativeLiveLogged {
@@ -369,6 +419,808 @@ function Add-WinGetPackageResults {
   }
 }
 
+function ConvertTo-TsvValue {
+  param([AllowNull()][object]$Value)
+  if ($null -eq $Value) { return "" }
+  return ([string]$Value) -replace "`t", " " -replace "(`r`n|`r|`n)", " "
+}
+
+function Add-WinGetDetailedResult {
+  param(
+    [string]$PackageId,
+    [string]$PackageName,
+    [string]$VersionBefore,
+    [string]$VersionTarget,
+    [string]$VersionAfter,
+    [ValidateSet("OK", "WARN", "FAIL")][string]$Status,
+    [AllowNull()][object]$ExitCode,
+    [int]$DurationSeconds,
+    [string]$LogPath,
+    [string]$Message
+  )
+  $fields = @(
+    $PackageId,
+    $PackageName,
+    $VersionBefore,
+    $VersionTarget,
+    $VersionAfter,
+    $Status,
+    $ExitCode,
+    $DurationSeconds,
+    $LogPath,
+    $Message
+  ) | ForEach-Object { ConvertTo-TsvValue $_ }
+  Add-TsvLineNoBom -Path $WinGetResultFile -Line ($fields -join "`t")
+}
+
+function Add-WinGetInventoryResult {
+  param(
+    [string]$PackageId,
+    [string]$PackageName,
+    [string]$InstalledVersion,
+    [string]$AvailableVersion,
+    [string]$Source,
+    [ValidateSet("upgradeable", "covered-no-update", "unknown-version", "ambiguous-or-unmanaged", "missing")][string]$CoverageStatus,
+    [bool]$UpdateSelected,
+    [int]$DuplicateCount = 1,
+    [string]$Message
+  )
+  $selectedText = if ($UpdateSelected) { "true" } else { "false" }
+  $fields = @(
+    $PackageId,
+    $PackageName,
+    $InstalledVersion,
+    $AvailableVersion,
+    $Source,
+    $CoverageStatus,
+    $selectedText,
+    $DuplicateCount,
+    $Message
+  ) | ForEach-Object { ConvertTo-TsvValue $_ }
+  Add-TsvLineNoBom -Path $WinGetInventoryFile -Line ($fields -join "`t")
+}
+
+function Add-WinGetSnapshotResult {
+  param(
+    [string]$Tool,
+    [string]$PackageId,
+    [string]$VersionBefore,
+    [string]$VersionAfter,
+    [string]$Result
+  )
+  $fields = @($Tool, $PackageId, $VersionBefore, $VersionAfter, $Result) | ForEach-Object { ConvertTo-TsvValue $_ }
+  Add-TsvLineNoBom -Path $WinGetSnapshotFile -Line ($fields -join "`t")
+}
+
+function Test-Truthy {
+  param([string]$Value)
+  return ($Value -match '^(?i:1|true|yes|y|on)$')
+}
+
+function Get-WinGetIncludeUnknownEnabled {
+  return ($IncludeUnknown.IsPresent -or (Test-Truthy $env:DOTFILES_WINGET_INCLUDE_UNKNOWN))
+}
+
+function Get-ColumnIndex {
+  param([string]$Header, [string[]]$Labels)
+  foreach ($label in $Labels) {
+    $index = $Header.IndexOf($label, [System.StringComparison]::OrdinalIgnoreCase)
+    if ($index -ge 0) { return $index }
+  }
+  return -1
+}
+
+function Get-Slice {
+  param([string]$Text, [int]$Start, [int]$End)
+  if ($Start -lt 0 -or $Start -ge $Text.Length) { return "" }
+  $length = if ($End -lt 0) { $Text.Length - $Start } else { [Math]::Min($End, $Text.Length) - $Start }
+  if ($length -le 0) { return "" }
+  return $Text.Substring($Start, $length).Trim()
+}
+
+function Get-WinGetTableRowsFromText {
+  param([string]$Text)
+  $rows = New-Object System.Collections.ArrayList
+  if ([string]::IsNullOrWhiteSpace($Text)) { return @() }
+
+  $lines = @(($Text -replace "`r", "`n") -split "`n")
+  $headerIndex = -1
+  $columns = $null
+  for ($i = 0; $i -lt $lines.Count; $i++) {
+    $header = ($lines[$i] -replace "`e\[[0-9;?]*[ -/]*[@-~]", "").TrimEnd()
+    $nameStart = Get-ColumnIndex $header @("Name", "Nombre")
+    $idStart = Get-ColumnIndex $header @("Id")
+    $versionStart = Get-ColumnIndex $header @("Version", "Versi")
+    if (($nameStart -ge 0) -and ($versionStart -gt $nameStart)) {
+      $availableStart = Get-ColumnIndex $header @("Available", "Disponible")
+      $sourceStart = Get-ColumnIndex $header @("Source", "Origen")
+      $columns = [pscustomobject]@{
+        Name = $nameStart
+        Id = $idStart
+        Version = $versionStart
+        Available = $availableStart
+        Source = $sourceStart
+      }
+      $headerIndex = $i
+      break
+    }
+  }
+  if ($headerIndex -lt 0) { return @() }
+
+  $afterSeparator = $false
+  for ($i = $headerIndex + 1; $i -lt $lines.Count; $i++) {
+    $line = ($lines[$i] -replace "`e\[[0-9;?]*[ -/]*[@-~]", "").TrimEnd()
+    if ([string]::IsNullOrWhiteSpace($line)) { continue }
+    if ($line -match '^\s*-{3,}') {
+      $afterSeparator = $true
+      continue
+    }
+    if (-not $afterSeparator) { continue }
+    if ($line -match '(?i)(upgrades?|actualizaci(?:o|\u00f3)n(?:es)?)\s+(?:available|disponible)') { break }
+    if ($line -match '(?i)^(No installed package found|No se encontr(?:o|\u00f3)|No hay actualizaciones|No available upgrades)') { break }
+
+    $end = -1
+    $idEnd = if ($columns.Id -ge 0) { $columns.Version } else { -1 }
+    $versionEnd = if ($columns.Available -gt $columns.Version) {
+      $columns.Available
+    } elseif ($columns.Source -gt $columns.Version) {
+      $columns.Source
+    } else {
+      -1
+    }
+    $availableEnd = if ($columns.Source -gt $columns.Available) { $columns.Source } else { -1 }
+
+    $name = if ($columns.Id -gt $columns.Name) { Get-Slice $line $columns.Name $columns.Id } else { Get-Slice $line $columns.Name $columns.Version }
+    $id = if ($columns.Id -ge 0) { Get-Slice $line $columns.Id $idEnd } else { "" }
+    $current = Get-Slice $line $columns.Version $versionEnd
+    $available = if ($columns.Available -gt $columns.Version) { Get-Slice $line $columns.Available $availableEnd } else { "" }
+    $source = if ($columns.Source -gt $columns.Version) { Get-Slice $line $columns.Source $end } else { "" }
+    if ([string]::IsNullOrWhiteSpace($name) -and [string]::IsNullOrWhiteSpace($id)) { continue }
+    [void]$rows.Add([pscustomobject]@{
+      PackageName = $name
+      PackageId = $id
+      CurrentVersion = $current
+      AvailableVersion = $available
+      Source = $source
+    })
+  }
+  return @($rows)
+}
+
+function Get-WinGetPackagePlanFromText {
+  param([string]$Text)
+  $packages = New-Object System.Collections.ArrayList
+  foreach ($row in (Get-WinGetTableRowsFromText $Text)) {
+    if ([string]::IsNullOrWhiteSpace($row.PackageId) -or [string]::IsNullOrWhiteSpace($row.AvailableVersion)) { continue }
+    [void]$packages.Add($row)
+  }
+  return @($packages)
+}
+
+function Get-WinGetInstalledVersionFromText {
+  param([string]$Text, [string]$PackageId)
+  $tablePackages = Get-WinGetPackagePlanFromText $Text
+  foreach ($package in $tablePackages) {
+    if ($package.PackageId -eq $PackageId) {
+      return $package.CurrentVersion
+    }
+  }
+  foreach ($line in (($Text -replace "`r", "`n") -split "`n")) {
+    if ($line -match [regex]::Escape($PackageId)) {
+      $parts = @($line.Trim() -split '\s{2,}' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+      if ($parts.Count -ge 3) { return $parts[2] }
+    }
+  }
+  return ""
+}
+
+function Get-WinGetRetryPlanFromTsv {
+  param([string]$Path)
+  if (-not (Test-Path $Path)) {
+    Add-Result "WARN" "WinGet retry" "retry TSV not found: $Path"
+    return @()
+  }
+  $rows = @(Import-Csv -Path $Path -Delimiter "`t" -ErrorAction SilentlyContinue | Where-Object { $_.status -ne "OK" })
+  $packages = New-Object System.Collections.ArrayList
+  foreach ($row in $rows) {
+    if ([string]::IsNullOrWhiteSpace($row.package_id)) { continue }
+    [void]$packages.Add([pscustomobject]@{
+      PackageName = $row.package_name
+      PackageId = $row.package_id
+      CurrentVersion = $row.version_before
+      AvailableVersion = $row.version_target
+      Source = ""
+    })
+  }
+  return @($packages)
+}
+
+function Get-SafeLogToken {
+  param([string]$Value)
+  $safe = $Value -replace '[^A-Za-z0-9._-]+', '_'
+  if ([string]::IsNullOrWhiteSpace($safe)) { return "package" }
+  return $safe
+}
+
+function Get-WinGetKnownMessage {
+  param([AllowNull()][object]$ExitCode, [string]$Text)
+  if ("$ExitCode" -eq "1618" -or $Text -match '(?i)(another installation|another installer|msi transaction|instalaci(?:o|\u00f3)n.*curso)') {
+    return "Another installer/MSI transaction is already running. Rerun later."
+  }
+  if ($Text -match '(?i)(0x80071130|Fast Cache data not found)') {
+    return "WinGet cache/source issue. Suggested fix: winget source reset --force; winget source update"
+  }
+  if ($null -ne $ExitCode -and "$ExitCode" -ne "") {
+    return "exit $ExitCode"
+  }
+  return "unknown result"
+}
+
+function Get-WinGetRowKey {
+  param([object]$Row)
+  if (($null -eq $Row) -or [string]::IsNullOrWhiteSpace($Row.PackageId)) { return "" }
+  return $Row.PackageId.ToLowerInvariant()
+}
+
+function New-WinGetRowMap {
+  param([object[]]$Rows)
+  $map = @{}
+  foreach ($row in $Rows) {
+    $key = Get-WinGetRowKey $row
+    if (-not [string]::IsNullOrWhiteSpace($key) -and -not $map.ContainsKey($key)) {
+      $map[$key] = $row
+    }
+  }
+  return $map
+}
+
+function Get-WinGetDuplicateCounts {
+  param([object[]]$Rows)
+  $counts = @{}
+  foreach ($row in $Rows) {
+    $key = Get-WinGetRowKey $row
+    if ([string]::IsNullOrWhiteSpace($key)) { continue }
+    if (-not $counts.ContainsKey($key)) { $counts[$key] = 0 }
+    $counts[$key]++
+  }
+  return $counts
+}
+
+function Update-WinGetInventory {
+  param(
+    [string]$InstalledText,
+    [string]$NormalUpgradeText,
+    [string]$IncludeUnknownUpgradeText,
+    [bool]$IncludeUnknownEnabled
+  )
+  Write-TsvNoBom -Path $WinGetInventoryFile -Lines @("package_id`tpackage_name`tinstalled_version`tavailable_version`tsource`tcoverage_status`tupdate_selected`tduplicate_count`tmessage")
+  Write-TsvNoBom -Path $WinGetSnapshotFile -Lines @("tool`tpackage_id`tversion_before`tversion_after`tresult")
+
+  $installedRows = @(Get-WinGetTableRowsFromText $InstalledText)
+  $normalUpgradeRows = @(Get-WinGetPackagePlanFromText $NormalUpgradeText)
+  $includeUnknownRows = @(Get-WinGetPackagePlanFromText $IncludeUnknownUpgradeText)
+  $normalMap = New-WinGetRowMap $normalUpgradeRows
+  $includeUnknownMap = New-WinGetRowMap $includeUnknownRows
+  $duplicateCounts = Get-WinGetDuplicateCounts $installedRows
+  $seen = @{}
+  $inventoryRows = New-Object System.Collections.ArrayList
+
+  foreach ($row in $installedRows) {
+    $key = Get-WinGetRowKey $row
+    $duplicateCount = if (-not [string]::IsNullOrWhiteSpace($key) -and $duplicateCounts.ContainsKey($key)) { [int]$duplicateCounts[$key] } else { 1 }
+    $status = "covered-no-update"
+    $available = ""
+    $selected = $false
+    $message = "recognized by WinGet; no update available"
+    if ([string]::IsNullOrWhiteSpace($row.PackageId) -or [string]::IsNullOrWhiteSpace($row.Source)) {
+      $status = "ambiguous-or-unmanaged"
+      $message = "missing reliable package id or source"
+    } elseif ($normalMap.ContainsKey($key)) {
+      $status = "upgradeable"
+      $available = $normalMap[$key].AvailableVersion
+      $selected = $true
+      $message = "selected for update"
+    } elseif ($includeUnknownMap.ContainsKey($key)) {
+      $status = "unknown-version"
+      $available = $includeUnknownMap[$key].AvailableVersion
+      $selected = $IncludeUnknownEnabled
+      $message = if ($IncludeUnknownEnabled) { "selected by include-unknown opt-in" } else { "not selected; include-unknown is opt-in" }
+    }
+    if ($duplicateCount -gt 1) {
+      $message = "$message; multiple installed entries share the same WinGet package id"
+    }
+    [void]$inventoryRows.Add([pscustomobject]@{
+      PackageId = $row.PackageId
+      PackageName = $row.PackageName
+      InstalledVersion = $row.CurrentVersion
+      AvailableVersion = $available
+      Source = $row.Source
+      CoverageStatus = $status
+      UpdateSelected = $selected
+      DuplicateCount = $duplicateCount
+      Message = $message
+    })
+    if (-not [string]::IsNullOrWhiteSpace($key)) { $seen[$key] = $true }
+  }
+
+  foreach ($row in $includeUnknownRows) {
+    $key = Get-WinGetRowKey $row
+    if ([string]::IsNullOrWhiteSpace($key) -or $seen.ContainsKey($key)) { continue }
+    $selected = $IncludeUnknownEnabled
+    [void]$inventoryRows.Add([pscustomobject]@{
+      PackageId = $row.PackageId
+      PackageName = $row.PackageName
+      InstalledVersion = $row.CurrentVersion
+      AvailableVersion = $row.AvailableVersion
+      Source = $row.Source
+      CoverageStatus = if ($normalMap.ContainsKey($key)) { "upgradeable" } else { "unknown-version" }
+      UpdateSelected = $selected
+      DuplicateCount = 1
+      Message = if ($selected) { "selected by include-unknown opt-in" } else { "not selected; include-unknown is opt-in" }
+    })
+  }
+
+  foreach ($item in $inventoryRows) {
+    Add-WinGetInventoryResult $item.PackageId $item.PackageName $item.InstalledVersion $item.AvailableVersion $item.Source $item.CoverageStatus $item.UpdateSelected $item.DuplicateCount $item.Message
+  }
+
+  $rows = @(Import-Csv -Path $WinGetInventoryFile -Delimiter "`t" -ErrorAction SilentlyContinue)
+  $script:WinGetInventorySummary = [pscustomobject]@{
+    Recognized = @($rows | Where-Object { $_.coverage_status -in @("covered-no-update", "upgradeable", "unknown-version") }).Count
+    Upgradeable = @($rows | Where-Object { $_.coverage_status -eq "upgradeable" }).Count
+    Unknown = @($rows | Where-Object { $_.coverage_status -eq "unknown-version" }).Count
+    Ambiguous = @($rows | Where-Object { $_.coverage_status -eq "ambiguous-or-unmanaged" }).Count
+    Duplicates = @($rows | Where-Object { [int]($_.duplicate_count) -gt 1 } | Select-Object -ExpandProperty package_id -Unique).Count
+  }
+
+  Write-WinGetTrackedToolsSnapshot -InventoryRows $rows
+  if ($VerbosePreference -ne "SilentlyContinue") {
+    Write-Verbose "WinGet inventory preview:"
+    $rows | Select-Object -First 10 | ForEach-Object {
+      Write-Verbose ("  {0} [{1}] {2} selected={3}" -f $_.package_name, $_.package_id, $_.coverage_status, $_.update_selected)
+    }
+  }
+}
+
+function Write-WinGetTrackedToolsSnapshot {
+  param([object[]]$InventoryRows)
+  $tracked = @(
+    [pscustomobject]@{ Tool = "GitHub CLI"; PackageId = "GitHub.cli" },
+    [pscustomobject]@{ Tool = "Pandoc"; PackageId = "JohnMacFarlane.Pandoc" },
+    [pscustomobject]@{ Tool = "Visual Studio Code"; PackageId = "Microsoft.VisualStudioCode" },
+    [pscustomobject]@{ Tool = "Cursor"; PackageId = "Anysphere.Cursor" },
+    [pscustomobject]@{ Tool = "WSL"; PackageId = "Microsoft.WSL" }
+  )
+  $upgradeRows = @()
+  if (Test-Path $WinGetResultFile) {
+    $upgradeRows = @(Import-Csv -Path $WinGetResultFile -Delimiter "`t" -ErrorAction SilentlyContinue)
+  }
+  foreach ($tool in $tracked) {
+    $inventory = @($InventoryRows | Where-Object { $_.package_id -eq $tool.PackageId } | Select-Object -First 1)
+    if ($inventory.Count -eq 0) {
+      Add-WinGetSnapshotResult $tool.Tool $tool.PackageId "" "" "missing"
+      continue
+    }
+    $before = $inventory[0].installed_version
+    $after = $before
+    $result = "unchanged"
+    $upgrade = @($upgradeRows | Where-Object { $_.package_id -eq $tool.PackageId } | Select-Object -First 1)
+    if ($upgrade.Count -gt 0) {
+      $after = if ([string]::IsNullOrWhiteSpace($upgrade[0].version_after)) { $upgrade[0].version_target } else { $upgrade[0].version_after }
+      $result = if ($upgrade[0].status -eq "OK" -and $after -ne $before) { "updated" } elseif ($upgrade[0].status -eq "OK") { "unchanged" } else { $upgrade[0].status.ToLowerInvariant() }
+    } elseif (($inventory[0].coverage_status -eq "upgradeable" -or $inventory[0].coverage_status -eq "unknown-version") -and $inventory[0].update_selected -eq "true") {
+      $after = if ([string]::IsNullOrWhiteSpace($inventory[0].available_version)) { $before } else { $inventory[0].available_version }
+      $result = "pending"
+    }
+    Add-WinGetSnapshotResult $tool.Tool $tool.PackageId $before $after $result
+  }
+}
+
+function Write-WinGetPlan {
+  param([object[]]$Packages, [bool]$RetryMode)
+  if ($Packages.Count -eq 0) { return }
+  if ($RetryMode) {
+    Write-Host ""
+    Write-Host "Retry plan:"
+  } else {
+    Write-Host ""
+    Write-Host "Plan:"
+  }
+  for ($i = 0; $i -lt $Packages.Count; $i++) {
+    $package = $Packages[$i]
+    Write-Host ("  {0}. {1} [{2}] {3} -> {4}" -f ($i + 1), $package.PackageName, $package.PackageId, $package.CurrentVersion, $package.AvailableVersion)
+  }
+}
+
+function Write-WinGetNoPackages {
+  param([int]$ElapsedSeconds)
+  Write-Host ("OK no packages to upgrade in {0}s" -f $ElapsedSeconds)
+  $script:WinGetConsoleSummary = [pscustomobject]@{
+    Planned = 0
+    Updated = 0
+    Failed = 0
+    NoPackages = $true
+    FailedRows = @()
+    RetryMode = $false
+  }
+}
+
+function Invoke-NativeCaptured {
+  param(
+    [string]$LogName,
+    [string]$FileName,
+    [string[]]$NativeArguments,
+    [string]$OutputEncoding = "utf8"
+  )
+  $log = Join-Path $LogDir $LogName
+  $start = Get-Date
+  $encoding = Get-NativeEncoding $OutputEncoding
+  $argumentString = Join-NativeArguments -NativeArguments $NativeArguments
+  $content = ""
+  $code = $null
+  try {
+    $psi = [System.Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName = $FileName
+    $psi.Arguments = $argumentString
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.StandardOutputEncoding = $encoding
+    $psi.StandardErrorEncoding = $encoding
+    $psi.CreateNoWindow = $true
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $psi
+    [void]$process.Start()
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    $process.WaitForExit()
+    $code = [int]$process.ExitCode
+    $content = (($stdoutTask.Result, $stderrTask.Result) | Where-Object { -not [string]::IsNullOrEmpty($_) }) -join [Environment]::NewLine
+    $content = $content -replace "`r`n", "`n" -replace "`r", "`n"
+  } catch {
+    $content = $_.Exception.ToString()
+  } finally {
+    if ($null -ne $process) { $process.Dispose() }
+  }
+  [System.IO.File]::WriteAllText($log, $content, [System.Text.UTF8Encoding]::new($false))
+  return [pscustomobject]@{
+    ExitCode = $code
+    Content = $content
+    LogPath = $log
+    Elapsed = [int]((Get-Date) - $start).TotalSeconds
+  }
+}
+
+function Invoke-WinGetPackageUpgrades {
+  param([object[]]$Packages, [bool]$IncludeUnknownEnabled, [bool]$RetryMode)
+  $updated = 0
+  $failed = 0
+  $warned = 0
+  Write-Host ""
+  Write-Host "Upgrading:"
+  for ($i = 0; $i -lt $Packages.Count; $i++) {
+    $package = $Packages[$i]
+    $logName = "windows-winget-upgrade-{0:D3}-{1}.log" -f ($i + 1), (Get-SafeLogToken $package.PackageId)
+    $log = Join-Path $LogDir $logName
+    $arguments = @("upgrade", "--id", $package.PackageId, "--exact", "--silent", "--accept-package-agreements", "--accept-source-agreements")
+    if ($IncludeUnknownEnabled) { $arguments += "--include-unknown" }
+    Write-Host ("  [{0}/{1}] {2} [{3}]" -f ($i + 1), $Packages.Count, $package.PackageName, $package.PackageId)
+    Write-Host ("        {0} -> {1}" -f $package.CurrentVersion, $package.AvailableVersion)
+    Write-Verbose "Package log: $log"
+    $start = Get-Date
+    $verboseNativeOutput = ($VerbosePreference -ne "SilentlyContinue")
+    $code = Invoke-WinGetLiveFiltered -FileName "winget" -NativeArguments $arguments -LogPath $log -OutputEncoding "utf8" -DisplayOutput $verboseNativeOutput -VerboseOutput $true
+    $content = if (Test-Path $log) { Get-Content -Path $log -Raw -ErrorAction SilentlyContinue } else { "" }
+    $elapsed = [int]((Get-Date) - $start).TotalSeconds
+    $versionAfter = ""
+    $status = "OK"
+    $message = "updated successfully"
+    if ($code -ne 0) {
+      $status = "FAIL"
+      $failed++
+      $message = Get-WinGetKnownMessage $code $content
+      Write-Host ("        WARN failed exit {0}; log: {1}" -f $code, $log)
+    } else {
+      $verify = Invoke-NativeCaptured ("windows-winget-verify-{0:D3}-{1}.log" -f ($i + 1), (Get-SafeLogToken $package.PackageId)) "winget" @("list", "--id", $package.PackageId, "--exact") "utf8"
+      Write-Verbose "Verification log: $($verify.LogPath)"
+      $versionAfter = Get-WinGetInstalledVersionFromText $verify.Content $package.PackageId
+      if ([string]::IsNullOrWhiteSpace($versionAfter)) {
+        $versionAfter = $package.AvailableVersion
+        $status = "WARN"
+        $warned++
+        $message = "verification_status=WARN; could not parse final installed version; expected $($package.AvailableVersion)"
+        Write-Host ("        WARN verification ambiguous; log: {0}" -f $log)
+      } elseif ($versionAfter -ne $package.AvailableVersion) {
+        $status = "WARN"
+        $warned++
+        $message = "verification_status=WARN; installed version $versionAfter differs from target $($package.AvailableVersion)"
+        Write-Host ("        WARN verification ambiguous; log: {0}" -f $log)
+      } else {
+        $updated++
+        Write-Host ("        OK updated in {0}s" -f $elapsed)
+      }
+    }
+    Add-WinGetDetailedResult $package.PackageId $package.PackageName $package.CurrentVersion $package.AvailableVersion $versionAfter $status $code $elapsed $log $message
+    if ($status -eq "OK") {
+      Add-Result "OK" "WinGet package $($package.PackageName) [$($package.PackageId)]" "$($package.CurrentVersion) -> $versionAfter; log: $log"
+    } elseif ($status -eq "WARN") {
+      Add-Result "WARN" "WinGet package $($package.PackageName) [$($package.PackageId)]" "$($package.CurrentVersion) -> $versionAfter; $message; log: $log"
+    } else {
+      Add-Result "WARN" "WinGet package $($package.PackageName) [$($package.PackageId)]" "$($package.CurrentVersion) -> $($package.AvailableVersion) exit $code; $message; log: $log"
+    }
+  }
+  return [pscustomobject]@{
+    Planned = $Packages.Count
+    Updated = $updated
+    Warned = $warned
+    Failed = $failed
+    Skipped = 0
+    RetryMode = $RetryMode
+  }
+}
+
+function Write-WinGetPackageSummary {
+  param([object]$Summary)
+  $rows = @(Import-Csv -Path $WinGetResultFile -Delimiter "`t" -ErrorAction SilentlyContinue)
+  $nonOk = @($rows | Where-Object { $_.status -ne "OK" })
+  $status = if ($nonOk.Count -eq 0) { "OK" } else { "WARN" }
+  Write-Host ""
+  Write-Host "==> WinGet package summary"
+  if ($Summary.RetryMode) {
+    Write-Host ("{0} {1} planned, {2} updated, {3} still failed" -f $status, $Summary.Planned, $Summary.Updated, $nonOk.Count)
+  } else {
+    Write-Host ("{0} {1} planned, {2} updated, {3} failed, {4} skipped" -f $status, $Summary.Planned, $Summary.Updated, $nonOk.Count, $Summary.Skipped)
+  }
+  $updatedRows = @($rows | Where-Object { $_.status -eq "OK" })
+  if ($updatedRows.Count -gt 0) {
+    Write-Host ""
+    Write-Host "Updated:"
+    foreach ($row in $updatedRows) {
+      Write-Host ("  OK {0} {1} -> {2}" -f $row.package_name, $row.version_before, $row.version_after)
+    }
+  }
+  if ($nonOk.Count -gt 0) {
+    Write-Host ""
+    Write-Host "Failed:"
+    foreach ($row in $nonOk) {
+      $target = if ([string]::IsNullOrWhiteSpace($row.version_target)) { $row.version_after } else { $row.version_target }
+      Write-Host ("  WARN {0} {1} -> {2} exit {3}" -f $row.package_name, $row.version_before, $target, $row.exit_code)
+      Write-Host ("    message: {0}" -f $row.message)
+    }
+    Write-Host ""
+    Write-Host ("Retry failed packages: .\scripts\update\update-windows.ps1 -RetryFailedFromTsv `"{0}`"" -f $WinGetResultFile)
+  }
+  Write-Host "WinGet package results: $WinGetResultFile"
+}
+
+function Set-WinGetConsoleSummary {
+  param([object]$Summary)
+  $rows = @(Import-Csv -Path $WinGetResultFile -Delimiter "`t" -ErrorAction SilentlyContinue)
+  $nonOk = @($rows | Where-Object { $_.status -ne "OK" })
+  if (Test-Path $WinGetInventoryFile) {
+    $inventoryRows = @(Import-Csv -Path $WinGetInventoryFile -Delimiter "`t" -ErrorAction SilentlyContinue)
+    Write-TsvNoBom -Path $WinGetSnapshotFile -Lines @("tool`tpackage_id`tversion_before`tversion_after`tresult")
+    Write-WinGetTrackedToolsSnapshot -InventoryRows $inventoryRows
+  }
+  $script:WinGetConsoleSummary = [pscustomobject]@{
+    Planned = $Summary.Planned
+    Updated = $Summary.Updated
+    Failed = $nonOk.Count
+    NoPackages = $false
+    FailedRows = $nonOk
+    RetryMode = $Summary.RetryMode
+  }
+}
+
+function Get-WslConsoleSummary {
+  param([string]$StatusText, [AllowNull()][object]$StatusCode, [AllowNull()][object]$UpdateCode)
+  if (($StatusCode -ne 0) -or ($UpdateCode -ne 0)) {
+    return "WSL: warnings; see logs"
+  }
+  $distro = ""
+  $version = ""
+  foreach ($line in (($StatusText -replace "`r", "`n") -split "`n")) {
+    if ($line -match '(?i)^\s*Default Distribution:\s*(.+)$') { $distro = $Matches[1].Trim() }
+    if ($line -match '(?i)^\s*Distribuci(?:o|\u00f3)n predeterminada:\s*(.+)$') { $distro = $Matches[1].Trim() }
+    if ($line -match '(?i)^\s*Default Version:\s*(.+)$') { $version = $Matches[1].Trim() }
+    if ($line -match '(?i)^\s*Versi(?:o|\u00f3)n predeterminada:\s*(.+)$') { $version = $Matches[1].Trim() }
+  }
+  if (-not [string]::IsNullOrWhiteSpace($distro) -and -not [string]::IsNullOrWhiteSpace($version)) {
+    return "WSL: $distro, version $version, up to date"
+  }
+  if (-not [string]::IsNullOrWhiteSpace($distro)) {
+    return "WSL: $distro, up to date"
+  }
+  return "WSL: up to date"
+}
+
+function Format-WinGetSummaryValue {
+  param([AllowNull()][object]$Value, [int]$Width)
+  $text = if ($null -eq $Value) { "" } else { [string]$Value }
+  if (($Width -gt 3) -and ($text.Length -gt $Width)) {
+    return $text.Substring(0, $Width - 3) + "..."
+  }
+  return $text
+}
+
+function Get-WinGetSummaryResultColor {
+  param([AllowNull()][object]$Result)
+  $text = if ($null -eq $Result) { "" } else { ([string]$Result).Trim().ToLowerInvariant() }
+  switch ($text) {
+    "unchanged" { return "" }
+    { $_ -in @("updated", "installed") } { return "Green" }
+    { $_ -in @("warn", "warning", "skipped", "unknown", "ambiguous") } { return "Yellow" }
+    { $_ -in @("fail", "failed", "error") } { return "Red" }
+    default {
+      if (($text -like "*unknown*") -or ($text -like "*ambiguous*") -or ($text -like "*warn*") -or ($text -like "*skipped*")) { return "Yellow" }
+      if (($text -like "*fail*") -or ($text -like "*error*")) { return "Red" }
+      return ""
+    }
+  }
+}
+
+function Test-WinGetSummaryResultColorContract {
+  $cases = @(
+    @{ Result = "unchanged"; Color = "" },
+    @{ Result = " updated "; Color = "Green" },
+    @{ Result = "installed"; Color = "Green" },
+    @{ Result = "warn"; Color = "Yellow" },
+    @{ Result = " WARNING "; Color = "Yellow" },
+    @{ Result = "skipped"; Color = "Yellow" },
+    @{ Result = "unknown-version"; Color = "Yellow" },
+    @{ Result = "ambiguous-or-unmanaged"; Color = "Yellow" },
+    @{ Result = "fail"; Color = "Red" },
+    @{ Result = " failed "; Color = "Red" },
+    @{ Result = "error"; Color = "Red" },
+    @{ Result = "pending"; Color = "" }
+  )
+  foreach ($case in $cases) {
+    $actual = Get-WinGetSummaryResultColor $case.Result
+    if ($actual -ne $case.Color) {
+      Write-Host ("WARN result color mismatch for '{0}': expected '{1}', got '{2}'" -f $case.Result, $case.Color, $actual)
+      return $false
+    }
+  }
+  return $true
+}
+
+function Get-WinGetManagedInventoryDisplayRows {
+  if (-not (Test-Path $WinGetInventoryFile)) { return @() }
+  $inventoryRows = @(Import-Csv -Path $WinGetInventoryFile -Delimiter "`t" -ErrorAction SilentlyContinue | Where-Object {
+    $_.coverage_status -in @("covered-no-update", "upgradeable", "unknown-version")
+  })
+  $resultRowsById = @{}
+  if (Test-Path $WinGetResultFile) {
+    foreach ($row in @(Import-Csv -Path $WinGetResultFile -Delimiter "`t" -ErrorAction SilentlyContinue)) {
+      if (-not [string]::IsNullOrWhiteSpace($row.package_id)) {
+        $resultRowsById[$row.package_id] = $row
+      }
+    }
+  }
+
+  $displayRows = New-Object System.Collections.ArrayList
+  foreach ($row in $inventoryRows) {
+    $before = $row.installed_version
+    $after = $row.installed_version
+    $result = "unchanged"
+    $resultRow = if ($resultRowsById.ContainsKey($row.package_id)) { $resultRowsById[$row.package_id] } else { $null }
+
+    if ($row.coverage_status -eq "upgradeable") {
+      if ($null -ne $resultRow) {
+        $before = if ([string]::IsNullOrWhiteSpace($resultRow.version_before)) { $row.installed_version } else { $resultRow.version_before }
+        if ($resultRow.status -eq "OK") {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $resultRow.version_target } else { $resultRow.version_after }
+          $result = "updated"
+        } elseif ($resultRow.status -eq "FAIL") {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $before } else { $resultRow.version_after }
+          $result = "failed"
+        } else {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $before } else { $resultRow.version_after }
+          $result = "warning"
+        }
+      } else {
+        $result = "pending"
+      }
+    } elseif ($row.coverage_status -eq "unknown-version") {
+      $result = "unknown-version"
+      if ($null -ne $resultRow) {
+        $before = if ([string]::IsNullOrWhiteSpace($resultRow.version_before)) { $row.installed_version } else { $resultRow.version_before }
+        if ($resultRow.status -eq "OK") {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $row.installed_version } else { $resultRow.version_after }
+          $result = "updated"
+        } elseif ($resultRow.status -eq "FAIL") {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $before } else { $resultRow.version_after }
+          $result = "failed"
+        } else {
+          $after = if ([string]::IsNullOrWhiteSpace($resultRow.version_after)) { $before } else { $resultRow.version_after }
+          $result = "warning"
+        }
+      }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($after)) { $after = $before }
+    [void]$displayRows.Add([pscustomobject]@{
+      PackageName = $row.package_name
+      PackageId = $row.package_id
+      Before = $before
+      After = $after
+      Result = $result
+    })
+  }
+  return @($displayRows)
+}
+
+function Write-WindowsSemanticSummary {
+  $resultRows = @()
+  if (Test-Path $ResultFile) {
+    $resultRows = @(Import-Csv -Path $ResultFile -Delimiter "`t" -Header "status", "area", "name", "message" | Where-Object { -not [string]::IsNullOrWhiteSpace($_.status) })
+  }
+  $warningRows = @($resultRows | Where-Object { $_.status -match '^(WARN|FAIL|INCIDENT)$' })
+  $winGetFailures = @()
+  if ($null -ne $script:WinGetConsoleSummary) {
+    $winGetFailures = @($script:WinGetConsoleSummary.FailedRows)
+  }
+  $status = if (($warningRows.Count -gt 0) -or ($winGetFailures.Count -gt 0)) { "WARN" } else { "OK" }
+
+  Write-Host ""
+  Write-Host "==> Summary"
+  if ($status -eq "OK") {
+    Write-Host "OK Windows update completed"
+  } else {
+    Write-Host "WARN Windows update completed with warnings"
+  }
+
+  if ($null -eq $script:WinGetConsoleSummary) {
+    Write-Host "WinGet: not available"
+  } elseif ($script:WinGetConsoleSummary.NoPackages) {
+    Write-Host "WinGet: no packages to upgrade"
+  } else {
+    Write-Host ("WinGet: {0} updated, {1} failed" -f $script:WinGetConsoleSummary.Updated, $script:WinGetConsoleSummary.Failed)
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($script:WslConsoleSummary)) {
+    Write-Host $script:WslConsoleSummary
+  }
+
+  if ($null -ne $script:WinGetInventorySummary) {
+    Write-Host "WinGet coverage"
+    Write-Host ("  Recognized packages:        {0}" -f $script:WinGetInventorySummary.Recognized)
+    Write-Host ("  Upgrade candidates:         {0}" -f $script:WinGetInventorySummary.Upgradeable)
+    Write-Host ("  Unknown-version candidates: {0}" -f $script:WinGetInventorySummary.Unknown)
+    Write-Host ("  Ambiguous/unmanaged:        {0}" -f $script:WinGetInventorySummary.Ambiguous)
+    Write-Host ("  Duplicate package ids:      {0}" -f $script:WinGetInventorySummary.Duplicates)
+    Write-Host ("  Inventory: {0}" -f $WinGetInventoryFile)
+  }
+
+  $managedRows = @(Get-WinGetManagedInventoryDisplayRows)
+  if ($managedRows.Count -gt 0) {
+    Write-Host "WinGet managed apps"
+    Write-Host ("  {0,-34} {1,-44} {2,-14} {3,-14} {4,-15}" -f "Package", "Id", "Before", "After", "Result")
+    Write-Host ("  {0,-34} {1,-44} {2,-14} {3,-14} {4,-15}" -f "----------------------------------", "--------------------------------------------", "--------------", "--------------", "---------------")
+    foreach ($row in $managedRows) {
+      $packageName = Format-WinGetSummaryValue $row.PackageName 34
+      $packageId = Format-WinGetSummaryValue $row.PackageId 44
+      $line = "  {0,-34} {1,-44} {2,-14} {3,-14} {4,-15}" -f $packageName, $packageId, $row.Before, $row.After, $row.Result
+      $color = Get-WinGetSummaryResultColor $row.Result
+      if ([string]::IsNullOrWhiteSpace($color)) {
+        Write-Host $line
+      } else {
+        Write-Host $line -ForegroundColor $color
+      }
+    }
+  }
+
+  if ($winGetFailures.Count -gt 0) {
+    Write-Host "Failed:"
+    foreach ($row in $winGetFailures) {
+      Write-Host ("  {0} [{1}] exit {2}" -f $row.package_name, $row.package_id, $row.exit_code)
+    }
+    Write-Host "Retry:"
+    Write-Host ("  .\scripts\update\update-windows.ps1 -RetryFailedFromTsv `"{0}`"" -f $WinGetResultFile)
+  }
+  Write-Host "Logs: $LogDir"
+}
+
 function Get-NonEmptyLines {
   param([string]$Path)
   if (-not (Test-Path $Path)) { return @() }
@@ -452,6 +1304,134 @@ if ($SelfTestWinGetPackageResults) {
   exit 0
 }
 
+if ($SelfTestWinGetPackageWorkflow) {
+  Write-Host "Dotfiles Windows update WinGet package workflow self-test"
+  Write-Host "Run directory: $RunDir"
+  $sample = @(
+    "Name             Id                         Version       Available     Source"
+    "----------------------------------------------------------------------------"
+    "GitHub CLI       GitHub.cli                 2.78.0        2.79.0        winget"
+    "Pandoc           JohnMacFarlane.Pandoc      3.7.0         3.8.0         winget"
+    "2 upgrades available."
+  ) -join [Environment]::NewLine
+  $packages = @(Get-WinGetPackagePlanFromText $sample)
+  if (($packages.Count -ne 2) -or ($packages[0].PackageId -ne "GitHub.cli") -or ($packages[1].AvailableVersion -ne "3.8.0")) {
+    Add-Result "WARN" "WinGet package workflow self-test" "upgrade table parsing failed"
+    Write-Host "WARN WinGet package workflow self-test failed"
+    exit 68
+  }
+  Add-WinGetDetailedResult "GitHub.cli" "GitHub CLI" "2.78.0" "2.79.0" "2.79.0" "OK" 0 4 "logs/windows-winget-upgrade-001-GitHub.cli.log" "updated successfully"
+  Add-WinGetDetailedResult "JohnMacFarlane.Pandoc" "Pandoc" "3.7.0" "3.8.0" "" "FAIL" 1618 5 "logs/windows-winget-upgrade-002-JohnMacFarlane.Pandoc.log" (Get-WinGetKnownMessage 1618 "")
+  $retry = @(Get-WinGetRetryPlanFromTsv $WinGetResultFile)
+  $header = (Get-Content -Path $WinGetResultFile -TotalCount 1)
+  $previousIncludeUnknown = $env:DOTFILES_WINGET_INCLUDE_UNKNOWN
+  $env:DOTFILES_WINGET_INCLUDE_UNKNOWN = "1"
+  $includeUnknownFromEnv = Get-WinGetIncludeUnknownEnabled
+  $env:DOTFILES_WINGET_INCLUDE_UNKNOWN = $previousIncludeUnknown
+  if (($header -ne "package_id`tpackage_name`tversion_before`tversion_target`tversion_after`tstatus`texit_code`tduration_seconds`tlog_path`tmessage") -or ($retry.Count -ne 1) -or ($retry[0].PackageId -ne "JohnMacFarlane.Pandoc") -or ($retry[0].CurrentVersion -ne "3.7.0") -or (-not $includeUnknownFromEnv) -or ((Get-WinGetKnownMessage 1 "Fast Cache data not found") -notlike "*winget source reset --force*")) {
+    Add-Result "WARN" "WinGet package workflow self-test" "TSV, retry, include-unknown, or known-error behavior failed"
+    Write-Host "WARN WinGet package workflow self-test failed"
+    exit 68
+  }
+  Set-Content -Path $ResultFile -Value "" -Encoding UTF8
+  Add-Result "OK" "WinGet package workflow self-test" "package workflow helpers passed"
+  Write-Host "OK WinGet package workflow self-test passed"
+  exit 0
+}
+
+if ($SelfTestWinGetInventory) {
+  Write-Host "Dotfiles Windows update WinGet inventory self-test"
+  Write-Host "Run directory: $RunDir"
+  $installed = @(
+    "Name                         Id                         Version   Source"
+    "--------------------------------------------------------------------------"
+    "GitHub CLI                   GitHub.cli                 2.94.0    winget"
+    "GitHub CLI Preview           GitHub.cli                 2.94.0    winget"
+    "Pandoc                       JohnMacFarlane.Pandoc      3.10      winget"
+    "Failing Tool                 Example.FailingTool        1.0       winget"
+    "Visual Studio Code           Microsoft.VisualStudioCode 1.124.2   winget"
+    "Cursor                       Anysphere.Cursor           3.7.27    winget"
+    "WSL                          Microsoft.WSL              2.7.8     winget"
+    "Loose App                                               1.0"
+  ) -join [Environment]::NewLine
+  $normalUpgrade = @(
+    "Name                         Id                         Version   Available Source"
+    "---------------------------------------------------------------------------------"
+    "GitHub CLI                   GitHub.cli                 2.94.0    2.95.0    winget"
+    "Failing Tool                 Example.FailingTool        1.0       2.0       winget"
+    "2 upgrades available."
+  ) -join [Environment]::NewLine
+  $includeUnknownUpgrade = @(
+    "Name                         Id                         Version   Available Source"
+    "---------------------------------------------------------------------------------"
+    "GitHub CLI                   GitHub.cli                 2.94.0    2.95.0    winget"
+    "Cursor                       Anysphere.Cursor           3.7.27    3.8.0     winget"
+    "2 upgrades available."
+  ) -join [Environment]::NewLine
+  Update-WinGetInventory -InstalledText $installed -NormalUpgradeText $normalUpgrade -IncludeUnknownUpgradeText $includeUnknownUpgrade -IncludeUnknownEnabled (Get-WinGetIncludeUnknownEnabled)
+  Add-WinGetDetailedResult "GitHub.cli" "GitHub CLI" "2.94.0" "2.95.0" "2.95.0" "OK" 0 4 "logs/windows-winget-upgrade-001-GitHub.cli.log" "updated successfully"
+  Add-WinGetDetailedResult "Example.FailingTool" "Failing Tool" "1.0" "2.0" "" "FAIL" 1618 5 "logs/windows-winget-upgrade-002-Example.FailingTool.log" (Get-WinGetKnownMessage 1618 "")
+  $script:WinGetConsoleSummary = [pscustomobject]@{
+    Planned = 2
+    Updated = 1
+    Failed = 1
+    NoPackages = $false
+    FailedRows = @([pscustomobject]@{ package_name = "Failing Tool"; package_id = "Example.FailingTool"; exit_code = 1618 })
+    RetryMode = $false
+  }
+  $script:WslConsoleSummary = "WSL: Ubuntu, version 2, up to date"
+  if (-not (Test-WinGetSummaryResultColorContract)) {
+    Write-Host "WARN WinGet inventory self-test failed: managed apps result color contract"
+    exit 69
+  }
+  Write-WindowsSemanticSummary
+  Write-Host "OK WinGet inventory self-test passed"
+  exit 0
+}
+
+if ($SelfTestWinGetPresentationNoPackages) {
+  Write-Verbose "Run directory: $RunDir"
+  Write-Host "==> WinGet"
+  Write-Verbose "WinGet sources log: $(Join-Path $LogDir "windows-winget-source.log")"
+  Write-Verbose "WinGet package list log: $(Join-Path $LogDir "windows-winget-list.log")"
+  Write-Host "OK sources updated in 3s"
+  Add-Result "OK" "WinGet sources" "completed in 3s; log: $(Join-Path $LogDir "windows-winget-source.log")"
+  Add-Result "OK" "WinGet packages" "no packages to upgrade"
+  Write-WinGetNoPackages -ElapsedSeconds 4
+  $script:WslConsoleSummary = "WSL: Ubuntu, version 2, up to date"
+  Write-WindowsSemanticSummary
+  exit 0
+}
+
+if ($SelfTestWinGetPresentationWarnings) {
+  Write-Verbose "Run directory: $RunDir"
+  Write-Host "==> WinGet"
+  Write-Host "OK sources updated in 3s"
+  $packages = @(
+    [pscustomobject]@{ PackageName = "GitHub CLI"; PackageId = "GitHub.cli"; CurrentVersion = "2.78.0"; AvailableVersion = "2.79.0" },
+    [pscustomobject]@{ PackageName = "Pandoc"; PackageId = "JohnMacFarlane.Pandoc"; CurrentVersion = "3.7.0"; AvailableVersion = "3.8.0" }
+  )
+  Write-WinGetPlan -Packages $packages -RetryMode $false
+  $failedLog = Join-Path $LogDir "windows-winget-upgrade-002-JohnMacFarlane.Pandoc.log"
+  Write-Host ""
+  Write-Host "Upgrading:"
+  Write-Host "  [1/2] GitHub CLI [GitHub.cli]"
+  Write-Host "        2.78.0 -> 2.79.0"
+  Write-Host "        OK updated in 58s"
+  Write-Host "  [2/2] Pandoc [JohnMacFarlane.Pandoc]"
+  Write-Host "        3.7.0 -> 3.8.0"
+  Write-Host "        WARN failed exit 1618; log: $failedLog"
+  Add-WinGetDetailedResult "GitHub.cli" "GitHub CLI" "2.78.0" "2.79.0" "2.79.0" "OK" 0 58 (Join-Path $LogDir "windows-winget-upgrade-001-GitHub.cli.log") "updated successfully"
+  Add-WinGetDetailedResult "JohnMacFarlane.Pandoc" "Pandoc" "3.7.0" "3.8.0" "" "FAIL" 1618 2 $failedLog (Get-WinGetKnownMessage 1618 "")
+  Add-Result "OK" "WinGet package GitHub CLI [GitHub.cli]" "2.78.0 -> 2.79.0; log: $(Join-Path $LogDir "windows-winget-upgrade-001-GitHub.cli.log")"
+  $knownMessage = Get-WinGetKnownMessage 1618 ""
+  Add-Result "WARN" "WinGet package Pandoc [JohnMacFarlane.Pandoc]" "3.7.0 -> 3.8.0 exit 1618; $knownMessage; log: $failedLog"
+  Set-WinGetConsoleSummary -Summary ([pscustomobject]@{ Planned = 2; Updated = 1; RetryMode = $false })
+  $script:WslConsoleSummary = "WSL: Ubuntu, version 2, up to date"
+  Write-WindowsSemanticSummary
+  exit 0
+}
+
 if ($SelfTestWinGetConsoleText) {
   $shade = [string]([char]0x2592)
   $block = [string]([char]0x2588)
@@ -511,42 +1491,64 @@ if ($SelfTestLiveLogging) {
   exit 0
 }
 
-Write-Host "Dotfiles Windows update"
-Write-Host "Run directory: $RunDir"
+Write-Verbose "Run directory: $RunDir"
 
 if (Get-Command winget -ErrorAction SilentlyContinue) {
-  Run-NativeLiveLogged "WinGet sources" "windows-winget-source.log" "winget" @("source", "update") "utf8" "Updating WinGet sources..." $true
-  Write-Host "Full WinGet source log: $script:LastRunLog"
+  $includeUnknownEnabled = Get-WinGetIncludeUnknownEnabled
+  $retryMode = -not [string]::IsNullOrWhiteSpace($RetryFailedFromTsv)
+  Write-Host "==> WinGet"
+  Run-NativeLogged "WinGet sources" "windows-winget-source.log" "winget" @("source", "update") "utf8" $false $false
+  if ($script:LastRunCode -eq 0) {
+    Write-Host ("OK sources updated in {0}s" -f $script:LastRunElapsed)
+  } else {
+    Write-Host ("WARN sources update exit {0}; log: {1}" -f $script:LastRunCode, $script:LastRunLog)
+  }
+
+  Run-NativeLogged "WinGet installed packages" "windows-winget-list-installed.log" "winget" @("list", "--accept-source-agreements", "--disable-interactivity") "utf8" $false $false
+  $installedPackageText = $script:LastRunContent
 
   $winGetListName = "WinGet packages to upgrade"
-  Run-NativeLogged $winGetListName "windows-winget-list.log" "winget" @("upgrade", "--include-unknown", "--accept-source-agreements", "--disable-interactivity") "utf8" $false $false
-  Write-Host ""
-  Write-Host "==> $winGetListName"
-  $packageTable = Get-WinGetConsoleText $script:LastRunContent
-  if ([string]::IsNullOrWhiteSpace($packageTable)) {
-    Write-Host "(no package list output; see log: $script:LastRunLog)"
-  } else {
-    Write-Host $packageTable
-  }
-  Write-WinGetListStatus $winGetListName
-  Write-Host "Full WinGet package list log: $script:LastRunLog"
+  $normalListArguments = @("upgrade", "--accept-source-agreements", "--disable-interactivity")
+  Run-NativeLogged $winGetListName "windows-winget-list.log" "winget" $normalListArguments "utf8" $false $false
+  $packageListElapsed = if ($null -eq $script:LastRunElapsed) { 0 } else { $script:LastRunElapsed }
+  $normalUpgradeText = $script:LastRunContent
 
-  $winGetPackageCount = Get-WinGetUpgradeCount $packageTable
-  Run-NativeLiveLogged "WinGet packages" "windows-winget-upgrade.log" "winget" @("upgrade", "--all", "--include-unknown", "--silent", "--accept-package-agreements", "--accept-source-agreements") "utf8" "Updating $winGetPackageCount packages with WinGet..." $true
-  Add-WinGetPackageResults $script:LastRunLog
+  $includeUnknownListArguments = @("upgrade", "--include-unknown", "--accept-source-agreements", "--disable-interactivity")
+  Run-NativeLogged "WinGet packages including unknown versions" "windows-winget-list-include-unknown.log" "winget" $includeUnknownListArguments "utf8" $false $false
+  $includeUnknownUpgradeText = $script:LastRunContent
+  Update-WinGetInventory -InstalledText $installedPackageText -NormalUpgradeText $normalUpgradeText -IncludeUnknownUpgradeText $includeUnknownUpgradeText -IncludeUnknownEnabled $includeUnknownEnabled
+
+  if ($retryMode) {
+    $packages = @(Get-WinGetRetryPlanFromTsv $RetryFailedFromTsv)
+    Write-Verbose "Retry TSV: $RetryFailedFromTsv"
+  } else {
+    $packageTable = if ($includeUnknownEnabled) { Get-WinGetConsoleText $includeUnknownUpgradeText } else { Get-WinGetConsoleText $normalUpgradeText }
+    $packages = @(Get-WinGetPackagePlanFromText $packageTable)
+  }
+  Write-WinGetPlan -Packages $packages -RetryMode $retryMode
+  if ($packages.Count -eq 0) {
+    Add-Result "OK" "WinGet packages" "no packages to upgrade"
+    Write-WinGetNoPackages -ElapsedSeconds $packageListElapsed
+  } else {
+    $winGetSummary = Invoke-WinGetPackageUpgrades -Packages $packages -IncludeUnknownEnabled $includeUnknownEnabled -RetryMode $retryMode
+    Set-WinGetConsoleSummary -Summary $winGetSummary
+  }
 } else {
   Add-Result "WARN" "WinGet" "winget not found on Windows PATH"
+  $script:WinGetConsoleSummary = $null
 }
 
 if (Get-Command wsl -ErrorAction SilentlyContinue) {
-  Run-NativeLogged "WSL status" "windows-wsl-status.log" "wsl" @("--status") "unicode"
-  Run-NativeLogged "WSL update" "windows-wsl-update.log" "wsl" @("--update") "unicode"
+  Run-NativeLogged "WSL status" "windows-wsl-status.log" "wsl" @("--status") "unicode" $false $false
+  $wslStatusContent = $script:LastRunContent
+  $wslStatusCode = $script:LastRunCode
+  Run-NativeLogged "WSL update" "windows-wsl-update.log" "wsl" @("--update") "unicode" $false $false
+  $wslUpdateCode = $script:LastRunCode
+  $script:WslConsoleSummary = Get-WslConsoleSummary -StatusText $wslStatusContent -StatusCode $wslStatusCode -UpdateCode $wslUpdateCode
   Add-Result "INFO" "WSL restart" "If WSL reports a pending restart, run later from PowerShell after this WSL session: wsl --shutdown"
 } else {
   Add-Result "WARN" "WSL update" "wsl command not found on Windows PATH"
+  $script:WslConsoleSummary = "WSL: command not found"
 }
 
-Write-Host ""
-Write-Host "==> Windows summary"
-Get-Content -Path $ResultFile | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { Write-Host $_ }
-Write-Host "Windows update finished. Result: $ResultFile"
+Write-WindowsSemanticSummary
