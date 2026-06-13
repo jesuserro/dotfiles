@@ -101,7 +101,7 @@ make test-ci
 make agent-validate
 ```
 
-Some Bats files exist under `tests/bats/` but are **not wired** into `test-bats`, `test-fast`, or `test-ci` (for example `github-identity-check.bats`, `clean-runtime-skills.bats`, `store-etl-ops-workdir.bats`). Wiring them is deferred; run individual `.bats` files manually when needed.
+Some Bats files exist under `tests/bats/` but are **not wired** into `test-bats`, `test-fast`, or `test-ci` (for example `github-identity-check.bats`, `store-etl-ops-workdir.bats`). Wiring them is deferred; run individual `.bats` files manually when needed.
 
 ### Other targets
 

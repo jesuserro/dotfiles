@@ -454,6 +454,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/mcp-manifest.bats)
 	@$(call run_bats,$(BATS_DIR)/system/mcp-render-drift.bats)
 	@$(call run_bats,$(BATS_DIR)/system/install-agent-skills.bats)
+	@$(call run_bats,$(BATS_DIR)/system/clean-runtime-skills.bats)
 	@$(call run_bats,$(BATS_DIR)/system/shell-audit-check.bats)
 	@$(call run_bats,$(BATS_DIR)/system/agent-validate-changed.bats)
 	@$(call run_bats,$(BATS_DIR)/system/security-osv-scan.bats)
