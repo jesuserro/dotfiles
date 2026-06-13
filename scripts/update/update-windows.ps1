@@ -1045,11 +1045,43 @@ function Format-WinGetSummaryValue {
 
 function Get-WinGetSummaryResultColor {
   param([AllowNull()][object]$Result)
-  $text = if ($null -eq $Result) { "" } else { ([string]$Result).ToLowerInvariant() }
-  if ($text -in @("updated", "installed")) { return "Green" }
-  if ($text -in @("failed", "fail")) { return "Red" }
-  if (($text -like "*warn*") -or ($text -like "*skipped*") -or ($text -like "*unknown*") -or ($text -like "*ambiguous*")) { return "Yellow" }
-  return ""
+  $text = if ($null -eq $Result) { "" } else { ([string]$Result).Trim().ToLowerInvariant() }
+  switch ($text) {
+    "unchanged" { return "" }
+    { $_ -in @("updated", "installed") } { return "Green" }
+    { $_ -in @("warn", "warning", "skipped", "unknown", "ambiguous") } { return "Yellow" }
+    { $_ -in @("fail", "failed", "error") } { return "Red" }
+    default {
+      if (($text -like "*unknown*") -or ($text -like "*ambiguous*") -or ($text -like "*warn*") -or ($text -like "*skipped*")) { return "Yellow" }
+      if (($text -like "*fail*") -or ($text -like "*error*")) { return "Red" }
+      return ""
+    }
+  }
+}
+
+function Test-WinGetSummaryResultColorContract {
+  $cases = @(
+    @{ Result = "unchanged"; Color = "" },
+    @{ Result = " updated "; Color = "Green" },
+    @{ Result = "installed"; Color = "Green" },
+    @{ Result = "warn"; Color = "Yellow" },
+    @{ Result = " WARNING "; Color = "Yellow" },
+    @{ Result = "skipped"; Color = "Yellow" },
+    @{ Result = "unknown-version"; Color = "Yellow" },
+    @{ Result = "ambiguous-or-unmanaged"; Color = "Yellow" },
+    @{ Result = "fail"; Color = "Red" },
+    @{ Result = " failed "; Color = "Red" },
+    @{ Result = "error"; Color = "Red" },
+    @{ Result = "pending"; Color = "" }
+  )
+  foreach ($case in $cases) {
+    $actual = Get-WinGetSummaryResultColor $case.Result
+    if ($actual -ne $case.Color) {
+      Write-Host ("WARN result color mismatch for '{0}': expected '{1}', got '{2}'" -f $case.Result, $case.Color, $actual)
+      return $false
+    }
+  }
+  return $true
 }
 
 function Get-WinGetManagedInventoryDisplayRows {
@@ -1348,6 +1380,10 @@ if ($SelfTestWinGetInventory) {
     RetryMode = $false
   }
   $script:WslConsoleSummary = "WSL: Ubuntu, version 2, up to date"
+  if (-not (Test-WinGetSummaryResultColorContract)) {
+    Write-Host "WARN WinGet inventory self-test failed: managed apps result color contract"
+    exit 69
+  }
   Write-WindowsSemanticSummary
   Write-Host "OK WinGet inventory self-test passed"
   exit 0

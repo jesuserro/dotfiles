@@ -1480,6 +1480,8 @@ PY
 	grep -q '\[string\]\$RetryFailedFromTsv' "$ps1"
 	grep -q '\$WinGetResultFile = Join-Path \$RunDir "windows-winget-results.tsv"' "$ps1"
 	grep -q 'function Get-WinGetSummaryResultColor' "$ps1"
+	grep -Fq '.Trim().ToLowerInvariant()' "$ps1"
+	grep -q 'function Test-WinGetSummaryResultColorContract' "$ps1"
 	grep -q 'Write-Host \$line -ForegroundColor \$color' "$ps1"
 }
 
