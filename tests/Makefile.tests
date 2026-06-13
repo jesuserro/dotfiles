@@ -446,6 +446,7 @@ bats-system: bats-zsh
 	@$(call run_bats,$(BATS_DIR)/system/update-workflow.bats)
 	@$(call run_bats,$(BATS_DIR)/system/update-node-runtime.bats)
 	@$(call run_bats,$(BATS_DIR)/system/update-governance.bats)
+	@$(call run_bats,$(BATS_DIR)/system/github-identity-check.bats)
 	@$(call run_bats,$(BATS_DIR)/system/docker-desktop-credentials.bats)
 	@$(call run_bats,$(BATS_DIR)/system/excalidraw-docker.bats)
 	@$(call run_bats,$(BATS_DIR)/system/dry-run-guard.bats)
